@@ -15,11 +15,12 @@
   limitations under the License. -->
 
 <ivy-module version="2.0">
-    <info organisation="org.apache.hadoop.hive" module="howl">
+    <info organisation="org.apache.hcatalog" module="${ant.project.name}"
+            revision="${hcatalog.version}">
         <license name="Apache 2.0"/>
-        <ivyauthor name="Apache Hadoop Team" url="http://hadoop.apache.org"/>
+        <ivyauthor name="Apache HCatalog Team" url="http://incubator.apache.org/hcatalog"/>
         <description>
-            Apache Hadoop Howl
+            Apache HCatalog
         </description>
     </info>
 
@@ -34,6 +35,13 @@
         <conf name="test" visibility="private" extends="runtime"/>
     </configurations>
     <dependencies>
-        <dependency org="org.apache.pig" name="pig" rev="0.8.0" conf="common->master" />
+        <dependency org="org.apache.pig" name="pig" rev="${pig.version}"
+          conf="common->master" />
+        <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}"
+          conf="common->master"/>
+        <!-- Removed until there is a secure version of hadoop in maven
+        <dependency org="org.apache.hadoop" name="hadoop-core" rev="${hadoop-core.version}"
+          conf="common->master"/>
+          -->
     </dependencies>
 </ivy-module>

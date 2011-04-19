@@ -18,61 +18,309 @@
 -->
 
 
-<!-- 
-Before you can run these subtargets directly, you need 
-to call at top-level: ant deploy-contrib compile-core-test
--->
 <project name="hcatalog" default="fatjar" xmlns:ivy="antlib:org.apache.ivy.ant" >
 
-  <property name="src.dir"  location="${basedir}/src/java"/>
+  <!--
+  ================================================================================
+  Properties and Classpaths Section
+  ================================================================================
+  -->
+  <!-- name and version -->
   <property name="hcatalog.version" value="0.1.0"/>
   <property name="hcatalog.jar" value="${ant.project.name}-${hcatalog.version}.jar"/>
-  <property name="docs.src" value="${basedir}/src/docs"/>
+    <property name="final.name" value="${ant.project.name}-${hcatalog.version}" />
 
-  <import file="../build-common.xml"/>
+  <!-- hive properties -->
+  <property name="hive.root" value="${basedir}/hive/external"/>
+
+  <!-- build properties -->
+  <property name="src.dir"  location="${basedir}/src/java"/>
+  <property name="docs.src" value="${basedir}/src/docs"/>
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="build.classes" value="${build.dir}/classes" />
+  <property name="build.docs" value="${build.dir}/docs" />
+  <property name="build.javadoc" value="${build.docs}/api" />
+  <property name="dist.dir" value="${build.dir}/${final.name}" />
+
+  <!-- javac properties -->
+  <property name="build.encoding" value="UTF8" />
+  <property name="excludes" value=""/>
+  <property name="javac.debug" value="on" />
+  <property name="javac.optimize" value="on" />
+  <property name="javac.deprecation" value="off" />
+  <property name="javac.version" value="1.6" />
+  <property name="javac.args" value="" />
+
+  <!-- test properties -->
+  <property name="test.src.dir" value="${basedir}/src/test" />
+  <property name="test.build.dir" value="${build.dir}/test" />
+  <property name="test.build.classes" value="${test.build.dir}/classes" />
+  <property name="test.log.dir" value="${test.build.dir}/logs" />
+  <property name="test.timeout" value="2700000" />
+  <property name="test.junit.output.format" value="plain" />
+  <property name="test.all.file" value="${test.src.dir}/all-tests"/>
+  <property name="test.exclude.file" value="${test.src.dir}/excluded-tests"/>
+  <property name="test.output" value="no"/>
+  <property name="hive.conf.dir" value="${hive.root}/conf"/>
+  <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
+
+  <!-- ivy properteis set here -->
+  <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
+  <property name="ivy.dir" location="ivy" />
+  <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
+  <property name="asfrepo" value="https://repository.apache.org"/>
+  <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
+  <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
+  <property name="asfstagingrepo" value="${asfrepo}/service/local/staging/deploy/maven2"/>
+  <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
+  <property name="ant_task.jar" location="${ivy.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
+  <property name="ant_task_repo_url"
+    value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
+  <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
+  <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
+  <property name="build.ivy.dir" location="${build.dir}/ivy" />
+  <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
+  <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
+  <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
+
+    <!--this is the naming policy for artifacts we want pulled down-->
+  <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
+
+  <!-- Classpaths for various builds -->
+  <path id="classpath">
+    <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
+    <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
+    <fileset dir="${hive.root}/lib" includes="*.jar"/>
+    <fileset dir="${hive.root}/build/cli" includes="*.jar"/>
+    <fileset dir="${hive.root}/build/common" includes="*.jar"/>
+    <fileset dir="${hive.root}/build/serde" includes="*.jar"/>
+    <fileset dir="${hive.root}/build/metastore" includes="*.jar"/>
+    <fileset dir="${hive.root}/build/ql" includes="*.jar"/>
+    <fileset dir="${hive.root}/ql/lib" includes="antlr-3.0.1.jar"/>
+    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
+      includes="hadoop-core-0.20.3-CDH3-SNAPSHOT.jar"/>
+    <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
+    
+  </path>
 
   <path id="test.classpath">
     <pathelement location="${test.build.classes}" />
     <pathelement location="" />
     <pathelement location="conf"/>
-    <pathelement location="${test.src.data.dir}/conf"/>
     <pathelement location="${hive.conf.dir}"/>
+    <!-- jars Hive depends on -->
+    <fileset dir="${hive.root}/build/ivy/lib/default/">
+      <include name="**/*.jar" />
+    </fileset>
+    <!-- jars Hadoop depends on -->
+    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
+      <include name="**/*.jar" />
+    </fileset>
+    <!--
+    <pathelement location="${test.src.data.dir}/conf"/>
     <pathelement location="${hadoop.oldstyle-name.test.jar}"/>
     <pathelement location="${hadoop.newstyle-name.test.jar}"/>
     <pathelement location="${common.jar}"/>
     <pathelement location="${jsp.test.jar}"/>
+    -->
+    <pathelement location="${hcatalog.jar}"/>
+    <!--
     <pathelement location="${hadoop.root}/lib/jsp-2.1/jsp-api-2.1.jar"/>
-    <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
-    <fileset dir="${hadoop.root}/lib" includes="*.jar"/>
+    -->
     <path refid="classpath"/>
+    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
+      includes="hadoop-test-0.20.3-CDH3-SNAPSHOT.jar"/>
   </path>
 
-  <target name="fatjar" depends="jar">
-     <jar jarfile="${hcatalog.jar}" basedir="${build.dir}/classes">
+  <!--
+  ================================================================================
+  Ivy Section
+  ================================================================================
+  -->
+  <!-- Ivy goop stolen directly from Pig's build.xml -->
+  <target name="ivy-init-dirs">
+    <mkdir dir="${build.ivy.dir}" />
+    <mkdir dir="${build.ivy.lib.dir}" />
+    <mkdir dir="${build.ivy.report.dir}" />
+  </target>
+
+  <target name="ivy-probe-antlib" >
+    <condition property="ivy.found">
+      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+    </condition>
+  </target>
+
+  <target name="ivy-download" description="To download ivy" unless="offline">
+    <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true"/>
+  </target>
+
+  <!--
+     To avoid Ivy leaking things across big projects, always load Ivy in the same classloader.
+     Also note how we skip loading Ivy if it is already there, just to make sure all is well.
+  -->
+  <target name="ivy-init-antlib" depends="ivy-download,ivy-init-dirs,ivy-probe-antlib" unless="ivy.found">
+    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
+      <classpath>
+        <pathelement location="${ivy.jar}"/>
+      </classpath>
+    </typedef>
+    <fail>
+      <condition >
+        <not>
+          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
+        </not>
+      </condition>
+         You need Apache Ivy 2.0 or later from http://ant.apache.org/
+         It could not be loaded from ${ivy_repo_url}
+    </fail>
+  </target>
+
+  <target name="ivy-init" depends="ivy-init-antlib" >
+    <!--Configure Ivy by reading in the settings file
+        If anyone has already read in a settings file into this settings ID, it gets priority
+    -->
+    <ivy:configure settingsid="${ant.project.name}.ivy.settings"
+      file="${ivysettings.xml}" override='false'/>
+  </target>
+
+  <target name="ivy-compile" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for compile configuration">
+    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="common"/>
+    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
+      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
+    <ivy:cachepath pathid="compile.classpath" conf="common"/>     
+  </target>
+
+  <target name="init" depends="ivy-compile" >
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.classes}" />
+    <mkdir dir="${test.build.classes}" />
+  </target>
+
+
+  <!-- Build the external hive code -->
+  <target name="hive.jar">
+    <ant antfile="build.xml" dir="${hive.root}" target="jar"/>
+  </target>
+
+  <!--
+  ================================================================================
+  Main Build and Jar Section
+  ================================================================================
+  -->
+  <!-- Build HCatalog src files -->
+  <target name="compile-src" depends="init,hive.jar">
+    <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
+        includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
+        optimize="${javac.optimize}" target="${javac.version}"
+        source="${javac.version}" deprecation="${javac.deprecation}"
+        includeantruntime="false">
+      <compilerarg line="${javac.args}"/>
+      <classpath refid="classpath" />
+    </javac>
+  </target>
+ 
+  <!-- Build the jar, this is the default -->
+  <target name="fatjar" depends="compile-src">
+     <jar jarfile="${hcatalog.jar}" basedir="${build.classes}">
         <zipgroupfileset dir="${hive.root}/lib" includes="thrift-fb303-${thrift-fb303.version}.jar,thrift-${thrift.version}.jar,commons-lang-2.4.jar,derby.jar"/> 
-        <zipgroupfileset dir="${build.dir.hive}/metastore" includes="hive-metastore-${version}.jar"/> 
-        <zipgroupfileset dir="${build.dir.hive}/ql" includes="hive-exec-${version}.jar"/> 
-        <zipgroupfileset dir="${build.dir.hive}/common" includes="hive-common-${version}.jar"/> 
-        <zipgroupfileset dir="${build.dir.hive}/serde" includes="hive-serde-${version}.jar"/> 
+        <zipgroupfileset dir="${hive.root}/metastore" includes="hive-metastore-${version}.jar"/> 
+        <zipgroupfileset dir="${hive.root}/ql" includes="hive-exec-${version}.jar"/> 
+        <zipgroupfileset dir="${hive.root}/common" includes="hive-common-${version}.jar"/> 
+        <zipgroupfileset dir="${hive.root}/serde" includes="hive-serde-${version}.jar"/> 
     </jar>
   </target>
 
+  <!--
+  ================================================================================
+  Test Section
+  ================================================================================
+  -->
+  <!-- Build HCatalog test files -->
+  <target name="compile-test" depends="fatjar">
+    <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${excludes}"
+        includes="**/*.java" destdir="${test.build.classes}" debug="${javac.debug}"
+        optimize="${javac.optimize}" target="${javac.version}"
+        source="${javac.version}" deprecation="${javac.deprecation}"
+        includeantruntime="false">
+      <compilerarg line="${javac.args}"/>
+      <classpath refid="test.classpath" />
+    </javac>
+  </target>
+
+  <!-- Run the unit tests -->
+  <target name="test" depends="compile-test">
+    <sequential>
+      <!-- If anyone knows how to set umask inside ant please do so -->
+      <exec executable="bin/umaskcheck.sh" failonerror="true"/>
+      <delete dir="${test.log.dir}"/>
+      <mkdir dir="${test.log.dir}"/>
+      <mkdir dir="${test.warehouse.dir}"/>
+      <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
+          fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}"
+          errorProperty="tests.failed" failureProperty="tests.failed">
+        <sysproperty key="hadoop.log.dir" value="${test.log.dir}"/>
+        <sysproperty key="hive.metastore.warehouse.dir" value="${test.warehouse.dir}"/>
+        <classpath>
+          <pathelement location="${test.build.classes}" />
+          <pathelement location="." />
+          <path refid="test.classpath"/>
+        </classpath>
+        <formatter type="${test.junit.output.format}" />
+        <!-- If the user has not defined a particular test to run, run them all -->
+        <batchtest fork="yes" todir="${test.log.dir}" unless="testcase">
+          <fileset dir="src/test">
+            <patternset>
+              <includesfile name="${test.all.file}"/>
+              <excludesfile name="${test.exclude.file}"/>
+            </patternset>
+          </fileset>
+        </batchtest>
+        <!-- Run one test case.  To use this define -Dtestcase=X on the command line -->
+        <batchtest fork="yes" todir="${test.log.dir}" if="testcase">
+          <fileset dir="src/test" includes="**/${testcase}.java"/>
+        </batchtest>
+
+        <assertions>
+          <enable />
+        </assertions>
+
+      </junit>
+      <fail if="tests.failed">Tests failed!</fail>
+    </sequential>
+  </target>
+
+  <!--
+  ================================================================================
+  Clean Section
+  ================================================================================
+  -->
+  <!-- Clean the external hive code -->
+  <target name="hive.clean">
+    <ant antfile="${hive.root}/build.xml" dir="${hive.root}" target="clean"/>
+  </target>
+
+  <!-- Clean up children -->
+  <target name="clean" depends="hive.clean" description="Cleanup build artifacts">
+    <delete dir="${build.dir}" />
+    <delete dir="${test.warehouse.dir}"/>
+  </target>
+ 
+  <!--
+  ================================================================================
+  Docs Section
+  ================================================================================
+  -->
   <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
     <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
           failonerror="true">
-      <env key="JAVA_HOME" value="${java5.home}"/>
     </exec>
-    <copy todir="${build.dir.hive}/docs">
+    <copy todir="${build.docs}/">
       <fileset dir="${docs.src}/build/site/" />
     </copy>
   </target>
 
-  <target name="forrest.check" unless="forrest.home" depends="java5.check">
+  <target name="forrest.check" unless="forrest.home" >
     <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
-  </target>
-
-  <target name="java5.check" unless="java5.home">
-    <fail message="'java5.home' is not defined.  Forrest requires Java 5.  Please pass -Djava5.home=&lt;base of Java 5 distribution&gt; to Ant on the command-line." />
   </target>
 
 </project>
