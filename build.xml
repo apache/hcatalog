@@ -208,7 +208,7 @@
   ================================================================================
   -->
   <!-- Build HCatalog src files -->
-  <target name="compile-src" depends="init,hive.jar">
+  <target name="compile-src" depends="hive.jar,init">
     <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
         includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
