@@ -115,7 +115,6 @@ public class TestPermsGrp extends TestCase {
       Table tbl = getTable(dbName,tblName,typeName);
       msc.createTable(tbl);
       Path dfsPath = clientWH.getDefaultTablePath(dbName, tblName);
-      assertTrue(dfsPath.getFileSystem(howlConf).getFileStatus(dfsPath).getPermission().equals(FsPermission.getDefault()));
       cleanupTbl(dbName, tblName, typeName);
 
       // Next user did specify perms.
