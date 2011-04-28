@@ -49,7 +49,7 @@ final class CreateDatabaseHook  extends AbstractSemanticAnalyzerHook{
     // Analyze and create tbl properties object
     int numCh = ast.getChildCount();
 
-    databaseName = BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText());
+    databaseName = BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0));
 
     for (int num = 1; num < numCh; num++) {
       ASTNode child = (ASTNode) ast.getChild(num);

@@ -66,7 +66,7 @@ final class CreateTableHook  extends AbstractSemanticAnalyzerHook{
     int numCh = ast.getChildCount();
 
     String inputFormat = null, outputFormat = null;
-    tableName = BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText());
+    tableName = BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0));
 
     for (int num = 1; num < numCh; num++) {
       ASTNode child = (ASTNode) ast.getChild(num);
@@ -90,7 +90,7 @@ final class CreateTableHook  extends AbstractSemanticAnalyzerHook{
       case HiveParser.TOK_LIKETABLE:
 
         String likeTableName;
-        if (child.getChildCount() > 0 && (likeTableName = BaseSemanticAnalyzer.unescapeIdentifier(child.getChild(0).getText())) != null) {
+        if (child.getChildCount() > 0 && (likeTableName = BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0))) != null) {
 
           throw new SemanticException("Operation not supported. CREATE TABLE LIKE is not supported.");
 //          Map<String, String> tblProps;

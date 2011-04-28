@@ -111,7 +111,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
         break;
 
       case HiveParser.TOK_SHOWPARTITIONS:
-        authorize(BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText()), context, FsAction.READ, false);
+        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.READ, false);
         break;
 
       case HiveParser.TOK_ALTERTABLE_ADDPARTS:
@@ -122,7 +122,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       case HiveParser.TOK_ALTERTABLE_PROPERTIES:
       case HiveParser.TOK_ALTERTABLE_SERIALIZER:
       case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
-        authorize(BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText()), context, FsAction.WRITE, false);
+        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.WRITE, false);
         break;
 
       case HiveParser.TOK_ALTERTABLE_PARTITION:
@@ -130,11 +130,11 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
         break;
 
       case HiveParser.TOK_SWITCHDATABASE:
-        authorize(BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText()), context, FsAction.READ, true);
+        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.READ, true);
         break;
 
       case HiveParser.TOK_DROPDATABASE:
-        authorize(BaseSemanticAnalyzer.unescapeIdentifier(ast.getChild(0).getText()), context, FsAction.WRITE, true);
+        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.WRITE, true);
         break;
 
       case HiveParser.TOK_CREATEDATABASE:
