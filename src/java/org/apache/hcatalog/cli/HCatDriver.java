@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -36,7 +37,12 @@ public class HCatDriver extends Driver {
   @Override
   public CommandProcessorResponse run(String command) {
 
-    int ret = super.run(command).getResponseCode();
+    int ret = -1;
+	try {
+		ret = super.run(command).getResponseCode();
+	} catch (CommandNeedRetryException e) {
+		return new CommandProcessorResponse(ret, e.toString(), "");
+	}
 
     SessionState ss = SessionState.get();
 

@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
@@ -74,7 +75,7 @@ public class TestSemanticAnalysis extends TestCase{
   String query;
   private final String tblName = "junit_sem_analysis";
 
-  public void testAlterTblFFpart() throws MetaException, TException, NoSuchObjectException {
+  public void testAlterTblFFpart() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException {
 
     hiveDriver.run("drop table junit_sem_analysis");
     hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as TEXTFILE");
@@ -102,7 +103,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testDatabaseOperations() throws MetaException {
+  public void testDatabaseOperations() throws MetaException, CommandNeedRetryException {
 
     List<String> dbs = msc.getAllDatabases();
     String testDb1 = "testdatabaseoperatons1";
@@ -129,7 +130,7 @@ public class TestSemanticAnalysis extends TestCase{
     assertFalse(msc.getAllDatabases().contains(testDb2));
   }
 
-  public void testCreateTableIfNotExists() throws MetaException, TException, NoSuchObjectException{
+  public void testCreateTableIfNotExists() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     howlDriver.run("drop table "+tblName);
     howlDriver.run("create table junit_sem_analysis (a int) stored as RCFILE");
@@ -159,7 +160,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAlterTblTouch(){
+  public void testAlterTblTouch() throws CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
@@ -174,7 +175,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testChangeColumns(){
+  public void testChangeColumns() throws CommandNeedRetryException{
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int, c string) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = howlDriver.run("alter table junit_sem_analysis change a a1 int");
@@ -191,7 +192,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAddReplaceCols() throws IOException, MetaException, TException, NoSuchObjectException{
+  public void testAddReplaceCols() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int, c string) partitioned by (b string) stored as RCFILE");
@@ -211,7 +212,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAlterTblClusteredBy(){
+  public void testAlterTblClusteredBy() throws CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
@@ -221,7 +222,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAlterTableSetFF() throws IOException, MetaException, TException, NoSuchObjectException{
+  public void testAlterTableSetFF() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
@@ -248,7 +249,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAddPartFail(){
+  public void testAddPartFail() throws CommandNeedRetryException{
 
     hiveDriver.run("drop table junit_sem_analysis");
     hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
@@ -259,7 +260,7 @@ public class TestSemanticAnalysis extends TestCase{
     hiveDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAddPartPass() throws IOException{
+  public void testAddPartPass() throws IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     howlDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
@@ -269,7 +270,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testCTAS(){
+  public void testCTAS() throws CommandNeedRetryException{
     howlDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int) as select * from tbl2";
     CommandProcessorResponse response = howlDriver.run(query);
@@ -278,7 +279,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testStoredAs(){
+  public void testStoredAs() throws CommandNeedRetryException{
     howlDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int)";
     CommandProcessorResponse response = howlDriver.run(query);
@@ -287,7 +288,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testAddDriverInfo() throws IOException, MetaException, TException, NoSuchObjectException{
+  public void testAddDriverInfo() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as " +
@@ -305,7 +306,7 @@ public class TestSemanticAnalysis extends TestCase{
     howlDriver.run("drop table junit_sem_analysis");
   }
 
-  public void testInvalidateNonStringPartition() throws IOException{
+  public void testInvalidateNonStringPartition() throws IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b int)  stored as RCFILE";
@@ -317,7 +318,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
-  public void testInvalidateSeqFileStoredAs() throws IOException{
+  public void testInvalidateSeqFileStoredAs() throws IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as SEQUENCEFILE";
@@ -329,7 +330,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
-  public void testInvalidateTextFileStoredAs() throws IOException{
+  public void testInvalidateTextFileStoredAs() throws IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as TEXTFILE";
@@ -341,7 +342,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
-  public void testInvalidateClusteredBy() throws IOException{
+  public void testInvalidateClusteredBy() throws IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) clustered by (a) into 10 buckets stored as TEXTFILE";
@@ -352,7 +353,7 @@ public class TestSemanticAnalysis extends TestCase{
         response.getErrorMessage());
   }
 
-  public void testCTLFail() throws IOException{
+  public void testCTLFail() throws IOException, CommandNeedRetryException{
 
     hiveDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE";
@@ -364,7 +365,7 @@ public class TestSemanticAnalysis extends TestCase{
     assertEquals("FAILED: Error in semantic analysis: Operation not supported. CREATE TABLE LIKE is not supported.", response.getErrorMessage());
   }
 
-  public void testCTLPass() throws IOException, MetaException, TException, NoSuchObjectException{
+  public void testCTLPass() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     try{
       howlDriver.run("drop table junit_sem_analysis");

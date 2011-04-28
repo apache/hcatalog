@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.SetProcessor;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -219,7 +220,7 @@ public class HCatCli {
       return new SetProcessor().run(cmd.substring(firstToken.length()).trim()).getResponseCode();
     }
 
-    Driver driver = new HCatDriver();
+    HCatDriver driver = new HCatDriver();
 
     int ret = driver.run(cmd).getResponseCode();
 
@@ -240,7 +241,11 @@ public class HCatCli {
       ss.err.println("Failed with exception " + e.getClass().getName() + ":"
           + e.getMessage() + "\n" + org.apache.hadoop.util.StringUtils.stringifyException(e));
       ret = 1;
-    }
+    } catch (CommandNeedRetryException e) {
+        ss.err.println("Failed with exception " + e.getClass().getName() + ":"
+                + e.getMessage() + "\n" + org.apache.hadoop.util.StringUtils.stringifyException(e));
+            ret = 1;
+	}
 
     int cret = driver.close();
     if (ret == 0) {

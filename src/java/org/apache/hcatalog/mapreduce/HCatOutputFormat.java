@@ -181,10 +181,12 @@ public class HCatOutputFormat extends OutputFormat<WritableComparable<?>, HCatRe
               // get delegation tokens from howl server and store them into the "job"
               // These will be used in the HowlOutputCommitter to publish partitions to
               // howl
-              String tokenStrForm = client.getDelegationTokenWithSignature(ugi.getUserName(),
-                  tokenSignature);
+              // when the JobTracker in Hadoop MapReduce starts supporting renewal of 
+              // arbitrary tokens, the renewer should be the principal of the JobTracker
+              String tokenStrForm = client.getDelegationToken(ugi.getUserName());
               Token<DelegationTokenIdentifier> t = new Token<DelegationTokenIdentifier>();
               t.decodeFromUrlString(tokenStrForm);
+              t.setService(new Text(tokenSignature));
               tokenMap.put(tokenSignature, t);
             }
             job.getCredentials().addToken(new Text(ugi.getUserName() + tokenSignature),

@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
@@ -78,7 +79,7 @@ public class TestPigStorageDriver extends TestCase {
     super.tearDown();
   }
 
-  public void testPigStorageDriver() throws IOException{
+  public void testPigStorageDriver() throws IOException, CommandNeedRetryException{
 
 
     String fsLoc = howlConf.get("fs.default.name");
@@ -133,7 +134,7 @@ public class TestPigStorageDriver extends TestCase {
     howlDriver.run("drop table junit_pigstorage");
   }
 
-  public void testDelim() throws MetaException, TException, UnknownTableException, NoSuchObjectException, InvalidOperationException, IOException{
+  public void testDelim() throws MetaException, TException, UnknownTableException, NoSuchObjectException, InvalidOperationException, IOException, CommandNeedRetryException{
 
     howlDriver.run("drop table junit_pigstorage_delim");
 

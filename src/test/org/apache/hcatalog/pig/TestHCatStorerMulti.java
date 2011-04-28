@@ -27,6 +27,7 @@ import junit.framework.TestCase;
 
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
@@ -48,10 +49,10 @@ public class TestHCatStorerMulti extends TestCase {
 
   private static Map<Integer,Pair<Integer,String>> basicInputData;
 
-  private void dropTable(String tablename) throws IOException{
+  private void dropTable(String tablename) throws IOException, CommandNeedRetryException{
     driver.run("drop table "+tablename);
   }
-  private void createTable(String tablename, String schema, String partitionedBy) throws IOException{
+  private void createTable(String tablename, String schema, String partitionedBy) throws IOException, CommandNeedRetryException{
     String createTable;
     createTable = "create table "+tablename+"("+schema+") ";
     if ((partitionedBy != null)&&(!partitionedBy.trim().isEmpty())){
@@ -65,7 +66,7 @@ public class TestHCatStorerMulti extends TestCase {
     }
   }
 
-  private void createTable(String tablename, String schema) throws IOException{
+  private void createTable(String tablename, String schema) throws IOException, CommandNeedRetryException{
     createTable(tablename,schema,null);
   }
 
@@ -184,7 +185,7 @@ public class TestHCatStorerMulti extends TestCase {
     MiniCluster.createInputFile(cluster, basicFile, input);
   }
 
-  private void cleanup() throws IOException {
+  private void cleanup() throws IOException, CommandNeedRetryException {
     MiniCluster.deleteFile(cluster, basicFile);
     dropTable(BASIC_TABLE);
     dropTable(PARTITIONED_TABLE);

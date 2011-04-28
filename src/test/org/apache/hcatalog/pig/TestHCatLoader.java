@@ -30,6 +30,7 @@ import junit.framework.TestCase;
 
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
@@ -61,10 +62,10 @@ public class TestHCatLoader extends TestCase {
 
   private static Map<Integer,Pair<Integer,String>> basicInputData;
 
-  private void dropTable(String tablename) throws IOException{
+  private void dropTable(String tablename) throws IOException, CommandNeedRetryException{
     driver.run("drop table "+tablename);
   }
-  private void createTable(String tablename, String schema, String partitionedBy) throws IOException{
+  private void createTable(String tablename, String schema, String partitionedBy) throws IOException, CommandNeedRetryException{
     String createTable;
     createTable = "create table "+tablename+"("+schema+") ";
     if ((partitionedBy != null)&&(!partitionedBy.trim().isEmpty())){
@@ -78,7 +79,7 @@ public class TestHCatLoader extends TestCase {
     }
   }
 
-  private void createTable(String tablename, String schema) throws IOException{
+  private void createTable(String tablename, String schema) throws IOException, CommandNeedRetryException{
     createTable(tablename,schema,null);
   }
 
@@ -154,7 +155,7 @@ public class TestHCatLoader extends TestCase {
     server.executeBatch();
 
   }
-  private void cleanup() throws IOException {
+  private void cleanup() throws IOException, CommandNeedRetryException {
     MiniCluster.deleteFile(cluster, basicFile);
     MiniCluster.deleteFile(cluster, complexFile);
     dropTable(BASIC_TABLE);
@@ -271,7 +272,7 @@ public class TestHCatLoader extends TestCase {
 
   }
 
-  public void testReadPartitionedBasic() throws IOException {
+  public void testReadPartitionedBasic() throws IOException, CommandNeedRetryException {
     PigServer server = new PigServer(ExecType.LOCAL, props);
 
     driver.run("select * from "+PARTITIONED_TABLE);

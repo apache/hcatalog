@@ -27,6 +27,7 @@ import junit.framework.TestCase;
 
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
@@ -101,7 +102,7 @@ public class TestHCatStorer extends TestCase {
 //
 //  }
 
-  public void testPartColsInData() throws IOException{
+  public void testPartColsInData() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE " +
@@ -140,7 +141,7 @@ public class TestHCatStorer extends TestCase {
     MiniCluster.deleteFile(cluster, fileName);
   }
 
-  public void testMultiPartColsInData() throws IOException{
+  public void testMultiPartColsInData() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table employee");
     String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
@@ -187,7 +188,7 @@ public class TestHCatStorer extends TestCase {
     driver.run("drop table employee");
   }
 
-  public void testStoreInPartiitonedTbl() throws IOException{
+  public void testStoreInPartiitonedTbl() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE " +
@@ -226,7 +227,7 @@ public class TestHCatStorer extends TestCase {
     MiniCluster.deleteFile(cluster, fileName);
   }
 
-  public void testNoAlias() throws IOException{
+  public void testNoAlias() throws IOException, CommandNeedRetryException{
     driver.run("drop table junit_parted");
     String createTable = "create table junit_parted(a int, b string) partitioned by (ds string) stored as RCFILE " +
         "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
@@ -272,7 +273,7 @@ public class TestHCatStorer extends TestCase {
     assertTrue(errCaught);
   }
 
-  public void testStoreMultiTables() throws IOException{
+  public void testStoreMultiTables() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
@@ -333,7 +334,7 @@ public class TestHCatStorer extends TestCase {
 
   }
 
-  public void testStoreWithNoSchema() throws IOException{
+  public void testStoreWithNoSchema() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
@@ -375,7 +376,7 @@ public class TestHCatStorer extends TestCase {
 
   }
 
-  public void testStoreWithNoCtorArgs() throws IOException{
+  public void testStoreWithNoCtorArgs() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
@@ -417,7 +418,7 @@ public class TestHCatStorer extends TestCase {
 
   }
 
-  public void testEmptyStore() throws IOException{
+  public void testEmptyStore() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
@@ -456,7 +457,7 @@ public class TestHCatStorer extends TestCase {
 
   }
 
-  public void testBagNStruct() throws IOException{
+  public void testBagNStruct() throws IOException, CommandNeedRetryException{
   driver.run("drop table junit_unparted");
   String createTable = "create table junit_unparted(b string,a struct<a1:int>,  arr_of_struct array<string>, " +
   		"arr_of_struct2 array<struct<s1:string,s2:string>>,  arr_of_struct3 array<struct<s3:string>>) stored as RCFILE " +
@@ -494,7 +495,7 @@ public class TestHCatStorer extends TestCase {
 
   }
 
-  public void testStoreFuncAllSimpleTypes() throws IOException{
+  public void testStoreFuncAllSimpleTypes() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string) stored as RCFILE " +
@@ -541,7 +542,7 @@ public class TestHCatStorer extends TestCase {
 
 
 
-  public void testStoreFuncSimple() throws IOException{
+  public void testStoreFuncSimple() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
     String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
