@@ -20,6 +20,8 @@ package org.apache.hcatalog.cli.SemanticAnalysis;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -42,6 +44,8 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
 
   private AbstractSemanticAnalyzerHook hook;
   private ASTNode ast;
+
+  private static final Log LOG = LogFactory.getLog(HCatSemanticAnalyzer.class);
 
   @Override
   public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
@@ -90,6 +94,11 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       } else {
         return ast;
       }
+
+    // allow export/import operations
+    case HiveParser.TOK_EXPORT:
+    case HiveParser.TOK_IMPORT:
+      return ast;
 
     // In all other cases, throw an exception. Its a white-list of allowed operations.
     default:
@@ -147,6 +156,19 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
         // No checks for Create Table, since its not possible to compute location
         // here easily. So, it is especially handled in CreateTable post hook.
         break;
+
+      case HiveParser.TOK_EXPORT:
+        String tableName = BaseSemanticAnalyzer.getUnescapedName(((ASTNode) ast.getChild(0).getChild(0)));
+        LOG.debug("Export for table " + tableName);
+        authorize(tableName, context, FsAction.READ, false);
+        break;
+
+      case HiveParser.TOK_IMPORT:
+        LOG.debug("Import into location " + context.getConf().get("import.destination.dir"));
+        AuthUtils.authorize(new Path(context.getConf().get("import.destination.dir")),
+                    FsAction.WRITE, context.getConf());
+        break;
+
 
       default:
         throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, "Unexpected token: "+ast.getToken());

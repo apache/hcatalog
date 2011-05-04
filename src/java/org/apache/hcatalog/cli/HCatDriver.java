@@ -37,24 +37,25 @@ public class HCatDriver extends Driver {
   @Override
   public CommandProcessorResponse run(String command) {
 
-    int ret = -1;
-	try {
-		ret = super.run(command).getResponseCode();
-	} catch (CommandNeedRetryException e) {
-		return new CommandProcessorResponse(ret, e.toString(), "");
-	}
+    CommandProcessorResponse cpr = null;
+    try {
+      cpr = super.run(command);
+    } catch (CommandNeedRetryException e) {
+      return new CommandProcessorResponse(-1, e.toString(), "");
+    }
 
     SessionState ss = SessionState.get();
 
-    if (ret == 0){
+    if (cpr.getResponseCode() == 0){
       // Only attempt to do this, if cmd was successful.
-      ret = setFSPermsNGrp(ss);
+      int rc = setFSPermsNGrp(ss);
+      cpr = new CommandProcessorResponse(rc);
     }
     // reset conf vars
     ss.getConf().set(HCatConstants.HCAT_CREATE_DB_NAME, "");
     ss.getConf().set(HCatConstants.HCAT_CREATE_TBL_NAME, "");
 
-    return new CommandProcessorResponse(ret);
+    return cpr;
   }
 
   private int setFSPermsNGrp(SessionState ss) {
@@ -62,6 +63,10 @@ public class HCatDriver extends Driver {
     Configuration conf =ss.getConf();
 
     String tblName = conf.get(HCatConstants.HCAT_CREATE_TBL_NAME,"");
+    if (tblName.isEmpty()) {
+      tblName = conf.get("import.destination.table", "");
+      conf.set("import.destination.table", "");
+    }
     String dbName = conf.get(HCatConstants.HCAT_CREATE_DB_NAME, "");
     String grp = conf.get(HCatConstants.HCAT_GROUP,null);
     String permsStr = conf.get(HCatConstants.HCAT_PERMS,null);
