@@ -41,7 +41,8 @@ public class HCatSchema implements Serializable{
     /**
      *
      * @param fieldSchemas is now owned by HCatSchema. Any subsequent modifications
-     * on fieldSchemas won't get reflected in HCatSchema.
+     * on fieldSchemas won't get reflected in HCatSchema.  Each fieldSchema's name
+     * in the list must be unique, otherwise throws IllegalArgumentException.
      */
     public HCatSchema(final List<HCatFieldSchema> fieldSchemas){
         this.fieldSchemas = new ArrayList<HCatFieldSchema>(fieldSchemas);
@@ -49,23 +50,29 @@ public class HCatSchema implements Serializable{
         fieldPositionMap = new HashMap<String,Integer>();
         fieldNames = new ArrayList<String>();
         for (HCatFieldSchema field : fieldSchemas){
-            fieldPositionMap.put(field.getName(), idx);
-            fieldNames.add(field.getName());
+            if(field == null)
+                throw new IllegalArgumentException("Field cannot be null");
+
+            String fieldName = field.getName();
+            if(fieldPositionMap.containsKey(fieldName))
+                throw new IllegalArgumentException("Field named " + fieldName +
+                                                   " already exists");
+            fieldPositionMap.put(fieldName, idx);
+            fieldNames.add(fieldName);
             idx++;
         }
     }
 
     public void append(final HCatFieldSchema hfs) throws HCatException{
-
-      if(hfs == null || fieldSchemas == null){
+      if(hfs == null)
         throw new HCatException("Attempt to append null HCatFieldSchema in HCatSchema.");
-      }
-      //TODO Addition of existing field should not be allowed in Schema.
-      //Need to enforce that. For that to happen, field schema needs to implement Comparable.
-      // Also, HCatSchema needs to implement Comparable.
+
+      String fieldName = hfs.getName();
+      if(fieldPositionMap.containsKey(fieldName))
+        throw new HCatException("Attempt to append HCatFieldSchema with already " +
+            "existing name: " + fieldName + ".");
 
       this.fieldSchemas.add(hfs);
-      String fieldName = hfs.getName();
       this.fieldNames.add(fieldName);
       this.fieldPositionMap.put(fieldName, this.size()-1);
     }
