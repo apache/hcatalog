@@ -47,7 +47,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 public class InitializeInput {
 
   /** The prefix for keys used for storage driver arguments */
-  private static final String HCAT_KEY_PREFIX = "hcat.";
+  static final String HCAT_KEY_PREFIX = "hcat.";
   private static final HiveConf hiveConf = new HiveConf(HCatInputFormat.class);
 
   private static HiveMetaStoreClient createHiveMetaClient(Configuration conf, HCatTableInfo inputInfo) throws Exception {
@@ -146,7 +146,7 @@ public class InitializeInput {
     return ptnKeyValues;
   }
 
-  private static PartInfo extractPartInfo(StorageDescriptor sd, Map<String,String> parameters) throws IOException{
+  static PartInfo extractPartInfo(StorageDescriptor sd, Map<String,String> parameters) throws IOException{
     HCatSchema schema = HCatUtil.extractSchemaFromStorageDescriptor(sd);
     String inputStorageDriverClass = null;
     Properties howlProperties = new Properties();

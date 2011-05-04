@@ -18,7 +18,6 @@
 package org.apache.hcatalog.pig;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -27,47 +26,33 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
-import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.pig.Expression;
+import org.apache.pig.Expression.BinaryExpression;
 import org.apache.pig.LoadFunc;
-import org.apache.pig.LoadMetadata;
-import org.apache.pig.LoadPushDown;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
-import org.apache.pig.ResourceStatistics;
-import org.apache.pig.Expression.BinaryExpression;
-import org.apache.pig.backend.executionengine.ExecException;
-import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.PigSplit;
-import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
  * Pig {@link LoadFunc} to read data from Howl
  */
 
-public class HCatLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
+public class HCatLoader extends HCatBaseLoader {
 
-  private static final String PRUNE_PROJECTION_INFO = "prune.projection.info";
   private static final String PARTITION_FILTER = "partition.filter"; // for future use
 
   private HCatInputFormat howlInputFormat = null;
-  private RecordReader<?, ?> reader;
   private String dbName;
   private String tableName;
   private String howlServerUri;
-  private String signature;
   private String partitionFilterString;
   private final PigHCatUtil phutil = new PigHCatUtil();
-
-  HCatSchema outputSchema = null;
 
   @Override
   public InputFormat<?,?> getInputFormat() throws IOException {
@@ -75,34 +60,6 @@ public class HCatLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
       howlInputFormat = new HCatInputFormat();
     }
     return howlInputFormat;
-  }
-
-  @Override
-  public Tuple getNext() throws IOException {
-    try {
-      HCatRecord hr =  (HCatRecord) (reader.nextKeyValue() ? reader.getCurrentValue() : null);
-      Tuple t = PigHCatUtil.transformToTuple(hr,outputSchema);
-      // TODO : we were discussing an iter interface, and also a LazyTuple
-      // change this when plans for that solidifies.
-      return t;
-    } catch (ExecException e) {
-      int errCode = 6018;
-      String errMsg = "Error while reading input";
-      throw new ExecException(errMsg, errCode,
-          PigException.REMOTE_ENVIRONMENT, e);
-    } catch (Exception eOther){
-      int errCode = 6018;
-      String errMsg = "Error converting read value to tuple";
-      throw new ExecException(errMsg, errCode,
-          PigException.REMOTE_ENVIRONMENT, eOther);
-    }
-
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public void prepareToRead(RecordReader reader, PigSplit arg1) throws IOException {
-    this.reader = reader;
   }
 
   @Override
@@ -207,12 +164,6 @@ public class HCatLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
   }
 
   @Override
-  public ResourceStatistics getStatistics(String location, Job job) throws IOException {
-    // statistics not implemented currently
-    return null;
-  }
-
-  @Override
   public void setPartitionFilter(Expression partitionFilter) throws IOException {
     // convert the partition filter expression into a string expected by
     // howl and pass it in setLocation()
@@ -223,37 +174,6 @@ public class HCatLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
     storeInUDFContext(signature,
         PARTITION_FILTER, partitionFilterString);
   }
-
-  @Override
-  public List<OperatorSet> getFeatures() {
-    return Arrays.asList(LoadPushDown.OperatorSet.PROJECTION);
-  }
-
-  @Override
-  public RequiredFieldResponse pushProjection(RequiredFieldList requiredFieldsInfo) throws FrontendException {
-    // Store the required fields information in the UDFContext so that we
-    // can retrieve it later.
-    storeInUDFContext(signature, PRUNE_PROJECTION_INFO, requiredFieldsInfo);
-
-    // Howl will always prune columns based on what we ask of it - so the
-    // response is true
-    return new RequiredFieldResponse(true);
-  }
-
-  @Override
-  public void setUDFContextSignature(String signature) {
-    this.signature = signature;
-  }
-
-
-  // helper methods
-  private void storeInUDFContext(String signature, String key, Object value) {
-    UDFContext udfContext = UDFContext.getUDFContext();
-    Properties props = udfContext.getUDFProperties(
-        this.getClass(), new String[] {signature});
-    props.put(key, value);
-  }
-
 
   private String getPartitionFilterString() {
     if(partitionFilterString == null) {
