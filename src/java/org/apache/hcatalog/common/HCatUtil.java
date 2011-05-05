@@ -100,6 +100,16 @@ public class HCatUtil {
     return bytes;
   }
 
+  public static List<HCatFieldSchema> getHCatFieldSchemaList(FieldSchema ... fields) throws HCatException {
+    List<HCatFieldSchema> result = new ArrayList<HCatFieldSchema>(fields.length);
+
+    for(FieldSchema f : fields) {
+      result.add(HCatSchemaUtils.getHCatFieldSchema(f));
+    }
+
+    return result;
+  }
+
   public static List<HCatFieldSchema> getHCatFieldSchemaList(List<FieldSchema> fields) throws HCatException {
       if(fields == null) {
           return null;

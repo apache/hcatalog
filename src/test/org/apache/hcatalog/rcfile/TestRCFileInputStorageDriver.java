@@ -15,12 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hcatalog.rcfile;import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+package org.apache.hcatalog.rcfile;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -49,58 +48,54 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
-;
+
 
 public class TestRCFileInputStorageDriver extends TestCase{
+  private static final Configuration conf = new Configuration();
+  private static final Path dir =  new Path(System.getProperty("test.data.dir", ".") + "/mapred");
+  private static final Path file = new Path(dir, "test_rcfile");
 
-  private static Configuration conf = new Configuration();
-
-  private static Path file;
-
-  private static FileSystem fs;
-
-   static {
-
-    try {
-      fs = FileSystem.getLocal(conf);
-      Path dir = new Path(System.getProperty("test.data.dir", ".") + "/mapred");
-      file = new Path(dir, "test_rcfile");
-      fs.delete(dir, true);
-    } catch (Exception e) {
-    }
-  }
-
-  public void testConvertValueToTuple() throws IOException,InterruptedException{
-    fs.delete(file, true);
-
+  // Generate sample records to compare against
+  private byte[][][] getRecords() throws UnsupportedEncodingException {
     byte[][] record_1 = {"123".getBytes("UTF-8"), "456".getBytes("UTF-8"),
         "789".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
+        "5.3".getBytes("UTF-8"), "hcatalog and hadoop".getBytes("UTF-8"),
         new byte[0], "\\N".getBytes("UTF-8")};
     byte[][] record_2 = {"100".getBytes("UTF-8"), "200".getBytes("UTF-8"),
         "123".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
+        "5.3".getBytes("UTF-8"), "hcatalog and hadoop".getBytes("UTF-8"),
         new byte[0], "\\N".getBytes("UTF-8")};
+    return new byte[][][]{record_1, record_2};
+  }
 
+  // Write sample records to file for individual tests
+  private BytesRefArrayWritable[] initTestEnvironment() throws IOException {
+    FileSystem fs = FileSystem.getLocal(conf);
+    fs.delete(file, true);
+
+    byte [][][] records = getRecords();
     RCFileOutputFormat.setColumnNumber(conf, 8);
-    RCFile.Writer writer = new RCFile.Writer(fs, conf, file, null,
-        new DefaultCodec());
-    BytesRefArrayWritable bytes = new BytesRefArrayWritable(record_1.length);
-    for (int i = 0; i < record_1.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_1[i], 0,
-          record_1[i].length);
+    RCFile.Writer writer = new RCFile.Writer(fs, conf, file, null, new DefaultCodec());
+
+    BytesRefArrayWritable bytes = writeBytesToFile(records[0], writer);
+    BytesRefArrayWritable bytes2 = writeBytesToFile(records[1], writer);
+
+    writer.close();
+    return new BytesRefArrayWritable[]{bytes,bytes2};
+  }
+
+  private BytesRefArrayWritable writeBytesToFile(byte[][] record, RCFile.Writer writer) throws IOException {
+    BytesRefArrayWritable bytes = new BytesRefArrayWritable(record.length);
+    for (int i = 0; i < record.length; i++) {
+      BytesRefWritable cu = new BytesRefWritable(record[i], 0, record[i].length);
       bytes.set(i, cu);
     }
     writer.append(bytes);
-    BytesRefArrayWritable bytes2 = new BytesRefArrayWritable(record_2.length);
-    for (int i = 0; i < record_2.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_2[i], 0,
-          record_2[i].length);
-      bytes2.set(i, cu);
-    }
-    writer.append(bytes2);
-    writer.close();
-    BytesRefArrayWritable[] bytesArr = new BytesRefArrayWritable[]{bytes,bytes2};
+    return bytes;
+  }
+
+  public void testConvertValueToTuple() throws IOException,InterruptedException{
+    BytesRefArrayWritable[] bytesArr = initTestEnvironment();
 
     HCatSchema schema = buildHiveSchema();
     RCFileInputDriver sd = new RCFileInputDriver();
@@ -127,36 +122,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
   }
 
   public void testPruning() throws IOException,InterruptedException{
-    fs.delete(file, true);
-
-    byte[][] record_1 = {"123".getBytes("UTF-8"), "456".getBytes("UTF-8"),
-        "789".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
-        new byte[0], "\\N".getBytes("UTF-8")};
-    byte[][] record_2 = {"100".getBytes("UTF-8"), "200".getBytes("UTF-8"),
-        "123".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
-        new byte[0], "\\N".getBytes("UTF-8")};
-
-    RCFileOutputFormat.setColumnNumber(conf, 8);
-    RCFile.Writer writer = new RCFile.Writer(fs, conf, file, null,
-        new DefaultCodec());
-    BytesRefArrayWritable bytes = new BytesRefArrayWritable(record_1.length);
-    for (int i = 0; i < record_1.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_1[i], 0,
-          record_1[i].length);
-      bytes.set(i, cu);
-    }
-    writer.append(bytes);
-    BytesRefArrayWritable bytes2 = new BytesRefArrayWritable(record_2.length);
-    for (int i = 0; i < record_2.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_2[i], 0,
-          record_2[i].length);
-      bytes2.set(i, cu);
-    }
-    writer.append(bytes2);
-    writer.close();
-    BytesRefArrayWritable[] bytesArr = new BytesRefArrayWritable[]{bytes,bytes2};
+    BytesRefArrayWritable[] bytesArr = initTestEnvironment();
 
     RCFileInputDriver sd = new RCFileInputDriver();
     JobContext jc = new JobContext(conf, new JobID());
@@ -185,36 +151,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
   }
 
   public void testReorderdCols() throws IOException,InterruptedException{
-    fs.delete(file, true);
-
-    byte[][] record_1 = {"123".getBytes("UTF-8"), "456".getBytes("UTF-8"),
-        "789".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
-        new byte[0], "\\N".getBytes("UTF-8")};
-    byte[][] record_2 = {"100".getBytes("UTF-8"), "200".getBytes("UTF-8"),
-        "123".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
-        new byte[0], "\\N".getBytes("UTF-8")};
-
-    RCFileOutputFormat.setColumnNumber(conf, 8);
-    RCFile.Writer writer = new RCFile.Writer(fs, conf, file, null,
-        new DefaultCodec());
-    BytesRefArrayWritable bytes = new BytesRefArrayWritable(record_1.length);
-    for (int i = 0; i < record_1.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_1[i], 0,
-          record_1[i].length);
-      bytes.set(i, cu);
-    }
-    writer.append(bytes);
-    BytesRefArrayWritable bytes2 = new BytesRefArrayWritable(record_2.length);
-    for (int i = 0; i < record_2.length; i++) {
-      BytesRefWritable cu = new BytesRefWritable(record_2[i], 0,
-          record_2[i].length);
-      bytes2.set(i, cu);
-    }
-    writer.append(bytes2);
-    writer.close();
-    BytesRefArrayWritable[] bytesArr = new BytesRefArrayWritable[]{bytes,bytes2};
+    BytesRefArrayWritable[] bytesArr = initTestEnvironment();
 
     RCFileInputDriver sd = new RCFileInputDriver();
     JobContext jc = new JobContext(conf, new JobID());
@@ -244,122 +181,101 @@ public class TestRCFileInputStorageDriver extends TestCase{
     }
     assertFalse(rr.nextKeyValue());
   }
-
   private HCatRecord[] getExpectedRecords(){
-
     List<Object> rec_1 = new ArrayList<Object>(8);
-    rec_1.add(new Byte("123"));
-    rec_1.add(new Short("456"));
-    rec_1.add( new Integer(789));
-    rec_1.add( new Long(1000L));
-    rec_1.add( new Double(5.3D));
-    rec_1.add( new String("howl and hadoop"));
-    rec_1.add( null);
-    rec_1.add( null);
+    Collections.addAll(rec_1, new Byte("123"),
+                              new Short("456"),
+                              new Integer(789),
+                              new Long(1000L),
+                              new Double(5.3D),
+                              new String("hcatalog and hadoop"),
+                              null,
+                              null);
 
     HCatRecord tup_1 = new DefaultHCatRecord(rec_1);
 
     List<Object> rec_2 = new ArrayList<Object>(8);
-    rec_2.add( new Byte("100"));
-    rec_2.add( new Short("200"));
-    rec_2.add( new Integer(123));
-    rec_2.add( new Long(1000L));
-    rec_2.add( new Double(5.3D));
-    rec_2.add( new String("howl and hadoop"));
-    rec_2.add( null);
-    rec_2.add( null);
+    Collections.addAll(rec_2, new Byte("100"),
+                              new Short("200"),
+                              new Integer(123),
+                              new Long(1000L),
+                              new Double(5.3D),
+                              new String("hcatalog and hadoop"),
+                              null,
+                              null);
     HCatRecord tup_2 = new DefaultHCatRecord(rec_2);
 
     return  new HCatRecord[]{tup_1,tup_2};
-
   }
 
   private HCatRecord[] getPrunedRecords(){
-
     List<Object> rec_1 = new ArrayList<Object>(8);
-    rec_1.add(new Byte("123"));
-    rec_1.add( new Integer(789));
-    rec_1.add( new Double(5.3D));
-    rec_1.add( new String("howl and hadoop"));
-    rec_1.add( null);
+    Collections.addAll(rec_1, new Byte("123"),
+        new Integer(789),
+        new Double(5.3D),
+        new String("hcatalog and hadoop"),
+        null);
     HCatRecord tup_1 = new DefaultHCatRecord(rec_1);
 
     List<Object> rec_2 = new ArrayList<Object>(8);
-    rec_2.add( new Byte("100"));
-    rec_2.add( new Integer(123));
-    rec_2.add( new Double(5.3D));
-    rec_2.add( new String("howl and hadoop"));
-    rec_2.add( null);
+    Collections.addAll(rec_2, new Byte("100"),
+        new Integer(123),
+        new Double(5.3D),
+        new String("hcatalog and hadoop"),
+        null);
     HCatRecord tup_2 = new DefaultHCatRecord(rec_2);
 
     return  new HCatRecord[]{tup_1,tup_2};
-
   }
 
   private HCatSchema buildHiveSchema() throws HCatException{
-
-    List<FieldSchema> fields = new ArrayList<FieldSchema>(8);
-    fields.add(new FieldSchema("atinyint", "tinyint", ""));
-    fields.add(new FieldSchema("asmallint", "smallint", ""));
-    fields.add(new FieldSchema("aint", "int", ""));
-    fields.add(new FieldSchema("along", "bigint", ""));
-    fields.add(new FieldSchema("adouble", "double", ""));
-    fields.add(new FieldSchema("astring", "string", ""));
-    fields.add(new FieldSchema("anullint", "int", ""));
-    fields.add(new FieldSchema("anullstring", "string", ""));
-
-    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(fields));
+    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(new FieldSchema("atinyint", "tinyint", ""),
+                                                          new FieldSchema("asmallint", "smallint", ""),
+                                                          new FieldSchema("aint", "int", ""),
+                                                          new FieldSchema("along", "bigint", ""),
+                                                          new FieldSchema("adouble", "double", ""),
+                                                          new FieldSchema("astring", "string", ""),
+                                                          new FieldSchema("anullint", "int", ""),
+                                                          new FieldSchema("anullstring", "string", "")));
   }
 
   private HCatSchema buildPrunedSchema() throws HCatException{
-
-    List<FieldSchema> fields = new ArrayList<FieldSchema>(5);
-    fields.add(new FieldSchema("atinyint", "tinyint", ""));
-    fields.add(new FieldSchema("aint", "int", ""));
-    fields.add(new FieldSchema("adouble", "double", ""));
-    fields.add(new FieldSchema("astring", "string", ""));
-    fields.add(new FieldSchema("anullint", "int", ""));
-
-    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(fields));
+    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(new FieldSchema("atinyint", "tinyint", ""),
+                                                          new FieldSchema("aint", "int", ""),
+                                                          new FieldSchema("adouble", "double", ""),
+                                                          new FieldSchema("astring", "string", ""),
+                                                          new FieldSchema("anullint", "int", "")));
   }
 
   private HCatSchema buildReorderedSchema() throws HCatException{
-
-    List<FieldSchema> fields = new ArrayList<FieldSchema>(7);
-
-    fields.add(new FieldSchema("aint", "int", ""));
-    fields.add(new FieldSchema("part1", "string", ""));
-    fields.add(new FieldSchema("adouble", "double", ""));
-    fields.add(new FieldSchema("newCol", "tinyint", ""));
-    fields.add(new FieldSchema("astring", "string", ""));
-    fields.add(new FieldSchema("atinyint", "tinyint", ""));
-    fields.add(new FieldSchema("anullint", "int", ""));
-
-
-    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(fields));
+    return new HCatSchema(HCatUtil.getHCatFieldSchemaList(new FieldSchema("aint", "int", ""),
+                                                          new FieldSchema("part1", "string", ""),
+                                                          new FieldSchema("adouble", "double", ""),
+                                                          new FieldSchema("newCol", "tinyint", ""),
+                                                          new FieldSchema("astring", "string", ""),
+                                                          new FieldSchema("atinyint", "tinyint", ""),
+                                                          new FieldSchema("anullint", "int", "")));
   }
 
   private HCatRecord[] getReorderedCols(){
-
     List<Object> rec_1 = new ArrayList<Object>(7);
-    rec_1.add( new Integer(789));
-    rec_1.add( new String("first-part"));
-    rec_1.add( new Double(5.3D));
-    rec_1.add( null); // new column
-    rec_1.add( new String("howl and hadoop"));
-    rec_1.add( new Byte("123"));
-    rec_1.add( null);
+    Collections.addAll(rec_1,  new Integer(789),
+                               new String("first-part"),
+                               new Double(5.3D),
+                               null, // new column
+                               new String("hcatalog and hadoop"),
+                               new Byte("123"),
+                               null);
     HCatRecord tup_1 = new DefaultHCatRecord(rec_1);
 
     List<Object> rec_2 = new ArrayList<Object>(7);
-
-    rec_2.add( new Integer(123));
-    rec_2.add( new String("first-part"));
-    rec_2.add( new Double(5.3D));
-    rec_2.add(null);
-    rec_2.add( new String("howl and hadoop"));
-    rec_2.add( new Byte("100"));
-    rec_2.add( null);
+    Collections.addAll(rec_2, new Integer(123),
+        new String("first-part"),
+        new Double(5.3D),
+        null,
+        new String("hcatalog and hadoop"),
+        new Byte("100"),
+        null);
     HCatRecord tup_2 = new DefaultHCatRecord(rec_2);
 
     return  new HCatRecord[]{tup_1,tup_2};
