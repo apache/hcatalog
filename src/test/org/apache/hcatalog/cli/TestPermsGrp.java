@@ -61,7 +61,11 @@ public class TestPermsGrp extends TestCase {
 
     @Override
     public void run() {
-      HiveMetaStore.main(new String[]{msPort});
+      try {
+        HiveMetaStore.main(new String[]{msPort});
+      } catch(Throwable t) {
+        System.err.println("Exiting. Got exception from metastore: " + t.getMessage()); 
+      }
     }
 
   }
