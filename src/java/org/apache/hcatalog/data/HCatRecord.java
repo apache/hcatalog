@@ -27,7 +27,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 /**
  * Abstract class exposing get and set semantics for basic record usage.
  * Note :
- *   HowlRecord is designed only to be used as in-memory representation only.
+ *   HCatRecord is designed only to be used as in-memory representation only.
  *   Don't use it to store data on the physical device.
  */
 public abstract class HCatRecord implements HCatRecordable {

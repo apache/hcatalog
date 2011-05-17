@@ -54,7 +54,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
     this.ast = ast;
     switch (ast.getToken().getType()) {
 
-    // Howl wants to intercept following tokens and special-handle them.
+    // HCat wants to intercept following tokens and special-handle them.
     case HiveParser.TOK_CREATETABLE:
       hook = new CreateTableHook();
       return hook.preAnalyze(context, ast);
@@ -63,13 +63,13 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       hook = new CreateDatabaseHook();
       return hook.preAnalyze(context, ast);
 
-    // DML commands used in Howl where we use the same implementation as default Hive.
+    // DML commands used in HCat where we use the same implementation as default Hive.
     case HiveParser.TOK_SHOWDATABASES:
     case HiveParser.TOK_DROPDATABASE:
     case HiveParser.TOK_SWITCHDATABASE:
       return ast;
 
-    // Howl will allow these operations to be performed since they are DDL statements.
+    // HCat will allow these operations to be performed since they are DDL statements.
     case HiveParser.TOK_DROPTABLE:
     case HiveParser.TOK_DESCTABLE:
     case HiveParser.TOK_ALTERTABLE_ADDCOLS:

@@ -100,7 +100,7 @@ final class CreateTableHook  extends AbstractSemanticAnalyzerHook{
 //            throw new SemanticException(he);
 //          }
 //          if(!(tblProps.containsKey(InitializeInput.HOWL_ISD_CLASS) && tblProps.containsKey(InitializeInput.HOWL_OSD_CLASS))){
-//            throw new SemanticException("Operation not supported. Table "+likeTableName+" should have been created through Howl. Seems like its not.");
+//            throw new SemanticException("Operation not supported. Table "+likeTableName+" should have been created through HCat. Seems like its not.");
 //          }
 //          return ast;
         }
@@ -168,7 +168,7 @@ final class CreateTableHook  extends AbstractSemanticAnalyzerHook{
 
     if(desc == null){
       // Desc will be null if its CREATE TABLE LIKE. Desc will be contained
-      // in CreateTableLikeDesc. Currently, Howl disallows CTLT in pre-hook.
+      // in CreateTableLikeDesc. Currently, HCat disallows CTLT in pre-hook.
       // So, desc can never be null.
       return;
     }

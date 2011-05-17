@@ -90,7 +90,7 @@ public class TestDefaultHCatRecord extends TestCase{
     rec_1.add( new Integer(789));
     rec_1.add( new Long(1000L));
     rec_1.add( new Double(5.3D));
-    rec_1.add( new String("howl and hadoop"));
+    rec_1.add( new String("hcat and hadoop"));
     rec_1.add( null);
     rec_1.add( "null");
 
@@ -102,7 +102,7 @@ public class TestDefaultHCatRecord extends TestCase{
     rec_2.add( new Integer(789));
     rec_2.add( new Long(1000L));
     rec_2.add( new Double(5.3D));
-    rec_2.add( new String("howl and hadoop"));
+    rec_2.add( new String("hcat and hadoop"));
     rec_2.add( null);
     rec_2.add( "null");
     HCatRecord tup_2 = new DefaultHCatRecord(rec_2);
@@ -113,14 +113,14 @@ public class TestDefaultHCatRecord extends TestCase{
     rec_3.add( new Integer(789));
     rec_3.add( new Long(1000L));
     rec_3.add( new Double(5.3D));
-    rec_3.add( new String("howl and hadoop"));
+    rec_3.add( new String("hcat and hadoop"));
     rec_3.add( null);
     List<Integer> innerList = new ArrayList<Integer>();
     innerList.add(314);
     innerList.add(007);
     rec_3.add( innerList);
     Map<Short, String> map = new HashMap<Short, String>(3);
-    map.put(new Short("2"), "howl is cool");
+    map.put(new Short("2"), "hcat is cool");
     map.put(new Short("3"), "is it?");
     map.put(new Short("4"), "or is it not?");
     rec_3.add(map);
@@ -133,12 +133,12 @@ public class TestDefaultHCatRecord extends TestCase{
     rec_4.add( new Integer(789));
     rec_4.add( new Long(1000L));
     rec_4.add( new Double(5.3D));
-    rec_4.add( new String("howl and hadoop"));
+    rec_4.add( new String("hcat and hadoop"));
     rec_4.add( null);
     rec_4.add( "null");
 
     Map<Short, String> map2 = new HashMap<Short, String>(3);
-    map2.put(new Short("2"), "howl is cool");
+    map2.put(new Short("2"), "hcat is cool");
     map2.put(new Short("3"), "is it?");
     map2.put(new Short("4"), "or is it not?");
     rec_4.add(map2);

@@ -95,7 +95,7 @@ public abstract class HCatBaseLoader extends LoadFunc implements LoadMetadata, L
     // can retrieve it later.
     storeInUDFContext(signature, PRUNE_PROJECTION_INFO, requiredFieldsInfo);
 
-    // Howl will always prune columns based on what we ask of it - so the
+    // HCat will always prune columns based on what we ask of it - so the
     // response is true
     return new RequiredFieldResponse(true);
   }

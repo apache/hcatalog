@@ -62,12 +62,12 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
   /**
    *
    */
-  protected static final String COMPUTED_OUTPUT_SCHEMA = "howl.output.schema";
+  protected static final String COMPUTED_OUTPUT_SCHEMA = "hcat.output.schema";
   protected final Map<String,String> partitions;
   protected Schema pigSchema;
   private RecordWriter<WritableComparable<?>, HCatRecord> writer;
   protected HCatSchema computedSchema;
-  protected static final String PIG_SCHEMA = "howl.pig.store.schema";
+  protected static final String PIG_SCHEMA = "hcat.pig.store.schema";
   protected String sign;
 
   public HCatBaseStorer(String partSpecs, String schema) throws ParseException, FrontendException {
@@ -101,7 +101,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     if(pigSchema != null){
       if(! Schema.equals(runtimeSchema, pigSchema, false, true) ){
         throw new FrontendException("Schema provided in store statement doesn't match with the Schema" +
-            "returned by Pig run-time. Schema provided in HowlStorer: "+pigSchema.toString()+ " Schema received from Pig runtime: "+runtimeSchema.toString(), PigHCatUtil.PIG_EXCEPTION_CODE);
+            "returned by Pig run-time. Schema provided in HCatStorer: "+pigSchema.toString()+ " Schema received from Pig runtime: "+runtimeSchema.toString(), PigHCatUtil.PIG_EXCEPTION_CODE);
       }
     } else {
       pigSchema = runtimeSchema;
@@ -117,20 +117,20 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     List<HCatFieldSchema> fieldSchemas = new ArrayList<HCatFieldSchema>(pigSchema.size());
     for(FieldSchema fSchema : pigSchema.getFields()){
       byte type = fSchema.type;
-      HCatFieldSchema howlFSchema;
+      HCatFieldSchema hcatFSchema;
 
       try {
 
         // Find out if we need to throw away the tuple or not.
         if(type == DataType.BAG && removeTupleFromBag(tableSchema, fSchema)){
           List<HCatFieldSchema> arrFields = new ArrayList<HCatFieldSchema>(1);
-          arrFields.add(getHowlFSFromPigFS(fSchema.schema.getField(0).schema.getField(0), tableSchema));
-          howlFSchema = new HCatFieldSchema(fSchema.alias, Type.ARRAY, new HCatSchema(arrFields), null);
+          arrFields.add(getHCatFSFromPigFS(fSchema.schema.getField(0).schema.getField(0), tableSchema));
+          hcatFSchema = new HCatFieldSchema(fSchema.alias, Type.ARRAY, new HCatSchema(arrFields), null);
       }
       else{
-          howlFSchema = getHowlFSFromPigFS(fSchema, tableSchema);
+          hcatFSchema = getHCatFSFromPigFS(fSchema, tableSchema);
       }
-      fieldSchemas.add(howlFSchema);
+      fieldSchemas.add(hcatFSchema);
       } catch (HCatException he){
           throw new FrontendException(he.getMessage(),PigHCatUtil.PIG_EXCEPTION_CODE,he);
       }
@@ -163,7 +163,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
   }
 
 
-  private HCatFieldSchema getHowlFSFromPigFS(FieldSchema fSchema, HCatSchema hcatTblSchema) throws FrontendException, HCatException{
+  private HCatFieldSchema getHCatFSFromPigFS(FieldSchema fSchema, HCatSchema hcatTblSchema) throws FrontendException, HCatException{
 
     byte type = fSchema.type;
     switch(type){
@@ -187,17 +187,17 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     case DataType.BAG:
       Schema bagSchema = fSchema.schema;
       List<HCatFieldSchema> arrFields = new ArrayList<HCatFieldSchema>(1);
-      arrFields.add(getHowlFSFromPigFS(bagSchema.getField(0), hcatTblSchema));
+      arrFields.add(getHCatFSFromPigFS(bagSchema.getField(0), hcatTblSchema));
       return new HCatFieldSchema(fSchema.alias, Type.ARRAY, new HCatSchema(arrFields), "");
 
     case DataType.TUPLE:
       List<String> fieldNames = new ArrayList<String>();
-      List<HCatFieldSchema> howlFSs = new ArrayList<HCatFieldSchema>();
+      List<HCatFieldSchema> hcatFSs = new ArrayList<HCatFieldSchema>();
       for( FieldSchema fieldSchema : fSchema.schema.getFields()){
         fieldNames.add( fieldSchema.alias);
-        howlFSs.add(getHowlFSFromPigFS(fieldSchema, hcatTblSchema));
+        hcatFSs.add(getHCatFSFromPigFS(fieldSchema, hcatTblSchema));
       }
-      return new HCatFieldSchema(fSchema.alias, Type.STRUCT, new HCatSchema(howlFSs), "");
+      return new HCatFieldSchema(fSchema.alias, Type.STRUCT, new HCatSchema(hcatFSs), "");
 
     case DataType.MAP:{
       // Pig's schema contain no type information about map's keys and
@@ -258,11 +258,11 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     }
   }
 
-  private Object getJavaObj(Object pigObj, HCatFieldSchema howlFS) throws ExecException, HCatException{
+  private Object getJavaObj(Object pigObj, HCatFieldSchema hcatFS) throws ExecException, HCatException{
 
     // The real work-horse. Spend time and energy in this method if there is
-    // need to keep HowlStorer lean and go fast.
-    Type type = howlFS.getType();
+    // need to keep HCatStorer lean and go fast.
+    Type type = hcatFS.getType();
 
     switch(type){
 
@@ -273,14 +273,14 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       //
       //      List<Object> innerList = new ArrayList<Object>(innerTup.size());
       //      int i = 0;
-      //      for(HowlTypeInfo structFieldTypeInfo : typeInfo.getAllStructFieldTypeInfos()){
+      //      for(HCatTypeInfo structFieldTypeInfo : typeInfo.getAllStructFieldTypeInfos()){
       //        innerList.add(getJavaObj(innerTup.get(i++), structFieldTypeInfo));
       //      }
       //      return innerList;
     case ARRAY:
       // Unwrap the bag.
       DataBag pigBag = (DataBag)pigObj;
-      HCatFieldSchema tupFS = howlFS.getArrayElementSchema().get(0);
+      HCatFieldSchema tupFS = hcatFS.getArrayElementSchema().get(0);
       boolean needTuple = tupFS.getType() == Type.STRUCT;
       List<Object> bagContents = new ArrayList<Object>((int)pigBag.size());
       Iterator<Tuple> bagItr = pigBag.iterator();
@@ -327,18 +327,18 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       byte type = pigField.type;
       String alias = pigField.alias;
       validateAlias(alias);
-      HCatFieldSchema howlField = getTableCol(alias, tblSchema);
+      HCatFieldSchema hcatField = getTableCol(alias, tblSchema);
 
       if(DataType.isComplex(type)){
         switch(type){
 
         case DataType.MAP:
-          if(howlField != null){
-            if(howlField.getMapKeyType() != Type.STRING){
-              throw new FrontendException("Key Type of map must be String "+howlField,  PigHCatUtil.PIG_EXCEPTION_CODE);
+          if(hcatField != null){
+            if(hcatField.getMapKeyType() != Type.STRING){
+              throw new FrontendException("Key Type of map must be String "+hcatField,  PigHCatUtil.PIG_EXCEPTION_CODE);
             }
-            if(howlField.getMapValueSchema().get(0).isComplex()){
-              throw new FrontendException("Value type of map cannot be complex" + howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+            if(hcatField.getMapValueSchema().get(0).isComplex()){
+              throw new FrontendException("Value type of map cannot be complex" + hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
             }
           }
           break;
@@ -351,37 +351,37 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
             }
             validateAlias(innerField.alias);
           }
-          if(howlField != null){
+          if(hcatField != null){
             // Do the same validation for HCatSchema.
-            HCatFieldSchema arrayFieldScehma = howlField.getArrayElementSchema().get(0);
+            HCatFieldSchema arrayFieldScehma = hcatField.getArrayElementSchema().get(0);
             Type hType = arrayFieldScehma.getType();
             if(hType == Type.STRUCT){
               for(HCatFieldSchema structFieldInBag : arrayFieldScehma.getStructSubSchema().getFields()){
                 if(structFieldInBag.getType() == Type.STRUCT || structFieldInBag.getType() == Type.ARRAY){
-                  throw new FrontendException("Nested Complex types not allowed "+ howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                  throw new FrontendException("Nested Complex types not allowed "+ hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
                 }
               }
             }
             if(hType == Type.MAP){
               if(arrayFieldScehma.getMapKeyType() != Type.STRING){
-                throw new FrontendException("Key Type of map must be String "+howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                throw new FrontendException("Key Type of map must be String "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
               }
               if(arrayFieldScehma.getMapValueSchema().get(0).isComplex()){
-                throw new FrontendException("Value type of map cannot be complex "+howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                throw new FrontendException("Value type of map cannot be complex "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
               }
             }
             if(hType == Type.ARRAY) {
-              throw new FrontendException("Arrays cannot contain array within it. "+howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+              throw new FrontendException("Arrays cannot contain array within it. "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
             }
           }
           break;
 
         case DataType.TUPLE:
           validateUnNested(pigField.schema);
-          if(howlField != null){
-            for(HCatFieldSchema structFieldSchema : howlField.getStructSubSchema().getFields()){
+          if(hcatField != null){
+            for(HCatFieldSchema structFieldSchema : hcatField.getStructSubSchema().getFields()){
               if(structFieldSchema.isComplex()){
-                throw new FrontendException("Nested Complex types are not allowed."+howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                throw new FrontendException("Nested Complex types are not allowed."+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
               }
             }
           }
@@ -393,15 +393,15 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       }
     }
 
-    for(HCatFieldSchema howlField : tblSchema.getFields()){
+    for(HCatFieldSchema hcatField : tblSchema.getFields()){
 
       // We dont do type promotion/demotion.
-      Type hType = howlField.getType();
+      Type hType = hcatField.getType();
       switch(hType){
       case SMALLINT:
       case TINYINT:
       case BOOLEAN:
-        throw new FrontendException("Incompatible type found in howl table schema: "+howlField, PigHCatUtil.PIG_EXCEPTION_CODE);
+        throw new FrontendException("Incompatible type found in hcat table schema: "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
       }
     }
   }
@@ -418,9 +418,9 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
   // Finds column by name in HCatSchema, if not found returns null.
   private HCatFieldSchema getTableCol(String alias, HCatSchema tblSchema){
 
-    for(HCatFieldSchema howlField : tblSchema.getFields()){
-      if(howlField.getName().equalsIgnoreCase(alias)){
-        return howlField;
+    for(HCatFieldSchema hcatField : tblSchema.getFields()){
+      if(hcatField.getName().equalsIgnoreCase(alias)){
+        return hcatField;
       }
     }
     // Its a new column

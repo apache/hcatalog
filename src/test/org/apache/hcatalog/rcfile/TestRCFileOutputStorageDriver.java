@@ -60,7 +60,7 @@ public class TestRCFileOutputStorageDriver extends TestCase {
       bytesWritable.set(i, cu);
     }
 
-    //Convert byte array to HowlRecord using isd, convert howlrecord back to byte array
+    //Convert byte array to HCatRecord using isd, convert hcatrecord back to byte array
     //using osd, compare the two arrays
     HCatRecord record = isd.convertToHCatRecord(null, bytesWritable);
 
@@ -77,7 +77,7 @@ public class TestRCFileOutputStorageDriver extends TestCase {
   private byte[][] buildBytesArray() throws UnsupportedEncodingException {
     byte[][] bytes = {"123".getBytes("UTF-8"), "456".getBytes("UTF-8"),
         "789".getBytes("UTF-8"), "1000".getBytes("UTF-8"),
-        "5.3".getBytes("UTF-8"), "howl and hadoop".getBytes("UTF-8"),
+        "5.3".getBytes("UTF-8"), "hcat and hadoop".getBytes("UTF-8"),
         new byte[0], "\\N".getBytes("UTF-8") };
     return bytes;
   }

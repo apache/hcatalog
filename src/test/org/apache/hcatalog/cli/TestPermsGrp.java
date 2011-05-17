@@ -52,7 +52,7 @@ public class TestPermsGrp extends TestCase {
 
   private boolean isServerRunning = false;
   private static final String msPort = "20101";
-  private HiveConf howlConf;
+  private HiveConf hcatConf;
   private Warehouse clientWH;
   private Thread t;
   private HiveMetaStoreClient msc;
@@ -91,17 +91,17 @@ public class TestPermsGrp extends TestCase {
     securityManager = System.getSecurityManager();
     System.setSecurityManager(new NoExitSecurityManager());
 
-    howlConf = new HiveConf(this.getClass());
-    howlConf.set("hive.metastore.local", "false");
-    howlConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + msPort);
-    howlConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
+    hcatConf = new HiveConf(this.getClass());
+    hcatConf.set("hive.metastore.local", "false");
+    hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + msPort);
+    hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
 
-    howlConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
-    howlConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-    howlConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-    howlConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-    clientWH = new Warehouse(howlConf);
-    msc = new HiveMetaStoreClient(howlConf,null);
+    hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
+    hcatConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
+    hcatConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
+    hcatConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    clientWH = new Warehouse(hcatConf);
+    msc = new HiveMetaStoreClient(hcatConf,null);
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
   }
@@ -130,12 +130,12 @@ public class TestPermsGrp extends TestCase {
         assertEquals(((ExitException)e).getStatus(), 0);
       }
       dfsPath = clientWH.getDefaultTablePath(dbName, tblName);
-      assertTrue(dfsPath.getFileSystem(howlConf).getFileStatus(dfsPath).getPermission().equals(FsPermission.valueOf("drwx-wx---")));
+      assertTrue(dfsPath.getFileSystem(hcatConf).getFileStatus(dfsPath).getPermission().equals(FsPermission.valueOf("drwx-wx---")));
 
       cleanupTbl(dbName, tblName, typeName);
 
       // User specified perms in invalid format.
-      howlConf.set(HCatConstants.HCAT_PERMS, "rwx");
+      hcatConf.set(HCatConstants.HCAT_PERMS, "rwx");
       // make sure create table fails.
       try{
         HCatCli.main(new String[]{"-e","create table simptbl (name string) stored as RCFILE", "-p","rwx"});
@@ -146,7 +146,7 @@ public class TestPermsGrp extends TestCase {
       // No physical dir gets created.
       dfsPath = clientWH.getDefaultTablePath(MetaStoreUtils.DEFAULT_DATABASE_NAME,tblName);
       try{
-        dfsPath.getFileSystem(howlConf).getFileStatus(dfsPath);
+        dfsPath.getFileSystem(hcatConf).getFileStatus(dfsPath);
         assert false;
       } catch(Exception fnfe){
         assertTrue(fnfe instanceof FileNotFoundException);
@@ -162,8 +162,8 @@ public class TestPermsGrp extends TestCase {
       }
 
       // test for invalid group name
-      howlConf.set(HCatConstants.HCAT_PERMS, "drw-rw-rw-");
-      howlConf.set(HCatConstants.HCAT_GROUP, "THIS_CANNOT_BE_A_VALID_GRP_NAME_EVER");
+      hcatConf.set(HCatConstants.HCAT_PERMS, "drw-rw-rw-");
+      hcatConf.set(HCatConstants.HCAT_GROUP, "THIS_CANNOT_BE_A_VALID_GRP_NAME_EVER");
 
       try{
         // create table must fail.
@@ -183,7 +183,7 @@ public class TestPermsGrp extends TestCase {
       }
       try{
         // neither dir should get created.
-        dfsPath.getFileSystem(howlConf).getFileStatus(dfsPath);
+        dfsPath.getFileSystem(hcatConf).getFileStatus(dfsPath);
         assert false;
       } catch(Exception e){
         assertTrue(e instanceof FileNotFoundException);

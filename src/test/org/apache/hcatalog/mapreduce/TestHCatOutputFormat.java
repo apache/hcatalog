@@ -53,8 +53,8 @@ public class TestHCatOutputFormat extends TestCase {
   private HiveMetaStoreClient client;
   private HiveConf hiveConf;
 
-  private static final String dbName = "howlOutputFormatTestDB";
-  private static final String tblName = "howlOutputFormatTestTable";
+  private static final String dbName = "hcatOutputFormatTestDB";
+  private static final String tblName = "hcatOutputFormatTestTable";
 
   @Override
   protected void setUp() throws Exception {

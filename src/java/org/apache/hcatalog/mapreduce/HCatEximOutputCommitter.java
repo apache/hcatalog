@@ -53,7 +53,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
 
   @Override
   public void cleanupJob(JobContext jobContext) throws IOException {
-    LOG.info("HowlEximOutputCommitter.cleanup invoked; m.o.d : " +
+    LOG.info("HCatEximOutputCommitter.cleanup invoked; m.o.d : " +
         jobContext.getConfiguration().get("mapred.output.dir"));
     if (baseCommitter != null) {
       LOG.info("baseCommitter.class = " + baseCommitter.getClass().getName());

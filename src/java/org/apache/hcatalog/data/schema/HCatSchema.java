@@ -110,15 +110,15 @@ public class HCatSchema implements Serializable{
       return fieldSchemas.size();
     }
 
-    public void remove(final HCatFieldSchema howlFieldSchema) throws HCatException {
+    public void remove(final HCatFieldSchema hcatFieldSchema) throws HCatException {
 
-      if(!fieldSchemas.contains(howlFieldSchema)){
-        throw new HCatException("Attempt to delete a non-existent column from Howl Schema: "+ howlFieldSchema);
+      if(!fieldSchemas.contains(hcatFieldSchema)){
+        throw new HCatException("Attempt to delete a non-existent column from HCat Schema: "+ hcatFieldSchema);
       }
 
-      fieldSchemas.remove(howlFieldSchema);
-      fieldPositionMap.remove(howlFieldSchema);
-      fieldNames.remove(howlFieldSchema.getName());
+      fieldSchemas.remove(hcatFieldSchema);
+      fieldPositionMap.remove(hcatFieldSchema);
+      fieldNames.remove(hcatFieldSchema.getName());
     }
 
     @Override

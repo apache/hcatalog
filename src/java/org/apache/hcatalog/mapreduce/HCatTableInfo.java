@@ -25,8 +25,8 @@ import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 
 /**
  *
- * HCatTableInfo - class to communicate table information to {@link HowlInputFormat}
- * and {@link HowlOutputFormat}
+ * HCatTableInfo - class to communicate table information to {@link HCatInputFormat}
+ * and {@link HCatOutputFormat}
  *
  */
 public class HCatTableInfo implements Serializable {
@@ -44,9 +44,9 @@ public class HCatTableInfo implements Serializable {
   /** The Metadata server uri */
   private final String serverUri;
 
-  /** If the howl server is configured to work with hadoop security, this
+  /** If the hcat server is configured to work with hadoop security, this
    * variable will hold the principal name of the server - this will be used
-   * in the authentication to the howl server using kerberos
+   * in the authentication to the hcat server using kerberos
    */
   private final String serverKerberosPrincipal;
 
@@ -67,13 +67,13 @@ public class HCatTableInfo implements Serializable {
   private Map<String, String> partitionValues;
 
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlInputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
    * for reading data from a table.
    * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the howl server is configured to
+   * @param serverKerberosPrincipal If the hcat server is configured to
    * work with hadoop security, the kerberos principal name of the server - else null
    * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "howl/_HOST@myrealm.com"
+   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
    * The special string _HOST will be replaced automatically with the correct host name
    * @param dbName the db name
    * @param tableName the table name
@@ -86,13 +86,13 @@ public class HCatTableInfo implements Serializable {
   }
 
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlInputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
    * for reading data from a table.
    * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the howl server is configured to
+   * @param serverKerberosPrincipal If the hcat server is configured to
    * work with hadoop security, the kerberos principal name of the server - else null
    * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "howl/_HOST@myrealm.com"
+   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
    * The special string _HOST will be replaced automatically with the correct host name
    * @param dbName the db name
    * @param tableName the table name
@@ -115,13 +115,13 @@ public class HCatTableInfo implements Serializable {
       this.filter = filter;
   }
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlOutputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatOutputFormat}
    * for writing data from a table.
    * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the howl server is configured to
+   * @param serverKerberosPrincipal If the hcat server is configured to
    * work with hadoop security, the kerberos principal name of the server - else null
    * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "howl/_HOST@myrealm.com"
+   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
    * The special string _HOST will be replaced automatically with the correct host name
    * @param dbName the db name
    * @param tableName the table name

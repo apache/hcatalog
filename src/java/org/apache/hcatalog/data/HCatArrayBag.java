@@ -38,11 +38,11 @@ public class HCatArrayBag<T> implements DataBag {
   DataBag convertedBag = null;
 //  List<Tuple> tupleList = null;
 
-  public class HowlArrayBagIterator implements Iterator<Tuple> {
+  public class HCatArrayBagIterator implements Iterator<Tuple> {
 
     Iterator<T> iter = null;
 
-    public HowlArrayBagIterator(List<T> rawItemList) {
+    public HCatArrayBagIterator(List<T> rawItemList) {
       iter = rawItemList.iterator();
     }
 
@@ -123,7 +123,7 @@ public class HCatArrayBag<T> implements DataBag {
     if (convertedBag != null){
       return convertedBag.iterator();
     }else{
-      return new HowlArrayBagIterator(rawItemList);
+      return new HCatArrayBagIterator(rawItemList);
     }
   }
 

@@ -87,16 +87,16 @@ public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
       List<Task<? extends Serializable>> rootTasks) throws SemanticException {
 
     Map<String,String> partSpec = ((DDLWork)rootTasks.get(rootTasks.size()-1).getWork()).getAlterTblDesc().getPartSpec();
-    Map<String, String> howlProps = new HashMap<String, String>(2);
-    howlProps.put(HCatConstants.HCAT_ISD_CLASS, inDriver);
-    howlProps.put(HCatConstants.HCAT_OSD_CLASS, outDriver);
+    Map<String, String> hcatProps = new HashMap<String, String>(2);
+    hcatProps.put(HCatConstants.HCAT_ISD_CLASS, inDriver);
+    hcatProps.put(HCatConstants.HCAT_OSD_CLASS, outDriver);
 
     try {
       Hive db = context.getHive();
       Table tbl = db.getTable(tableName);
       if(partSpec == null){
         // File format is for table; not for partition.
-        tbl.getTTable().getParameters().putAll(howlProps);
+        tbl.getTTable().getParameters().putAll(hcatProps);
         db.alterTable(tableName, tbl);
       }else{
         Partition part = db.getPartition(tbl,partSpec,false);
@@ -104,7 +104,7 @@ public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
         if(partParams == null){
           partParams = new HashMap<String, String>();
         }
-        partParams.putAll(howlProps);
+        partParams.putAll(hcatProps);
         part.getTPartition().setParameters(partParams);
         db.alterPartition(tableName, part);
       }

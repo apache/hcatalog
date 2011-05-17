@@ -22,7 +22,7 @@ import java.util.List;
 import org.apache.hadoop.io.WritableComparable;
 
 /**
- * Interface that determines whether we can implement a HowlRecord on top of it
+ * Interface that determines whether we can implement a HCatRecord on top of it
  */
 public interface HCatRecordable extends WritableComparable<Object> {
 
@@ -34,7 +34,7 @@ public interface HCatRecordable extends WritableComparable<Object> {
   Object get(int fieldNum);
 
   /**
-   * Gets all the fields of the howl record.
+   * Gets all the fields of the hcat record.
    * @return the list of fields
    */
   List<Object> getAll();
@@ -47,7 +47,7 @@ public interface HCatRecordable extends WritableComparable<Object> {
   void set(int fieldNum, Object value);
 
   /**
-   * Gets the size of the howl record.
+   * Gets the size of the hcat record.
    * @return the size
    */
   int size();

@@ -26,8 +26,8 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.data.HCatRecord;
 
-/** The Howl wrapper for the underlying RecordReader, this ensures that the initialize on
- * the underlying record reader is done with the underlying split, not with HowlSplit.
+/** The HCat wrapper for the underlying RecordReader, this ensures that the initialize on
+ * the underlying record reader is done with the underlying split, not with HCatSplit.
  */
 class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
 
@@ -38,7 +38,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
     private final HCatInputStorageDriver storageDriver;
 
     /**
-     * Instantiates a new howl record reader.
+     * Instantiates a new hcat record reader.
      * @param baseRecordReader the base record reader
      */
     public HCatRecordReader(HCatInputStorageDriver storageDriver, RecordReader<? extends WritableComparable, ? extends Writable> baseRecordReader) {

@@ -69,7 +69,7 @@ public class RCFileInputDriver extends HCatInputStorageDriver{
   private Map<String,Integer> namePosMapping;
 
   @Override
-  public InputFormat<? extends WritableComparable, ? extends Writable> getInputFormat(Properties howlProperties) {
+  public InputFormat<? extends WritableComparable, ? extends Writable> getInputFormat(Properties hcatProperties) {
     return new RCFileMapReduceInputFormat<LongWritable, BytesRefArrayWritable>();
   }
 
@@ -117,7 +117,7 @@ public class RCFileInputDriver extends HCatInputStorageDriver{
   public HCatRecord convertToHCatRecord(WritableComparable ignored, Writable bytesRefArray) throws IOException {
 
     // Deserialize bytesRefArray into struct and then convert that struct to
-    // HowlRecord.
+    // HCatRecord.
     ColumnarStruct struct;
     try {
       struct = (ColumnarStruct)serde.deserialize(bytesRefArray);
@@ -152,7 +152,7 @@ public class RCFileInputDriver extends HCatInputStorageDriver{
   private Object getTypedObj(Object data, ObjectInspector oi) throws IOException{
 
     // The real work-horse method. We are gobbling up all the laziness benefits
-    // of Hive-RCFile by deserializing everything and creating crisp  HowlRecord
+    // of Hive-RCFile by deserializing everything and creating crisp  HCatRecord
     // with crisp Java objects inside it. We have to do it because higher layer
     // may not know how to do it.
 
@@ -200,26 +200,26 @@ public class RCFileInputDriver extends HCatInputStorageDriver{
   }
 
   @Override
-  public void initialize(JobContext context,Properties howlProperties)
+  public void initialize(JobContext context,Properties hcatProperties)
   throws IOException {
 
-    super.initialize(context, howlProperties);
+    super.initialize(context, hcatProperties);
 
     // Columnar Serde needs to know names and types of columns it needs to read.
     List<FieldSchema> fields = HCatUtil.getFieldSchemaList(colsInData);
-    howlProperties.setProperty(Constants.LIST_COLUMNS,MetaStoreUtils.
+    hcatProperties.setProperty(Constants.LIST_COLUMNS,MetaStoreUtils.
         getColumnNamesFromFieldSchema(fields));
-    howlProperties.setProperty(Constants.LIST_COLUMN_TYPES, MetaStoreUtils.
+    hcatProperties.setProperty(Constants.LIST_COLUMN_TYPES, MetaStoreUtils.
         getColumnTypesFromFieldSchema(fields));
 
     // It seems RCFIle reads and writes nulls differently as compared to default hive.
     // setting these props to match LazySimpleSerde
-    howlProperties.setProperty(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
-    howlProperties.setProperty(Constants.SERIALIZATION_FORMAT, "1");
+    hcatProperties.setProperty(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
+    hcatProperties.setProperty(Constants.SERIALIZATION_FORMAT, "1");
 
     try {
       serde = new ColumnarSerDe();
-      serde.initialize(context.getConfiguration(), howlProperties);
+      serde.initialize(context.getConfiguration(), hcatProperties);
       oi = (StructObjectInspector) serde.getObjectInspector();
       structFields = oi.getAllStructFieldRefs();
 

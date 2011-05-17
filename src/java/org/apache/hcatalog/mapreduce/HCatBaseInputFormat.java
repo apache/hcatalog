@@ -37,11 +37,11 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable, HCatRecord> {
   
   /**
-   * get the schema for the HowlRecord data returned by HowlInputFormat.
+   * get the schema for the HCatRecord data returned by HCatInputFormat.
    * 
    * @param job
    *          the job object
-   * @param howlSchema
+   * @param hcatSchema
    *          the schema to use as the consolidated schema
    * @throws IllegalArgumentException
    */
@@ -55,7 +55,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   }
   
   /**
-   * Set the schema for the HowlRecord data returned by HowlInputFormat.
+   * Set the schema for the HCatRecord data returned by HCatInputFormat.
    * @param job the job object
    * @param hcatSchema the schema to use as the consolidated schema
    */
@@ -68,7 +68,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * Logically split the set of input files for the job. Returns the
    * underlying InputFormat's splits
    * @param jobContext the job context object
-   * @return the splits, an HowlInputSplit wrapper over the storage
+   * @return the splits, an HCatInputSplit wrapper over the storage
    *         driver InputSplits
    * @throws IOException or InterruptedException
    */
@@ -127,11 +127,11 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   /**
    * Create the RecordReader for the given InputSplit. Returns the underlying
    * RecordReader if the required operations are supported and schema matches
-   * with HowlTable schema. Returns an HowlRecordReader if operations need to
-   * be implemented in Howl.
+   * with HCatTable schema. Returns an HCatRecordReader if operations need to
+   * be implemented in HCat.
    * @param split the split
    * @param taskContext the task attempt context
-   * @return the record reader instance, either an HowlRecordReader(later) or
+   * @return the record reader instance, either an HCatRecordReader(later) or
    *         the underlying storage driver's RecordReader
    * @throws IOException or InterruptedException
    */
@@ -139,12 +139,12 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   public RecordReader<WritableComparable, HCatRecord> createRecordReader(InputSplit split,
       TaskAttemptContext taskContext) throws IOException, InterruptedException {
 
-    HCatSplit howlSplit = (HCatSplit) split;
-    PartInfo partitionInfo = howlSplit.getPartitionInfo();
+    HCatSplit hcatSplit = (HCatSplit) split;
+    PartInfo partitionInfo = hcatSplit.getPartitionInfo();
 
     //If running through a Pig job, the JobInfo will not be available in the
-    //backend process context (since HowlLoader works on a copy of the JobContext and does
-    //not call HowlInputFormat.setInput in the backend process).
+    //backend process context (since HCatLoader works on a copy of the JobContext and does
+    //not call HCatInputFormat.setInput in the backend process).
     //So this function should NOT attempt to read the JobInfo.
 
     HCatInputStorageDriver storageDriver;
@@ -155,26 +155,26 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
     }
 
     //Pass all required information to the storage driver
-    initStorageDriver(storageDriver, taskContext, partitionInfo, howlSplit.getTableSchema());
+    initStorageDriver(storageDriver, taskContext, partitionInfo, hcatSplit.getTableSchema());
 
     //Get the input format for the storage driver
     InputFormat inputFormat =
       storageDriver.getInputFormat(partitionInfo.getInputStorageDriverProperties());
 
-    //Create the underlying input formats record record and an Howl wrapper
+    //Create the underlying input formats record record and an HCat wrapper
     RecordReader recordReader =
-      inputFormat.createRecordReader(howlSplit.getBaseSplit(), taskContext);
+      inputFormat.createRecordReader(hcatSplit.getBaseSplit(), taskContext);
 
     return new HCatRecordReader(storageDriver,recordReader);
   }
 
   /**
-   * Gets the HowlTable schema for the table specified in the HowlInputFormat.setInput call
-   * on the specified job context. This information is available only after HowlInputFormat.setInput
+   * Gets the HCatTable schema for the table specified in the HCatInputFormat.setInput call
+   * on the specified job context. This information is available only after HCatInputFormat.setInput
    * has been called for a JobContext.
    * @param context the context
    * @return the table schema
-   * @throws Exception if HowlInputFromat.setInput has not been called for the current context
+   * @throws Exception if HCatInputFromat.setInput has not been called for the current context
    */
   public static HCatSchema getTableSchema(JobContext context) throws Exception {
     JobInfo jobInfo = getJobInfo(context);
@@ -184,7 +184,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   /**
    * Gets the JobInfo object by reading the Configuration and deserializing
    * the string. If JobInfo is not present in the configuration, throws an
-   * exception since that means HowlInputFormat.setInput has not been called.
+   * exception since that means HCatInputFormat.setInput has not been called.
    * @param jobContext the job context
    * @return the JobInfo object
    * @throws Exception the exception
@@ -192,7 +192,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   private static JobInfo getJobInfo(JobContext jobContext) throws Exception {
     String jobString = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
     if( jobString == null ) {
-      throw new Exception("job information not found in JobContext. HowlInputFormat.setInput() not called?");
+      throw new Exception("job information not found in JobContext. HCatInputFormat.setInput() not called?");
     }
 
     return (JobInfo) HCatUtil.deserialize(jobString);

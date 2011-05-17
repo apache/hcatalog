@@ -18,21 +18,21 @@
 package org.apache.hcatalog.common;
 
 /**
- * Enum type representing the various errors throws by Howl.
+ * Enum type representing the various errors throws by HCat.
  */
 public enum ErrorType {
 
-    /* Howl Input Format related errors 1000 - 1999 */
+    /* HCat Input Format related errors 1000 - 1999 */
     ERROR_DB_INIT                       (1000, "Error initializing database session"),
     ERROR_EXCEED_MAXPART                (1001, "Query result exceeded maximum number of partitions allowed"),
 
 
-    /* Howl Output Format related errors 2000 - 2999 */
+    /* HCat Output Format related errors 2000 - 2999 */
     ERROR_INVALID_TABLE                 (2000, "Table specified does not exist"),
     ERROR_SET_OUTPUT                    (2001, "Error setting output information"),
     ERROR_DUPLICATE_PARTITION           (2002, "Partition already present with given partition key values"),
     ERROR_NON_EMPTY_TABLE               (2003, "Non-partitioned table already contains data"),
-    ERROR_NOT_INITIALIZED               (2004, "HowlOutputFormat not initialized, setOutput has to be called"),
+    ERROR_NOT_INITIALIZED               (2004, "HCatOutputFormat not initialized, setOutput has to be called"),
     ERROR_INIT_STORAGE_DRIVER           (2005, "Error initializing output storage driver instance"),
     ERROR_PUBLISHING_PARTITION          (2006, "Error adding partition to metastore"),
     ERROR_SCHEMA_COLUMN_MISMATCH        (2007, "Invalid column position in partition schema"),
@@ -48,7 +48,7 @@ public enum ErrorType {
 
     /* Miscellaneous errors, range 9000 - 9998 */
     ERROR_UNIMPLEMENTED                 (9000, "Functionality currently unimplemented"),
-    ERROR_INTERNAL_EXCEPTION            (9001, "Exception occurred while processing Howl request");
+    ERROR_INTERNAL_EXCEPTION            (9001, "Exception occurred while processing HCat request");
 
     /** The error code. */
     private int errorCode;

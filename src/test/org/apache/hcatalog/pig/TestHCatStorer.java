@@ -78,7 +78,7 @@ public class TestHCatStorer extends TestCase {
 //    }
 //
 //    MiniCluster.deleteFile(cluster, fileName);
-//    MiniCluster.createInputFile(cluster, fileName, new String[]{"test\t{([a#haddop,b#pig])}","data\t{([b#hive,a#howl])}"});
+//    MiniCluster.createInputFile(cluster, fileName, new String[]{"test\t{([a#haddop,b#pig])}","data\t{([b#hive,a#hcat])}"});
 //
 //    PigServer server = new PigServer(ExecType.LOCAL, props);
 //    UDFContext.getUDFContext().setClientSystemProps();
@@ -469,8 +469,8 @@ public class TestHCatStorer extends TestCase {
   }
 
   MiniCluster.deleteFile(cluster, fileName);
-  MiniCluster.createInputFile(cluster, fileName, new String[]{"zookeeper\t(2)\t{(pig)}\t{(pnuts,hdfs)}\t{(hadoop),(howl)}",
-      "chubby\t(2)\t{(sawzall)}\t{(bigtable,gfs)}\t{(mapreduce),(howl)}"});
+  MiniCluster.createInputFile(cluster, fileName, new String[]{"zookeeper\t(2)\t{(pig)}\t{(pnuts,hdfs)}\t{(hadoop),(hcat)}",
+      "chubby\t(2)\t{(sawzall)}\t{(bigtable,gfs)}\t{(mapreduce),(hcat)}"});
 
   PigServer server = new PigServer(ExecType.LOCAL, props);
   UDFContext.getUDFContext().setClientSystemProps();
@@ -489,8 +489,8 @@ public class TestHCatStorer extends TestCase {
   driver.getResults(res);
   driver.run("drop table junit_unparted");
   Iterator<String> itr = res.iterator();
-  assertEquals("zookeeper\t{\"a1\":2}\t[\"pig\"]\t[{\"s1\":\"pnuts\",\"s2\":\"hdfs\"}]\t[{\"s3\":\"hadoop\"},{\"s3\":\"howl\"}]", itr.next());
-  assertEquals("chubby\t{\"a1\":2}\t[\"sawzall\"]\t[{\"s1\":\"bigtable\",\"s2\":\"gfs\"}]\t[{\"s3\":\"mapreduce\"},{\"s3\":\"howl\"}]",itr.next());
+  assertEquals("zookeeper\t{\"a1\":2}\t[\"pig\"]\t[{\"s1\":\"pnuts\",\"s2\":\"hdfs\"}]\t[{\"s3\":\"hadoop\"},{\"s3\":\"hcat\"}]", itr.next());
+  assertEquals("chubby\t{\"a1\":2}\t[\"sawzall\"]\t[{\"s1\":\"bigtable\",\"s2\":\"gfs\"}]\t[{\"s3\":\"mapreduce\"},{\"s3\":\"hcat\"}]",itr.next());
  assertFalse(itr.hasNext());
 
   }
@@ -509,7 +509,7 @@ public class TestHCatStorer extends TestCase {
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets howl";
+      input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat";
     }
 
     MiniCluster.createInputFile(cluster, fileName, input);

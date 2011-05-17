@@ -39,15 +39,15 @@ public class JobInfo implements Serializable{
     private final List<PartInfo> partitions;
 
     /**
-     * Instantiates a new howl job info.
+     * Instantiates a new hcat job info.
      * @param tableName the table name
      * @param tableSchema the table schema
      * @param partitions the partitions
      */
-    public JobInfo(HCatTableInfo howlTableInfo, HCatSchema tableSchema,
+    public JobInfo(HCatTableInfo hcatTableInfo, HCatSchema tableSchema,
             List<PartInfo> partitions) {
-        this.tableName = howlTableInfo.getTableName();
-        this.dbName = howlTableInfo.getDatabaseName();
+        this.tableName = hcatTableInfo.getTableName();
+        this.dbName = hcatTableInfo.getDatabaseName();
         this.tableSchema = tableSchema;
         this.partitions = partitions;
     }

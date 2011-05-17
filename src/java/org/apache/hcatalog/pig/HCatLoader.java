@@ -40,26 +40,26 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
- * Pig {@link LoadFunc} to read data from Howl
+ * Pig {@link LoadFunc} to read data from HCat
  */
 
 public class HCatLoader extends HCatBaseLoader {
 
   private static final String PARTITION_FILTER = "partition.filter"; // for future use
 
-  private HCatInputFormat howlInputFormat = null;
+  private HCatInputFormat hcatInputFormat = null;
   private String dbName;
   private String tableName;
-  private String howlServerUri;
+  private String hcatServerUri;
   private String partitionFilterString;
   private final PigHCatUtil phutil = new PigHCatUtil();
 
   @Override
   public InputFormat<?,?> getInputFormat() throws IOException {
-    if(howlInputFormat == null) {
-      howlInputFormat = new HCatInputFormat();
+    if(hcatInputFormat == null) {
+      hcatInputFormat = new HCatInputFormat();
     }
-    return howlInputFormat;
+    return hcatInputFormat;
   }
 
   @Override
@@ -76,30 +76,30 @@ public class HCatLoader extends HCatBaseLoader {
 
     // get partitionFilterString stored in the UDFContext - it would have
     // been stored there by an earlier call to setPartitionFilter
-    // call setInput on OwlInputFormat only in the frontend because internally
-    // it makes calls to the owl server - we don't want these to happen in
+    // call setInput on HCatInputFormat only in the frontend because internally
+    // it makes calls to the hcat server - we don't want these to happen in
     // the backend
     // in the hadoop front end mapred.task.id property will not be set in
     // the Configuration
     if (!HCatUtil.checkJobContextIfRunningFromBackend(job)){
 
       HCatInputFormat.setInput(job, HCatTableInfo.getInputTableInfo(
-              howlServerUri!=null ? howlServerUri :
-                  (howlServerUri = PigHCatUtil.getHowlServerUri(job)),
-              PigHCatUtil.getHowlServerPrincipal(job),
+              hcatServerUri!=null ? hcatServerUri :
+                  (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
+              PigHCatUtil.getHCatServerPrincipal(job),
               dbName,
               tableName,
               getPartitionFilterString()));
     }
 
     // Need to also push projections by calling setOutputSchema on
-    // OwlInputFormat - we have to get the RequiredFields information
+    // HCatInputFormat - we have to get the RequiredFields information
     // from the UdfContext, translate it to an Schema and then pass it
     // The reason we do this here is because setLocation() is called by
     // Pig runtime at InputFormat.getSplits() and
     // InputFormat.createRecordReader() time - we are not sure when
-    // OwlInputFormat needs to know about pruned projections - so doing it
-    // here will ensure we communicate to OwlInputFormat about pruned
+    // HCatInputFormat needs to know about pruned projections - so doing it
+    // here will ensure we communicate to HCatInputFormat about pruned
     // projections at getSplits() and createRecordReader() time
 
     UDFContext udfContext = UDFContext.getUDFContext();
@@ -108,7 +108,7 @@ public class HCatLoader extends HCatBaseLoader {
     RequiredFieldList requiredFieldsInfo =
       (RequiredFieldList)props.get(PRUNE_PROJECTION_INFO);
     if(requiredFieldsInfo != null) {
-      // convert to owlschema and pass to OwlInputFormat
+      // convert to hcatschema and pass to HCatInputFormat
       try {
         outputSchema = phutil.getHCatSchema(requiredFieldsInfo.getFields(),signature,this.getClass());
         HCatInputFormat.setOutputSchema(job, outputSchema);
@@ -118,11 +118,11 @@ public class HCatLoader extends HCatBaseLoader {
     } else{
       // else - this means pig's optimizer never invoked the pushProjection
       // method - so we need all fields and hence we should not call the
-      // setOutputSchema on OwlInputFormat
+      // setOutputSchema on HCatInputFormat
       if (HCatUtil.checkJobContextIfRunningFromBackend(job)){
         try {
-          HCatSchema howlTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
-          outputSchema = howlTableSchema;
+          HCatSchema hcatTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
+          outputSchema = hcatTableSchema;
         } catch (Exception e) {
           throw new IOException(e);
         }
@@ -134,8 +134,8 @@ public class HCatLoader extends HCatBaseLoader {
   public String[] getPartitionKeys(String location, Job job)
   throws IOException {
     Table table = phutil.getTable(location,
-        howlServerUri!=null?howlServerUri:PigHCatUtil.getHowlServerUri(job),
-            PigHCatUtil.getHowlServerPrincipal(job));
+        hcatServerUri!=null?hcatServerUri:PigHCatUtil.getHCatServerUri(job),
+            PigHCatUtil.getHCatServerPrincipal(job));
     List<FieldSchema> tablePartitionKeys = table.getPartitionKeys();
     String[] partitionKeys = new String[tablePartitionKeys.size()];
     for(int i = 0; i < tablePartitionKeys.size(); i++) {
@@ -147,28 +147,28 @@ public class HCatLoader extends HCatBaseLoader {
   @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
     Table table = phutil.getTable(location,
-        howlServerUri!=null?howlServerUri:PigHCatUtil.getHowlServerUri(job),
-            PigHCatUtil.getHowlServerPrincipal(job));
-    HCatSchema howlTableSchema = HCatUtil.getTableSchemaWithPtnCols(table);
+        hcatServerUri!=null?hcatServerUri:PigHCatUtil.getHCatServerUri(job),
+            PigHCatUtil.getHCatServerPrincipal(job));
+    HCatSchema hcatTableSchema = HCatUtil.getTableSchemaWithPtnCols(table);
     try {
-      PigHCatUtil.validateHowlTableSchemaFollowsPigRules(howlTableSchema);
+      PigHCatUtil.validateHCatTableSchemaFollowsPigRules(hcatTableSchema);
     } catch (IOException e){
       throw new PigException(
-          "Table schema incompatible for reading through HowlLoader :" + e.getMessage()
-          + ";[Table schema was "+ howlTableSchema.toString() +"]"
+          "Table schema incompatible for reading through HCatLoader :" + e.getMessage()
+          + ";[Table schema was "+ hcatTableSchema.toString() +"]"
           ,PigHCatUtil.PIG_EXCEPTION_CODE, e);
     }
-    storeInUDFContext(signature, HCatConstants.HCAT_TABLE_SCHEMA, howlTableSchema);
-    outputSchema = howlTableSchema;
-    return PigHCatUtil.getResourceSchema(howlTableSchema);
+    storeInUDFContext(signature, HCatConstants.HCAT_TABLE_SCHEMA, hcatTableSchema);
+    outputSchema = hcatTableSchema;
+    return PigHCatUtil.getResourceSchema(hcatTableSchema);
   }
 
   @Override
   public void setPartitionFilter(Expression partitionFilter) throws IOException {
     // convert the partition filter expression into a string expected by
-    // howl and pass it in setLocation()
+    // hcat and pass it in setLocation()
 
-    partitionFilterString = getHowlComparisonString(partitionFilter);
+    partitionFilterString = getHCatComparisonString(partitionFilter);
 
     // store this in the udf context so we can get it later
     storeInUDFContext(signature,
@@ -184,9 +184,9 @@ public class HCatLoader extends HCatBaseLoader {
     return partitionFilterString;
   }
 
-  private String getHowlComparisonString(Expression expr) {
+  private String getHCatComparisonString(Expression expr) {
     if(expr instanceof BinaryExpression){
-      // call getOwlComparisonString on lhs and rhs, and and join the
+      // call getHCatComparisonString on lhs and rhs, and and join the
       // results with OpType string
 
       // we can just use OpType.toString() on all Expression types except
@@ -201,9 +201,9 @@ public class HCatLoader extends HCatBaseLoader {
           opStr = expr.getOpType().toString();
       }
       BinaryExpression be = (BinaryExpression)expr;
-      return "(" + getHowlComparisonString(be.getLhs()) +
+      return "(" + getHCatComparisonString(be.getLhs()) +
                   opStr +
-                  getHowlComparisonString(be.getRhs()) + ")";
+                  getHCatComparisonString(be.getRhs()) + ")";
     } else {
       // should be a constant or column
       return expr.toString();

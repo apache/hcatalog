@@ -35,18 +35,18 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
 
-/** The abstract class to be implemented by underlying storage drivers to enable data access from Howl through
- *  HowlOutputFormat.
+/** The abstract class to be implemented by underlying storage drivers to enable data access from HCat through
+ *  HCatOutputFormat.
  */
 public abstract class HCatOutputStorageDriver {
 
   /**
    * Initialize the storage driver with specified properties, default implementation does nothing.
    * @param context the job context object
-   * @param howlProperties the properties for the storage driver
+   * @param hcatProperties the properties for the storage driver
    * @throws IOException Signals that an I/O exception has occurred.
    */
-    public void initialize(JobContext context, Properties howlProperties) throws IOException {
+    public void initialize(JobContext context, Properties hcatProperties) throws IOException {
     }
 
     /**
@@ -81,17 +81,17 @@ public abstract class HCatOutputStorageDriver {
     public abstract void setPartitionValues(JobContext jobContext, Map<String, String> partitionValues) throws IOException;
 
     /**
-     * Generate the key for the underlying outputformat. The value given to HowlOutputFormat is passed as the
-     * argument. The key given to HowlOutputFormat is ignored..
-     * @param value the value given to HowlOutputFormat
+     * Generate the key for the underlying outputformat. The value given to HCatOutputFormat is passed as the
+     * argument. The key given to HCatOutputFormat is ignored..
+     * @param value the value given to HCatOutputFormat
      * @return a key instance
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public abstract WritableComparable<?> generateKey(HCatRecord value) throws IOException;
 
     /**
-     * Convert the given HowlRecord value to the actual value type.
-     * @param value the HowlRecord value to convert
+     * Convert the given HCatRecord value to the actual value type.
+     * @param value the HCatRecord value to convert
      * @return a value instance
      * @throws IOException Signals that an I/O exception has occurred.
      */

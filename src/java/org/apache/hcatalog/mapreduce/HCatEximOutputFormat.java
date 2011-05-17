@@ -54,10 +54,10 @@ import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 /**
- * The OutputFormat to use to write data to Howl without a howl server. This can then
- * be imported into a howl instance, or used with a HowlEximInputFormat. As in
- * HowlOutputFormat, the key value is ignored and
- * and should be given as null. The value is the HowlRecord to write.
+ * The OutputFormat to use to write data to HCat without a hcat server. This can then
+ * be imported into a hcat instance, or used with a HCatEximInputFormat. As in
+ * HCatOutputFormat, the key value is ignored and
+ * and should be given as null. The value is the HCatRecord to write.
  */
 public class HCatEximOutputFormat extends HCatBaseOutputFormat {
 

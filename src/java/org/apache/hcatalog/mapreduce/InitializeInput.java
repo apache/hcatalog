@@ -68,7 +68,7 @@ public class InitializeInput {
    * Set the input to use for the Job. This queries the metadata server with the specified partition predicates,
    * gets the matching partitions, puts the information in the configuration object.
    * @param job the job object
-   * @param inputInfo the howl table input info
+   * @param inputInfo the hcat table input info
    * @throws Exception
    */
   public static void setInput(Job job, HCatTableInfo inputInfo) throws Exception {
@@ -111,12 +111,12 @@ public class InitializeInput {
         partInfoList.add(partInfo);
       }
 
-      JobInfo howlJobInfo = new JobInfo(inputInfo, tableSchema, partInfoList);
-      inputInfo.setJobInfo(howlJobInfo);
+      JobInfo hcatJobInfo = new JobInfo(inputInfo, tableSchema, partInfoList);
+      inputInfo.setJobInfo(hcatJobInfo);
 
       job.getConfiguration().set(
           HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(howlJobInfo)
+          HCatUtil.serialize(hcatJobInfo)
       );
     } finally {
       if (client != null ) {
@@ -149,7 +149,7 @@ public class InitializeInput {
   static PartInfo extractPartInfo(StorageDescriptor sd, Map<String,String> parameters) throws IOException{
     HCatSchema schema = HCatUtil.extractSchemaFromStorageDescriptor(sd);
     String inputStorageDriverClass = null;
-    Properties howlProperties = new Properties();
+    Properties hcatProperties = new Properties();
     if (parameters.containsKey(HCatConstants.HCAT_ISD_CLASS)){
       inputStorageDriverClass = parameters.get(HCatConstants.HCAT_ISD_CLASS);
     }else{
@@ -162,10 +162,10 @@ public class InitializeInput {
     }
     for (String key : parameters.keySet()){
       if (key.startsWith(HCAT_KEY_PREFIX)){
-        howlProperties.put(key, parameters.get(key));
+        hcatProperties.put(key, parameters.get(key));
       }
     }
-    return new PartInfo(schema,inputStorageDriverClass,  sd.getLocation(), howlProperties);
+    return new PartInfo(schema,inputStorageDriverClass,  sd.getLocation(), hcatProperties);
   }
 
 
@@ -195,14 +195,14 @@ public class InitializeInput {
       }
     }
 
-    Properties howlProperties = new Properties();
+    Properties hcatProperties = new Properties();
     for (String key : properties.keySet()){
       if (key.startsWith(HCAT_KEY_PREFIX)){
-        howlProperties.put(key, properties.get(key));
+        hcatProperties.put(key, properties.get(key));
       }
     }
 
-    return new StorerInfo(inputSDClass, outputSDClass, howlProperties);
+    return new StorerInfo(inputSDClass, outputSDClass, hcatProperties);
   }
 
 }

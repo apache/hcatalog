@@ -62,8 +62,8 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.thrift.TException;
 
-/** The OutputFormat to use to write data to Howl. The key value is ignored and
- * and should be given as null. The value is the HowlRecord to write.*/
+/** The OutputFormat to use to write data to HCat. The key value is ignored and
+ * and should be given as null. The value is the HCatRecord to write.*/
 public class HCatOutputFormat extends HCatBaseOutputFormat {
 
     /** The directory under which data is initially written for a non partitioned table */
@@ -147,13 +147,13 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
         if(UserGroupInformation.isSecurityEnabled()){
           UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
-          // check if oozie has set up a howl deleg. token - if so use it
+          // check if oozie has set up a hcat deleg. token - if so use it
           TokenSelector<? extends TokenIdentifier> tokenSelector = new DelegationTokenSelector();
           // TODO: will oozie use a "service" called "oozie" - then instead of
           // new Text() do new Text("oozie") below - if this change is made also
           // remember to do:
           //  job.getConfiguration().set(HCAT_KEY_TOKEN_SIGNATURE, "oozie");
-          // Also change code in HowlOutputCommitter.cleanupJob() to cancel the
+          // Also change code in HCatOutputCommitter.cleanupJob() to cancel the
           // token only if token.service is not "oozie" - remove the condition of
           // HCAT_KEY_TOKEN_SIGNATURE != null in that code.
           Token<? extends TokenIdentifier> token = tokenSelector.selectToken(
@@ -165,9 +165,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           } else {
 
             // we did not get token set up by oozie, let's get them ourselves here.
-            // we essentially get a token per unique Output HowlTableInfo - this is
+            // we essentially get a token per unique Output HCatTableInfo - this is
             // done because through Pig, setOutput() method is called multiple times
-            // We want to only get the token once per unique output HowlTableInfo -
+            // We want to only get the token once per unique output HCatTableInfo -
             // we cannot just get one token since in multi-query case (> 1 store in 1 job)
             // or the case when a single pig script results in > 1 jobs, the single
             // token will get cancelled by the output committer and the subsequent
@@ -178,9 +178,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             // cancel.
             String tokenSignature = getTokenSignature(outputInfo);
             if(tokenMap.get(tokenSignature) == null) {
-              // get delegation tokens from howl server and store them into the "job"
-              // These will be used in the HowlOutputCommitter to publish partitions to
-              // howl
+              // get delegation tokens from hcat server and store them into the "job"
+              // These will be used in the HCatOutputCommitter to publish partitions to
+              // hcat
               // when the JobTracker in Hadoop MapReduce starts supporting renewal of 
               // arbitrary tokens, the renewer should be the principal of the JobTracker
               String tokenStrForm = client.getDelegationToken(ugi.getUserName());
@@ -211,7 +211,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
 
-    // a signature string to associate with a HowlTableInfo - essentially
+    // a signature string to associate with a HCatTableInfo - essentially
     // a concatenation of dbname, tablename and partition keyvalues.
     private static String getTokenSignature(HCatTableInfo outputInfo) {
       StringBuilder result = new StringBuilder("");
@@ -312,7 +312,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       try{
         fs.setOwner(workFile, null, tblPathStat.getGroup());
       } catch(AccessControlException ace){
-        // log the messages before ignoring. Currently, logging is not built in Howl.
+        // log the messages before ignoring. Currently, logging is not built in HCat.
       }
       return rw;
     }

@@ -28,7 +28,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
-/** The HowlSplit wrapper around the InputSplit returned by the underlying InputFormat */
+/** The HCatSplit wrapper around the InputSplit returned by the underlying InputFormat */
 class HCatSplit extends InputSplit implements Writable {
 
     /** The partition info for the split. */
@@ -37,16 +37,16 @@ class HCatSplit extends InputSplit implements Writable {
     /** The split returned by the underlying InputFormat split. */
     private InputSplit baseSplit;
 
-    /** The schema for the HowlTable */
+    /** The schema for the HCatTable */
     private HCatSchema tableSchema;
     /**
-     * Instantiates a new howl split.
+     * Instantiates a new hcat split.
      */
     public HCatSplit() {
     }
 
     /**
-     * Instantiates a new howl split.
+     * Instantiates a new hcat split.
      *
      * @param partitionInfo the partition info
      * @param baseSplit the base split

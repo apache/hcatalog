@@ -35,8 +35,8 @@ public class PartInfo implements Serializable {
   /** The information about which input storage driver to use */
   private final String inputStorageDriverClass;
 
-  /** Howl-specific properties set at the partition */
-  private final Properties howlProperties;
+  /** HCat-specific properties set at the partition */
+  private final Properties hcatProperties;
 
   /** The data location. */
   private final String location;
@@ -45,17 +45,17 @@ public class PartInfo implements Serializable {
   private Map<String,String> partitionValues;
 
   /**
-   * Instantiates a new howl partition info.
+   * Instantiates a new hcat partition info.
    * @param partitionSchema the partition schema
    * @param inputStorageDriverClass the input storage driver class name
    * @param location the location
-   * @param howlProperties howl-specific properties at the partition
+   * @param hcatProperties hcat-specific properties at the partition
    */
-  public PartInfo(HCatSchema partitionSchema, String inputStorageDriverClass, String location, Properties howlProperties){
+  public PartInfo(HCatSchema partitionSchema, String inputStorageDriverClass, String location, Properties hcatProperties){
     this.partitionSchema = partitionSchema;
     this.inputStorageDriverClass = inputStorageDriverClass;
     this.location = location;
-    this.howlProperties = howlProperties;
+    this.hcatProperties = hcatProperties;
   }
 
   /**
@@ -77,11 +77,11 @@ public class PartInfo implements Serializable {
 
 
   /**
-   * Gets the value of howlProperties.
-   * @return the howlProperties
+   * Gets the value of hcatProperties.
+   * @return the hcatProperties
    */
   public Properties getInputStorageDriverProperties() {
-    return howlProperties;
+    return hcatProperties;
   }
 
   /**

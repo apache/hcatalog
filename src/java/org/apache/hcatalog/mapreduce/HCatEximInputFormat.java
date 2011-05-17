@@ -39,7 +39,7 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 
-/** The InputFormat to use to read data from Howl */
+/** The InputFormat to use to read data from HCat */
 public class HCatEximInputFormat extends HCatBaseInputFormat {
 
   /**
@@ -52,7 +52,7 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
    *          the job object
    * @param inputInfo
    *          the table input info
-   * @return two howl schemas, for the table columns and the partition keys
+   * @return two hcat schemas, for the table columns and the partition keys
    * @throws IOException
    *           the exception in communicating with the metadata server
    */
@@ -92,20 +92,20 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
         }else{
           throw new IOException("No input storage driver classname found, cannot read partition");
         }
-        Properties howlProperties = new Properties();
+        Properties hcatProperties = new Properties();
         for (String key : parameters.keySet()){
           if (key.startsWith(InitializeInput.HCAT_KEY_PREFIX)){
-            howlProperties.put(key, parameters.get(key));
+            hcatProperties.put(key, parameters.get(key));
           }
         }
-        PartInfo partInfo = new PartInfo(schema, inputStorageDriverClass,  location + "/data", howlProperties);
+        PartInfo partInfo = new PartInfo(schema, inputStorageDriverClass,  location + "/data", hcatProperties);
         partInfoList.add(partInfo);
       }
-      JobInfo howlJobInfo = new JobInfo(inputInfo,
+      JobInfo hcatJobInfo = new JobInfo(inputInfo,
           HCatUtil.getTableSchemaWithPtnCols(table), partInfoList);
       job.getConfiguration().set(
           HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(howlJobInfo));
+          HCatUtil.serialize(hcatJobInfo));
       List<HCatSchema> rv = new ArrayList<HCatSchema>(2);
       rv.add(HCatSchemaUtils.getHCatSchema(table.getSd().getCols()));
       rv.add(HCatSchemaUtils.getHCatSchema(partCols));

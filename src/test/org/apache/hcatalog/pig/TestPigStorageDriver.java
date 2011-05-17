@@ -56,21 +56,21 @@ import org.apache.thrift.TException;
 
 public class TestPigStorageDriver extends TestCase {
 
-  private HiveConf howlConf;
-  private Driver howlDriver;
+  private HiveConf hcatConf;
+  private Driver hcatDriver;
   private HiveMetaStoreClient msc;
 
   @Override
   protected void setUp() throws Exception {
 
-    howlConf = new HiveConf(this.getClass());
-    howlConf.set(ConfVars.PREEXECHOOKS.varname, "");
-    howlConf.set(ConfVars.POSTEXECHOOKS.varname, "");
-    howlConf.set(ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-    howlConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
-    howlDriver = new Driver(howlConf);
-    msc = new HiveMetaStoreClient(howlConf);
-    SessionState.start(new CliSessionState(howlConf));
+    hcatConf = new HiveConf(this.getClass());
+    hcatConf.set(ConfVars.PREEXECHOOKS.varname, "");
+    hcatConf.set(ConfVars.POSTEXECHOOKS.varname, "");
+    hcatConf.set(ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
+    hcatDriver = new Driver(hcatConf);
+    msc = new HiveMetaStoreClient(hcatConf);
+    SessionState.start(new CliSessionState(hcatConf));
     super.setUp();
   }
 
@@ -82,33 +82,33 @@ public class TestPigStorageDriver extends TestCase {
   public void testPigStorageDriver() throws IOException, CommandNeedRetryException{
 
 
-    String fsLoc = howlConf.get("fs.default.name");
+    String fsLoc = hcatConf.get("fs.default.name");
     Path tblPath = new Path(fsLoc, "/tmp/test_pig/data");
     String anyExistingFileInCurDir = "ivy.xml";
-    tblPath.getFileSystem(howlConf).copyFromLocalFile(new Path(anyExistingFileInCurDir),tblPath);
+    tblPath.getFileSystem(hcatConf).copyFromLocalFile(new Path(anyExistingFileInCurDir),tblPath);
 
-    howlDriver.run("drop table junit_pigstorage");
+    hcatDriver.run("drop table junit_pigstorage");
     CommandProcessorResponse resp;
     String createTable = "create table junit_pigstorage (a string) partitioned by (b string) stored as RCFILE";
 
-    resp = howlDriver.run(createTable);
+    resp = hcatDriver.run(createTable);
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = howlDriver.run("alter table junit_pigstorage add partition (b='2010-10-10') location '"+new Path(fsLoc, "/tmp/test_pig")+"'");
+    resp = hcatDriver.run("alter table junit_pigstorage add partition (b='2010-10-10') location '"+new Path(fsLoc, "/tmp/test_pig")+"'");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = howlDriver.run("alter table junit_pigstorage partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
+    resp = hcatDriver.run("alter table junit_pigstorage partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
         +"' outputformat '"+RCFileOutputFormat.class.getName()+"' inputdriver '"+PigStorageInputDriver.class.getName()+"' outputdriver 'non-existent'");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp =  howlDriver.run("desc extended junit_pigstorage partition (b='2010-10-10')");
+    resp =  hcatDriver.run("desc extended junit_pigstorage partition (b='2010-10-10')");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    PigServer server = new PigServer(ExecType.LOCAL, howlConf.getAllProperties());
+    PigServer server = new PigServer(ExecType.LOCAL, hcatConf.getAllProperties());
     UDFContext.getUDFContext().setClientSystemProps();
     server.registerQuery(" a = load 'junit_pigstorage' using "+HCatLoader.class.getName()+";");
     Iterator<Tuple> itr = server.openIterator("a");
@@ -131,26 +131,26 @@ public class TestPigStorageDriver extends TestCase {
     }
     assertEquals(0,stream.available());
     stream.close();
-    howlDriver.run("drop table junit_pigstorage");
+    hcatDriver.run("drop table junit_pigstorage");
   }
 
   public void testDelim() throws MetaException, TException, UnknownTableException, NoSuchObjectException, InvalidOperationException, IOException, CommandNeedRetryException{
 
-    howlDriver.run("drop table junit_pigstorage_delim");
+    hcatDriver.run("drop table junit_pigstorage_delim");
 
     CommandProcessorResponse resp;
     String createTable = "create table junit_pigstorage_delim (a string) partitioned by (b string) stored as RCFILE";
 
-    resp = howlDriver.run(createTable);
+    resp = hcatDriver.run(createTable);
 
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = howlDriver.run("alter table junit_pigstorage_delim add partition (b='2010-10-10')");
+    resp = hcatDriver.run("alter table junit_pigstorage_delim add partition (b='2010-10-10')");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = howlDriver.run("alter table junit_pigstorage_delim partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
+    resp = hcatDriver.run("alter table junit_pigstorage_delim partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
         +"' outputformat '"+RCFileOutputFormat.class.getName()+"' inputdriver '"+MyPigStorageDriver.class.getName()+"' outputdriver 'non-existent'");
 
     Partition part = msc.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, "junit_pigstorage_delim", "b=2010-10-10");
@@ -159,7 +159,7 @@ public class TestPigStorageDriver extends TestCase {
 
     msc.alter_partition(MetaStoreUtils.DEFAULT_DATABASE_NAME, "junit_pigstorage_delim", part);
 
-    PigServer server = new PigServer(ExecType.LOCAL, howlConf.getAllProperties());
+    PigServer server = new PigServer(ExecType.LOCAL, hcatConf.getAllProperties());
     UDFContext.getUDFContext().setClientSystemProps();
     server.registerQuery(" a = load 'junit_pigstorage_delim' using "+HCatLoader.class.getName()+";");
     try{

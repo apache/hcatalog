@@ -66,13 +66,13 @@ import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 /**
- * Test for HowlOutputFormat. Writes a partition using HowlOutputFormat and reads
+ * Test for HCatOutputFormat. Writes a partition using HCatOutputFormat and reads
  * it back using HCatInputFormat, checks the column values and counts.
  */
 public abstract class HCatMapReduceTest extends TestCase {
 
   protected String dbName = "default";
-  protected String tableName = "testHowlMapReduceTable";
+  protected String tableName = "testHCatMapReduceTable";
 
   protected String inputFormat = RCFileInputFormat.class.getName();
   protected String outputFormat = RCFileOutputFormat.class.getName();
@@ -249,14 +249,14 @@ public abstract class HCatMapReduceTest extends TestCase {
     MapCreate.writeCount = 0;
 
     Configuration conf = new Configuration();
-    Job job = new Job(conf, "howl mapreduce write test");
+    Job job = new Job(conf, "hcat mapreduce write test");
     job.setJarByClass(this.getClass());
     job.setMapperClass(HCatMapReduceTest.MapCreate.class);
 
     // input/output settings
     job.setInputFormatClass(TextInputFormat.class);
 
-    Path path = new Path(fs.getWorkingDirectory(), "mapred/testHowlMapReduceInput");
+    Path path = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceInput");
     createInputFile(path, writeCount);
 
     TextInputFormat.setInputPaths(job, path);
@@ -273,7 +273,7 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     HCatOutputFormat.setSchema(job, new HCatSchema(partitionColumns));
 
-    //new HowlOutputCommitter(null).setupJob(job);
+    //new HCatOutputCommitter(null).setupJob(job);
     job.waitForCompletion(true);
     new HCatOutputCommitter(null).cleanupJob(job);
     Assert.assertEquals(writeCount, MapCreate.writeCount);
@@ -289,7 +289,7 @@ public abstract class HCatMapReduceTest extends TestCase {
     readRecords.clear();
 
     Configuration conf = new Configuration();
-    Job job = new Job(conf, "howl mapreduce read test");
+    Job job = new Job(conf, "hcat mapreduce read test");
     job.setJarByClass(this.getClass());
     job.setMapperClass(HCatMapReduceTest.MapRead.class);
 
@@ -306,7 +306,7 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     job.setNumReduceTasks(0);
 
-    Path path = new Path(fs.getWorkingDirectory(), "mapred/testHowlMapReduceOutput");
+    Path path = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceOutput");
     if( fs.exists(path) ) {
       fs.delete(path, true);
     }
@@ -323,7 +323,7 @@ public abstract class HCatMapReduceTest extends TestCase {
   protected HCatSchema getTableSchema() throws Exception {
 
     Configuration conf = new Configuration();
-    Job job = new Job(conf, "howl mapreduce read schema test");
+    Job job = new Job(conf, "hcat mapreduce read schema test");
     job.setJarByClass(this.getClass());
 
     // input/output settings

@@ -89,7 +89,7 @@ public class TestHCatHiveCompatibility extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    // assert that the table created has no howl instrumentation, and that we're still able to read it.
+    // assert that the table created has no hcat instrumentation, and that we're still able to read it.
     Table table = client.getTable("default", "junit_unparted_noisd");
     assertFalse(table.getParameters().containsKey(HCatConstants.HCAT_ISD_CLASS));
     assertTrue(table.getSd().getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS));
@@ -113,7 +113,7 @@ public class TestHCatHiveCompatibility extends TestCase {
     assertFalse(itr.hasNext());
     assertEquals(11, i);
 
-    // assert that the table created still has no howl instrumentation
+    // assert that the table created still has no hcat instrumentation
     Table table2 = client.getTable("default", "junit_unparted_noisd");
     assertFalse(table2.getParameters().containsKey(HCatConstants.HCAT_ISD_CLASS));
     assertTrue(table2.getSd().getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS));
@@ -130,7 +130,7 @@ public class TestHCatHiveCompatibility extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    // assert that the table created has no howl instrumentation, and that we're still able to read it.
+    // assert that the table created has no hcat instrumentation, and that we're still able to read it.
     Table table = client.getTable("default", "junit_parted_noisd");
 
     assertFalse(table.getParameters().containsKey(HCatConstants.HCAT_ISD_CLASS));
@@ -156,12 +156,12 @@ public class TestHCatHiveCompatibility extends TestCase {
     assertFalse(itr.hasNext());
     assertEquals(11, i);
 
-    // assert that the table created still has no howl instrumentation
+    // assert that the table created still has no hcat instrumentation
     Table table2 = client.getTable("default", "junit_parted_noisd");
     assertFalse(table2.getParameters().containsKey(HCatConstants.HCAT_ISD_CLASS));
     assertTrue(table2.getSd().getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS));
 
-    // assert that there is one partition present, and it had howl instrumentation inserted when it was created.
+    // assert that there is one partition present, and it had hcat instrumentation inserted when it was created.
     Partition ptn = client.getPartition("default", "junit_parted_noisd", Arrays.asList("42"));
 
     assertNotNull(ptn);

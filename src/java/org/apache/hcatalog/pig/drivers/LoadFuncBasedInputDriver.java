@@ -38,9 +38,9 @@ import org.apache.pig.data.Tuple;
 
 
 /**
- * This is a base class which wraps a Load func in HowlInputStorageDriver.
+ * This is a base class which wraps a Load func in HCatInputStorageDriver.
  * If you already have a LoadFunc, then this class along with LoadFuncBasedInputFormat
- * is doing all the heavy lifting. For a new Howl Input Storage Driver just extend it
+ * is doing all the heavy lifting. For a new HCat Input Storage Driver just extend it
  * and override the initialize(). {@link PigStorageInputDriver} illustrates
  * that well.
  */
@@ -57,7 +57,7 @@ public abstract class LoadFuncBasedInputDriver extends HCatInputStorageDriver{
       throws IOException {
 
     List<Object> data = ((Tuple)baseValue).getAll();
-    List<Object> howlRecord = new ArrayList<Object>(desiredColNames.size());
+    List<Object> hcatRecord = new ArrayList<Object>(desiredColNames.size());
 
     /* Iterate through columns asked for in output schema, look them up in
      * original data schema. If found, put it. Else look up in partition columns
@@ -66,28 +66,28 @@ public abstract class LoadFuncBasedInputDriver extends HCatInputStorageDriver{
      */
     for(String colName : desiredColNames){
       Integer idx = dataSchema.getPosition(colName);
-      howlRecord.add( idx != null ? data.get(idx) : partVals.get(colName));
+      hcatRecord.add( idx != null ? data.get(idx) : partVals.get(colName));
     }
-    return new DefaultHCatRecord(howlRecord);
+    return new DefaultHCatRecord(hcatRecord);
   }
 
   @Override
   public InputFormat<? extends WritableComparable, ? extends Writable> getInputFormat(
-      Properties howlProperties) {
+      Properties hcatProperties) {
 
     return inputFormat;
   }
 
   @Override
-  public void setOriginalSchema(JobContext jobContext, HCatSchema howlSchema) throws IOException {
+  public void setOriginalSchema(JobContext jobContext, HCatSchema hcatSchema) throws IOException {
 
-    dataSchema = howlSchema;
+    dataSchema = hcatSchema;
   }
 
   @Override
-  public void setOutputSchema(JobContext jobContext, HCatSchema howlSchema) throws IOException {
+  public void setOutputSchema(JobContext jobContext, HCatSchema hcatSchema) throws IOException {
 
-    desiredColNames = howlSchema.getFieldNames();
+    desiredColNames = hcatSchema.getFieldNames();
   }
 
   @Override

@@ -40,7 +40,7 @@ import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
- * HowlStorer.
+ * HCatStorer.
  *
  */
 
@@ -75,11 +75,11 @@ public class HCatStorer extends HCatBaseStorer {
     String[] userStr = location.split("\\.");
     HCatTableInfo tblInfo;
     if(userStr.length == 2) {
-      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHowlServerUri(job),
-          PigHCatUtil.getHowlServerPrincipal(job), userStr[0],userStr[1],partitions);
+      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHCatServerUri(job),
+          PigHCatUtil.getHCatServerPrincipal(job), userStr[0],userStr[1],partitions);
     } else {
-      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHowlServerUri(job),
-          PigHCatUtil.getHowlServerPrincipal(job), null,userStr[0],partitions);
+      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHCatServerUri(job),
+          PigHCatUtil.getHCatServerPrincipal(job), null,userStr[0],partitions);
     }
 
 
@@ -101,13 +101,13 @@ public class HCatStorer extends HCatBaseStorer {
           // information passed to HCatOutputFormat was not right
           throw new PigException(he.getMessage(), PigHCatUtil.PIG_EXCEPTION_CODE, he);
       }
-      HCatSchema howlTblSchema = HCatOutputFormat.getTableSchema(job);
+      HCatSchema hcatTblSchema = HCatOutputFormat.getTableSchema(job);
       try{
-        doSchemaValidations(pigSchema, howlTblSchema);
+        doSchemaValidations(pigSchema, hcatTblSchema);
       } catch(HCatException he){
         throw new FrontendException(he.getMessage(), PigHCatUtil.PIG_EXCEPTION_CODE, he);
       }
-      computedSchema = convertPigSchemaToHCatSchema(pigSchema,howlTblSchema);
+      computedSchema = convertPigSchemaToHCatSchema(pigSchema,hcatTblSchema);
       HCatOutputFormat.setSchema(job, computedSchema);
       p.setProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO, config.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
       if(config.get(HCatConstants.HCAT_KEY_HIVE_CONF) != null){
@@ -134,7 +134,7 @@ public class HCatStorer extends HCatBaseStorer {
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
     if( job.getConfiguration().get("mapred.job.tracker", "").equalsIgnoreCase("local") ) {
-      //In local mode, mapreduce will not call HowlOutputCommitter.cleanupJob.
+      //In local mode, mapreduce will not call HCatOutputCommitter.cleanupJob.
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
       new HCatOutputCommitter(null).cleanupJob(job);

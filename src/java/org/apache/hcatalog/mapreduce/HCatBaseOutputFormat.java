@@ -37,11 +37,11 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparable<?>, HCatRecord> {
 
   /**
-   * Gets the table schema for the table specified in the HowlOutputFormat.setOutput call
+   * Gets the table schema for the table specified in the HCatOutputFormat.setOutput call
    * on the specified job context.
    * @param context the context
    * @return the table schema
-   * @throws IOException if HowlOutputFromat.setOutput has not been called for the passed context
+   * @throws IOException if HCatOutputFromat.setOutput has not been called for the passed context
    */
   public static HCatSchema getTableSchema(JobContext context) throws IOException {
       OutputJobInfo jobInfo = getJobInfo(context);
@@ -76,9 +76,9 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   /**
-   * Gets the HowlOuputJobInfo object by reading the Configuration and deserializing
+   * Gets the HCatOuputJobInfo object by reading the Configuration and deserializing
    * the string. If JobInfo is not present in the configuration, throws an
-   * exception since that means HowlOutputFormat.setOutput has not been called.
+   * exception since that means HCatOutputFormat.setOutput has not been called.
    * @param jobContext the job context
    * @return the OutputJobInfo object
    * @throws IOException the IO exception

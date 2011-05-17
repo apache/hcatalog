@@ -54,7 +54,7 @@ public class PigHCatUtil {
   static final int PIG_EXCEPTION_CODE = 1115; // http://wiki.apache.org/pig/PigErrorHandlingFunctionalSpecification#Error_codes
   private static final String DEFAULT_DB = MetaStoreUtils.DEFAULT_DATABASE_NAME;
 
-  private final  Map<Pair<String,String>, Table> howlTableCache =
+  private final  Map<Pair<String,String>, Table> hcatTableCache =
     new HashMap<Pair<String,String>, Table>();
 
   private static final TupleFactory tupFac = TupleFactory.getInstance();
@@ -62,7 +62,7 @@ public class PigHCatUtil {
   static public Pair<String, String> getDBTableNames(String location) throws IOException {
     // the location string will be of the form:
     // <database name>.<table name> - parse it and
-    // communicate the information to HowlInputFormat
+    // communicate the information to HCatInputFormat
 
     String[] dbTableNametokens = location.split("\\.");
     if(dbTableNametokens.length == 1) {
@@ -77,12 +77,12 @@ public class PigHCatUtil {
     }
   }
 
-  static public String getHowlServerUri(Job job) {
+  static public String getHCatServerUri(Job job) {
 
     return job.getConfiguration().get(HCatConstants.HCAT_METASTORE_URI);
   }
 
-  static public String getHowlServerPrincipal(Job job) {
+  static public String getHCatServerPrincipal(Job job) {
 
     return job.getConfiguration().get(HCatConstants.HCAT_METASTORE_PRINCIPAL);
   }
@@ -120,20 +120,20 @@ public class PigHCatUtil {
 
     Properties props = UDFContext.getUDFContext().getUDFProperties(
         classForUDFCLookup, new String[] {signature});
-    HCatSchema howlTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
+    HCatSchema hcatTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
 
     ArrayList<HCatFieldSchema> fcols = new ArrayList<HCatFieldSchema>();
     for(RequiredField rf: fields) {
-      fcols.add(howlTableSchema.getFields().get(rf.getIndex()));
+      fcols.add(hcatTableSchema.getFields().get(rf.getIndex()));
     }
     return new HCatSchema(fcols);
   }
 
-  public Table getTable(String location, String howlServerUri, String howlServerPrincipal) throws IOException{
-    Pair<String, String> loc_server = new Pair<String,String>(location, howlServerUri);
-    Table howlTable = howlTableCache.get(loc_server);
-    if(howlTable != null){
-      return howlTable;
+  public Table getTable(String location, String hcatServerUri, String hcatServerPrincipal) throws IOException{
+    Pair<String, String> loc_server = new Pair<String,String>(location, hcatServerUri);
+    Table hcatTable = hcatTableCache.get(loc_server);
+    if(hcatTable != null){
+      return hcatTable;
     }
 
     Pair<String, String> dbTablePair = PigHCatUtil.getDBTableNames(location);
@@ -141,21 +141,21 @@ public class PigHCatUtil {
     String tableName = dbTablePair.second;
     Table table = null;
     try {
-      client = createHiveMetaClient(howlServerUri, howlServerPrincipal, PigHCatUtil.class);
+      client = createHiveMetaClient(hcatServerUri, hcatServerPrincipal, PigHCatUtil.class);
       table = client.getTable(dbName, tableName);
     } catch (NoSuchObjectException nsoe){
       throw new PigException("Table not found : " + nsoe.getMessage(), PIG_EXCEPTION_CODE); // prettier error messages to frontend
     } catch (Exception e) {
       throw new IOException(e);
     }
-    howlTableCache.put(loc_server, table);
+    hcatTableCache.put(loc_server, table);
     return table;
   }
 
-  public static ResourceSchema getResourceSchema(HCatSchema howlSchema) throws IOException {
+  public static ResourceSchema getResourceSchema(HCatSchema hcatSchema) throws IOException {
 
     List<ResourceFieldSchema> rfSchemaList = new ArrayList<ResourceFieldSchema>();
-    for (HCatFieldSchema hfs : howlSchema.getFields()){
+    for (HCatFieldSchema hfs : hcatSchema.getFields()){
       ResourceFieldSchema rfSchema;
       rfSchema = getResourceSchemaFromFieldSchema(hfs);
       rfSchemaList.add(rfSchema);
@@ -229,7 +229,7 @@ public class PigHCatUtil {
   }
 
 /**
-   * @param type owl column type
+   * @param type hcat column type
    * @return corresponding pig type
    * @throws IOException
    */
@@ -351,8 +351,8 @@ public static Object extractPigObject(Object o, HCatFieldSchema hfs) throws Exce
   }
 
 
-  public static void validateHowlTableSchemaFollowsPigRules(HCatSchema howlTableSchema) throws IOException {
-      for (HCatFieldSchema hfs : howlTableSchema.getFields()){
+  public static void validateHCatTableSchemaFollowsPigRules(HCatSchema hcatTableSchema) throws IOException {
+      for (HCatFieldSchema hfs : hcatTableSchema.getFields()){
           Type htype = hfs.getType();
           if (htype == Type.ARRAY){
               validateIsPigCompatibleArrayWithPrimitivesOrSimpleComplexTypes(hfs);

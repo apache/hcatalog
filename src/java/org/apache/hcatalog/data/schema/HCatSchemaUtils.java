@@ -209,13 +209,13 @@ public class HCatSchemaUtils {
         return outerSchema.get(0).getStructSubSchema();
     }
 
-    public static FieldSchema getFieldSchema(HCatFieldSchema howlFieldSchema){
-        return new FieldSchema(howlFieldSchema.getName(),howlFieldSchema.getTypeString(),howlFieldSchema.getComment());
+    public static FieldSchema getFieldSchema(HCatFieldSchema hcatFieldSchema){
+        return new FieldSchema(hcatFieldSchema.getName(),hcatFieldSchema.getTypeString(),hcatFieldSchema.getComment());
     }
 
-    public static List<FieldSchema> getFieldSchemas(List<HCatFieldSchema> howlFieldSchemas){
+    public static List<FieldSchema> getFieldSchemas(List<HCatFieldSchema> hcatFieldSchemas){
         List<FieldSchema> lfs = new ArrayList<FieldSchema>();
-        for (HCatFieldSchema hfs : howlFieldSchemas){
+        for (HCatFieldSchema hfs : hcatFieldSchemas){
             lfs.add(getFieldSchema(hfs));
         }
         return lfs;

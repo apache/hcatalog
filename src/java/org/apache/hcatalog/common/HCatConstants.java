@@ -56,7 +56,7 @@ public final class HCatConstants {
 
   // IMPORTANT IMPORTANT IMPORTANT!!!!!
   //The keys used to store info into the job Configuration.
-  //If any new keys are added, the HowlStorer needs to be updated. The HowlStorer
+  //If any new keys are added, the HCatStorer needs to be updated. The HCatStorer
   //updates the job configuration in the backend to insert these keys to avoid
   //having to call setOutput from the backend (which would cause a metastore call
   //from the map jobs)

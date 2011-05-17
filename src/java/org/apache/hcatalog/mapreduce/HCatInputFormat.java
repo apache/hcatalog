@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import org.apache.hadoop.mapreduce.Job;
 
-/** The InputFormat to use to read data from Howl */
+/** The InputFormat to use to read data from HCat */
 public class HCatInputFormat extends HCatBaseInputFormat {
 
   /**

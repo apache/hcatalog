@@ -33,19 +33,19 @@ import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 /* Unit test for GitHub Howl issue #3 */
 public class TestUseDatabase extends TestCase{
 
-  private Driver howlDriver;
+  private Driver hcatDriver;
 
   @Override
   protected void setUp() throws Exception {
 
-    HiveConf howlConf = new HiveConf(this.getClass());
-    howlConf.set(ConfVars.PREEXECHOOKS.varname, "");
-    howlConf.set(ConfVars.POSTEXECHOOKS.varname, "");
-    howlConf.set(ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    HiveConf hcatConf = new HiveConf(this.getClass());
+    hcatConf.set(ConfVars.PREEXECHOOKS.varname, "");
+    hcatConf.set(ConfVars.POSTEXECHOOKS.varname, "");
+    hcatConf.set(ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
 
-    howlConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
-    howlDriver = new Driver(howlConf);
-    SessionState.start(new CliSessionState(howlConf));
+    hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
+    hcatDriver = new Driver(hcatConf);
+    SessionState.start(new CliSessionState(hcatConf));
   }
 
   String query;
@@ -54,23 +54,23 @@ public class TestUseDatabase extends TestCase{
 
   public void testAlterTablePass() throws IOException, CommandNeedRetryException{
 
-    howlDriver.run("create database " + dbName);
-    howlDriver.run("use " + dbName);
-    howlDriver.run("create table " + tblName + " (a int) partitioned by (b string) stored as RCFILE");
+    hcatDriver.run("create database " + dbName);
+    hcatDriver.run("use " + dbName);
+    hcatDriver.run("create table " + tblName + " (a int) partitioned by (b string) stored as RCFILE");
 
     CommandProcessorResponse response;
 
-    response = howlDriver.run("alter table " + tblName + " add partition (b='2') location '/tmp'");
+    response = hcatDriver.run("alter table " + tblName + " add partition (b='2') location '/tmp'");
     assertEquals(0, response.getResponseCode());
     assertNull(response.getErrorMessage());
 
-    response = howlDriver.run("alter table " + tblName + " set fileformat INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
+    response = hcatDriver.run("alter table " + tblName + " set fileformat INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
         "'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver'");
     assertEquals(0, response.getResponseCode());
     assertNull(response.getErrorMessage());
 
-    howlDriver.run("drop table " + tblName);
-    howlDriver.run("drop database " + dbName);
+    hcatDriver.run("drop table " + tblName);
+    hcatDriver.run("drop database " + dbName);
   }
 
 }

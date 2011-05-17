@@ -42,7 +42,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
   @Override
   protected void initialize() throws Exception {
 
-    tableName = "testHowlPartitionedTable";
+    tableName = "testHCatPartitionedTable";
     writeRecords = new ArrayList<HCatRecord>();
 
     for(int i = 0;i < 20;i++) {
@@ -75,7 +75,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
   }
 
 
-  public void testHowlPartitionedTable() throws Exception {
+  public void testHCatPartitionedTable() throws Exception {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value1");
@@ -297,7 +297,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     runMRRead(70);
   }
 
-  //Test that data inserted through howloutputformat is readable from hive
+  //Test that data inserted through hcatoutputformat is readable from hive
   private void hiveReadTest() throws Exception {
 
     String query = "select * from " + tableName;

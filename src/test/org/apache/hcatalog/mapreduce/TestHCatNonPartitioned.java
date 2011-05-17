@@ -42,7 +42,7 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
   protected void initialize() throws HCatException {
 
     dbName = null; //test if null dbName works ("default" is used)
-    tableName = "testHowlNonPartitionedTable";
+    tableName = "testHCatNonPartitionedTable";
 
     writeRecords = new ArrayList<HCatRecord>();
 
@@ -75,7 +75,7 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
   }
 
 
-  public void testHowlNonPartitionedTable() throws Exception {
+  public void testHCatNonPartitionedTable() throws Exception {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
     runMRCreate(null, partitionColumns, writeRecords, 10);
@@ -113,7 +113,7 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
     hiveReadTest();
   }
 
-  //Test that data inserted through howloutputformat is readable from hive
+  //Test that data inserted through hcatoutputformat is readable from hive
   private void hiveReadTest() throws Exception {
 
     String query = "select * from " + tableName;

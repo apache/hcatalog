@@ -131,12 +131,12 @@ public class HCatUtil {
         return schema;
   }
 
-  public static List<FieldSchema> getFieldSchemaList(List<HCatFieldSchema> howlFields) {
-      if(howlFields == null) {
+  public static List<FieldSchema> getFieldSchemaList(List<HCatFieldSchema> hcatFields) {
+      if(hcatFields == null) {
           return null;
       } else {
           List<FieldSchema> result = new ArrayList<FieldSchema>();
-          for(HCatFieldSchema f: howlFields) {
+          for(HCatFieldSchema f: hcatFields) {
               result.add(HCatSchemaUtils.getFieldSchema(f));
           }
           return result;

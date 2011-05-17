@@ -49,7 +49,7 @@ public class HCatRecordWriter extends RecordWriter<WritableComparable<?>, HCatRe
 
       if(partColsToDel == null){
         throw new HCatException("It seems that setSchema() is not called on " +
-        		"HowlOutputFormat. Please make sure that method is called.");
+        		"HCatOutputFormat. Please make sure that method is called.");
       }
 
       this.storageDriver = HCatOutputFormat.getOutputDriverInstance(context, jobInfo);
