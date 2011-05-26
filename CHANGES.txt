@@ -1,0 +1,54 @@
+Apache HCatalog Change Log
+
+Trunk (unreleased changes)
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+    HCAT-16. Add InputFormat/OutputFormat for handling exported tables/partitions.
+    (Krishna Kumar via macyang)
+    
+  IMPROVEMENTS
+ 
+    HCAT-30. Need changes.txt (Jakob Homan via hashutosh)
+  
+    HCAT-19. Enable and add decorators for the export/import cli commands 
+    for authorization and permission setting. (Krishna Kumar via macyang)
+
+    HCAT-18. Refactor TestRCFileInputStorageDriver. (Jakob Homan via hashutosh)
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+    HCAT-12. Get trunk to build. (hashutosh)
+
+    HCAT-17. Shouldn't be able to add an HCatFieldSchema with the same name as 
+    existing field. (Jakob Homan via gates)
+
+    HCAT-28. Trunk test not compiling: Upstream Hive changes broke TestPermsGrp.
+    (Jakob Homan via hashutosh)
+
+    HCAT-15. Replace all occurrences of 'howl' with hcat/hcatalog. 
+    (Jakob Homan via macyang)
+
+Release 0.1 - Unreleased
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+    HCAT-1. Upload initial code to HCatalog (gates)
+
+    HCAT-4. Get the build working for HCatalog. (gates)
+
+    HCAT-9. Get a beginning HCatalog website up. (gates)
+
+  IMPROVEMENTS
+
+    HCAT-29. Remove Yahoo copyright from documentation (Jakob Homan via hashutosh)
+  
+  OPTIMIZATIONS
+
+  BUG FIXES
+    HCAT-7. Ivy fetch of CDH Hadoop versions does not work properly. (gates)
+
+    HCAT-6. Unit test TestPermsInheritance fails. (hashutosh)
