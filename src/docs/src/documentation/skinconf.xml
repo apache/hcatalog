@@ -93,13 +93,11 @@ which will be used to configure the chosen Forrest skin.
 
 <!-- @inception enable automatic generation of a date-range to current date -->
   <year inception="true">2011</year>
-  <vendor>Yahoo! Inc.</vendor>
+  <vendor>The Apache Software Foundation</vendor>
  
     
-<!-- The optional copyright-link URL will be used as a link in the
-    copyright statement 
-  <copyright-link>http://www.example.org/</copyright-link>
-  -->
+  <copyright-link>http://www.apache.org/licenses/</copyright-link>
+ 
 
   
 <!-- Some skins use this to form a 'breadcrumb trail' of links.
