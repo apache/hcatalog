@@ -10,6 +10,8 @@ Trunk (unreleased changes)
     
   IMPROVEMENTS
  
+    HCAT-29. Remove Yahoo copyright from documentation (Jakob Homan via hashutosh)
+  
     HCAT-30. Need changes.txt (Jakob Homan via hashutosh)
   
     HCAT-19. Enable and add decorators for the export/import cli commands 
