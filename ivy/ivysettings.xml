@@ -36,10 +36,17 @@
   <include url="${ivy.default.conf.dir}/ivyconf-local.xml"/>
   <settings defaultResolver="default"/>
   <resolvers>
+    <ibiblio
+      name="jboss"
+      m2compatible="true"
+      root="https://repository.jboss.org/nexus/content/groups/public"
+      pattern="[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+
     <ibiblio name="maven2" root="${repo.maven.org}" pattern="${maven2.pattern.ext}" m2compatible="true"/>
     <chain name="default" dual="true">
       <resolver ref="local"/>
       <resolver ref="maven2"/>
+      <resolver ref="jboss"/>
     </chain>
     <chain name="internal">
       <resolver ref="local"/>

@@ -100,7 +100,10 @@
     <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
       includes="hadoop-core-0.20.3-CDH3-SNAPSHOT.jar"/>
     <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
-    
+    <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-2.3-ec.jar"/>
+    <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-enhancer-2.0.3.jar"/>
+    <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-2.0.3.jar"/>
+ <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
   </path>
 
   <path id="test.classpath">
@@ -217,6 +220,7 @@
       <compilerarg line="${javac.args}"/>
       <classpath refid="classpath" />
     </javac>
+  <antcall target="model-enhance" />
   </target>
  
   <!-- Build the jar, this is the default -->
@@ -230,6 +234,31 @@
     </jar>
   </target>
 
+ <!--
+  ================================================================================
+  Datanucleus Section
+  ================================================================================
+  -->
+
+ <target name="model-enhance">
+    <taskdef name="datanucleusenhancer"
+                classname="org.datanucleus.enhancer.tools.EnhancerTask">
+       <classpath refid="classpath"/>
+   </taskdef>
+
+    <datanucleusenhancer
+        dir="${basedir}" failonerror="true" verbose="true" fork="true">
+    <fileset dir="${src.dir}/org/apache/hcatalog/metadata/">
+	<include name="ormodel.jdo" />
+    </fileset>   
+    <classpath>
+          <path refid="classpath"/>
+          <pathelement path="${build.dir}/classes/"/>
+        </classpath>
+        <jvmarg line="-Dlog4j.configuration=${basedir}/../conf/hive-log4j.properties"/>
+    </datanucleusenhancer>
+  </target>
+  
   <!--
   ================================================================================
   Test Section

@@ -5,6 +5,9 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+ 
+    HCAT-3. Send a message on a message bus when events occur in Metastore (hashutosh)
+  
     HCAT-16. Add InputFormat/OutputFormat for handling exported tables/partitions.
     (Krishna Kumar via macyang)
     

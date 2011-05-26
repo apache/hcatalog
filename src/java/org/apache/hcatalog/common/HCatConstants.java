@@ -64,4 +64,20 @@ public final class HCatConstants {
   public static final String HCAT_KEY_OUTPUT_INFO = HCAT_KEY_OUTPUT_BASE + ".info";
   public static final String HCAT_KEY_HIVE_CONF = HCAT_KEY_OUTPUT_BASE + ".hive.conf";
   public static final String HCAT_KEY_TOKEN_SIGNATURE = HCAT_KEY_OUTPUT_BASE + ".token.sig";
+  
+  public static final String HCAT_MSG_CLEAN_FREQ = "hcat.msg.clean.freq";
+  public static final String HCAT_MSG_EXPIRY_DURATION = "hcat.msg.expiry.duration";
+  
+  public static final String HCAT_MSGBUS_TOPIC_NAME = "hcat.msgbus.topic.name";
+  public static final String HCAT_MSGBUS_TOPIC_NAMING_POLICY = "hcat.msgbus.topic.naming.policy";
+
+  // Message Bus related properties.
+  public static final String HCAT_TOPIC = "HCAT";
+  public static final String HCAT_EVENT = "HCAT_EVENT";
+  public static final String HCAT_ADD_PARTITION_EVENT = "HCAT_ADD_PARTITION";
+  public static final String HCAT_DROP_PARTITION_EVENT = "HCAT_DROP_PARTITION";
+  public static final String HCAT_ADD_TABLE_EVENT = "HCAT_ADD_TABLE";
+  public static final String HCAT_DROP_TABLE_EVENT = "HCAT_DROP_TABLE";
+  public static final String HCAT_ADD_DATABASE_EVENT = "HCAT_ADD_DATABASE";
+  public static final String HCAT_DROP_DATABASE_EVENT = "HCAT_DROP_DATABASE";
 }
