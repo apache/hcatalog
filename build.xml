@@ -282,6 +282,7 @@
       <!-- If anyone knows how to set umask inside ant please do so -->
       <exec executable="bin/umaskcheck.sh" failonerror="true"/>
       <delete dir="${test.log.dir}"/>
+      <delete dir="${test.warehouse.dir}"/>
       <mkdir dir="${test.log.dir}"/>
       <mkdir dir="${test.warehouse.dir}"/>
       <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
