@@ -236,6 +236,19 @@
     </jar>
   </target>
 
+  <!--
+  ================================================================================
+  Build server side code, mainly listener.
+  ================================================================================
+  -->
+  <!-- Build the server side jar -->
+  <target name="server-extensions" depends="compile-src">
+     <jar jarfile="${build.dir}/${ant.project.name}/${final.name}-server-extensions.jar" basedir="${build.classes}"
+ 	  includes="org/apache/hcatalog/listener/**,org/apache/hcatalog/metadata/**">
+ </jar>
+  </target>
+
+
  <!--
   ================================================================================
   Datanucleus Section

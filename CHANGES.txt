@@ -13,6 +13,8 @@ Trunk (unreleased changes)
     
   IMPROVEMENTS
 
+    HCAT-34. Add ant target for server side classes (hashutosh)
+    
     HCAT-33. minor changes to the test target in build.xml (macyang via hashutosh)
  
     HCAT-30. Need changes.txt (Jakob Homan via hashutosh)
