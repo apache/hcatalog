@@ -32,8 +32,10 @@
 
   <!-- hive properties -->
   <property name="hive.root" value="${basedir}/hive/external"/>
+  <property name="hive.version" value="0.7.0"/>
 
   <!-- build properties -->
+  <property name="lib.dir" value="${basedir}/lib/" />
   <property name="src.dir"  location="${basedir}/src/java"/>
   <property name="docs.src" value="${basedir}/src/docs"/>
   <property name="build.dir" value="${basedir}/build"/>
@@ -323,4 +325,154 @@
     <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
   </target>
 
+  <!--
+  ===============================================================================
+  Distribution Section
+  ===============================================================================
+  -->
+  <target name="package" depends="fatjar, docs" description="Create an HCatalog release">
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${dist.dir}/lib" />
+    <mkdir dir="${dist.dir}/conf" />
+    <mkdir dir="${dist.dir}/bin" />
+    <mkdir dir="${dist.dir}/bin/ext" />
+    <mkdir dir="${dist.dir}/bin/ext/util" />
+    <mkdir dir="${dist.dir}/scripts" />
+    <mkdir dir="${dist.dir}/docs" />
+    <mkdir dir="${dist.dir}/docs/api" />
+    <mkdir dir="${dist.dir}/docs/jdiff"/>
+    <mkdir dir="${dist.dir}/license" />
+
+    <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
+      <fileset dir="${lib.dir}"/>
+
+      <fileset file="hcatalog-*.jar"/>
+
+      <fileset dir="hive/external/build/ivy/lib/default">
+        <include name="jdo2-api-*.jar"/>
+        <include name="log4j-*.jar"/>
+        <include name="datanucleus-connectionpool-*.jar"/>
+        <include name="datanucleus-core-*.jar"/>
+        <include name="datanucleus-rdbms-*.jar"/>
+        <include name="datanucleus-enhancer-*.jar"/>
+        <include name="commons-cli-*.jar"/>
+        <include name="commons-pool-*.jar"/>
+        <include name="commons-dbcp-*.jar"/>
+        <include name="guava-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/common">
+        <include name="hive-common-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/cli">
+        <include name="hive-cli-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/service">
+        <include name="hive-service-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/serde">
+        <include name="hive-serde-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/ql">
+        <include name="hive-exec-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/metastore">
+        <include name="hive-metastore-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/lib">
+        <include name="commons-collections-*.jar"/>
+        <include name="commons-logging-*.jar"/>
+        <include name="commons-logging-api-*.jar"/>
+        <include name="commons-lang-*.jar"/>
+        <include name="asm-api-*.jar"/>
+        <include name="derby-*.jar"/>
+        <include name="thrift-fb303-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/cli/lib">
+        <include name="jline-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/ql/lib">
+        <include name="antlr-runtime-*.jar"/>
+      </fileset>
+    </copy>
+
+    <copy todir="${dist.dir}/ivy">
+      <fileset dir="ivy" />
+    </copy>
+
+    <copy todir="${dist.dir}/bin">
+      <fileset file="bin/hcat.sh"/>
+      <fileset file="hive/external/bin/hive"/>
+      <fileset file="hive/external/bin/hive-config.sh"/>
+    </copy>
+
+    <copy todir="${dist.dir}/bin/ext">
+      <fileset file="hive/external/bin/ext/metastore.sh"/>
+    </copy>
+
+    <copy todir="${dist.dir}/bin/ext/util">
+      <fileset file="hive/external/bin/ext/util/execHiveCmd.sh"/>
+    </copy>
+
+    <copy todir="${dist.dir}/docs">
+      <fileset dir="${build.docs}" />
+    </copy>
+
+    <copy todir="${dist.dir}/conf">
+      <fileset dir="conf" />
+      <fileset file="hive/external/conf/hive-default.xml"/>
+    </copy>
+    <copy todir="${dist.dir}/scripts"
+      file="hive/external/metastore/scripts/upgrade/mysql/hive-schema-0.7.0.mysql.sql"/>
+
+    <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+      <fileset dir="${src.dir}" />
+    </copy>
+
+    <copy todir="${dist.dir}/test" includeEmptyDirs="true">
+      <fileset dir="${test.src.dir}" />
+    </copy>
+
+    <copy todir="${dist.dir}/" file="build.xml" />
+    <copy todir="${dist.dir}/" file="ivy.xml" />
+
+    <copy todir="${dist.dir}">
+      <fileset dir=".">
+        <include name="*.txt" />
+      </fileset>
+    </copy>
+
+    <copy todir="${dist.dir}/license">
+      <fileset dir="license" />
+    </copy>
+
+    <chmod perm="ugo+x" type="file">
+      <fileset dir="${dist.dir}/bin" />
+    </chmod>
+
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Make release tarball                                               -->
+    <!-- ================================================================== -->
+    <target name="tar" depends="package" description="Create release tarball">
+        <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${final.name}.tar.gz">
+            <tarfileset dir="${build.dir}" mode="664">
+                <exclude name="${final.name}/bin/*" />
+                <include name="${final.name}/**" />
+            </tarfileset>
+            <tarfileset dir="${build.dir}" mode="755">
+                <include name="${final.name}/bin/*" />
+            </tarfileset>
+        </tar>
+    </target>
+ 
 </project>
