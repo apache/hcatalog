@@ -43,6 +43,7 @@ Release 0.1 - Unreleased
     HCAT-9. Get a beginning HCatalog website up. (gates)
 
   IMPROVEMENTS
+  	HCAT-27. Start and stop scripts for the server (gates)
 
   	HCAT-21. Install documenation and script (gates)
 

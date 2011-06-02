@@ -106,10 +106,15 @@ for dir in var conf var/log bin lib ; do
 done
 
 # Move files into the appropriate directories
-for dir in conf lib ; do
+for dir in bin conf lib ; do
     for file in ./$dir/* ; do
-        cp $file $root/$dir
+        cp -R $file $root/$dir
     done
+done
+
+# Put the start and stop scripts into bin
+for file in hcat_server_start.sh hcat_server_stop.sh ; do
+	cp scripts/$file $root/bin
 done
 
 # Move the proto-hive-site.xml to hive-site.xml
