@@ -476,7 +476,9 @@
 
     <copy todir="${dist.dir}/scripts">
       <fileset file="hive/external/metastore/scripts/upgrade/mysql/hive-schema-0.7.0.mysql.sql"/>
-      <fileset file="scripts/hcat_server_install.sh"/>
+      <fileset dir="scripts">
+	  	<include name="*.sh"/>
+      </fileset>
     </copy>
 
     <copy todir="${dist.dir}/src" includeEmptyDirs="true">

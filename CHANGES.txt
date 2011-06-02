@@ -12,6 +12,8 @@ Trunk (unreleased changes)
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-27. Start and stop scripts for the server (gates)
+
     HCAT-21. Install documenation and script (gates)
 
     HCAT-34. Add ant target for server side classes (hashutosh)
