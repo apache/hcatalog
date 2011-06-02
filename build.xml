@@ -473,8 +473,11 @@
       <fileset dir="conf" />
       <fileset file="hive/external/conf/hive-default.xml"/>
     </copy>
-    <copy todir="${dist.dir}/scripts"
-      file="hive/external/metastore/scripts/upgrade/mysql/hive-schema-0.7.0.mysql.sql"/>
+
+    <copy todir="${dist.dir}/scripts">
+      <fileset file="hive/external/metastore/scripts/upgrade/mysql/hive-schema-0.7.0.mysql.sql"/>
+      <fileset file="scripts/hcat_server_install.sh"/>
+    </copy>
 
     <copy todir="${dist.dir}/src" includeEmptyDirs="true">
       <fileset dir="${src.dir}" />
@@ -514,6 +517,9 @@
             </tarfileset>
             <tarfileset dir="${build.dir}" mode="755">
                 <include name="${final.name}/bin/*" />
+            </tarfileset>
+            <tarfileset dir="${build.dir}" mode="755">
+                <include name="${final.name}/scripts/*" />
             </tarfileset>
         </tar>
     </target>
