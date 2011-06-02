@@ -44,6 +44,8 @@ Release 0.1 - Unreleased
 
   IMPROVEMENTS
 
+  	HCAT-21. Install documenation and script (gates)
+
     HCAT-20. Create a package target (gates via hashutosh)
 
     HCAT-29. Remove Yahoo copyright from documentation (Jakob Homan via hashutosh)
