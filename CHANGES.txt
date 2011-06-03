@@ -12,6 +12,9 @@ Trunk (unreleased changes)
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+
+    HCAT-37. Misc. build.xml changes (macyang via hashutosh)
+  
     HCAT-27. Start and stop scripts for the server (gates)
 
     HCAT-21. Install documenation and script (gates)
