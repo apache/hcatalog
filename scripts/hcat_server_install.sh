@@ -20,11 +20,12 @@
 # HCatalog distribution tarball
 
 function usage() {
-    echo "Usage: $0 -r root -d dbroot -h hadoop_home"
+    echo "Usage: $0 -r root -d dbroot -h hadoop_home -p server_port"
     echo "    root is the directory where you like to install the HCatalog server"
     echo "        /usr/local/hcat is suggested."
     echo "    dbroot is the directory where your mysql connector jar is located."
     echo "    hadoop_home is the directory of your Hadoop installation."
+    echo "    server_port is the listening port of the HCatalog server"
     echo "    All paths must be absolute"
 }
 
@@ -38,6 +39,7 @@ fi
 root="unknown"
 dbroot="unknown"
 hadoop_home="unknown"
+server_port="9080"
 
 while [ "${1}x" != "x" ] ; do
     if [ $1 == "-r" ] || [ $1 == "--root" ] ; then
@@ -51,6 +53,10 @@ while [ "${1}x" != "x" ] ; do
     elif [ $1 == "-h" ] || [ $1 == "--hadoop" ] ; then
         shift
         hadoop_home=$1
+        shift
+    elif [ $1 == "-p" ] || [ $1 == "--port" ] ; then
+        shift
+        server_port=$1
         shift
     else
         echo "Unknown option $1"
@@ -130,6 +136,7 @@ ROOT=$root
 DBROOT=$dbroot
 USER=`whoami`
 HADOOP_HOME=$hadoop_home
+export METASTORE_PORT=$server_port
 !!
 
 echo "Installation successful"

@@ -18,7 +18,7 @@
 -->
 
 
-<project name="hcatalog" default="fatjar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+<project name="hcatalog" default="clientjar" xmlns:ivy="antlib:org.apache.ivy.ant" >
 
   <!--
   ================================================================================
@@ -32,7 +32,6 @@
 
   <!-- hive properties -->
   <property name="hive.root" value="${basedir}/hive/external"/>
-  <property name="hive.version" value="0.7.0"/>
 
   <!-- build properties -->
   <property name="lib.dir" value="${basedir}/lib/" />
@@ -107,7 +106,7 @@
 
   <path id="test.classpath">
     <pathelement location="${test.build.classes}" />
-    <pathelement location="" />
+    <pathelement location="${build.classes}" />
     <pathelement location="conf"/>
     <pathelement location="${hive.conf.dir}"/>
     <!-- jars Hive depends on -->
@@ -221,15 +220,10 @@
     </javac>
   </target>
  
-  <!-- Build the jar, this is the default -->
-  <target name="fatjar" depends="compile-src">
-     <jar jarfile="${hcatalog.jar}" basedir="${build.classes}">
-        <zipgroupfileset dir="${hive.root}/lib" includes="thrift-fb303-${thrift-fb303.version}.jar,thrift-${thrift.version}.jar,commons-lang-2.4.jar,derby.jar"/> 
-        <zipgroupfileset dir="${hive.root}/metastore" includes="hive-metastore-${version}.jar"/> 
-        <zipgroupfileset dir="${hive.root}/ql" includes="hive-exec-${version}.jar"/> 
-        <zipgroupfileset dir="${hive.root}/common" includes="hive-common-${version}.jar"/> 
-        <zipgroupfileset dir="${hive.root}/serde" includes="hive-serde-${version}.jar"/> 
-    </jar>
+  <!-- Build the hcatalog client jar -->
+  <target name="clientjar" depends="compile-src">
+     <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}" basedir="${build.classes}">
+     </jar>
   </target>
 
   <!--
@@ -238,7 +232,7 @@
   ================================================================================
   -->
   <!-- Build HCatalog test files -->
-  <target name="compile-test" depends="fatjar">
+  <target name="compile-test" depends="clientjar">
     <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${excludes}"
         includes="**/*.java" destdir="${test.build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
@@ -255,6 +249,7 @@
       <!-- If anyone knows how to set umask inside ant please do so -->
       <exec executable="bin/umaskcheck.sh" failonerror="true"/>
       <delete dir="${test.log.dir}"/>
+      <delete dir="${test.warehouse.dir}"/>
       <mkdir dir="${test.log.dir}"/>
       <mkdir dir="${test.warehouse.dir}"/>
       <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
@@ -330,7 +325,7 @@
   Distribution Section
   ===============================================================================
   -->
-  <target name="package" depends="fatjar, docs" description="Create an HCatalog release">
+  <target name="package" depends="clientjar, docs" description="Create an HCatalog release">
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${dist.dir}/lib" />
     <mkdir dir="${dist.dir}/conf" />
@@ -346,7 +341,9 @@
     <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
       <fileset dir="${lib.dir}"/>
 
-      <fileset file="hcatalog-*.jar"/>
+      <fileset dir="${build.dir}/${ant.project.name}/">
+        <include name="hcatalog-*.jar"/>
+      </fileset>
 
       <fileset dir="hive/external/build/ivy/lib/default">
         <include name="jdo2-api-*.jar"/>
