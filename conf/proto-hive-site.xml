@@ -81,7 +81,7 @@
 
 <property>
   <name>hive.metastore.uris</name>
-  <value>thrift://SVRHOST:3306</value>
+  <value>thrift://SVRHOST:9080</value>
   <description>URI for client to contact metastore server</description>
 </property>
 

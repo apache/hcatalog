@@ -13,6 +13,8 @@ Trunk (unreleased changes)
     
   IMPROVEMENTS
 
+    HCAT-40. Remove dependencies from the HCatalog client jar (macyang)
+
     HCAT-37. Misc. build.xml changes (macyang via hashutosh)
   
     HCAT-27. Start and stop scripts for the server (gates)
