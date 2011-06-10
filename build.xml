@@ -203,7 +203,7 @@
 
   <!-- Build the external hive code -->
   <target name="hive.jar">
-    <ant antfile="build.xml" dir="${hive.root}" target="jar"/>
+    <ant antfile="build.xml" dir="${hive.root}" target="package"/>
   </target>
 
   <!--
@@ -281,7 +281,7 @@
   ================================================================================
   -->
   <!-- Build HCatalog test files -->
-  <target name="compile-test" depends="clientjar">
+  <target name="compile-test" depends="jar">
     <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${excludes}"
         includes="**/*.java" destdir="${test.build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
@@ -374,7 +374,7 @@
   Distribution Section
   ===============================================================================
   -->
-  <target name="package" depends="clientjar, docs" description="Create an HCatalog release">
+  <target name="package" depends="jar, docs" description="Create an HCatalog release">
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${dist.dir}/lib" />
     <mkdir dir="${dist.dir}/conf" />
