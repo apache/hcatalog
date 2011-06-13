@@ -84,7 +84,10 @@
   <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
   <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
 
-    <!--this is the naming policy for artifacts we want pulled down-->
+  <!-- rats properties -->
+  <property name="rat.reporting.classname" value="rat.Report"/>
+
+  <!--this is the naming policy for artifacts we want pulled down-->
   <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
 
   <!-- Classpaths for various builds -->
@@ -189,6 +192,13 @@
     <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
       pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
     <ivy:cachepath pathid="compile.classpath" conf="common"/>     
+  </target>
+
+  <target name="ivy-releaseaudit" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for releaseaudit configuration">
+    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="releaseaudit"/>
+    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
+      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="releaseaudit"/>
+    <ivy:cachepath pathid="releaseaudit.classpath" conf="releaseaudit"/>
   </target>
 
   <target name="init" depends="ivy-compile" >
@@ -460,6 +470,13 @@
       <fileset dir="${dist.dir}/bin" />
     </chmod>
 
+    </target>
+
+    <target name="releaseaudit" depends="ivy-releaseaudit, package" description="Release Audit activities">
+      <java classname="${rat.reporting.classname}" fork="true">
+        <classpath refid="releaseaudit.classpath"/>
+        <arg value="${build.dir}/${final.name}"/>
+      </java>
     </target>
 
     <!-- ================================================================== -->

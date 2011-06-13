@@ -33,12 +33,14 @@
             extends="runtime"
             description="artifacts needed to compile/test the application"/>
         <conf name="test" visibility="private" extends="runtime"/>
+        <conf name="releaseaudit" visibility="private"/>
     </configurations>
     <dependencies>
         <dependency org="org.apache.pig" name="pig" rev="${pig.version}"
           conf="common->master" />
         <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}"
           conf="common->master"/>
+        <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="releaseaudit->default"/>
         <!-- Removed until there is a secure version of hadoop in maven
         <dependency org="org.apache.hadoop" name="hadoop-core" rev="${hadoop-core.version}"
           conf="common->master"/>
