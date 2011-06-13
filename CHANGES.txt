@@ -12,6 +12,7 @@ Trunk (unreleased changes)
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-44. Add a releaseaudit target to build.xml (gates)
 
     HCAT-40. Remove dependencies from the HCatalog client jar (macyang)
 
