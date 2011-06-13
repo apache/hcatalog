@@ -35,6 +35,9 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+
+    HCAT-41. Changes to hcat.sh in HCATALOG-20 broke the -e option (gates)
+
     HCAT-12. Get trunk to build. (hashutosh)
 
     HCAT-17. Shouldn't be able to add an HCatFieldSchema with the same name as 

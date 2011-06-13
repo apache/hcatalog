@@ -86,7 +86,7 @@ if [ "$debug" == "true" ]; then
 	echo "with HADOOP_CLASSPATH set to ($HADOOP_CLASSPATH)"
 	echo "and HADOOP_OPTS set to ($HADOOP_OPTS)"
 else
-	exec $HADOOP_HOME/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli $remaining
+	exec $HADOOP_HOME/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli "$@"
 fi
 
 # Above is the recommended way to launch hcatalog cli. If it doesnt work, you can try the following:
