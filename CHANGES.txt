@@ -56,6 +56,8 @@ Release 0.1 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-41. Changes to hcat.sh in HCATALOG-20 broke the -e option (gates)
+
     HCAT-7. Ivy fetch of CDH Hadoop versions does not work properly. (gates)
 
     HCAT-6. Unit test TestPermsInheritance fails. (hashutosh)
