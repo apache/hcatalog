@@ -1,6 +1,6 @@
 Apache HCatalog Change Log
 
-Release 0.1.0 - Unreleased
+Release 0.1.0
 
   INCOMPATIBLE CHANGES
 
