@@ -22,11 +22,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.jdo.PersistenceManager;
-import javax.jdo.Query;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -35,16 +35,11 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
-import org.apache.hadoop.hive.metastore.ObjectStore;
-import org.apache.hadoop.hive.metastore.RawStore;
-import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler.Command;
-import org.apache.hadoop.hive.metastore.api.HiveObjectRef;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -82,26 +77,7 @@ public class NotificationListener extends MetaStoreEventListener{
 	public NotificationListener(final Configuration conf) {
 
 		super(conf);
-		try {
-			Context jndiCntxt = new InitialContext();
-			ConnectionFactory connFac = (ConnectionFactory)jndiCntxt.lookup("ConnectionFactory");
-			conn = connFac.createConnection();
-			conn.start();
-			// We want message to be sent when session commits, thus we run in
-			// transacted mode.
-			session = conn.createSession(true, Session.SESSION_TRANSACTED);
-
-		} catch (NamingException e) {
-			LOG.error("JNDI error while setting up Message Bus connection. " +
-					"Please make sure file named 'jndi.properties' is in " +
-					"classpath and contains appropriate key-value pairs.",e);
-		}
-		catch (JMSException e) {
-			LOG.error("Failed to initialize connection to message bus",e);
-		}
-		catch(Throwable t){
-			LOG.error("HCAT Listener failed to load",t);
-		}
+		createConnection();
 	}
 
 	@Override
@@ -227,18 +203,36 @@ public class NotificationListener extends MetaStoreEventListener{
 	 */
 	private void send(Serializable msgBody, String topicName, String event){
 
-		if(null == session){
-			// If we weren't able to setup the session in the constructor
-			// we cant send message in any case.
-			LOG.error("Invalid session. Failed to send message on topic: "+
-					topicName + " event: "+event);
-			return;
-		}
-
 		try{
-			// Topics are created on demand. If it doesn't exist on broker it will
-			// be created when broker receives this message.
-			Destination topic = session.createTopic(topicName);
+
+			Destination topic = null;
+			if(null == session){
+				// this will happen, if we never able to establish a connection.
+				createConnection();
+				if (null == session){
+					// Still not successful, return from here.
+					LOG.error("Invalid session. Failed to send message on topic: "+
+							topicName + " event: "+event);				
+					return;
+				}
+			}
+			try{
+				// Topics are created on demand. If it doesn't exist on broker it will
+				// be created when broker receives this message.
+				topic = session.createTopic(topicName);				
+			} catch (IllegalStateException ise){
+				// this will happen if we were able to establish connection once, but its no longer valid,
+				// ise is thrown, catch it and retry.
+				LOG.error("Seems like connection is lost. Retrying", ise);
+				createConnection();
+				topic = session.createTopic(topicName);				
+			}
+			if (null == topic){
+				// Still not successful, return from here.
+				LOG.error("Invalid session. Failed to send message on topic: "+
+						topicName + " event: "+event);				
+				return;
+			}
 			MessageProducer producer = session.createProducer(topic);
 			ObjectMessage msg = session.createObjectMessage(msgBody);
 			msg.setStringProperty(HCatConstants.HCAT_EVENT, event);
@@ -252,13 +246,44 @@ public class NotificationListener extends MetaStoreEventListener{
 		}
 	}
 
+	private void createConnection(){
+
+		Context jndiCntxt;
+		try {
+			jndiCntxt = new InitialContext();
+			ConnectionFactory connFac = (ConnectionFactory)jndiCntxt.lookup("ConnectionFactory");
+			Connection conn = connFac.createConnection();
+			conn.start();
+			conn.setExceptionListener(new ExceptionListener() {
+				@Override
+				public void onException(JMSException jmse) {
+						LOG.error(jmse);
+				}
+			});
+			// We want message to be sent when session commits, thus we run in
+			// transacted mode.
+			session = conn.createSession(true, Session.SESSION_TRANSACTED);
+		} catch (NamingException e) {
+			LOG.error("JNDI error while setting up Message Bus connection. " +
+					"Please make sure file named 'jndi.properties' is in " +
+					"classpath and contains appropriate key-value pairs.",e);
+		} catch (JMSException e) {
+			LOG.error("Failed to initialize connection to message bus",e);
+		} catch(Throwable t){
+			LOG.error("Unable to connect to JMS provider",t);
+		}
+	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		// Close the connection before dying.
 		try {
+			if (null != session)
+				session.close();
 			if(conn != null) {
 				conn.close();
 			}
+			
 		} catch (Exception ignore) {
 			LOG.info("Failed to close message bus connection.", ignore);
 		}
