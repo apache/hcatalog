@@ -347,6 +347,8 @@
     <mkdir dir="${dist.dir}/docs/api" />
     <mkdir dir="${dist.dir}/docs/jdiff"/>
     <mkdir dir="${dist.dir}/license" />
+    <mkdir dir="${dist.dir}/hive" />
+    <mkdir dir="${dist.dir}/hive/external" />
 
     <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
       <fileset dir="${lib.dir}"/>
@@ -416,7 +418,9 @@
     </copy>
 
     <copy todir="${dist.dir}/bin">
-      <fileset file="bin/hcat.sh"/>
+      <fileset dir="bin/">
+	  	<include name="*.sh"/>
+	  </fileset>
       <fileset file="hive/external/bin/hive"/>
       <fileset file="hive/external/bin/hive-config.sh"/>
     </copy>
@@ -445,17 +449,29 @@
       </fileset>
     </copy>
 
-    <copy todir="${dist.dir}/src" includeEmptyDirs="true">
+	<!-- Copy source files so the tar ball can build -->
+    <copy todir="${dist.dir}/src/java" includeEmptyDirs="true">
       <fileset dir="${src.dir}" />
     </copy>
 
-    <copy todir="${dist.dir}/test" includeEmptyDirs="true">
+    <copy todir="${dist.dir}/src/test" includeEmptyDirs="true">
       <fileset dir="${test.src.dir}" />
+    </copy>
+
+    <copy todir="${dist.dir}/src/docs" includeEmptyDirs="true">
+      <fileset dir="${docs.src}" />
     </copy>
 
     <copy todir="${dist.dir}/" file="build.xml" />
     <copy todir="${dist.dir}/" file="ivy.xml" />
 
+	<copy todir="${dist.dir}/hive/external" includeEmptyDirs="true">
+		<fileset dir="${hive.root}">
+			<exclude name="build/**"/>
+		</fileset>
+	</copy>
+
+	<!-- Copy the licenses and such -->
     <copy todir="${dist.dir}">
       <fileset dir=".">
         <include name="*.txt" />
