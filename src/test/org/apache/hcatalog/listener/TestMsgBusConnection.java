@@ -66,6 +66,7 @@ public class TestMsgBusConnection extends TestCase{
 		hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
 		hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
 		hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+		hiveConf.set(HCatConstants.HCAT_MSGBUS_TOPIC_PREFIX, "planetlab.hcat");
 		SessionState.start(new CliSessionState(hiveConf));
 		driver = new Driver(hiveConf);
 	}
@@ -75,7 +76,7 @@ public class TestMsgBusConnection extends TestCase{
 		Connection conn = connFac.createConnection();
 		conn.start();
 		Session session = conn.createSession(true, Session.SESSION_TRANSACTED);
-		Destination hcatTopic = session.createTopic(HCatConstants.HCAT_TOPIC);
+		Destination hcatTopic = session.createTopic("planetlab.hcat");
 		consumer = session.createConsumer(hcatTopic);
 	}
 
@@ -85,7 +86,7 @@ public class TestMsgBusConnection extends TestCase{
 			driver.run("create database testconndb");
 			Message msg = consumer.receive();
 			assertEquals(HCatConstants.HCAT_ADD_DATABASE_EVENT, msg.getStringProperty(HCatConstants.HCAT_EVENT));
-			assertEquals("topic://"+HCatConstants.HCAT_TOPIC,msg.getJMSDestination().toString());
+			assertEquals("topic://planetlab.hcat",msg.getJMSDestination().toString());
 			assertEquals("testconndb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			broker.stop();
 			driver.run("drop database testconndb cascade");
@@ -94,12 +95,12 @@ public class TestMsgBusConnection extends TestCase{
 			driver.run("create database testconndb");
 			msg = consumer.receive();
 			assertEquals(HCatConstants.HCAT_ADD_DATABASE_EVENT, msg.getStringProperty(HCatConstants.HCAT_EVENT));
-			assertEquals("topic://"+HCatConstants.HCAT_TOPIC,msg.getJMSDestination().toString());
+			assertEquals("topic://planetlab.hcat",msg.getJMSDestination().toString());
 			assertEquals("testconndb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			driver.run("drop database testconndb cascade");
 			msg = consumer.receive();
 			assertEquals(HCatConstants.HCAT_DROP_DATABASE_EVENT, msg.getStringProperty(HCatConstants.HCAT_EVENT));
-			assertEquals("topic://"+HCatConstants.HCAT_TOPIC,msg.getJMSDestination().toString());
+			assertEquals("topic://planetlab.hcat",msg.getJMSDestination().toString());
 			assertEquals("testconndb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 		} catch (NoSuchObjectException nsoe){
 			nsoe.printStackTrace(System.err);

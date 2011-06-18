@@ -68,13 +68,13 @@ public class TestNotificationListener extends TestCase implements MessageListene
 		// We want message to be sent when session commits, thus we run in
 		// transacted mode.
 		Session session = conn.createSession(true, Session.SESSION_TRANSACTED);
-		Destination hcatTopic = session.createTopic(HCatConstants.HCAT_TOPIC);
+		Destination hcatTopic = session.createTopic(HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX);
 		MessageConsumer consumer1 = session.createConsumer(hcatTopic);
 		consumer1.setMessageListener(this);
-		Destination tblTopic = session.createTopic(HCatConstants.HCAT_TOPIC+".mydb.mytbl");
+		Destination tblTopic = session.createTopic(HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".mydb.mytbl");
 		MessageConsumer consumer2 = session.createConsumer(tblTopic);
 		consumer2.setMessageListener(this);
-		Destination dbTopic = session.createTopic(HCatConstants.HCAT_TOPIC+".mydb");
+		Destination dbTopic = session.createTopic(HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".mydb");
 		MessageConsumer consumer3 = session.createConsumer(dbTopic);
 		consumer3.setMessageListener(this);
 		hiveConf = new HiveConf(this.getClass());
@@ -112,7 +112,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			event = msg.getStringProperty(HCatConstants.HCAT_EVENT);
 			if(event.equals(HCatConstants.HCAT_ADD_DATABASE_EVENT)){
 
-				assertEquals("topic://"+HCatConstants.HCAT_TOPIC,msg.getJMSDestination().toString());
+				assertEquals("topic://"+HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX,msg.getJMSDestination().toString());
 				assertEquals("mydb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			}
 			else if(event.equals(HCatConstants.HCAT_ADD_TABLE_EVENT)){
@@ -153,7 +153,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			}
 			else if(event.equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)){
 
-				assertEquals("topic://"+HCatConstants.HCAT_TOPIC,msg.getJMSDestination().toString());
+				assertEquals("topic://"+HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX,msg.getJMSDestination().toString());
 				assertEquals("mydb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			}
 			else

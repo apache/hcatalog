@@ -38,6 +38,7 @@ import javax.naming.NamingException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
@@ -133,7 +134,7 @@ public class NotificationListener extends MetaStoreEventListener{
 		// by listening on a topic named "HCAT" and message selector string
 		// as "HCAT_EVENT = HCAT_ADD_DATABASE" 
 		if(dbEvent.getStatus())
-			send(dbEvent.getDatabase(),HCatConstants.HCAT_TOPIC,HCatConstants.HCAT_ADD_DATABASE_EVENT);
+			send(dbEvent.getDatabase(),getTopicPrefix(dbEvent.getHandler().getHiveConf()),HCatConstants.HCAT_ADD_DATABASE_EVENT);
 	}
 
 	@Override
@@ -142,7 +143,7 @@ public class NotificationListener extends MetaStoreEventListener{
 		// by listening on a topic named "HCAT" and message selector string
 		// as "HCAT_EVENT = HCAT_DROP_DATABASE" 
 		if(dbEvent.getStatus())
-			send(dbEvent.getDatabase(),HCatConstants.HCAT_TOPIC,HCatConstants.HCAT_DROP_DATABASE_EVENT);
+			send(dbEvent.getDatabase(),getTopicPrefix(dbEvent.getHandler().getHiveConf()),HCatConstants.HCAT_DROP_DATABASE_EVENT);
 	}
 
 	@Override
@@ -155,23 +156,23 @@ public class NotificationListener extends MetaStoreEventListener{
 				Table tbl = tableEvent.getTable();
 				Table newTbl = tbl.deepCopy();
 				HMSHandler handler = tableEvent.getHandler();
-				String namingPolicy = handler.getHiveConf().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAMING_POLICY, "tablename");
-				newTbl.getParameters().put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, getTopicNameForParts(namingPolicy, tbl.getDbName(), tbl.getTableName()));
+				HiveConf conf = handler.getHiveConf();
+				newTbl.getParameters().put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, 
+						getTopicPrefix(conf) + "." + tbl.getDbName() +"." + tbl.getTableName());
 				try {
 					handler.alter_table(tbl.getDbName(), tbl.getTableName(), newTbl);
 				} catch (InvalidOperationException e) {
 					throw new MetaException(e.toString());
 				}
-				send(tableEvent.getTable(),HCatConstants.HCAT_TOPIC+"."+tbl.getDbName(), HCatConstants.HCAT_ADD_TABLE_EVENT);
+				send(tableEvent.getTable(),getTopicPrefix(conf)+ "."+ tbl.getDbName(), HCatConstants.HCAT_ADD_TABLE_EVENT);
 			}
 		}	
 	}
 
-	private String getTopicNameForParts(String namingPolicy, String dbName, String tblName){
-		// we only have one policy now, so ignore policy param for now.
-		return HCatConstants.HCAT_TOPIC+"."+dbName+"."+tblName;
+	private String getTopicPrefix(HiveConf conf){
+		return conf.get(HCatConstants.HCAT_MSGBUS_TOPIC_PREFIX,HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX);
 	}
-
+	
 	@Override
 	public void onDropTable(DropTableEvent tableEvent) throws MetaException {
 		// Subscriber can get notification about drop of a  table in HCAT
@@ -188,7 +189,7 @@ public class NotificationListener extends MetaStoreEventListener{
 			sd.setSortCols(new ArrayList<Order>());
 			sd.setParameters(new HashMap<String, String>());
 			sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-			send(table,HCatConstants.HCAT_TOPIC+"."+table.getDbName(), HCatConstants.HCAT_DROP_TABLE_EVENT);	
+			send(table,getTopicPrefix(tableEvent.getHandler().getHiveConf())+"."+table.getDbName(), HCatConstants.HCAT_DROP_TABLE_EVENT);	
 		}
 	}
 
@@ -246,7 +247,7 @@ public class NotificationListener extends MetaStoreEventListener{
 		}
 	}
 
-	private void createConnection(){
+	protected void createConnection(){
 
 		Context jndiCntxt;
 		try {

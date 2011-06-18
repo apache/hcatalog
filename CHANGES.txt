@@ -13,6 +13,8 @@ Trunk (unreleased changes)
     
   IMPROVEMENTS
 
+    HCAT-47. Topic prefix for the message bus should be configurable (hashutosh)
+
     HCAT-39. Lazily create connection for Message bus (hashutosh)
 
     HCAT-44. Add a releaseaudit target to build.xml (gates)
