@@ -19,13 +19,16 @@
 package org.apache.hcatalog.listener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSException;
+import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
@@ -36,11 +39,16 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.InvalidPartitionException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PartitionEventType;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.UnknownDBException;
+import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
@@ -89,15 +97,20 @@ public class TestNotificationListener extends TestCase implements MessageListene
 
 	@Override
 	protected void tearDown() throws Exception {
-		assertEquals(6, cntInvocation.get());
+		assertEquals(7, cntInvocation.get());
 		super.tearDown();
 	}
 
-	public void testAMQListener() throws MetaException, TException, UnknownTableException, NoSuchObjectException, CommandNeedRetryException{
+	public void testAMQListener() throws MetaException, TException, UnknownTableException, NoSuchObjectException, 
+	CommandNeedRetryException, UnknownDBException, InvalidPartitionException, UnknownPartitionException{
 		driver.run("create database mydb");
 		driver.run("use mydb");
 		driver.run("create table mytbl (a string) partitioned by (b string)");
 		driver.run("alter table mytbl add partition(b='2011')");
+		HiveMetaStoreClient msc = new HiveMetaStoreClient(hiveConf);
+		Map<String,String> kvs = new HashMap<String, String>(1);
+		kvs.put("b", "2011");
+		msc.markPartitionForEvent("mydb", "mytbl", kvs, PartitionEventType.LOAD_DONE);
 		driver.run("alter table mytbl drop partition(b='2011')");
 		driver.run("drop table mytbl");
 		driver.run("drop database mydb");
@@ -156,7 +169,11 @@ public class TestNotificationListener extends TestCase implements MessageListene
 				assertEquals("topic://"+HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX,msg.getJMSDestination().toString());
 				assertEquals("mydb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			}
-			else
+			else if (event.equals(HCatConstants.HCAT_PARTITION_DONE_EVENT)) {
+				assertEquals("topic://HCAT.mydb.mytbl",msg.getJMSDestination().toString());
+				MapMessage mapMsg = (MapMessage)msg;
+				assert mapMsg.getString("b").equals("2011");
+			} else
 				assert false;
 		} catch (JMSException e) {
 			e.printStackTrace(System.err);

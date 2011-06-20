@@ -77,6 +77,7 @@ public final class HCatConstants {
   public static final String HCAT_EVENT = "HCAT_EVENT";
   public static final String HCAT_ADD_PARTITION_EVENT = "HCAT_ADD_PARTITION";
   public static final String HCAT_DROP_PARTITION_EVENT = "HCAT_DROP_PARTITION";
+  public static final String HCAT_PARTITION_DONE_EVENT = "HCAT_PARTITION_DONE";
   public static final String HCAT_ADD_TABLE_EVENT = "HCAT_ADD_TABLE";
   public static final String HCAT_DROP_TABLE_EVENT = "HCAT_DROP_TABLE";
   public static final String HCAT_ADD_DATABASE_EVENT = "HCAT_ADD_DATABASE";

@@ -6,6 +6,8 @@ Trunk (unreleased changes)
 
   NEW FEATURES
  
+    HCAT-46. Send a message on a message bus when a partition is marked done (hashutosh via macyang)
+
     HCAT-3. Send a message on a message bus when events occur in Metastore (hashutosh)
   
     HCAT-16. Add InputFormat/OutputFormat for handling exported tables/partitions.

@@ -231,7 +231,6 @@
       <compilerarg line="${javac.args}"/>
       <classpath refid="classpath" />
     </javac>
-  <antcall target="model-enhance" />
   </target>
  
   <!-- Build the hcatalog client jar -->
@@ -259,32 +258,6 @@
   -->
   <target name="jar" depends="clientjar,server-extensions"/>
 
-
- <!--
-  ================================================================================
-  Datanucleus Section
-  ================================================================================
-  -->
-
- <target name="model-enhance">
-    <taskdef name="datanucleusenhancer"
-                classname="org.datanucleus.enhancer.tools.EnhancerTask">
-       <classpath refid="classpath"/>
-   </taskdef>
-
-    <datanucleusenhancer
-        dir="${basedir}" failonerror="true" verbose="true" fork="true">
-    <fileset dir="${src.dir}/org/apache/hcatalog/metadata/">
-	<include name="ormodel.jdo" />
-    </fileset>   
-    <classpath>
-          <path refid="classpath"/>
-          <pathelement path="${build.dir}/classes/"/>
-        </classpath>
-        <jvmarg line="-Dlog4j.configuration=${basedir}/../conf/hive-log4j.properties"/>
-    </datanucleusenhancer>
-  </target>
-  
   <!--
   ================================================================================
   Test Section

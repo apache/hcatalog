@@ -21,6 +21,8 @@ package org.apache.hcatalog.listener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -28,6 +30,8 @@ import javax.jms.Destination;
 import javax.jms.ExceptionListener;
 import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
@@ -54,6 +58,7 @@ import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
+import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hcatalog.common.HCatConstants;
 
 /**
@@ -69,8 +74,8 @@ import org.apache.hcatalog.common.HCatConstants;
 public class NotificationListener extends MetaStoreEventListener{
 
 	private static final Log LOG = LogFactory.getLog(NotificationListener.class);
-	private Session session;
-	private Connection conn;
+	protected Session session;
+	protected Connection conn;
 
 	/**
 	 * Create message bus connection and session in constructor.
@@ -202,7 +207,7 @@ public class NotificationListener extends MetaStoreEventListener{
 	 * @param event is the value of HCAT_EVENT property in message. It can be 
 	 * used to select messages in client side. 
 	 */
-	private void send(Serializable msgBody, String topicName, String event){
+	protected void send(Object msgBody, String topicName, String event){
 
 		try{
 
@@ -235,7 +240,19 @@ public class NotificationListener extends MetaStoreEventListener{
 				return;
 			}
 			MessageProducer producer = session.createProducer(topic);
-			ObjectMessage msg = session.createObjectMessage(msgBody);
+			Message msg;
+			if (msgBody instanceof Map){
+				MapMessage mapMsg = session.createMapMessage();
+				Map<String,String> incomingMap = (Map<String,String>)msgBody;
+				for (Entry<String,String> partCol : incomingMap.entrySet()){
+					mapMsg.setString(partCol.getKey(), partCol.getValue());
+				}
+				msg = mapMsg;
+			}
+			else {
+				msg = session.createObjectMessage((Serializable)msgBody);
+			}
+
 			msg.setStringProperty(HCatConstants.HCAT_EVENT, event);
 			producer.send(msg);
 			// Message must be transacted before we return.
@@ -288,5 +305,12 @@ public class NotificationListener extends MetaStoreEventListener{
 		} catch (Exception ignore) {
 			LOG.info("Failed to close message bus connection.", ignore);
 		}
+	}
+
+	@Override
+	public void onLoadPartitionDone(LoadPartitionDoneEvent lpde)
+			throws MetaException {
+		if(lpde.getStatus())
+			send(lpde.getPartitionName(),lpde.getTable().getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME),HCatConstants.HCAT_PARTITION_DONE_EVENT);
 	}
 }
