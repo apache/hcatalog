@@ -34,7 +34,6 @@ import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.apache.pig.impl.logicalLayer.parser.ParseException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.UDFContext;
@@ -50,15 +49,15 @@ public class HCatStorer extends HCatBaseStorer {
    *
    */
 
-  public HCatStorer(String partSpecs, String schema) throws ParseException, FrontendException {
+  public HCatStorer(String partSpecs, String schema) throws Exception {
     super(partSpecs, schema);
   }
 
-  public HCatStorer(String partSpecs) throws ParseException, FrontendException {
+  public HCatStorer(String partSpecs) throws Exception {
     this(partSpecs, null);
   }
 
-  public HCatStorer() throws FrontendException, ParseException{
+  public HCatStorer() throws Exception{
     this(null,null);
   }
 

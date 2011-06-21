@@ -15,6 +15,8 @@ Trunk (unreleased changes)
     
   IMPROVEMENTS
 
+    HCAT-35. HCatalog fails to compile with Pig 0.9 (hashutosh)
+
     HCAT-47. Topic prefix for the message bus should be configurable (hashutosh)
 
     HCAT-39. Lazily create connection for Message bus (hashutosh)

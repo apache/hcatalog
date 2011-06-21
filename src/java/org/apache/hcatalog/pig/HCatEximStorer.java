@@ -38,7 +38,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.apache.pig.impl.logicalLayer.parser.ParseException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.UDFContext;
@@ -54,17 +53,16 @@ public class HCatEximStorer extends HCatBaseStorer {
 
   private final String outputLocation;
 
-  public HCatEximStorer(String outputLocation) throws FrontendException, ParseException {
+  public HCatEximStorer(String outputLocation) throws Exception {
     this(outputLocation, null, null);
   }
 
-  public HCatEximStorer(String outputLocation, String partitionSpec) throws FrontendException,
-      ParseException {
+  public HCatEximStorer(String outputLocation, String partitionSpec) throws Exception {
     this(outputLocation, partitionSpec, null);
   }
 
   public HCatEximStorer(String outputLocation, String partitionSpec, String schema)
-      throws FrontendException, ParseException {
+      throws Exception {
     super(partitionSpec, schema);
     this.outputLocation = outputLocation;
     LOG.debug("HCatEximStorer called");
