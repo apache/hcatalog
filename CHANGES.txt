@@ -45,6 +45,9 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+
+    HCAT-52. No message is sent on message bus in case partition keys are uppercase (hashutosh)
+
     HCAT-45. HCatalog release tar ball source code has problems (gates)
 
     HCAT-41. Changes to hcat.sh in HCATALOG-20 broke the -e option (gates)

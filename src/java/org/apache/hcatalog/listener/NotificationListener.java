@@ -33,7 +33,6 @@ import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
-import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -157,23 +156,29 @@ public class NotificationListener extends MetaStoreEventListener{
 		// by listening on a topic named "HCAT" and message selector string
 		// as "HCAT_EVENT = HCAT_ADD_TABLE" 
 		if(tableEvent.getStatus()){
-			if(tableEvent.getStatus()){
-				Table tbl = tableEvent.getTable();
-				Table newTbl = tbl.deepCopy();
-				HMSHandler handler = tableEvent.getHandler();
-				HiveConf conf = handler.getHiveConf();
+			Table tbl = tableEvent.getTable();
+			HMSHandler handler = tableEvent.getHandler();
+			HiveConf conf = handler.getHiveConf();
+			Table newTbl;
+			try {
+				newTbl = handler.get_table(tbl.getDbName(), tbl.getTableName()).deepCopy();
 				newTbl.getParameters().put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, 
-						getTopicPrefix(conf) + "." + tbl.getDbName() +"." + tbl.getTableName());
-				try {
-					handler.alter_table(tbl.getDbName(), tbl.getTableName(), newTbl);
-				} catch (InvalidOperationException e) {
-					throw new MetaException(e.toString());
-				}
-				send(tableEvent.getTable(),getTopicPrefix(conf)+ "."+ tbl.getDbName(), HCatConstants.HCAT_ADD_TABLE_EVENT);
+						getTopicPrefix(conf) + "." + newTbl.getDbName().toLowerCase()
+						+"." + newTbl.getTableName().toLowerCase());
+				handler.alter_table(newTbl.getDbName(), newTbl.getTableName(), newTbl);
+			} catch (InvalidOperationException e) {
+				 MetaException me  = new MetaException(e.toString());
+				 me.initCause(e);
+				throw me;
+			} catch (NoSuchObjectException e) {
+				 MetaException me  = new MetaException(e.toString());
+				 me.initCause(e);
+				throw me;
 			}
-		}	
+			send(newTbl,getTopicPrefix(conf)+ "."+ newTbl.getDbName().toLowerCase(), HCatConstants.HCAT_ADD_TABLE_EVENT);
+		}
 	}
-
+	
 	private String getTopicPrefix(HiveConf conf){
 		return conf.get(HCatConstants.HCAT_MSGBUS_TOPIC_PREFIX,HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX);
 	}
@@ -194,7 +199,7 @@ public class NotificationListener extends MetaStoreEventListener{
 			sd.setSortCols(new ArrayList<Order>());
 			sd.setParameters(new HashMap<String, String>());
 			sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-			send(table,getTopicPrefix(tableEvent.getHandler().getHiveConf())+"."+table.getDbName(), HCatConstants.HCAT_DROP_TABLE_EVENT);	
+			send(table,getTopicPrefix(tableEvent.getHandler().getHiveConf())+"."+table.getDbName().toLowerCase(), HCatConstants.HCAT_DROP_TABLE_EVENT);	
 		}
 	}
 

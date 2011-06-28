@@ -73,7 +73,7 @@ public final class HCatConstants {
   public static final String HCAT_MSGBUS_TOPIC_PREFIX = "hcat.msgbus.topic.prefix";
 
   // Message Bus related properties.
-  public static final String HCAT_DEFAULT_TOPIC_PREFIX = "HCAT";
+  public static final String HCAT_DEFAULT_TOPIC_PREFIX = "hcat";
   public static final String HCAT_EVENT = "HCAT_EVENT";
   public static final String HCAT_ADD_PARTITION_EVENT = "HCAT_ADD_PARTITION";
   public static final String HCAT_DROP_PARTITION_EVENT = "HCAT_DROP_PARTITION";

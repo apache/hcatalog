@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.listener.NotificationListener;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 import org.apache.thrift.TException;
@@ -57,6 +58,7 @@ public class TestSemanticAnalysis extends TestCase{
   @Override
   protected void setUp() throws Exception {
 
+	System.setProperty(ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
     HiveConf hcatConf = new HiveConf(this.getClass());
     hcatConf.set(ConfVars.PREEXECHOOKS.varname, "");
     hcatConf.set(ConfVars.POSTEXECHOOKS.varname, "");
@@ -64,7 +66,7 @@ public class TestSemanticAnalysis extends TestCase{
 
     HiveConf hiveConf = new HiveConf(hcatConf,this.getClass());
     hiveDriver = new Driver(hiveConf);
-
+  
     hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
     hcatDriver = new Driver(hcatConf);
 
@@ -75,6 +77,16 @@ public class TestSemanticAnalysis extends TestCase{
   String query;
   private final String tblName = "junit_sem_analysis";
 
+  public void testCreateTblWithLowerCasePartNames() throws CommandNeedRetryException, MetaException, TException, NoSuchObjectException{
+    hiveDriver.run("drop table junit_sem_analysis");
+    CommandProcessorResponse resp = hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (B string) stored as TEXTFILE");
+    assertEquals(resp.getResponseCode(), 0);
+    assertEquals(null, resp.getErrorMessage());
+    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    assertEquals("Partition key name case problem", "b" , tbl.getPartitionKeys().get(0).getName());
+    hiveDriver.run("drop table junit_sem_analysis");
+  }
+  
   public void testAlterTblFFpart() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException {
 
     hiveDriver.run("drop table junit_sem_analysis");

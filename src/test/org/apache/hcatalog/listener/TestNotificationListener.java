@@ -130,7 +130,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			}
 			else if(event.equals(HCatConstants.HCAT_ADD_TABLE_EVENT)){
 
-				assertEquals("topic://HCAT.mydb",msg.getJMSDestination().toString());
+				assertEquals("topic://hcat.mydb",msg.getJMSDestination().toString());
 				Table tbl = (Table)(((ObjectMessage)msg).getObject());
 				assertEquals("mytbl", tbl.getTableName());
 				assertEquals("mydb", tbl.getDbName());
@@ -138,7 +138,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			}
 			else if(event.equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)){
 
-				assertEquals("topic://HCAT.mydb.mytbl",msg.getJMSDestination().toString());
+				assertEquals("topic://hcat.mydb.mytbl",msg.getJMSDestination().toString());
 				Partition part = (Partition)(((ObjectMessage)msg).getObject());
 				assertEquals("mytbl", part.getTableName());
 				assertEquals("mydb", part.getDbName());
@@ -148,7 +148,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			}
 			else if(event.equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)){
 
-				assertEquals("topic://HCAT.mydb.mytbl",msg.getJMSDestination().toString());
+				assertEquals("topic://hcat.mydb.mytbl",msg.getJMSDestination().toString());
 				Partition part = (Partition)(((ObjectMessage)msg).getObject());
 				assertEquals("mytbl", part.getTableName());
 				assertEquals("mydb", part.getDbName());
@@ -158,7 +158,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 			}
 			else if(event.equals(HCatConstants.HCAT_DROP_TABLE_EVENT)){
 
-				assertEquals("topic://HCAT.mydb",msg.getJMSDestination().toString());
+				assertEquals("topic://hcat.mydb",msg.getJMSDestination().toString());
 				Table tbl = (Table)(((ObjectMessage)msg).getObject());
 				assertEquals("mytbl", tbl.getTableName());
 				assertEquals("mydb", tbl.getDbName());
@@ -170,7 +170,7 @@ public class TestNotificationListener extends TestCase implements MessageListene
 				assertEquals("mydb", ((Database) ((ObjectMessage)msg).getObject()).getName());
 			}
 			else if (event.equals(HCatConstants.HCAT_PARTITION_DONE_EVENT)) {
-				assertEquals("topic://HCAT.mydb.mytbl",msg.getJMSDestination().toString());
+				assertEquals("topic://hcat.mydb.mytbl",msg.getJMSDestination().toString());
 				MapMessage mapMsg = (MapMessage)msg;
 				assert mapMsg.getString("b").equals("2011");
 			} else
