@@ -17,11 +17,11 @@ Release 0.1.0
   IMPROVEMENTS
     HCAT-44. Add a releaseaudit target to build.xml (gates)
 
-  	HCAT-40. Remove dependencies from the HCatalog client jar (macyang)
+    HCAT-40. Remove dependencies from the HCatalog client jar (macyang)
 
-  	HCAT-27. Start and stop scripts for the server (gates)
+    HCAT-27. Start and stop scripts for the server (gates)
 
-  	HCAT-21. Install documenation and script (gates)
+    HCAT-21. Install documenation and script (gates)
 
     HCAT-20. Create a package target (gates via hashutosh)
 
@@ -37,6 +37,8 @@ Release 0.1.0
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-35. HCatalog fails to compile with Pig 0.9 (hashutosh)
+
     HCAT-55. HCatalog distribution missing a few required jars (gates)
 
     HCAT-45. HCatalog release tar ball source code has problems (gates)

@@ -54,7 +54,6 @@ import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
-import org.apache.pig.impl.logicalLayer.parser.ParseException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.apache.pig.impl.util.ObjectSerializer;
@@ -79,7 +78,7 @@ public class HCatStorer extends StoreFunc implements StoreMetadata {
   private static final String PIG_SCHEMA = "howl.pig.store.schema";
   private String sign;
 
-  public HCatStorer(String partSpecs, String schema) throws ParseException, FrontendException {
+  public HCatStorer(String partSpecs, String schema) throws Exception {
 
     partitions = new HashMap<String, String>();
     if(partSpecs != null && !partSpecs.trim().isEmpty()){
@@ -100,11 +99,11 @@ public class HCatStorer extends StoreFunc implements StoreMetadata {
 
   }
 
-  public HCatStorer(String partSpecs) throws ParseException, FrontendException {
+  public HCatStorer(String partSpecs) throws Exception {
     this(partSpecs, null);
   }
 
-  public HCatStorer() throws FrontendException, ParseException{
+  public HCatStorer() throws Exception {
     this(null,null);
   }
 
