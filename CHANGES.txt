@@ -37,6 +37,8 @@ Release 0.1.0
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-55. HCatalog distribution missing a few required jars (gates)
+
     HCAT-45. HCatalog release tar ball source code has problems (gates)
 
     HCAT-41. Changes to hcat.sh in HCATALOG-20 broke the -e option (gates)

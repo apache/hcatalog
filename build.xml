@@ -360,6 +360,7 @@
       <fileset dir="hive/external/build/ivy/lib/default">
         <include name="jdo2-api-*.jar"/>
         <include name="log4j-*.jar"/>
+        <include name="slf4j-*.jar"/>
         <include name="datanucleus-connectionpool-*.jar"/>
         <include name="datanucleus-core-*.jar"/>
         <include name="datanucleus-rdbms-*.jar"/>
@@ -368,6 +369,10 @@
         <include name="commons-pool-*.jar"/>
         <include name="commons-dbcp-*.jar"/>
         <include name="guava-*.jar"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/shims">
+        <include name="hive-shims-*.jar"/>
       </fileset>
 
       <fileset dir="hive/external/build/common">
