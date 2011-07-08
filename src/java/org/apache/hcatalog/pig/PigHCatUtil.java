@@ -229,7 +229,7 @@ public class PigHCatUtil {
   }
 
 /**
-   * @param type owl column type
+   * @param hfs schema of the column
    * @return corresponding pig type
    * @throws IOException
    */

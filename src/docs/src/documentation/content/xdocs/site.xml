@@ -45,6 +45,7 @@ See http://forrest.apache.org/docs/linking.html for more info
     <index label="Cmd Line Interface " href="cli.html" />
     <index label="Supported data formats" href="supportedformats.html" />
     <index label="Installation" href="install.html" />
-    </docs>  
+    <api   label="API Docs" href="api/index.html"/>
+  </docs>  
 
 </site>

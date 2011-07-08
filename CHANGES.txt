@@ -15,6 +15,8 @@ Release 0.1.0
     (Krishna Kumar via macyang)
 
   IMPROVEMENTS
+    HCAT-54. Javadoc is not being built as part of HCatalog docs (hashutosh) 
+
     HCAT-44. Add a releaseaudit target to build.xml (gates)
 
     HCAT-40. Remove dependencies from the HCatalog client jar (macyang)

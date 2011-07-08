@@ -40,7 +40,7 @@ public class JobInfo implements Serializable{
 
     /**
      * Instantiates a new howl job info.
-     * @param tableName the table name
+     * @param howlTableInfo 
      * @param tableSchema the table schema
      * @param partitions the partitions
      */

@@ -25,8 +25,8 @@ import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 
 /**
  *
- * HCatTableInfo - class to communicate table information to {@link HowlInputFormat}
- * and {@link HowlOutputFormat}
+ * HCatTableInfo - class to communicate table information to {@link HCatInputFormat}
+ * and {@link HCatOutputFormat}
  *
  */
 public class HCatTableInfo implements Serializable {
@@ -67,7 +67,7 @@ public class HCatTableInfo implements Serializable {
   private Map<String, String> partitionValues;
 
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlInputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
    * for reading data from a table.
    * @param serverUri the Metadata server uri
    * @param serverKerberosPrincipal If the howl server is configured to
@@ -86,7 +86,7 @@ public class HCatTableInfo implements Serializable {
   }
 
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlInputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
    * for reading data from a table.
    * @param serverUri the Metadata server uri
    * @param serverKerberosPrincipal If the howl server is configured to
@@ -115,7 +115,7 @@ public class HCatTableInfo implements Serializable {
       this.filter = filter;
   }
   /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HowlOutputFormat}
+   * Initializes a new HCatTableInfo instance to be used with {@link HCatOutputFormat}
    * for writing data from a table.
    * @param serverUri the Metadata server uri
    * @param serverKerberosPrincipal If the howl server is configured to
