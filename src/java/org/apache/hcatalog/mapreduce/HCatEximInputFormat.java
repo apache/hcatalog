@@ -48,10 +48,7 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
    * the information in the conf object. The inputInfo object is updated with
    * information needed in the client context
    *
-   * @param job
-   *          the job object
-   * @param inputInfo
-   *          the table input info
+   * @param job the job object
    * @return two hcat schemas, for the table columns and the partition keys
    * @throws IOException
    *           the exception in communicating with the metadata server

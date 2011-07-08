@@ -229,7 +229,7 @@ public class PigHCatUtil {
   }
 
 /**
-   * @param type hcat column type
+   * @param hfs the field schema of the column
    * @return corresponding pig type
    * @throws IOException
    */

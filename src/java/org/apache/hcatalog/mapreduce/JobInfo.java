@@ -40,7 +40,7 @@ public class JobInfo implements Serializable{
 
     /**
      * Instantiates a new hcat job info.
-     * @param tableName the table name
+     * @param hcatTableInfo 
      * @param tableSchema the table schema
      * @param partitions the partitions
      */

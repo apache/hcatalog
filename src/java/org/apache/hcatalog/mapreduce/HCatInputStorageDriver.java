@@ -45,7 +45,7 @@ public abstract class HCatInputStorageDriver {
 
   /**
    * Returns the InputFormat to use with this Storage Driver.
-   * @param properties the properties containing parameters required for initialization of InputFormat
+   * @param hcatProperties the properties containing parameters required for initialization of InputFormat
    * @return the InputFormat instance
    */
   public abstract InputFormat<? extends WritableComparable, ? extends Writable> getInputFormat(Properties hcatProperties);
@@ -56,7 +56,7 @@ public abstract class HCatInputStorageDriver {
    * Implementers of StorageDriver should look to overwriting this function so as to convert their
    * value type to HCatRecord. Default implementation is provided for StorageDriver implementations
    * on top of an underlying InputFormat that already uses HCatRecord as a tuple
-   * @param value the underlying value to convert to HCatRecord
+   * @param baseValue the underlying value to convert to HCatRecord
    */
   public abstract HCatRecord convertToHCatRecord(WritableComparable baseKey, Writable baseValue) throws IOException;
 
@@ -130,7 +130,6 @@ public abstract class HCatInputStorageDriver {
    * the schema it has (like Zebra) or it will use this to create a HCatRecord matching the output schema.
    * @param jobContext the job context object
    * @param hcatSchema the schema published in HCat for this data
-   * @param instantiationState
    * @throws IOException Signals that an I/O exception has occurred.
    */
   public abstract void setOriginalSchema(JobContext jobContext, HCatSchema hcatSchema) throws IOException;
@@ -149,7 +148,6 @@ public abstract class HCatInputStorageDriver {
    * driver can add the partition key values to the output HCatRecord if the partition key values are not present on disk.
    * @param jobContext the job context object
    * @param partitionValues the partition values having a map with partition key name as key and the HCatKeyValue as value
-   * @param instantiationState
    * @throws IOException Signals that an I/O exception has occurred.
    */
   public abstract void setPartitionValues(JobContext jobContext, Map<String,String> partitionValues) throws IOException;

@@ -339,7 +339,7 @@
   Docs Section
   ================================================================================
   -->
-  <target name="docs" depends="forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
+  <target name="docs" depends="javadoc, forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
     <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
           failonerror="true">
     </exec>
@@ -351,6 +351,18 @@
   <target name="forrest.check" unless="forrest.home" >
     <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
   </target>
+
+  <target name="javadoc" depends="jar" description="Create documentation">
+      <mkdir dir="${build.javadoc}" />
+      <javadoc overview="${src.dir}/../docs/overview.html" packagenames="org.apache.hcatalog.*" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="HCatalog ${hcatalog.version} API" doctitle="HCatalog ${hcatalog.version} API">
+          <packageset dir="${src.dir}" />
+          <classpath>
+              <path refid="classpath" />
+          </classpath>
+          <group title="hcatalog" packages="org.apache.hcatalog.*" />
+      </javadoc>
+  </target>
+
 
   <!--
   ===============================================================================

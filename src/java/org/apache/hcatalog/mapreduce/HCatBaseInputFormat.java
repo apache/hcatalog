@@ -39,10 +39,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
   /**
    * get the schema for the HCatRecord data returned by HCatInputFormat.
    * 
-   * @param job
-   *          the job object
-   * @param hcatSchema
-   *          the schema to use as the consolidated schema
+   * @param context the jobContext
    * @throws IllegalArgumentException
    */
   public static HCatSchema getOutputSchema(JobContext context) throws Exception {
