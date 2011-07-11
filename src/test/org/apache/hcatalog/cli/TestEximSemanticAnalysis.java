@@ -32,6 +32,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
@@ -70,13 +72,13 @@ public class TestEximSemanticAnalysis extends TestCase {
   protected void tearDown() throws Exception {
   }
 
-  public void testExportPerms() throws IOException, MetaException {
+  public void testExportPerms() throws IOException, MetaException, HiveException {
 
     hcatDriver.run("drop table junit_sem_analysis");
     CommandProcessorResponse response = hcatDriver
         .run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
     assertEquals(0, response.getResponseCode());
-    Path whPath = wh.getDefaultTablePath("default", "junit_sem_analysis");
+    Path whPath = wh.getTablePath(Hive.get(hcatConf).getDatabase("default"), "junit_sem_analysis");
     cluster.getFileSystem().setPermission(whPath, FsPermission.valueOf("-rwxrwx-wx"));
     cluster.getFileSystem().setOwner(whPath, "nosuchuser", "nosuchgroup");
 
@@ -96,7 +98,7 @@ public class TestEximSemanticAnalysis extends TestCase {
     }
   }
 
-  public void testImportPerms() throws IOException, MetaException {
+  public void testImportPerms() throws IOException, MetaException, HiveException {
 
     hcatDriver.run("drop table junit_sem_analysis");
     CommandProcessorResponse response = hcatDriver
@@ -111,7 +113,7 @@ public class TestEximSemanticAnalysis extends TestCase {
     response = hcatDriver
         .run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
     assertEquals(0, response.getResponseCode());
-    Path whPath = wh.getDefaultTablePath("default", "junit_sem_analysis");
+    Path whPath = wh.getTablePath(Hive.get(hcatConf).getDatabase("default"), "junit_sem_analysis");
     cluster.getFileSystem().setPermission(whPath, FsPermission.valueOf("-rwxrwxr-x"));
     cluster.getFileSystem().setOwner(whPath, "nosuchuser", "nosuchgroup");
 
@@ -132,7 +134,7 @@ public class TestEximSemanticAnalysis extends TestCase {
     }
   }
 
-  public void testImportSetPermsGroup() throws IOException, MetaException {
+  public void testImportSetPermsGroup() throws IOException, MetaException, HiveException {
 
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("drop table junit_sem_analysis_imported");
@@ -153,7 +155,7 @@ public class TestEximSemanticAnalysis extends TestCase {
         .run("import table junit_sem_analysis_imported from 'pfile://local:9080/tmp/hcat/exports/junit_sem_analysis'");
     assertEquals(0, response.getResponseCode());
 
-    Path whPath = wh.getDefaultTablePath("default", "junit_sem_analysis_imported");
+    Path whPath = wh.getTablePath(Hive.get(hcatConf).getDatabase("default"), "junit_sem_analysis_imported");
     assertEquals(FsPermission.valueOf("-rwxrw-r--"), cluster.getFileSystem().getFileStatus(whPath).getPermission());
     assertEquals("nosuchgroup", cluster.getFileSystem().getFileStatus(whPath).getGroup());
 

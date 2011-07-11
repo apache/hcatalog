@@ -52,12 +52,14 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
+import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
 import org.apache.hadoop.hive.metastore.events.CreateDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
+import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hcatalog.common.HCatConstants;
 
 /**
@@ -317,5 +319,15 @@ public class NotificationListener extends MetaStoreEventListener{
 			throws MetaException {
 		if(lpde.getStatus())
 			send(lpde.getPartitionName(),lpde.getTable().getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME),HCatConstants.HCAT_PARTITION_DONE_EVENT);
+	}
+	
+	@Override
+	public void onAlterPartition(AlterPartitionEvent ape) throws MetaException{
+		//no-op
+	}
+	
+	@Override
+	public void onAlterTable(AlterTableEvent ate) throws MetaException {
+		// no-op
 	}
 }

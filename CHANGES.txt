@@ -46,7 +46,10 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
-
+    HCAT-57. Remove usage of deprecated methods (hashutosh)
+   
+    HCAT-59. Assimilate new changes in listener interface (hashutosh)
+    
     HCAT-55. HCatalog distribution missing a few required jars (gates)
 
     HCAT-52. No message is sent on message bus in case partition keys are uppercase (hashutosh)

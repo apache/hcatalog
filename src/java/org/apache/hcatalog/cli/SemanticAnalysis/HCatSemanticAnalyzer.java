@@ -212,7 +212,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       }
     } else{
       // Else, its a DB operation.
-      AuthUtils.authorize(wh.getDefaultDatabasePath(name), action, cntxt.getConf());
+      AuthUtils.authorize(wh.getDatabasePath(cntxt.getHive().getDatabase(name)), action, cntxt.getConf());
     }
   }
 

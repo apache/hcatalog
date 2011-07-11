@@ -33,6 +33,8 @@ import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hcatalog.ExitException;
 import org.apache.hcatalog.NoExitSecurityManager;
 import org.apache.hcatalog.cli.HCatCli;
@@ -70,7 +72,7 @@ public class TestPermsInheritance extends TestCase {
 
   private final HiveConf conf = new HiveConf(this.getClass());
 
-  public void testNoPartTbl() throws IOException, MetaException, UnknownTableException, TException, NoSuchObjectException{
+  public void testNoPartTbl() throws IOException, MetaException, UnknownTableException, TException, NoSuchObjectException, HiveException{
 
     try{
       HCatCli.main(new String[]{"-e","create table testNoPartTbl (line string) stored as RCFILE", "-p","rwx-wx---"});
@@ -80,7 +82,7 @@ public class TestPermsInheritance extends TestCase {
       assertEquals(((ExitException)e).getStatus(), 0);
     }
     Warehouse wh = new Warehouse(conf);
-    Path dfsPath = wh.getDefaultTablePath(MetaStoreUtils.DEFAULT_DATABASE_NAME, "testNoPartTbl");
+    Path dfsPath = wh.getTablePath(Hive.get(conf).getDatabase(MetaStoreUtils.DEFAULT_DATABASE_NAME), "testNoPartTbl");
     FileSystem fs = dfsPath.getFileSystem(conf);
     assertEquals(fs.getFileStatus(dfsPath).getPermission(),FsPermission.valueOf("drwx-wx---"));
 
@@ -101,7 +103,7 @@ public class TestPermsInheritance extends TestCase {
       assertEquals(((ExitException)e).getStatus(), 0);
     }
 
-    dfsPath = wh.getDefaultTablePath(MetaStoreUtils.DEFAULT_DATABASE_NAME, "testPartTbl");
+    dfsPath = wh.getTablePath(Hive.get(conf).getDatabase(MetaStoreUtils.DEFAULT_DATABASE_NAME), "testPartTbl");
     assertEquals(fs.getFileStatus(dfsPath).getPermission(),FsPermission.valueOf("drwx-wx--x"));
 
     pig.setBatchOn();

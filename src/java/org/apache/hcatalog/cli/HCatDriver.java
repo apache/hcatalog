@@ -82,6 +82,7 @@ public class HCatDriver extends Driver {
     }
 
     FsPermission perms = FsPermission.valueOf(permsStr);
+
     if(!tblName.isEmpty()){
       Hive db = null;
       try{
@@ -116,7 +117,8 @@ public class HCatDriver extends Driver {
       }
       else{
         try{
-          Path dbPath = new Warehouse(conf).getDefaultDatabasePath(dbName);
+          Hive db = Hive.get();
+          Path dbPath = new Warehouse(conf).getDatabasePath(db.getDatabase(dbName));
           FileSystem fs = dbPath.getFileSystem(conf);
           if(perms != null){
             fs.setPermission(dbPath, perms);

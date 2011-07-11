@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.exec.DDLTask;
@@ -190,7 +191,8 @@ final class CreateTableHook  extends AbstractSemanticAnalyzerHook{
     try {
       Warehouse wh = new Warehouse(conf);
       if (loc == null || loc.isEmpty()){
-        tblDir = wh.getDnsPath(wh.getDefaultTablePath(context.getHive().getCurrentDatabase(), tableName).getParent());
+    	Hive hive = context.getHive();
+        tblDir = wh.getTablePath(hive.getDatabase(hive.getCurrentDatabase()), tableName).getParent();
       }
       else{
         tblDir = wh.getDnsPath(new Path(loc));

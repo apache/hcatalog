@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
@@ -39,6 +40,7 @@ import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.Type;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.ExitException;
@@ -118,7 +120,8 @@ public class TestPermsGrp extends TestCase {
       // Lets first test for default permissions, this is the case when user specified nothing.
       Table tbl = getTable(dbName,tblName,typeName);
       msc.createTable(tbl);
-      Path dfsPath = clientWH.getDefaultTablePath(dbName, tblName);
+      Database db = Hive.get(hcatConf).getDatabase(dbName);
+      Path dfsPath = clientWH.getTablePath(db, tblName);
       cleanupTbl(dbName, tblName, typeName);
 
       // Next user did specify perms.
@@ -129,7 +132,7 @@ public class TestPermsGrp extends TestCase {
         assertTrue(e instanceof ExitException);
         assertEquals(((ExitException)e).getStatus(), 0);
       }
-      dfsPath = clientWH.getDefaultTablePath(dbName, tblName);
+      dfsPath = clientWH.getTablePath(db, tblName);
       assertTrue(dfsPath.getFileSystem(hcatConf).getFileStatus(dfsPath).getPermission().equals(FsPermission.valueOf("drwx-wx---")));
 
       cleanupTbl(dbName, tblName, typeName);
@@ -144,7 +147,7 @@ public class TestPermsGrp extends TestCase {
         assertTrue(me instanceof ExitException);
       }
       // No physical dir gets created.
-      dfsPath = clientWH.getDefaultTablePath(MetaStoreUtils.DEFAULT_DATABASE_NAME,tblName);
+      dfsPath = clientWH.getTablePath(db,tblName);
       try{
         dfsPath.getFileSystem(hcatConf).getFileStatus(dfsPath);
         assert false;
