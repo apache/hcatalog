@@ -14,6 +14,8 @@ Trunk (unreleased changes)
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-66. HCatalog 0.2.0 Documentation (chandec via hashutosh)
+
     HCAT-54. Javadoc is not being built as part of HCatalog docs (hashutosh) 
 
     HCAT-35. HCatalog fails to compile with Pig 0.9 (hashutosh)

@@ -40,11 +40,14 @@ See http://forrest.apache.org/docs/linking.html for more info
 
   <docs label="HCatalog"> 
     <index label="Overview" href="index.html" />
-    <index label="Pig Load &amp; Store " href="loadstore.html" />
-    <index label="MapReduce Input &amp; Output " href="inputoutput.html" />
-    <index label="Cmd Line Interface " href="cli.html" />
-    <index label="Supported data formats" href="supportedformats.html" />
     <index label="Installation" href="install.html" />
+    <index label="Load &amp; Store Interfaces" href="loadstore.html" />
+    <index label="Input &amp; Output Interfaces " href="inputoutput.html" />
+    <index label="Command Line Interface " href="cli.html" />
+    <index label="Storage Formats" href="supportedformats.html" />
+    <index label="Dynamic Partitioning" href="dynpartition.html" />
+    <index label="Notification" href="notification.html" />    
+
     <api   label="API Docs" href="api/index.html"/>
   </docs>  
 
