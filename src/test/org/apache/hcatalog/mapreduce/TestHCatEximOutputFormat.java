@@ -109,7 +109,7 @@ public class TestHCatEximOutputFormat extends TestCase {
           schema);
 
       job.waitForCompletion(true);
-      HCatEximOutputCommitter committer = new HCatEximOutputCommitter(null);
+      HCatEximOutputCommitter committer = new HCatEximOutputCommitter(job,null);
       committer.cleanupJob(job);
 
       Path metadataPath = new Path(outputLocation, "_metadata");
@@ -165,7 +165,7 @@ public class TestHCatEximOutputFormat extends TestCase {
           schema);
 
       job.waitForCompletion(true);
-      HCatEximOutputCommitter committer = new HCatEximOutputCommitter(null);
+      HCatEximOutputCommitter committer = new HCatEximOutputCommitter(job,null);
       committer.cleanupJob(job);
       Path metadataPath = new Path(outputLocation, "_metadata");
       Map.Entry<Table, List<Partition>> rv = EximUtil.readMetaData(fs, metadataPath);

@@ -19,6 +19,7 @@
 package org.apache.hcatalog.mapreduce;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -65,6 +66,10 @@ public class HCatTableInfo implements Serializable {
 
   /** The partition values to publish to, if used for output*/
   private Map<String, String> partitionValues;
+
+  /** List of keys for which values were not specified at write setup time, to be infered at write time */
+  private List<String> dynamicPartitioningKeys;
+  
 
   /**
    * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
@@ -229,6 +234,27 @@ public class HCatTableInfo implements Serializable {
     return serverKerberosPrincipal;
   }
 
+  /**
+   * Returns whether or not Dynamic Partitioning is used
+   * @return whether or not dynamic partitioning is currently enabled and used
+   */
+  public boolean isDynamicPartitioningUsed() {
+    return !((dynamicPartitioningKeys == null) || (dynamicPartitioningKeys.isEmpty()));
+  }
+
+  /**
+   * Sets the list of dynamic partitioning keys used for outputting without specifying all the keys
+   * @param dynamicPartitioningKeys
+   */
+  public void setDynamicPartitioningKeys(List<String> dynamicPartitioningKeys) {
+    this.dynamicPartitioningKeys = dynamicPartitioningKeys;
+  }
+  
+  public List<String> getDynamicPartitioningKeys(){
+    return this.dynamicPartitioningKeys;
+  }
+
+
   @Override
   public int hashCode() {
     int result = 17;
@@ -240,8 +266,9 @@ public class HCatTableInfo implements Serializable {
     result = 31*result + (partitionPredicates == null ? 0 : partitionPredicates.hashCode());
     result = 31*result + tableInfoType.ordinal();
     result = 31*result + (partitionValues == null ? 0 : partitionValues.hashCode());
+    result = 31*result + (dynamicPartitioningKeys == null ? 0 : dynamicPartitioningKeys.hashCode());
     return result;
-
   }
+
 }
 

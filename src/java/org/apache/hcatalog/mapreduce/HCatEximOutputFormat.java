@@ -91,7 +91,7 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
   @Override
   public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
       OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getOutputFormat(context);
-      return new HCatEximOutputCommitter(outputFormat.getOutputCommitter(context));
+      return new HCatEximOutputCommitter(context,outputFormat.getOutputCommitter(context));
   }
 
   public static void setOutput(Job job, String dbname, String tablename, String location,

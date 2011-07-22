@@ -78,12 +78,12 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
   public void testHCatNonPartitionedTable() throws Exception {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
-    runMRCreate(null, partitionColumns, writeRecords, 10);
+    runMRCreate(null, partitionColumns, writeRecords, 10,true);
 
     //Test for duplicate publish
     IOException exc = null;
     try {
-      runMRCreate(null,  partitionColumns, writeRecords, 20);
+      runMRCreate(null,  partitionColumns, writeRecords, 20,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -98,7 +98,7 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
     partitionMap.put("px", "p1value2");
 
     try {
-      runMRCreate(partitionMap, partitionColumns, writeRecords, 20);
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
     } catch(IOException e) {
       exc = e;
     }

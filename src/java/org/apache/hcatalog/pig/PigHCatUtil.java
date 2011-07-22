@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -403,6 +404,18 @@ public static Object extractPigObject(Object o, HCatFieldSchema hfs) throws Exce
                       "compatible primitive for:" + hfs.getTypeString());
           }
 
+  }
+
+  public static void getConfigFromUDFProperties(Properties p, Configuration config, String propName) {
+    if(p.getProperty(propName) != null){
+      config.set(propName, p.getProperty(propName));
+    }
+  }
+
+  public static void saveConfigIntoUDFProperties(Properties p, Configuration config, String propName) {
+    if(config.get(propName) != null){
+      p.setProperty(propName, config.get(propName));
+    }
   }
 
 }

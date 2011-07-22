@@ -145,7 +145,7 @@ public class HCatEximStorer extends HCatBaseStorer {
       //In local mode, mapreduce will not call HCatOutputCommitter.cleanupJob.
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
-      new HCatEximOutputCommitter(null).cleanupJob(job);
+      new HCatEximOutputCommitter(job,null).cleanupJob(job);
     }
   }
 }

@@ -41,7 +41,7 @@ public enum ErrorType {
     ERROR_INVALID_PARTITION_VALUES      (2010, "Invalid partition values specified"),
     ERROR_MISSING_PARTITION_KEY         (2011, "Partition key value not provided for publish"),
     ERROR_MOVE_FAILED                   (2012, "Moving of data failed during commit"),
-
+    ERROR_TOO_MANY_DYNAMIC_PTNS         (2013, "Attempt to create too many dynamic partitions"),
 
     /* Authorization Errors 3000 - 3999 */
     ERROR_ACCESS_CONTROL           (3000, "Permission denied"),

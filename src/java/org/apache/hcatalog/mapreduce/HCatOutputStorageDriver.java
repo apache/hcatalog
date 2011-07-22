@@ -22,15 +22,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus.State;
+import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
@@ -39,6 +47,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  *  HCatOutputFormat.
  */
 public abstract class HCatOutputStorageDriver {
+
 
   /**
    * Initialize the storage driver with specified properties, default implementation does nothing.
@@ -103,13 +112,22 @@ public abstract class HCatOutputStorageDriver {
      * @param jobContext the job context object
      * @param tableLocation the location of the table
      * @param partitionValues the partition values
+     * @param dynHash A unique hash value that represents the dynamic partitioning job used
      * @return the location String.
      * @throws IOException Signals that an I/O exception has occurred.
      */
     public String getOutputLocation(JobContext jobContext,
-            String tableLocation, List<String> partitionCols, Map<String, String> partitionValues) throws IOException {
+            String tableLocation, List<String> partitionCols, Map<String, String> partitionValues, String dynHash) throws IOException {
+      
+      String parentPath = tableLocation;
+      // For dynamic partitioned writes without all keyvalues specified, 
+      // we create a temp dir for the associated write job
+      if (dynHash != null){
+        parentPath = new Path(tableLocation, HCatOutputFormat.DYNTEMP_DIR_NAME+dynHash).toString();
+      }
 
-      if( partitionValues == null || partitionValues.size() == 0 ) {
+      // For non-partitioned tables, we send them to the temp dir
+      if((dynHash == null) && ( partitionValues == null || partitionValues.size() == 0 )) {
         return new Path(tableLocation, HCatOutputFormat.TEMP_DIR_NAME).toString();
       }
 
@@ -120,7 +138,7 @@ public abstract class HCatOutputStorageDriver {
 
       String partitionLocation = FileUtils.makePartName(partitionCols, values);
 
-      Path path = new Path(tableLocation, partitionLocation);
+      Path path = new Path(parentPath, partitionLocation);
       return path.toString();
     }
 
@@ -130,4 +148,59 @@ public abstract class HCatOutputStorageDriver {
     public Path getWorkFilePath(TaskAttemptContext context, String outputLoc) throws IOException{
       return new Path(new FileOutputCommitter(new Path(outputLoc), context).getWorkPath(), FileOutputFormat.getUniqueFile(context, "part",""));
     }
+
+    /**
+     * Implementation that calls the underlying output committer's setupJob, 
+     * used in lieu of underlying committer's setupJob when using dynamic partitioning
+     * The default implementation should be overriden by underlying implementations
+     * that do not use FileOutputCommitter.
+     * The reason this function exists is so as to allow a storage driver implementor to
+     * override underlying OutputCommitter's setupJob implementation to allow for
+     * being called multiple times in a job, to make it idempotent.
+     * This should be written in a manner that is callable multiple times 
+     * from individual tasks without stepping on each others' toes
+     * 
+     * @param context
+     * @throws InterruptedException 
+     * @throws IOException 
+     */
+    public void setupOutputCommitterJob(TaskAttemptContext context) 
+        throws IOException, InterruptedException{
+      getOutputFormat().getOutputCommitter(context).setupJob(context);
+    }
+
+    /**
+     * Implementation that calls the underlying output committer's cleanupJob, 
+     * used in lieu of underlying committer's cleanupJob when using dynamic partitioning
+     * This should be written in a manner that is okay to call after having had
+     * multiple underlying outputcommitters write to task dirs inside it.
+     * While the base MR cleanupJob should have sufficed normally, this is provided
+     * in order to let people implementing setupOutputCommitterJob to cleanup properly
+     * 
+     * @param context
+     * @throws IOException 
+     */
+    public void cleanupOutputCommitterJob(TaskAttemptContext context) 
+        throws IOException, InterruptedException{
+      getOutputFormat().getOutputCommitter(context).cleanupJob(context);
+    }
+
+    /**
+     * Implementation that calls the underlying output committer's abortJob, 
+     * used in lieu of underlying committer's abortJob when using dynamic partitioning
+     * This should be written in a manner that is okay to call after having had
+     * multiple underlying outputcommitters write to task dirs inside it.
+     * While the base MR cleanupJob should have sufficed normally, this is provided
+     * in order to let people implementing setupOutputCommitterJob to abort properly
+     * 
+     * @param context
+     * @param state
+     * @throws IOException 
+     */
+    public void abortOutputCommitterJob(TaskAttemptContext context, State state) 
+        throws IOException, InterruptedException{
+      getOutputFormat().getOutputCommitter(context).abortJob(context,state);
+    }
+
+    
 }

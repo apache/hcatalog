@@ -34,7 +34,7 @@ public abstract class HCatBaseOutputCommitter extends OutputCommitter {
   /** The underlying output committer */
   protected final OutputCommitter baseCommitter;
 
-  public HCatBaseOutputCommitter(OutputCommitter baseCommitter) {
+  public HCatBaseOutputCommitter(JobContext context, OutputCommitter baseCommitter) {
     this.baseCommitter = baseCommitter;
   }
 

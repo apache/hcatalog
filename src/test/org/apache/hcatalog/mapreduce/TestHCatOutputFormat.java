@@ -160,7 +160,7 @@ public class TestHCatOutputFormat extends TestCase {
   }
 
   public void publishTest(Job job) throws Exception {
-    OutputCommitter committer = new HCatOutputCommitter(null);
+    OutputCommitter committer = new HCatOutputCommitter(job,null);
     committer.cleanupJob(job);
 
     Partition part = client.getPartition(dbName, tblName, Arrays.asList("p1"));

@@ -40,6 +40,7 @@ import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 
@@ -47,8 +48,8 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
 
   private static final Log LOG = LogFactory.getLog(HCatEximOutputCommitter.class);
 
-  public HCatEximOutputCommitter(OutputCommitter baseCommitter) {
-    super(baseCommitter);
+  public HCatEximOutputCommitter(JobContext context, OutputCommitter baseCommitter) {
+    super(context,baseCommitter);
   }
 
   @Override

@@ -64,13 +64,18 @@ public final class HCatConstants {
   public static final String HCAT_KEY_OUTPUT_INFO = HCAT_KEY_OUTPUT_BASE + ".info";
   public static final String HCAT_KEY_HIVE_CONF = HCAT_KEY_OUTPUT_BASE + ".hive.conf";
   public static final String HCAT_KEY_TOKEN_SIGNATURE = HCAT_KEY_OUTPUT_BASE + ".token.sig";
-  
+  public static final String HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE = HCAT_KEY_OUTPUT_BASE + ".jobclient.token.sig";
+  public static final String HCAT_KEY_JOBCLIENT_TOKEN_STRFORM = HCAT_KEY_OUTPUT_BASE + ".jobclient.token.strform";
+
   public static final String HCAT_MSG_CLEAN_FREQ = "hcat.msg.clean.freq";
   public static final String HCAT_MSG_EXPIRY_DURATION = "hcat.msg.expiry.duration";
   
   public static final String HCAT_MSGBUS_TOPIC_NAME = "hcat.msgbus.topic.name";
   public static final String HCAT_MSGBUS_TOPIC_NAMING_POLICY = "hcat.msgbus.topic.naming.policy";
   public static final String HCAT_MSGBUS_TOPIC_PREFIX = "hcat.msgbus.topic.prefix";
+  
+  public static final String HCAT_DYNAMIC_PTN_JOBID = HCAT_KEY_OUTPUT_BASE + "dynamic.jobid";
+  public static final boolean HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED = false;
 
   // Message Bus related properties.
   public static final String HCAT_DEFAULT_TOPIC_PREFIX = "hcat";

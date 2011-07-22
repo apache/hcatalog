@@ -109,26 +109,27 @@ public class HCatStorer extends HCatBaseStorer {
       computedSchema = convertPigSchemaToHCatSchema(pigSchema,hcatTblSchema);
       HCatOutputFormat.setSchema(job, computedSchema);
       p.setProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO, config.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-      if(config.get(HCatConstants.HCAT_KEY_HIVE_CONF) != null){
-        p.setProperty(HCatConstants.HCAT_KEY_HIVE_CONF, config.get(HCatConstants.HCAT_KEY_HIVE_CONF));
-      }
-      if(config.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null){
-        p.setProperty(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE,
-            config.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
-      }
+      
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_HIVE_CONF);
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+      
       p.setProperty(COMPUTED_OUTPUT_SCHEMA,ObjectSerializer.serialize(computedSchema));
 
     }else{
       config.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, p.getProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-      if(p.getProperty(HCatConstants.HCAT_KEY_HIVE_CONF) != null){
-        config.set(HCatConstants.HCAT_KEY_HIVE_CONF, p.getProperty(HCatConstants.HCAT_KEY_HIVE_CONF));
-      }
-      if(p.getProperty(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null){
-        config.set(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE,
-            p.getProperty(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
-      }
+      
+      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_HIVE_CONF);
+      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
+      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
+      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
+      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+      
     }
   }
+
 
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
@@ -136,7 +137,7 @@ public class HCatStorer extends HCatBaseStorer {
       //In local mode, mapreduce will not call HCatOutputCommitter.cleanupJob.
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
-      new HCatOutputCommitter(null).cleanupJob(job);
+      new HCatOutputCommitter(job,null).cleanupJob(job);
     }
   }
 }

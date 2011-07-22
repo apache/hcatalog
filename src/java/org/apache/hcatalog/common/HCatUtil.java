@@ -28,20 +28,41 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.TokenIdentifier;
+import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.apache.hcatalog.mapreduce.HCatOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.thrift.TException;
 
 public class HCatUtil {
+
+//  static final private Log LOG = LogFactory.getLog(HCatUtil.class);
 
   public static boolean checkJobContextIfRunningFromBackend(JobContext j){
     if (j.getConfiguration().get("mapred.task.id", "").equals("")){
@@ -256,4 +277,102 @@ public class HCatUtil {
     return true;
   }
 
+  public static Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> getJobTrackerDelegationToken(Configuration conf, String userName) throws Exception {
+//    LOG.info("getJobTrackerDelegationToken("+conf+","+userName+")");
+    JobClient jcl = new JobClient(new JobConf(conf, HCatOutputFormat.class));
+    Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> t = jcl.getDelegationToken(new Text(userName));
+//    LOG.info("got "+t);
+    return t;
+    
+//    return null;
+  }
+
+  public static void cancelJobTrackerDelegationToken(String tokenStrForm, String tokenSignature) throws Exception {
+//    LOG.info("cancelJobTrackerDelegationToken("+tokenStrForm+","+tokenSignature+")");
+    JobClient jcl = new JobClient(new JobConf(new Configuration(), HCatOutputFormat.class));
+    Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> t = extractJobTrackerToken(tokenStrForm,tokenSignature);
+//    LOG.info("canceling "+t);
+    try {
+      jcl.cancelDelegationToken(t);
+    }catch(Exception e){
+//      HCatUtil.logToken(LOG, "jcl token to cancel", t);
+      // ignore if token has already been invalidated.
+    }
+  }
+  
+  
+  public static Token<? extends AbstractDelegationTokenIdentifier> 
+      extractThriftToken(String tokenStrForm, String tokenSignature) throws MetaException, TException, IOException {
+//    LOG.info("extractThriftToken("+tokenStrForm+","+tokenSignature+")");
+    Token<? extends AbstractDelegationTokenIdentifier> t = new Token<DelegationTokenIdentifier>();
+    t.decodeFromUrlString(tokenStrForm);
+    t.setService(new Text(tokenSignature));
+//    LOG.info("returning "+t);
+    return t;
+  }
+
+  public static Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> 
+      extractJobTrackerToken(String tokenStrForm, String tokenSignature) throws MetaException, TException, IOException {
+//    LOG.info("extractJobTrackerToken("+tokenStrForm+","+tokenSignature+")");
+    Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> t = 
+        new Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier>();
+    t.decodeFromUrlString(tokenStrForm);
+    t.setService(new Text(tokenSignature));
+//    LOG.info("returning "+t);
+    return t;
+  }
+
+  /**
+   * Logging stack trace
+   * @param logger
+   */
+  public static void logStackTrace(Log logger) {
+    StackTraceElement[] stackTrace = new Exception().getStackTrace();
+    for (int i = 1 ; i < stackTrace.length ; i++){
+      logger.info("\t"+stackTrace[i].toString());
+    }
+  }
+
+  /**
+   * debug log the hive conf
+   * @param logger
+   * @param hc
+   */
+  public static void logHiveConf(Log logger, HiveConf hc){
+    logEntrySet(logger,"logging hiveconf:",hc.getAllProperties().entrySet());
+  }
+
+  
+  public static void logList(Log logger, String itemName, List<? extends Object> list){
+      logger.info(itemName+":");
+      for (Object item : list){
+          logger.info("\t["+item+"]");
+      }
+  }
+  
+  public static void logMap(Log logger, String itemName, Map<? extends Object,? extends Object> map){
+    logEntrySet(logger,itemName,map.entrySet());
+  }
+
+  public static void logEntrySet(Log logger, String itemName, Set<? extends Entry> entrySet) {
+    logger.info(itemName+":");
+    for (Entry e : entrySet){
+      logger.info("\t["+e.getKey()+"]=>["+e.getValue()+"]");
+    }
+  }
+
+  public static void logAllTokens(Log logger, JobContext context) throws IOException {
+    for (Token<? extends TokenIdentifier>t : context.getCredentials().getAllTokens()){
+      logToken(logger,"token",t);
+    }
+  }
+
+  public static void logToken(Log logger, String itemName, Token<? extends TokenIdentifier> t) throws IOException {
+    logger.info(itemName+":");
+    logger.info("\tencodeToUrlString : "+t.encodeToUrlString());
+    logger.info("\ttoString : "+t.toString());
+    logger.info("\tkind : "+t.getKind());
+    logger.info("\tservice : "+t.getService());
+  }
+  
 }

@@ -80,17 +80,17 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value1");
 
-    runMRCreate(partitionMap, partitionColumns, writeRecords, 10);
+    runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
 
     partitionMap.clear();
     partitionMap.put("PART1", "p1value2");
 
-    runMRCreate(partitionMap, partitionColumns, writeRecords, 20);
+    runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
 
     //Test for duplicate publish
     IOException exc = null;
     try {
-      runMRCreate(partitionMap, partitionColumns, writeRecords, 20);
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -105,7 +105,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     partitionMap.put("px", "p1value2");
 
     try {
-      runMRCreate(partitionMap, partitionColumns, writeRecords, 20);
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -118,14 +118,15 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     //Test for null partition value map
     exc = null;
     try {
-      runMRCreate(null, partitionColumns, writeRecords, 20);
+      runMRCreate(null, partitionColumns, writeRecords, 20,false);
     } catch(IOException e) {
       exc = e;
     }
 
-    assertTrue(exc != null);
-    assertTrue(exc instanceof HCatException);
-    assertEquals(ErrorType.ERROR_INVALID_PARTITION_VALUES, ((HCatException) exc).getErrorType());
+    assertTrue(exc == null);
+//    assertTrue(exc instanceof HCatException);
+//    assertEquals(ErrorType.ERROR_PUBLISHING_PARTITION, ((HCatException) exc).getErrorType());
+    // With Dynamic partitioning, this isn't an error that the keyValues specified didn't values
 
     //Read should get 10 + 20 rows
     runMRRead(30);
@@ -166,7 +167,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value5");
 
-    runMRCreate(partitionMap, partitionColumns, writeRecords, 10);
+    runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
 
     tableSchema = getTableSchema();
 
@@ -187,7 +188,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     IOException exc = null;
     try {
-      runMRCreate(partitionMap, partitionColumns, writeRecords, 20);
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -217,7 +218,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     exc = null;
     try {
-      runMRCreate(partitionMap, partitionColumns, recordsContainingPartitionCols, 20);
+      runMRCreate(partitionMap, partitionColumns, recordsContainingPartitionCols, 20,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -266,7 +267,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     Exception exc = null;
     try {
-      runMRCreate(partitionMap, partitionColumns, writeRecords, 10);
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
     } catch(IOException e) {
       exc = e;
     }
@@ -291,7 +292,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
       writeRecords.add(new DefaultHCatRecord(objList));
     }
 
-    runMRCreate(partitionMap, partitionColumns, writeRecords, 10);
+    runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
 
     //Read should get 10 + 20 + 10 + 10 + 20 rows
     runMRRead(70);

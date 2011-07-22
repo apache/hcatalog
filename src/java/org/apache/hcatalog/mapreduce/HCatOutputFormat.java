@@ -21,11 +21,14 @@ package org.apache.hcatalog.mapreduce;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -54,6 +57,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.TokenSelector;
+import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -66,9 +70,15 @@ import org.apache.thrift.TException;
  * and should be given as null. The value is the HCatRecord to write.*/
 public class HCatOutputFormat extends HCatBaseOutputFormat {
 
+//    static final private Log LOG = LogFactory.getLog(HCatOutputFormat.class);
+
     /** The directory under which data is initially written for a non partitioned table */
     protected static final String TEMP_DIR_NAME = "_TEMP";
-    private static Map<String, Token<DelegationTokenIdentifier>> tokenMap = new HashMap<String, Token<DelegationTokenIdentifier>>();
+    
+    /** */
+    protected static final String DYNTEMP_DIR_NAME = "_DYN";
+    
+    private static Map<String, Token<? extends AbstractDelegationTokenIdentifier>> tokenMap = new HashMap<String, Token<? extends AbstractDelegationTokenIdentifier>>();
 
     private static final PathFilter hiddenFileFilter = new PathFilter(){
       public boolean accept(Path p){
@@ -76,6 +86,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         return !name.startsWith("_") && !name.startsWith(".");
       }
     };
+    
+    private static int maxDynamicPartitions;
+    private static boolean harRequested;
 
     /**
      * Set the info about the output to write for the Job. This queries the metadata server
@@ -90,17 +103,58 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
       try {
 
-	Configuration conf = job.getConfiguration();
+        Configuration conf = job.getConfiguration();
         client = createHiveClient(outputInfo.getServerUri(), conf);
         Table table = client.getTable(outputInfo.getDatabaseName(), outputInfo.getTableName());
 
-        if( outputInfo.getPartitionValues() == null ) {
+        if (table.getPartitionKeysSize() == 0 ){
+          if ((outputInfo.getPartitionValues() != null) && (!outputInfo.getPartitionValues().isEmpty())){
+            // attempt made to save partition values in non-partitioned table - throw error.
+            throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES, 
+                "Partition values specified for non-partitioned table");
+          }
+          // non-partitioned table
           outputInfo.setPartitionValues(new HashMap<String, String>());
+          
         } else {
-          //Convert user specified map to have lower case key names
+          // partitioned table, we expect partition values
+          // convert user specified map to have lower case key names
           Map<String, String> valueMap = new HashMap<String, String>();
-          for(Map.Entry<String, String> entry : outputInfo.getPartitionValues().entrySet()) {
-            valueMap.put(entry.getKey().toLowerCase(), entry.getValue());
+          if (outputInfo.getPartitionValues() != null){
+            for(Map.Entry<String, String> entry : outputInfo.getPartitionValues().entrySet()) {
+              valueMap.put(entry.getKey().toLowerCase(), entry.getValue());
+            }
+          }
+
+          if (
+              (outputInfo.getPartitionValues() == null)
+              || (outputInfo.getPartitionValues().size() < table.getPartitionKeysSize())
+          ){
+            // dynamic partition usecase - partition values were null, or not all were specified
+            // need to figure out which keys are not specified.
+            List<String> dynamicPartitioningKeys = new ArrayList<String>();
+            boolean firstItem = true;
+            for (FieldSchema fs : table.getPartitionKeys()){
+              if (!valueMap.containsKey(fs.getName().toLowerCase())){
+                dynamicPartitioningKeys.add(fs.getName().toLowerCase());
+              }
+            }
+            
+            if (valueMap.size() + dynamicPartitioningKeys.size() != table.getPartitionKeysSize()){
+              // If this isn't equal, then bogus key values have been inserted, error out.
+              throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,"Invalid partition keys specified");
+            }
+                        
+            outputInfo.setDynamicPartitioningKeys(dynamicPartitioningKeys);
+            String dynHash;
+            if ((dynHash = conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID)) == null){
+              dynHash = String.valueOf(Math.random());
+//              LOG.info("New dynHash : ["+dynHash+"]");
+//            }else{
+//              LOG.info("Old dynHash : ["+dynHash+"]");
+            }
+            conf.set(HCatConstants.HCAT_DYNAMIC_PTN_JOBID, dynHash);
+
           }
 
           outputInfo.setPartitionValues(valueMap);
@@ -125,11 +179,13 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         String tblLocation = tblSD.getLocation();
         String location = driver.getOutputLocation(job,
             tblLocation, partitionCols,
-            outputInfo.getPartitionValues());
+            outputInfo.getPartitionValues(),conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID));
 
         //Serialize the output info into the configuration
         OutputJobInfo jobInfo = new OutputJobInfo(outputInfo,
                 tableSchema, tableSchema, storerInfo, location, table);
+        jobInfo.setHarRequested(harRequested);
+        jobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
         conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
 
         Path tblPath = new Path(tblLocation);
@@ -176,6 +232,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             // TableInfo, we can have as many tokens as there are stores and the TokenSelector
             // will correctly pick the right tokens which the committer will use and
             // cancel.
+            
             String tokenSignature = getTokenSignature(outputInfo);
             if(tokenMap.get(tokenSignature) == null) {
               // get delegation tokens from hcat server and store them into the "job"
@@ -183,19 +240,32 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
               // hcat
               // when the JobTracker in Hadoop MapReduce starts supporting renewal of 
               // arbitrary tokens, the renewer should be the principal of the JobTracker
-              String tokenStrForm = client.getDelegationToken(ugi.getUserName());
-              Token<DelegationTokenIdentifier> t = new Token<DelegationTokenIdentifier>();
-              t.decodeFromUrlString(tokenStrForm);
-              t.setService(new Text(tokenSignature));
-              tokenMap.put(tokenSignature, t);
+              tokenMap.put(tokenSignature, HCatUtil.extractThriftToken(
+                  client.getDelegationToken(ugi.getUserName()),
+                  tokenSignature));
             }
+
+            String jcTokenSignature = "jc."+tokenSignature;
+            if(tokenMap.get(jcTokenSignature) == null) {
+              tokenMap.put(jcTokenSignature,
+                  HCatUtil.getJobTrackerDelegationToken(conf,ugi.getUserName()));
+            }
+            
             job.getCredentials().addToken(new Text(ugi.getUserName() + tokenSignature),
                 tokenMap.get(tokenSignature));
             // this will be used by the outputcommitter to pass on to the metastore client
             // which in turn will pass on to the TokenSelector so that it can select
             // the right token.
+            job.getCredentials().addToken(new Text(ugi.getUserName() + jcTokenSignature),
+                tokenMap.get(jcTokenSignature));
+            
             job.getConfiguration().set(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE, tokenSignature);
-        }
+            job.getConfiguration().set(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE, jcTokenSignature);
+            job.getConfiguration().set(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM, tokenMap.get(jcTokenSignature).encodeToUrlString());
+
+//            LOG.info("Set hive dt["+tokenSignature+"]");
+//            LOG.info("Set jt dt["+jcTokenSignature+"]");
+          }
        }
       } catch(Exception e) {
         if( e instanceof HCatException ) {
@@ -207,9 +277,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         if( client != null ) {
           client.close();
         }
+//        HCatUtil.logAllTokens(LOG,job);
       }
     }
-
 
     // a signature string to associate with a HCatTableInfo - essentially
     // a concatenation of dbname, tablename and partition keyvalues.
@@ -232,11 +302,10 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       return result.toString();
     }
 
-
-
     /**
      * Handles duplicate publish of partition. Fails if partition already exists.
      * For non partitioned tables, fails if files are present in table directory.
+     * For dynamic partitioned publish, does nothing - check would need to be done at recordwriter time
      * @param job the job
      * @param outputInfo the output info
      * @param client the metastore client
@@ -247,18 +316,33 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      */
     private static void handleDuplicatePublish(Job job, HCatTableInfo outputInfo,
         HiveMetaStoreClient client, Table table) throws IOException, MetaException, TException {
-      List<String> partitionValues = HCatOutputCommitter.getPartitionValueList(
-                  table, outputInfo.getPartitionValues());
+
+      /*
+       * For fully specified ptn, follow strict checks for existence of partitions in metadata
+       * For unpartitioned tables, follow filechecks
+       * For partially specified tables:
+       *    This would then need filechecks at the start of a ptn write,
+       *    Doing metadata checks can get potentially very expensive (fat conf) if 
+       *    there are a large number of partitions that match the partial specifications
+       */
 
       if( table.getPartitionKeys().size() > 0 ) {
-        //For partitioned table, fail if partition is already present
-        List<String> currentParts = client.listPartitionNames(outputInfo.getDatabaseName(),
-            outputInfo.getTableName(), partitionValues, (short) 1);
+        if (!outputInfo.isDynamicPartitioningUsed()){
+          List<String> partitionValues = HCatOutputCommitter.getPartitionValueList(
+              table, outputInfo.getPartitionValues());
+          // fully-specified partition
+          List<String> currentParts = client.listPartitionNames(outputInfo.getDatabaseName(),
+              outputInfo.getTableName(), partitionValues, (short) 1);
 
-        if( currentParts.size() > 0 ) {
-          throw new HCatException(ErrorType.ERROR_DUPLICATE_PARTITION);
+          if( currentParts.size() > 0 ) {
+            throw new HCatException(ErrorType.ERROR_DUPLICATE_PARTITION);
+          }
         }
       } else {
+        List<String> partitionValues = HCatOutputCommitter.getPartitionValueList(
+            table, outputInfo.getPartitionValues());
+        // non-partitioned table
+        
         Path tablePath = new Path(table.getSd().getLocation());
         FileSystem fs = tablePath.getFileSystem(job.getConfiguration());
 
@@ -299,23 +383,11 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       getRecordWriter(TaskAttemptContext context
                       ) throws IOException, InterruptedException {
 
-      // First create the RW.
       HCatRecordWriter rw = new HCatRecordWriter(context);
-
-      // Now set permissions and group on freshly created files.
-      OutputJobInfo info =  getJobInfo(context);
-      Path workFile = rw.getStorageDriver().getWorkFilePath(context,info.getLocation());
-      Path tblPath = new Path(info.getTable().getSd().getLocation());
-      FileSystem fs = tblPath.getFileSystem(context.getConfiguration());
-      FileStatus tblPathStat = fs.getFileStatus(tblPath);
-      fs.setPermission(workFile, tblPathStat.getPermission());
-      try{
-        fs.setOwner(workFile, null, tblPathStat.getGroup());
-      } catch(AccessControlException ace){
-        // log the messages before ignoring. Currently, logging is not built in HCat.
-      }
+      rw.prepareForStorageDriverOutput(context);
       return rw;
     }
+
 
     /**
      * Get the output committer for this output format. This is responsible
@@ -329,10 +401,17 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     public OutputCommitter getOutputCommitter(TaskAttemptContext context
                                        ) throws IOException, InterruptedException {
         OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getOutputFormat(context);
-        return new HCatOutputCommitter(outputFormat.getOutputCommitter(context));
+        return new HCatOutputCommitter(context,outputFormat.getOutputCommitter(context));
     }
 
     static HiveMetaStoreClient createHiveClient(String url, Configuration conf) throws IOException, MetaException {
+      HiveConf hiveConf = getHiveConf(url, conf);
+//      HCatUtil.logHiveConf(LOG, hiveConf);
+      return new HiveMetaStoreClient(hiveConf);
+    }
+
+
+    private static HiveConf getHiveConf(String url, Configuration conf) throws IOException {
       HiveConf hiveConf = new HiveConf(HCatOutputFormat.class);
 
       if( url != null ) {
@@ -372,9 +451,48 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         }
 
       }
-
-      return new HiveMetaStoreClient(hiveConf);
+      
+      // figure out what the maximum number of partitions allowed is, so we can pass it on to our outputinfo
+      if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
+        maxDynamicPartitions = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
+      }else{
+        maxDynamicPartitions = -1; // disables bounds checking for maximum number of dynamic partitions 
+      }
+      harRequested = hiveConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
+      return hiveConf;
     }
+
+    /**
+     * Any initialization of file paths, set permissions and group on freshly created files
+     * This is called at RecordWriter instantiation time which can be at write-time for  
+     * a dynamic partitioning usecase
+     * @param context
+     * @throws IOException
+     */
+    public static void prepareOutputLocation(HCatOutputStorageDriver osd, TaskAttemptContext context) throws IOException {
+      OutputJobInfo info =  HCatBaseOutputFormat.getJobInfo(context);
+//      Path workFile = osd.getWorkFilePath(context,info.getLocation());
+      Path workFile = osd.getWorkFilePath(context,context.getConfiguration().get("mapred.output.dir"));
+      Path tblPath = new Path(info.getTable().getSd().getLocation());
+      FileSystem fs = tblPath.getFileSystem(context.getConfiguration());
+      FileStatus tblPathStat = fs.getFileStatus(tblPath);
+      
+//      LOG.info("Attempting to set permission ["+tblPathStat.getPermission()+"] on ["+
+//          workFile+"], location=["+info.getLocation()+"] , mapred.locn =["+
+//          context.getConfiguration().get("mapred.output.dir")+"]"); 
+//
+//      FileStatus wFileStatus = fs.getFileStatus(workFile);
+//      LOG.info("Table : "+tblPathStat.getPath());
+//      LOG.info("Working File : "+wFileStatus.getPath());
+      
+      fs.setPermission(workFile, tblPathStat.getPermission());
+      try{
+        fs.setOwner(workFile, null, tblPathStat.getGroup());
+      } catch(AccessControlException ace){
+        // log the messages before ignoring. Currently, logging is not built in HCat.
+      }
+    }
+
 
 
 }

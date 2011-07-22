@@ -56,12 +56,24 @@ class OutputJobInfo implements Serializable {
      * data contains partition columns.*/
 
     private List<Integer> posOfPartCols;
+    private List<Integer> posOfDynPartCols;
+
+    private int maxDynamicPartitions;
+
+    private boolean harRequested;
 
     /**
      * @return the posOfPartCols
      */
     protected List<Integer> getPosOfPartCols() {
       return posOfPartCols;
+    }
+
+    /**
+     * @return the posOfDynPartCols
+     */
+    protected List<Integer> getPosOfDynPartCols() {
+      return posOfDynPartCols;
     }
 
     /**
@@ -76,6 +88,14 @@ class OutputJobInfo implements Serializable {
         }
       });
       this.posOfPartCols = posOfPartCols;
+    }
+
+    /**
+     * @param posOfDynPartCols the posOfDynPartCols to set
+     */
+    protected void setPosOfDynPartCols(List<Integer> posOfDynPartCols) {
+      // Important - no sorting here! We retain order, it's used to match with values at runtime
+      this.posOfDynPartCols = posOfDynPartCols;
     }
 
     public OutputJobInfo(HCatTableInfo tableInfo, HCatSchema outputSchema, HCatSchema tableSchema,
@@ -137,6 +157,38 @@ class OutputJobInfo implements Serializable {
      */
     public Table getTable() {
       return table;
+    }
+
+    /**
+     * Set maximum number of allowable dynamic partitions
+     * @param maxDynamicPartitions
+     */
+    public void setMaximumDynamicPartitions(int maxDynamicPartitions){
+      this.maxDynamicPartitions = maxDynamicPartitions;
+    }
+    
+    /**
+     * Returns maximum number of allowable dynamic partitions
+     * @return maximum number of allowable dynamic partitions
+     */
+    public int getMaxDynamicPartitions() {
+      return this.maxDynamicPartitions;
+    }
+
+    /**
+     * Sets whether or not hadoop archiving has been requested for this job
+     * @param harRequested
+     */
+    public void setHarRequested(boolean harRequested){
+      this.harRequested = harRequested;
+    }
+    
+    /**
+     * Returns whether or not hadoop archiving has been requested for this job
+     * @return whether or not hadoop archiving has been requested for this job
+     */
+    public boolean getHarRequested() {
+      return this.harRequested;
     }
 
 }

@@ -243,7 +243,7 @@ public abstract class HCatMapReduceTest extends TestCase {
 
   void runMRCreate(Map<String, String> partitionValues,
         List<HCatFieldSchema> partitionColumns, List<HCatRecord> records,
-        int writeCount) throws Exception {
+        int writeCount, boolean assertWrite) throws Exception {
 
     writeRecords = records;
     MapCreate.writeCount = 0;
@@ -275,8 +275,11 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     //new HCatOutputCommitter(null).setupJob(job);
     job.waitForCompletion(true);
-    new HCatOutputCommitter(null).cleanupJob(job);
-    Assert.assertEquals(writeCount, MapCreate.writeCount);
+    new HCatOutputCommitter(job,null).cleanupJob(job);
+    if (assertWrite){
+      // we assert only if we expected to assert with this call.
+      Assert.assertEquals(writeCount, MapCreate.writeCount);
+    }
   }
 
   List<HCatRecord> runMRRead(int readCount) throws Exception {
