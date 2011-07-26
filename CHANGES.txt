@@ -5,6 +5,7 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+    HCAT-42. Storing across partitions(Dynamic Partitioning) from HCatStorer/HCatOutputFormat (khorgath)
  
     HCAT-46. Send a message on a message bus when a partition is marked done (hashutosh via macyang)
 
