@@ -263,8 +263,8 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     job.setOutputFormatClass(HCatOutputFormat.class);
 
-    HCatTableInfo outputInfo = HCatTableInfo.getOutputTableInfo(thriftUri, null, dbName, tableName, partitionValues);
-    HCatOutputFormat.setOutput(job, outputInfo);
+    OutputJobInfo outputJobInfo = OutputJobInfo.create(dbName, tableName, partitionValues, thriftUri, null);
+    HCatOutputFormat.setOutput(job, outputJobInfo);
 
     job.setMapOutputKeyClass(BytesWritable.class);
     job.setMapOutputValueClass(DefaultHCatRecord.class);
@@ -300,9 +300,8 @@ public abstract class HCatMapReduceTest extends TestCase {
     job.setInputFormatClass(HCatInputFormat.class);
     job.setOutputFormatClass(TextOutputFormat.class);
 
-    HCatTableInfo inputInfo = HCatTableInfo.getInputTableInfo(
-          thriftUri, null, dbName, tableName, filter);
-    HCatInputFormat.setInput(job, inputInfo);
+    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,filter,thriftUri,null);
+    HCatInputFormat.setInput(job, inputJobInfo);
 
     job.setMapOutputKeyClass(BytesWritable.class);
     job.setMapOutputValueClass(Text.class);
@@ -333,8 +332,8 @@ public abstract class HCatMapReduceTest extends TestCase {
     job.setInputFormatClass(HCatInputFormat.class);
     job.setOutputFormatClass(TextOutputFormat.class);
 
-    HCatTableInfo inputInfo = HCatTableInfo.getInputTableInfo(thriftUri, null, dbName, tableName);
-    HCatInputFormat.setInput(job, inputInfo);
+    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,null,thriftUri,null);
+    HCatInputFormat.setInput(job, inputJobInfo);
 
     return HCatInputFormat.getTableSchema(job);
   }

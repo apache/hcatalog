@@ -18,12 +18,6 @@
 
 package org.apache.hcatalog.mapreduce;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -37,11 +31,7 @@ import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -52,6 +42,12 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
 
 /**
  * The OutputFormat to use to write data to HCat without a hcat server. This can then
@@ -128,8 +124,7 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
       }
     }
     StorerInfo storerInfo = new StorerInfo(isdname, osdname, new Properties());
-    HCatTableInfo outputInfo = HCatTableInfo.getOutputTableInfo(null, null, dbname, tablename,
-        partSpec);
+    OutputJobInfo outputJobInfo = OutputJobInfo.create(dbname,tablename,partSpec,null,null);
     org.apache.hadoop.hive.ql.metadata.Table tbl = new
       org.apache.hadoop.hive.ql.metadata.Table(dbname, tablename);
     Table table = tbl.getTTable();
@@ -146,16 +141,17 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
       StorageDescriptor sd = table.getSd();
       sd.setLocation(location);
       String dataLocation = location + "/" + partname;
-      OutputJobInfo jobInfo = new OutputJobInfo(outputInfo,
-          columnSchema, columnSchema, storerInfo, dataLocation, table);
-      setPartDetails(jobInfo, columnSchema, partSpec);
-      sd.setCols(HCatUtil.getFieldSchemaList(jobInfo.getOutputSchema().getFields()));
+      outputJobInfo.setTableInfo(new HCatTableInfo(dbname,tablename,columnSchema,null,storerInfo,table));
+      outputJobInfo.setOutputSchema(columnSchema);
+      outputJobInfo.setLocation(dataLocation);
+      setPartDetails(outputJobInfo, columnSchema, partSpec);
+      sd.setCols(HCatUtil.getFieldSchemaList(outputJobInfo.getOutputSchema().getFields()));
       sd.setInputFormat(ifname);
       sd.setOutputFormat(ofname);
       SerDeInfo serdeInfo = sd.getSerdeInfo();
       serdeInfo.setSerializationLib(serializationLib);
       Configuration conf = job.getConfiguration();
-      conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
+      conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
     } catch (IOException e) {
       throw new HCatException(ErrorType.ERROR_SET_OUTPUT, e);
     } catch (MetaException e) {

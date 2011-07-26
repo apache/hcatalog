@@ -18,21 +18,18 @@
 
 package org.apache.hcatalog.mapreduce;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
+import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable, HCatRecord> {
   
@@ -75,15 +72,15 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
 
     //Get the job info from the configuration,
     //throws exception if not initialized
-    JobInfo jobInfo;
+    InputJobInfo inputJobInfo;
     try {
-      jobInfo = getJobInfo(jobContext);
+      inputJobInfo = getJobInfo(jobContext);
     } catch (Exception e) {
       throw new IOException(e);
     }
 
     List<InputSplit> splits = new ArrayList<InputSplit>();
-    List<PartInfo> partitionInfoList = jobInfo.getPartitions();
+    List<PartInfo> partitionInfoList = inputJobInfo.getPartitions();
     if(partitionInfoList == null ) {
       //No partitions match the specified partition filter
       return splits;
@@ -99,8 +96,14 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
         throw new IOException(e);
       }
 
+      HCatSchema allCols = new HCatSchema(new LinkedList<HCatFieldSchema>());
+      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getDataColumns().getFields())
+          allCols.append(field);
+      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getPartitionColumns().getFields())
+          allCols.append(field);
+
       //Pass all required information to the storage driver
-      initStorageDriver(storageDriver, localJob, partitionInfo, jobInfo.getTableSchema());
+      initStorageDriver(storageDriver, localJob, partitionInfo, allCols);
 
       //Get the input format for the storage driver
       InputFormat inputFormat =
@@ -114,7 +117,7 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
         splits.add(new HCatSplit(
             partitionInfo,
             split,
-            jobInfo.getTableSchema()));
+            allCols));
       }
     }
 
@@ -139,10 +142,10 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
     HCatSplit hcatSplit = (HCatSplit) split;
     PartInfo partitionInfo = hcatSplit.getPartitionInfo();
 
-    //If running through a Pig job, the JobInfo will not be available in the
+    //If running through a Pig job, the InputJobInfo will not be available in the
     //backend process context (since HCatLoader works on a copy of the JobContext and does
     //not call HCatInputFormat.setInput in the backend process).
-    //So this function should NOT attempt to read the JobInfo.
+    //So this function should NOT attempt to read the InputJobInfo.
 
     HCatInputStorageDriver storageDriver;
     try {
@@ -174,25 +177,30 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * @throws Exception if HCatInputFromat.setInput has not been called for the current context
    */
   public static HCatSchema getTableSchema(JobContext context) throws Exception {
-    JobInfo jobInfo = getJobInfo(context);
-    return jobInfo.getTableSchema();
+    InputJobInfo inputJobInfo = getJobInfo(context);
+      HCatSchema allCols = new HCatSchema(new LinkedList<HCatFieldSchema>());
+      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getDataColumns().getFields())
+          allCols.append(field);
+      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getPartitionColumns().getFields())
+          allCols.append(field);
+    return allCols;
   }
 
   /**
-   * Gets the JobInfo object by reading the Configuration and deserializing
-   * the string. If JobInfo is not present in the configuration, throws an
+   * Gets the InputJobInfo object by reading the Configuration and deserializing
+   * the string. If InputJobInfo is not present in the configuration, throws an
    * exception since that means HCatInputFormat.setInput has not been called.
    * @param jobContext the job context
-   * @return the JobInfo object
+   * @return the InputJobInfo object
    * @throws Exception the exception
    */
-  private static JobInfo getJobInfo(JobContext jobContext) throws Exception {
+  private static InputJobInfo getJobInfo(JobContext jobContext) throws Exception {
     String jobString = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
     if( jobString == null ) {
       throw new Exception("job information not found in JobContext. HCatInputFormat.setInput() not called?");
     }
 
-    return (JobInfo) HCatUtil.deserialize(jobString);
+    return (InputJobInfo) HCatUtil.deserialize(jobString);
   }
 
 

@@ -18,14 +18,6 @@
 
 package org.apache.hcatalog.mapreduce;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.Writable;
@@ -38,6 +30,11 @@ import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparable<?>, HCatRecord> {
 
@@ -52,7 +49,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
    */
   public static HCatSchema getTableSchema(JobContext context) throws IOException {
       OutputJobInfo jobInfo = getJobInfo(context);
-      return jobInfo.getTableSchema();
+      return jobInfo.getTableInfo().getDataColumns();
   }
 
   /**
@@ -84,7 +81,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
 
   /**
    * Gets the HCatOuputJobInfo object by reading the Configuration and deserializing
-   * the string. If JobInfo is not present in the configuration, throws an
+   * the string. If InputJobInfo is not present in the configuration, throws an
    * exception since that means HCatOutputFormat.setOutput has not been called.
    * @param jobContext the job context
    * @return the OutputJobInfo object
@@ -125,15 +122,15 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
       try {
           Class<? extends HCatOutputStorageDriver> driverClass =
               (Class<? extends HCatOutputStorageDriver>)
-              Class.forName(jobInfo.getStorerInfo().getOutputSDClass());
+              Class.forName(jobInfo.getTableInfo().getStorerInfo().getOutputSDClass());
           HCatOutputStorageDriver driver = driverClass.newInstance();
 
-          Map<String, String> partitionValues = jobInfo.getTableInfo().getPartitionValues();
+          Map<String, String> partitionValues = jobInfo.getPartitionValues();
           String location = jobInfo.getLocation();
 
           if (dynamicPartVals != null){
             // dynamic part vals specified
-            List<String> dynamicPartKeys = jobInfo.getTableInfo().getDynamicPartitioningKeys();
+            List<String> dynamicPartKeys = jobInfo.getDynamicPartitioningKeys();
             if (dynamicPartVals.size() != dynamicPartKeys.size()){
               throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES, 
                   "Unable to instantiate dynamic partitioning storage driver, mismatch between"
@@ -145,7 +142,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
             }
 
             // re-home location, now that we know the rest of the partvals
-            Table table = jobInfo.getTable();
+            Table table = jobInfo.getTableInfo().getTable();
             
             List<String> partitionCols = new ArrayList<String>();
             for(FieldSchema schema : table.getPartitionKeys()) {
@@ -164,7 +161,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
           
 //          HCatUtil.logMap(LOG,"Setting outputPath ["+location+"] for ",partitionValues);
 
-          driver.initialize(jobContext, jobInfo.getStorerInfo().getProperties());
+          driver.initialize(jobContext, jobInfo.getTableInfo().getStorerInfo().getProperties());
 
           return driver;
       } catch(Exception e) {
@@ -179,7 +176,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   /**
    * Gets the output storage driver instance, with allowing specification 
    * of partvals from which it picks the dynamic partvals
-   * @param jobContext the job context
+   * @param context the job context
    * @param jobInfo the output job info
    * @return the output driver instance
    * @throws IOException
@@ -188,7 +185,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   protected static HCatOutputStorageDriver getOutputDriverInstance(
       JobContext context, OutputJobInfo jobInfo,
       Map<String, String> fullPartSpec) throws IOException {
-    List<String> dynamicPartKeys = jobInfo.getTableInfo().getDynamicPartitioningKeys();
+    List<String> dynamicPartKeys = jobInfo.getDynamicPartitioningKeys();
     if ((dynamicPartKeys == null)||(dynamicPartKeys.isEmpty())){
       return getOutputDriverInstance(context,jobInfo,(List<String>)null);
     }else{
@@ -227,8 +224,8 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     // These would be partition keys too, so would also need to be removed from 
     // output schema and partcols
 
-    if (jobInfo.getTableInfo().isDynamicPartitioningUsed()){
-      for (String partKey : jobInfo.getTableInfo().getDynamicPartitioningKeys()){
+    if (jobInfo.isDynamicPartitioningUsed()){
+      for (String partKey : jobInfo.getDynamicPartitioningKeys()){
         Integer idx;
         if((idx = schema.getPosition(partKey)) != null){
           posOfPartCols.add(idx);
@@ -238,7 +235,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
       }
     }
     
-    HCatUtil.validatePartitionSchema(jobInfo.getTable(), schemaWithoutParts);
+    HCatUtil.validatePartitionSchema(jobInfo.getTableInfo().getTable(), schemaWithoutParts);
     jobInfo.setPosOfPartCols(posOfPartCols);
     jobInfo.setPosOfDynPartCols(posOfDynPartCols);
     jobInfo.setOutputSchema(schemaWithoutParts);

@@ -17,13 +17,6 @@
  */
 package org.apache.hcatalog.mapreduce;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -38,6 +31,9 @@ import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
+import java.io.IOException;
+import java.util.*;
+
 /**
  * The Class which handles querying the metadata server using the MetaStoreClient. The list of
  * partitions matching the partition filter is fetched from the server and the information is
@@ -50,15 +46,15 @@ public class InitializeInput {
   static final String HCAT_KEY_PREFIX = "hcat.";
   private static final HiveConf hiveConf = new HiveConf(HCatInputFormat.class);
 
-  private static HiveMetaStoreClient createHiveMetaClient(Configuration conf, HCatTableInfo inputInfo) throws Exception {
-    if (inputInfo.getServerUri() != null){
+  private static HiveMetaStoreClient createHiveMetaClient(Configuration conf, InputJobInfo inputJobInfo) throws Exception {
+    if (inputJobInfo.getServerUri() != null){
 
       hiveConf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
       hiveConf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-          inputInfo.getServerKerberosPrincipal());
+          inputJobInfo.getServerKerberosPrincipal());
 
       hiveConf.set("hive.metastore.local", "false");
-      hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, inputInfo.getServerUri());
+      hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, inputJobInfo.getServerUri());
     }
 
     return new HiveMetaStoreClient(hiveConf,null);
@@ -68,28 +64,29 @@ public class InitializeInput {
    * Set the input to use for the Job. This queries the metadata server with the specified partition predicates,
    * gets the matching partitions, puts the information in the configuration object.
    * @param job the job object
-   * @param inputInfo the hcat table input info
+   * @param inputJobInfo information on the Input to read
    * @throws Exception
    */
-  public static void setInput(Job job, HCatTableInfo inputInfo) throws Exception {
+  public static void setInput(Job job, InputJobInfo inputJobInfo) throws Exception {
 
-    //* Create and initialize an JobInfo object
-    //* Serialize the JobInfo and save in the Job's Configuration object
+    //* Create and initialize an InputJobInfo object
+    //* Serialize the InputJobInfo and save in the Job's Configuration object
 
     HiveMetaStoreClient client = null;
 
     try {
-      client = createHiveMetaClient(job.getConfiguration(),inputInfo);
-      Table table = client.getTable(inputInfo.getDatabaseName(), inputInfo.getTableName());
-      HCatSchema tableSchema = HCatUtil.getTableSchemaWithPtnCols(table);
+      client = createHiveMetaClient(job.getConfiguration(),inputJobInfo);
+      Table table = client.getTable(inputJobInfo.getDatabaseName(),
+                                                 inputJobInfo.getTableName());
 
       List<PartInfo> partInfoList = new ArrayList<PartInfo>();
 
       if( table.getPartitionKeys().size() != 0 ) {
         //Partitioned table
-        List<Partition> parts = client.listPartitionsByFilter(
-            inputInfo.getDatabaseName(), inputInfo.getTableName(),
-            inputInfo.getFilter(), (short) -1);
+        List<Partition> parts = client.listPartitionsByFilter(inputJobInfo.getDatabaseName(),
+                                                                                inputJobInfo.getTableName(),
+                                                                                inputJobInfo.getFilter(),
+                                                                                (short) -1);
 
         // Default to 100,000 partitions if hive.metastore.maxpartition is not defined
         int maxPart = hiveConf.getInt("hcat.metastore.maxpartitions", 100000);
@@ -110,13 +107,12 @@ public class InitializeInput {
         partInfo.setPartitionValues(new HashMap<String,String>());
         partInfoList.add(partInfo);
       }
-
-      JobInfo hcatJobInfo = new JobInfo(inputInfo, tableSchema, partInfoList);
-      inputInfo.setJobInfo(hcatJobInfo);
+      inputJobInfo.setPartitions(partInfoList);
+      inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
 
       job.getConfiguration().set(
           HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(hcatJobInfo)
+          HCatUtil.serialize(inputJobInfo)
       );
     } finally {
       if (client != null ) {

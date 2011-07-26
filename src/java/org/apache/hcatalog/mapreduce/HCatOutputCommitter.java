@@ -17,17 +17,6 @@
  */
 package org.apache.hcatalog.mapreduce;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -37,18 +26,11 @@ import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.Warehouse;
-import org.apache.hadoop.hive.metastore.api.Constants;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.Partition;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hcatalog.common.ErrorType;
@@ -60,6 +42,11 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.har.HarOutputCommitterPostProcessor;
 import org.apache.thrift.TException;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class HCatOutputCommitter extends OutputCommitter {
 
@@ -80,7 +67,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
     public HCatOutputCommitter(JobContext context, OutputCommitter baseCommitter) throws IOException {
       OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
-      dynamicPartitioningUsed = jobInfo.getTableInfo().isDynamicPartitioningUsed();
+      dynamicPartitioningUsed = jobInfo.isDynamicPartitioningUsed();
       if (!dynamicPartitioningUsed){
         this.baseCommitter = baseCommitter;
         this.partitionsDiscovered = true;
@@ -161,7 +148,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
       try {
         HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(
-            jobInfo.getTableInfo().getServerUri(), jobContext.getConfiguration());
+            jobInfo.getServerUri(), jobContext.getConfiguration());
         // cancel the deleg. tokens that were acquired for this job now that
         // we are done - we should cancel if the tokens were acquired by
         // HCatOutputFormat and not if they were supplied by Oozie. In the latter
@@ -189,7 +176,7 @@ public class HCatOutputCommitter extends OutputCommitter {
       Path src; 
       if (dynamicPartitioningUsed){
         src = new Path(getPartitionRootLocation(
-            jobInfo.getLocation().toString(),jobInfo.getTable().getPartitionKeysSize()
+            jobInfo.getLocation().toString(),jobInfo.getTableInfo().getTable().getPartitionKeysSize()
             ));
       }else{
         src = new Path(jobInfo.getLocation());
@@ -244,7 +231,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
       OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
       Configuration conf = context.getConfiguration();
-      Table table = jobInfo.getTable();
+      Table table = jobInfo.getTableInfo().getTable();
       Path tblPath = new Path(table.getSd().getLocation());
       FileSystem fs = tblPath.getFileSystem(conf);
 
@@ -283,7 +270,7 @@ public class HCatOutputCommitter extends OutputCommitter {
       List<Partition> partitionsAdded = new ArrayList<Partition>();
 
       try {
-        client = HCatOutputFormat.createHiveClient(tableInfo.getServerUri(), conf);
+        client = HCatOutputFormat.createHiveClient(jobInfo.getServerUri(), conf);
 
         StorerInfo storer = InitializeInput.extractStorerInfo(table.getSd(),table.getParameters());
 
@@ -298,7 +285,7 @@ public class HCatOutputCommitter extends OutputCommitter {
           partitionsToAdd.add(
               constructPartition(
                   context,
-                  tblPath.toString(), tableInfo.getPartitionValues()
+                  tblPath.toString(), jobInfo.getPartitionValues()
                   ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
                   ,table, fs
                   ,grpName,perms));
@@ -316,35 +303,35 @@ public class HCatOutputCommitter extends OutputCommitter {
 
         //Publish the new partition(s)
         if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())){
-          
-          Path src = new Path(ptnRootLocation);
 
-          // check here for each dir we're copying out, to see if it already exists, error out if so
-          moveTaskOutputs(fs, src, src, tblPath,true);
-          
-          moveTaskOutputs(fs, src, src, tblPath,false);
-          fs.delete(src, true);
-          
-          
-//          for (Partition partition : partitionsToAdd){
-//            partitionsAdded.add(client.add_partition(partition));
-//            // currently following add_partition instead of add_partitions because latter isn't 
-//            // all-or-nothing and we want to be able to roll back partitions we added if need be.
-//          }
+	          Path src = new Path(ptnRootLocation);
 
-          try {
-            client.add_partitions(partitionsToAdd);
-            partitionsAdded = partitionsToAdd;
-          } catch (Exception e){
-            // There was an error adding partitions : rollback fs copy and rethrow
-            for (Partition p : partitionsToAdd){
-              Path ptnPath = new Path(harProcessor.getParentFSPath(new Path(p.getSd().getLocation())));
-              if (fs.exists(ptnPath)){
-                fs.delete(ptnPath,true);
-              }
-            }
-            throw e;
-          }
+	          // check here for each dir we're copying out, to see if it already exists, error out if so
+	          moveTaskOutputs(fs, src, src, tblPath,true);
+
+	          moveTaskOutputs(fs, src, src, tblPath,false);
+	          fs.delete(src, true);
+
+
+	//          for (Partition partition : partitionsToAdd){
+	//            partitionsAdded.add(client.add_partition(partition));
+	//            // currently following add_partition instead of add_partitions because latter isn't
+	//            // all-or-nothing and we want to be able to roll back partitions we added if need be.
+	//          }
+
+	          try {
+	            client.add_partitions(partitionsToAdd);
+	            partitionsAdded = partitionsToAdd;
+	          } catch (Exception e){
+	            // There was an error adding partitions : rollback fs copy and rethrow
+	            for (Partition p : partitionsToAdd){
+	              Path ptnPath = new Path(harProcessor.getParentFSPath(new Path(p.getSd().getLocation())));
+	              if (fs.exists(ptnPath)){
+	                fs.delete(ptnPath,true);
+	              }
+	            }
+	            throw e;
+	          }
 
         }else{
           // no harProcessor, regular operation

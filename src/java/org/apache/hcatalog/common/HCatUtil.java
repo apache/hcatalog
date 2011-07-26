@@ -18,24 +18,8 @@
 
 package org.apache.hcatalog.common;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -47,8 +31,9 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
@@ -56,9 +41,11 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobConf;
 import org.apache.thrift.TException;
+
+import java.io.*;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class HCatUtil {
 
@@ -180,6 +167,22 @@ public class HCatUtil {
         }
       }
       return tableSchema;
+    }
+
+  /**
+   * return the partition columns from a table instance
+   * @param table the instance to extract partition columns from
+   * @return HCatSchema instance which contains the partition columns
+   * @throws IOException
+   */
+  public static HCatSchema getPartitionColumns(Table table) throws IOException{
+      HCatSchema cols = new HCatSchema(new LinkedList<HCatFieldSchema>());
+      if( table.getPartitionKeys().size() != 0 ) {
+        for (FieldSchema fs : table.getPartitionKeys()){
+            cols.append(HCatSchemaUtils.getHCatFieldSchema(fs));
+        }
+      }
+      return cols;
     }
 
   /**

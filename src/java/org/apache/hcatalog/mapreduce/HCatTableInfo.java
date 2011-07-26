@@ -18,11 +18,13 @@
 
 package org.apache.hcatalog.mapreduce;
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.data.schema.HCatSchema;
+
+import java.io.IOException;
+import java.io.Serializable;
 
 /**
  *
@@ -35,128 +37,47 @@ public class HCatTableInfo implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
-  public enum TableInfoType {
-    INPUT_INFO,
-    OUTPUT_INFO
-  };
-
-  private final TableInfoType tableInfoType;
-
-  /** The Metadata server uri */
-  private final String serverUri;
-
-  /** If the hcat server is configured to work with hadoop security, this
-   * variable will hold the principal name of the server - this will be used
-   * in the authentication to the hcat server using kerberos
-   */
-  private final String serverKerberosPrincipal;
-
   /** The db and table names */
   private final String dbName;
   private final String tableName;
 
-  /** The partition filter */
-  private String filter;
+  /** The table schema. */
+  private final HCatSchema dataColumns;
+  private final HCatSchema partitionColumns;
 
-  /** The partition predicates to filter on, an arbitrary AND/OR filter, if used to input from*/
-  private final String partitionPredicates;
+  /** The table being written to */
+  private final Table table;
 
-  /** The information about the partitions matching the specified query */
-  private JobInfo jobInfo;
-
-  /** The partition values to publish to, if used for output*/
-  private Map<String, String> partitionValues;
-
-  /** List of keys for which values were not specified at write setup time, to be infered at write time */
-  private List<String> dynamicPartitioningKeys;
-  
+  /** The storer info */
+  private StorerInfo storerInfo;
 
   /**
    * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
    * for reading data from a table.
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
    * work with hadoop security, the kerberos principal name of the server - else null
    * The principal name should be of the form:
    * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
    * The special string _HOST will be replaced automatically with the correct host name
    * @param dbName the db name
    * @param tableName the table name
+   * @param dataColumns schema of columns which contain data
+   * @param partitionColumns schema of partition columns
+   * @param storerInfo information about storage descriptor
+   * @param table hive metastore table class
    */
-  public static HCatTableInfo getInputTableInfo(String serverUri,
-      String serverKerberosPrincipal,
+  HCatTableInfo(
       String dbName,
-          String tableName) {
-    return new HCatTableInfo(serverUri, serverKerberosPrincipal, dbName, tableName, (String) null);
-  }
-
-  /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HCatInputFormat}
-   * for reading data from a table.
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
-   * work with hadoop security, the kerberos principal name of the server - else null
-   * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
-   * The special string _HOST will be replaced automatically with the correct host name
-   * @param dbName the db name
-   * @param tableName the table name
-   * @param filter the partition filter
-   */
-  public static HCatTableInfo getInputTableInfo(String serverUri, String serverKerberosPrincipal, String dbName,
-          String tableName, String filter) {
-    return new HCatTableInfo(serverUri, serverKerberosPrincipal, dbName, tableName, filter);
-  }
-
-  private HCatTableInfo(String serverUri, String serverKerberosPrincipal,
-      String dbName, String tableName, String filter) {
-      this.serverUri = serverUri;
-      this.serverKerberosPrincipal = serverKerberosPrincipal;
-      this.dbName = (dbName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : dbName;
-      this.tableName = tableName;
-      this.partitionPredicates = null;
-      this.partitionValues = null;
-      this.tableInfoType = TableInfoType.INPUT_INFO;
-      this.filter = filter;
-  }
-  /**
-   * Initializes a new HCatTableInfo instance to be used with {@link HCatOutputFormat}
-   * for writing data from a table.
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
-   * work with hadoop security, the kerberos principal name of the server - else null
-   * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
-   * The special string _HOST will be replaced automatically with the correct host name
-   * @param dbName the db name
-   * @param tableName the table name
-   * @param partitionValues The partition values to publish to, can be null or empty Map to
-   * indicate write to a unpartitioned table. For partitioned tables, this map should
-   * contain keys for all partition columns with corresponding values.
-   */
-  public static HCatTableInfo getOutputTableInfo(String serverUri,
-          String serverKerberosPrincipal, String dbName, String tableName, Map<String, String> partitionValues){
-      return new HCatTableInfo(serverUri, serverKerberosPrincipal, dbName,
-          tableName, partitionValues);
-  }
-
-  private HCatTableInfo(String serverUri, String serverKerberosPrincipal,
-      String dbName, String tableName, Map<String, String> partitionValues){
-    this.serverUri = serverUri;
-    this.serverKerberosPrincipal = serverKerberosPrincipal;
+      String tableName,
+      HCatSchema dataColumns,
+      HCatSchema partitionColumns,
+      StorerInfo storerInfo,
+      Table table) {
     this.dbName = (dbName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : dbName;
     this.tableName = tableName;
-    this.partitionPredicates = null;
-    this.partitionValues = partitionValues;
-    this.tableInfoType = TableInfoType.OUTPUT_INFO;
-  }
-
-  /**
-   * Gets the value of serverUri
-   * @return the serverUri
-   */
-  public String getServerUri() {
-    return serverUri;
+    this.dataColumns = dataColumns;
+    this.table = table;
+    this.storerInfo = storerInfo;
+    this.partitionColumns = partitionColumns;
   }
 
   /**
@@ -176,97 +97,80 @@ public class HCatTableInfo implements Serializable {
   }
 
   /**
-   * Gets the value of partitionPredicates
-   * @return the partitionPredicates
+   * @return return schema of data columns as defined in meta store
    */
-  public String getPartitionPredicates() {
-    return partitionPredicates;
+  public HCatSchema getDataColumns() {
+    return dataColumns;
   }
 
   /**
-   * Gets the value of partitionValues
-   * @return the partitionValues
+   * @return schema of partition columns
    */
-  public Map<String, String> getPartitionValues() {
-    return partitionValues;
+  public HCatSchema getPartitionColumns() {
+    return partitionColumns;
   }
 
   /**
-   * Gets the value of job info
-   * @return the job info
+   * @return the storerInfo
    */
-  public JobInfo getJobInfo() {
-    return jobInfo;
+  public StorerInfo getStorerInfo() {
+    return storerInfo;
   }
 
   /**
-   * Sets the value of jobInfo
-   * @param jobInfo the jobInfo to set
+   * minimize dependency on hive classes so this is package private
+   * this should eventually no longer be used
+   * @return hive metastore representation of table
    */
-  public void setJobInfo(JobInfo jobInfo) {
-    this.jobInfo = jobInfo;
-  }
-
-  public TableInfoType getTableType(){
-    return this.tableInfoType;
+  Table getTable() {
+    return table;
   }
 
   /**
-   * Sets the value of partitionValues
-   * @param partitionValues the partition values to set
+   * create an HCatTableInfo instance from the supplied Hive Table instance
+   * @param table to create an instance from
+   * @return HCatTableInfo
+   * @throws IOException
    */
-  void setPartitionValues(Map<String, String>  partitionValues) {
-    this.partitionValues = partitionValues;
+  static HCatTableInfo valueOf(Table table) throws IOException {
+    HCatSchema dataColumns = HCatUtil.extractSchemaFromStorageDescriptor(table.getSd());
+    StorerInfo storerInfo = InitializeInput.extractStorerInfo(table.getSd(), table.getParameters());
+    HCatSchema partitionColumns = HCatUtil.getPartitionColumns(table);
+    return new HCatTableInfo(table.getDbName(),
+                                           table.getTableName(),
+                                           dataColumns,
+                                           partitionColumns,
+                                           storerInfo,
+                                           table);
   }
 
-  /**
-   * Gets the value of partition filter
-   * @return the filter string
-   */
-  public String getFilter() {
-    return filter;
-  }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-  /**
-   * @return the serverKerberosPrincipal
-   */
-  public String getServerKerberosPrincipal() {
-    return serverKerberosPrincipal;
-  }
+    HCatTableInfo tableInfo = (HCatTableInfo) o;
 
-  /**
-   * Returns whether or not Dynamic Partitioning is used
-   * @return whether or not dynamic partitioning is currently enabled and used
-   */
-  public boolean isDynamicPartitioningUsed() {
-    return !((dynamicPartitioningKeys == null) || (dynamicPartitioningKeys.isEmpty()));
-  }
+    if (dataColumns != null ? !dataColumns.equals(tableInfo.dataColumns) : tableInfo.dataColumns != null) return false;
+    if (dbName != null ? !dbName.equals(tableInfo.dbName) : tableInfo.dbName != null) return false;
+    if (partitionColumns != null ? !partitionColumns.equals(tableInfo.partitionColumns) : tableInfo.partitionColumns != null)
+      return false;
+    if (storerInfo != null ? !storerInfo.equals(tableInfo.storerInfo) : tableInfo.storerInfo != null) return false;
+    if (table != null ? !table.equals(tableInfo.table) : tableInfo.table != null) return false;
+    if (tableName != null ? !tableName.equals(tableInfo.tableName) : tableInfo.tableName != null) return false;
 
-  /**
-   * Sets the list of dynamic partitioning keys used for outputting without specifying all the keys
-   * @param dynamicPartitioningKeys
-   */
-  public void setDynamicPartitioningKeys(List<String> dynamicPartitioningKeys) {
-    this.dynamicPartitioningKeys = dynamicPartitioningKeys;
-  }
-  
-  public List<String> getDynamicPartitioningKeys(){
-    return this.dynamicPartitioningKeys;
+    return true;
   }
 
 
   @Override
   public int hashCode() {
-    int result = 17;
-    result = 31*result + (serverUri == null ? 0 : serverUri.hashCode());
-    result = 31*result + (serverKerberosPrincipal == null ? 0 : serverKerberosPrincipal.hashCode());
-    result = 31*result + (dbName == null? 0 : dbName.hashCode());
-    result = 31*result + tableName.hashCode();
-    result = 31*result + (filter == null? 0 : filter.hashCode());
-    result = 31*result + (partitionPredicates == null ? 0 : partitionPredicates.hashCode());
-    result = 31*result + tableInfoType.ordinal();
-    result = 31*result + (partitionValues == null ? 0 : partitionValues.hashCode());
-    result = 31*result + (dynamicPartitioningKeys == null ? 0 : dynamicPartitioningKeys.hashCode());
+    int result = dbName != null ? dbName.hashCode() : 0;
+    result = 31 * result + (tableName != null ? tableName.hashCode() : 0);
+    result = 31 * result + (dataColumns != null ? dataColumns.hashCode() : 0);
+    result = 31 * result + (partitionColumns != null ? partitionColumns.hashCode() : 0);
+    result = 31 * result + (table != null ? table.hashCode() : 0);
+    result = 31 * result + (storerInfo != null ? storerInfo.hashCode() : 0);
     return result;
   }
 

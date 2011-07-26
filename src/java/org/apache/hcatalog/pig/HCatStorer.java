@@ -18,9 +18,6 @@
 
 package org.apache.hcatalog.pig;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -30,13 +27,16 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatOutputCommitter;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.HCatTableInfo;
+import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.impl.util.UDFContext;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * HCatStorer.
@@ -72,13 +72,20 @@ public class HCatStorer extends HCatBaseStorer {
     Properties p = UDFContext.getUDFContext().getUDFProperties(this.getClass(), new String[]{sign});
 
     String[] userStr = location.split("\\.");
-    HCatTableInfo tblInfo;
+    OutputJobInfo outputJobInfo;
+
     if(userStr.length == 2) {
-      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHCatServerUri(job),
-          PigHCatUtil.getHCatServerPrincipal(job), userStr[0],userStr[1],partitions);
+      outputJobInfo = OutputJobInfo.create(userStr[0],
+                                                             userStr[1],
+                                                             partitions,
+                                                             PigHCatUtil.getHCatServerUri(job),
+                                                             PigHCatUtil.getHCatServerPrincipal(job));
     } else {
-      tblInfo = HCatTableInfo.getOutputTableInfo(PigHCatUtil.getHCatServerUri(job),
-          PigHCatUtil.getHCatServerPrincipal(job), null,userStr[0],partitions);
+      outputJobInfo = OutputJobInfo.create(null,
+                                                             userStr[0],
+                                                             partitions,
+                                                             PigHCatUtil.getHCatServerUri(job),
+                                                             PigHCatUtil.getHCatServerPrincipal(job));
     }
 
 
@@ -94,7 +101,7 @@ public class HCatStorer extends HCatBaseStorer {
         throw new FrontendException("Schema for data cannot be determined.", PigHCatUtil.PIG_EXCEPTION_CODE);
       }
       try{
-        HCatOutputFormat.setOutput(job, tblInfo);
+        HCatOutputFormat.setOutput(job, outputJobInfo);
       } catch(HCatException he) {
           // pass the message to the user - essentially something about the table
           // information passed to HCatOutputFormat was not right

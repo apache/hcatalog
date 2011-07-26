@@ -41,12 +41,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.mapreduce.HCatOutputCommitter;
-import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.HCatTableInfo;
-import org.apache.hcatalog.mapreduce.InitializeInput;
-import org.apache.hcatalog.mapreduce.OutputJobInfo;
-import org.apache.hcatalog.mapreduce.StorerInfo;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 public class TestHCatOutputFormat extends TestCase {
@@ -142,20 +136,19 @@ public class TestHCatOutputFormat extends TestCase {
     Map<String, String> partitionValues = new HashMap<String, String>();
     partitionValues.put("colname", "p1");
     //null server url means local mode
-    HCatTableInfo info = HCatTableInfo.getOutputTableInfo(null, null, dbName, tblName, partitionValues);
+    OutputJobInfo info = OutputJobInfo.create(dbName, tblName, partitionValues, null, null);
 
     HCatOutputFormat.setOutput(job, info);
     OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(job);
 
     assertNotNull(jobInfo.getTableInfo());
-    assertEquals(1, jobInfo.getTableInfo().getPartitionValues().size());
-    assertEquals("p1", jobInfo.getTableInfo().getPartitionValues().get("colname"));
-    assertEquals(1, jobInfo.getTableSchema().getFields().size());
-    assertEquals("colname", jobInfo.getTableSchema().getFields().get(0).getName());
+    assertEquals(1, jobInfo.getPartitionValues().size());
+    assertEquals("p1", jobInfo.getPartitionValues().get("colname"));
+    assertEquals(1, jobInfo.getTableInfo().getDataColumns().getFields().size());
+    assertEquals("colname", jobInfo.getTableInfo().getDataColumns().getFields().get(0).getName());
 
-    StorerInfo storer = jobInfo.getStorerInfo();
+    StorerInfo storer = jobInfo.getTableInfo().getStorerInfo();
     assertEquals(RCFileOutputDriver.class.getName(), storer.getOutputSDClass());
-
     publishTest(job);
   }
 
