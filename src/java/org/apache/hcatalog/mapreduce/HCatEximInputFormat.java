@@ -18,6 +18,15 @@
 
 package org.apache.hcatalog.mapreduce;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -29,11 +38,6 @@ import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
 
 /** The InputFormat to use to read data from HCat */
 public class HCatEximInputFormat extends HCatBaseInputFormat {
@@ -64,7 +68,8 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
       Map.Entry<org.apache.hadoop.hive.metastore.api.Table, List<Partition>> tp = EximUtil
       .readMetaData(fs, metadataPath);
       org.apache.hadoop.hive.metastore.api.Table table = tp.getKey();
-      InputJobInfo inputInfo = InputJobInfo.create(table.getDbName(), table.getTableName(),null,null,null);
+      HCatTableInfo inputInfo = HCatTableInfo.getInputTableInfo(null,
+          null, table.getDbName(), table.getTableName());
       List<FieldSchema> partCols = table.getPartitionKeys();
       List<PartInfo> partInfoList = null;
       if (partCols.size() > 0) {
@@ -93,11 +98,11 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
         PartInfo partInfo = new PartInfo(schema, inputStorageDriverClass,  location + "/data", hcatProperties);
         partInfoList.add(partInfo);
       }
-      inputInfo.setPartitions(partInfoList);
-      inputInfo.setTableInfo(HCatTableInfo.valueOf(table));
+      JobInfo hcatJobInfo = new JobInfo(inputInfo,
+          HCatUtil.getTableSchemaWithPtnCols(table), partInfoList);
       job.getConfiguration().set(
           HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(inputInfo));
+          HCatUtil.serialize(hcatJobInfo));
       List<HCatSchema> rv = new ArrayList<HCatSchema>(2);
       rv.add(HCatSchemaUtils.getHCatSchema(table.getSd().getCols()));
       rv.add(HCatSchemaUtils.getHCatSchema(partCols));

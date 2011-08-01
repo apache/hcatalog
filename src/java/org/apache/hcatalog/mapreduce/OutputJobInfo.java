@@ -18,126 +18,79 @@
 
 package org.apache.hcatalog.mapreduce;
 
-import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
-import java.io.Serializable;
-import java.util.*;
-
 /** The class used to serialize and store the output related information  */
-public class OutputJobInfo implements Serializable {
+class OutputJobInfo implements Serializable {
 
-  /** The db and table names. */
-  private final String databaseName;
-  private final String tableName;
+    /** The serialization version. */
+    private static final long serialVersionUID = 1L;
 
-  /** The serialization version. */
-  private static final long serialVersionUID = 1L;
+    /** The table info provided by user. */
+    private final HCatTableInfo tableInfo;
 
-  /** The table info provided by user. */
-  private HCatTableInfo tableInfo;
+    /** The output schema. This is given to us by user.  This wont contain any
+     * partition columns ,even if user has specified them.
+     * */
+    private HCatSchema outputSchema;
 
-  /** The output schema. This is given to us by user.  This wont contain any
-   * partition columns ,even if user has specified them.
-   * */
-  private HCatSchema outputSchema;
+    /** This is table schema, retrieved from metastore. */
+    private final HCatSchema tableSchema;
 
-  /** The location of the partition being written */
-  private String location;
+    /** The storer info */
+    private final StorerInfo storerInfo;
 
-  /** The partition values to publish to, if used for output*/
-  private Map<String, String> partitionValues;
+    /** The location of the partition being written */
+    private final String location;
 
-  /** The Metadata server uri */
-  private final String serverUri;
+    /** The table being written to */
+    private final Table table;
 
-  /** If the hcat server is configured to work with hadoop security, this
-   * variable will hold the principal name of the server - this will be used
-   * in the authentication to the hcat server using kerberos
-   */
-  private final String serverKerberosPrincipal;
+    /** This is a list of partition columns which will be deleted from data, if
+     * data contains partition columns.*/
 
-  private List<Integer> posOfPartCols;
-  private List<Integer> posOfDynPartCols;
+    private List<Integer> posOfPartCols;
+    private List<Integer> posOfDynPartCols;
 
-  private Map<String,String> properties;
+    private int maxDynamicPartitions;
 
-  private int maxDynamicPartitions;
+    private boolean harRequested;
 
-  /** List of keys for which values were not specified at write setup time, to be infered at write time */
-  private List<String> dynamicPartitioningKeys;
+    /**
+     * @return the posOfPartCols
+     */
+    protected List<Integer> getPosOfPartCols() {
+      return posOfPartCols;
+    }
 
-  private boolean harRequested;
+    /**
+     * @return the posOfDynPartCols
+     */
+    protected List<Integer> getPosOfDynPartCols() {
+      return posOfDynPartCols;
+    }
 
-  /**
-   * Initializes a new OutputJobInfo instance
-   * for writing data from a table.
-   * @param databaseName the db name
-   * @param tableName the table name
-   * @param partitionValues The partition values to publish to, can be null or empty Map to
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
-   * work with hadoop security, the kerberos principal name of the server - else null
-   * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
-   * The special string _HOST will be replaced automatically with the correct host name
-   * indicate write to a unpartitioned table. For partitioned tables, this map should
-   * contain keys for all partition columns with corresponding values.
-   */
-  public static OutputJobInfo create(String databaseName,
-                                     String tableName,
-                                     Map<String, String> partitionValues,
-                                     String serverUri,
-                                     String serverKerberosPrincipal) {
-    return new OutputJobInfo(databaseName,
-        tableName,
-        partitionValues,
-        serverUri,
-        serverKerberosPrincipal);
-  }
+    /**
+     * @param posOfPartCols the posOfPartCols to set
+     */
+    protected void setPosOfPartCols(List<Integer> posOfPartCols) {
+      // sorting the list in the descending order so that deletes happen back-to-front
+      Collections.sort(posOfPartCols, new Comparator<Integer> () {
+        @Override
+        public int compare(Integer earlier, Integer later) {
+          return (earlier > later) ? -1 : ((earlier == later) ? 0 : 1);
+        }
+      });
+      this.posOfPartCols = posOfPartCols;
+    }
 
-  private OutputJobInfo(String databaseName,
-                        String tableName,
-                        Map<String, String> partitionValues,
-                        String serverUri,
-                        String serverKerberosPrincipal) {
-    this.databaseName =  (databaseName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
-    this.tableName = tableName;
-    this.serverUri = serverUri;
-    this.serverKerberosPrincipal = serverKerberosPrincipal;
-    this.partitionValues = partitionValues;
-    this.properties = new HashMap<String,String>();
-  }
-
-  /**
-   * @return the posOfPartCols
-   */
-  protected List<Integer> getPosOfPartCols() {
-    return posOfPartCols;
-  }
-
-  /**
-   * @return the posOfDynPartCols
-   */
-  protected List<Integer> getPosOfDynPartCols() {
-    return posOfDynPartCols;
-  }
-
-  /**
-   * @param posOfPartCols the posOfPartCols to set
-   */
-  protected void setPosOfPartCols(List<Integer> posOfPartCols) {
-    // sorting the list in the descending order so that deletes happen back-to-front
-    Collections.sort(posOfPartCols, new Comparator<Integer> () {
-      @Override
-      public int compare(Integer earlier, Integer later) {
-        return (earlier > later) ? -1 : ((earlier == later) ? 0 : 1);
-      }
-    });
-    this.posOfPartCols = posOfPartCols;
-  }
-
-  /**
+    /**
      * @param posOfDynPartCols the posOfDynPartCols to set
      */
     protected void setPosOfDynPartCols(List<Integer> posOfDynPartCols) {
@@ -145,153 +98,97 @@ public class OutputJobInfo implements Serializable {
       this.posOfDynPartCols = posOfDynPartCols;
     }
 
-  /**
-   * @return the tableInfo
-   */
-  public HCatTableInfo getTableInfo() {
-    return tableInfo;
-  }
+    public OutputJobInfo(HCatTableInfo tableInfo, HCatSchema outputSchema, HCatSchema tableSchema,
+        StorerInfo storerInfo, String location, Table table) {
+      super();
+      this.tableInfo = tableInfo;
+      this.outputSchema = outputSchema;
+      this.tableSchema = tableSchema;
+      this.storerInfo = storerInfo;
+      this.location = location;
+      this.table = table;
+    }
 
-  /**
-   * @return the outputSchema
-   */
-  public HCatSchema getOutputSchema() {
-    return outputSchema;
-  }
+    /**
+     * @return the tableInfo
+     */
+    public HCatTableInfo getTableInfo() {
+      return tableInfo;
+    }
 
-  /**
-   * @param schema the outputSchema to set
-   */
-  public void setOutputSchema(HCatSchema schema) {
-    this.outputSchema = schema;
-  }
+    /**
+     * @return the outputSchema
+     */
+    public HCatSchema getOutputSchema() {
+      return outputSchema;
+    }
 
-  /**
-   * @return the location
-   */
-  public String getLocation() {
-    return location;
-  }
+    /**
+     * @param schema the outputSchema to set
+     */
+    public void setOutputSchema(HCatSchema schema) {
+      this.outputSchema = schema;
+    }
 
-  /**
-   * @param location location to write to
-   */
-  void setLocation(String location) {
-    this.location = location;
-  }
-  /**
-   * Sets the value of partitionValues
-   * @param partitionValues the partition values to set
-   */
-  void setPartitionValues(Map<String, String>  partitionValues) {
-    this.partitionValues = partitionValues;
-  }
+    /**
+     * @return the tableSchema
+     */
+    public HCatSchema getTableSchema() {
+      return tableSchema;
+    }
 
-  /**
-   * Gets the value of partitionValues
-   * @return the partitionValues
-   */
-  public Map<String, String> getPartitionValues() {
-    return partitionValues;
-  }
+    /**
+     * @return the storerInfo
+     */
+    public StorerInfo getStorerInfo() {
+      return storerInfo;
+    }
 
-  /**
-   * @return metastore thrift server URI
-   */
-  public String getServerUri() {
-    return serverUri;
-  }
+    /**
+     * @return the location
+     */
+    public String getLocation() {
+      return location;
+    }
 
-  /**
-   * @return the serverKerberosPrincipal
-   */
-  public String getServerKerberosPrincipal() {
-    return serverKerberosPrincipal;
-  }
+    /**
+     * Gets the value of table
+     * @return the table
+     */
+    public Table getTable() {
+      return table;
+    }
 
-  /**
-   * set the tablInfo instance
-   * this should be the same instance
-   * determined by this object's DatabaseName and TableName
-   * @param tableInfo
-   */
-  void setTableInfo(HCatTableInfo tableInfo) {
-    this.tableInfo = tableInfo;
-  }
+    /**
+     * Set maximum number of allowable dynamic partitions
+     * @param maxDynamicPartitions
+     */
+    public void setMaximumDynamicPartitions(int maxDynamicPartitions){
+      this.maxDynamicPartitions = maxDynamicPartitions;
+    }
+    
+    /**
+     * Returns maximum number of allowable dynamic partitions
+     * @return maximum number of allowable dynamic partitions
+     */
+    public int getMaxDynamicPartitions() {
+      return this.maxDynamicPartitions;
+    }
 
-  /**
-   * @return database name of table to write to
-   */
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  /**
-   * @return name of table to write to
-   */
-  public String getTableName() {
-    return tableName;
-  }
-
-  /**
-   * Set/Get Property information to be passed down to *StorageDriver implementation
-   * put implementation specific storage driver configurations here
-   * @return
-   */
-  public Map<String,String> getProperties() {
-    return properties;
-  }
-
-  /**
-   * Set maximum number of allowable dynamic partitions
-   * @param maxDynamicPartitions
-   */
-  public void setMaximumDynamicPartitions(int maxDynamicPartitions){
-    this.maxDynamicPartitions = maxDynamicPartitions;
-  }
-
-  /**
-   * Returns maximum number of allowable dynamic partitions
-   * @return maximum number of allowable dynamic partitions
-   */
-  public int getMaxDynamicPartitions() {
-    return this.maxDynamicPartitions;
-  }
-
-  /**
-   * Sets whether or not hadoop archiving has been requested for this job
-   * @param harRequested
-   */
-  public void setHarRequested(boolean harRequested){
-    this.harRequested = harRequested;
-  }
-
-  /**
-   * Returns whether or not hadoop archiving has been requested for this job
-   * @return whether or not hadoop archiving has been requested for this job
-   */
-  public boolean getHarRequested() {
-    return this.harRequested;
-  }
-
-  /**
-   * Returns whether or not Dynamic Partitioning is used
-   * @return whether or not dynamic partitioning is currently enabled and used
-   */
-  public boolean isDynamicPartitioningUsed() {
-    return !((dynamicPartitioningKeys == null) || (dynamicPartitioningKeys.isEmpty()));
-  }
-
-  /**
-   * Sets the list of dynamic partitioning keys used for outputting without specifying all the keys
-   * @param dynamicPartitioningKeys
-   */
-  public void setDynamicPartitioningKeys(List<String> dynamicPartitioningKeys) {
-    this.dynamicPartitioningKeys = dynamicPartitioningKeys;
-  }
-
-  public List<String> getDynamicPartitioningKeys(){
-    return this.dynamicPartitioningKeys;
-  }
+    /**
+     * Sets whether or not hadoop archiving has been requested for this job
+     * @param harRequested
+     */
+    public void setHarRequested(boolean harRequested){
+      this.harRequested = harRequested;
+    }
+    
+    /**
+     * Returns whether or not hadoop archiving has been requested for this job
+     * @return whether or not hadoop archiving has been requested for this job
+     */
+    public boolean getHarRequested() {
+      return this.harRequested;
+    }
 
 }

@@ -17,6 +17,10 @@
  */
 package org.apache.hcatalog.pig;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -27,17 +31,13 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
-import org.apache.hcatalog.mapreduce.InputJobInfo;
+import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.pig.Expression;
 import org.apache.pig.Expression.BinaryExpression;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.impl.util.UDFContext;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Pig {@link LoadFunc} to read data from HCat
@@ -82,12 +82,14 @@ public class HCatLoader extends HCatBaseLoader {
     // in the hadoop front end mapred.task.id property will not be set in
     // the Configuration
     if (!HCatUtil.checkJobContextIfRunningFromBackend(job)){
-      HCatInputFormat.setInput(job,
-                                            InputJobInfo.create(dbName,
-                                                                         tableName,
-                                                                         getPartitionFilterString(),
-                                                                         hcatServerUri != null ? hcatServerUri : (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
-                                                                         PigHCatUtil.getHCatServerPrincipal(job)));
+
+      HCatInputFormat.setInput(job, HCatTableInfo.getInputTableInfo(
+              hcatServerUri!=null ? hcatServerUri :
+                  (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
+              PigHCatUtil.getHCatServerPrincipal(job),
+              dbName,
+              tableName,
+              getPartitionFilterString()));
     }
 
     // Need to also push projections by calling setOutputSchema on

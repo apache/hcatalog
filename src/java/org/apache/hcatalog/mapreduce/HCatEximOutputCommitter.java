@@ -18,6 +18,13 @@
 
 package org.apache.hcatalog.mapreduce;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -33,15 +40,9 @@ import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
 
@@ -64,7 +65,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
     Configuration conf = jobContext.getConfiguration();
     FileSystem fs;
     try {
-      fs = FileSystem.get(new URI(jobInfo.getTableInfo().getTable().getSd().getLocation()), conf);
+      fs = FileSystem.get(new URI(jobInfo.getTable().getSd().getLocation()), conf);
     } catch (URISyntaxException e) {
       throw new IOException(e);
     }
@@ -74,7 +75,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
   private static void doCleanup(OutputJobInfo jobInfo, FileSystem fs) throws IOException,
       HCatException {
     try {
-      Table ttable = jobInfo.getTableInfo().getTable();
+      Table ttable = jobInfo.getTable();
       org.apache.hadoop.hive.ql.metadata.Table table = new org.apache.hadoop.hive.ql.metadata.Table(
           ttable);
       StorageDescriptor tblSD = ttable.getSd();
@@ -95,7 +96,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
         }
       }
       if (!table.getPartitionKeys().isEmpty()) {
-        Map<String, String> partitionValues = jobInfo.getPartitionValues();
+        Map<String, String> partitionValues = jobInfo.getTableInfo().getPartitionValues();
         org.apache.hadoop.hive.ql.metadata.Partition partition =
             new org.apache.hadoop.hive.ql.metadata.Partition(table,
                 partitionValues,
