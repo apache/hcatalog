@@ -74,7 +74,7 @@ export HADOOP_HOME=$HADOOP_HOME
 #export HADOOP_CONF_DIR=$HADOOP_CONF_DIR # get from package yinst setting
 #export HADOOP_OPTS="-Dlog4j.configuration=file://${ROOT}/conf/log4j.properties"
 export HADOOP_OPTS="${HADOOP_OPTS} -server -XX:+UseConcMarkSweepGC -XX:ErrorFile=${ROOT}/var/log/hcat_err_pid%p.log -Xloggc:${ROOT}/var/log/hcat_gc.log-`date +'%Y%m%d%H%M'` -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps"
-export HADOOP_HEAPSIZE=8192
+export HADOOP_HEAPSIZE=2048
 
 #export HADOOP_OVERRIDE=${ROOT}/bin/hadoop.local
 
