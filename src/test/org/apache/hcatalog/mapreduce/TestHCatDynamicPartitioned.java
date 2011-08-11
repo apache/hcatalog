@@ -125,7 +125,11 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
     assertTrue(exc != null);
     assertTrue(exc instanceof HCatException);
-    assertEquals(ErrorType.ERROR_PUBLISHING_PARTITION, ((HCatException) exc).getErrorType());
+    assertTrue( "Got exception of type ["+((HCatException) exc).getErrorType().toString()
+        + "] Expected ERROR_PUBLISHING_PARTITION or ERROR_MOVE_FAILED",
+        (ErrorType.ERROR_PUBLISHING_PARTITION == ((HCatException) exc).getErrorType()) 
+        || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType()) 
+        );
   }
 
   public void testHCatDynamicPartitionMaxPartitions() throws Exception {
