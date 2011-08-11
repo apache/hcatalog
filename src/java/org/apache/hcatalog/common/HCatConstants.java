@@ -87,4 +87,11 @@ public final class HCatConstants {
   public static final String HCAT_DROP_TABLE_EVENT = "HCAT_DROP_TABLE";
   public static final String HCAT_ADD_DATABASE_EVENT = "HCAT_ADD_DATABASE";
   public static final String HCAT_DROP_DATABASE_EVENT = "HCAT_DROP_DATABASE";
+
+  // System environment variables
+  public static final String SYSENV_HADOOP_TOKEN_FILE_LOCATION = "HADOOP_TOKEN_FILE_LOCATION";
+  
+  // Hadoop Conf Var Names
+  public static final String CONF_MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
+
 }

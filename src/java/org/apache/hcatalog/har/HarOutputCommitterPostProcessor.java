@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.tools.HadoopArchives;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 
@@ -100,9 +101,9 @@ public class HarOutputCommitterPostProcessor {
       Configuration newConf = new Configuration();
       FileSystem fs = archivePath.getFileSystem(newConf);
       
-      String hadoopTokenFileLocationEnvSetting = System.getenv("HADOOP_TOKEN_FILE_LOCATION");
+      String hadoopTokenFileLocationEnvSetting = System.getenv(HCatConstants.SYSENV_HADOOP_TOKEN_FILE_LOCATION);
       if ((hadoopTokenFileLocationEnvSetting != null) && (!hadoopTokenFileLocationEnvSetting.isEmpty())){
-        newConf.set("mapreduce.job.credentials.binary", hadoopTokenFileLocationEnvSetting);
+        newConf.set(HCatConstants.CONF_MAPREDUCE_JOB_CREDENTIALS_BINARY, hadoopTokenFileLocationEnvSetting);
 //      LOG.info("System.getenv(\"HADOOP_TOKEN_FILE_LOCATION\") =["+  System.getenv("HADOOP_TOKEN_FILE_LOCATION")+"]");
       }
 //      for (FileStatus ds : fs.globStatus(new Path(dir, "*"))){
