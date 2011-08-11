@@ -100,9 +100,11 @@ public class HarOutputCommitterPostProcessor {
       Configuration newConf = new Configuration();
       FileSystem fs = archivePath.getFileSystem(newConf);
       
-      newConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+      String hadoopTokenFileLocationEnvSetting = System.getenv("HADOOP_TOKEN_FILE_LOCATION");
+      if ((hadoopTokenFileLocationEnvSetting != null) && (!hadoopTokenFileLocationEnvSetting.isEmpty())){
+        newConf.set("mapreduce.job.credentials.binary", hadoopTokenFileLocationEnvSetting);
 //      LOG.info("System.getenv(\"HADOOP_TOKEN_FILE_LOCATION\") =["+  System.getenv("HADOOP_TOKEN_FILE_LOCATION")+"]");
-
+      }
 //      for (FileStatus ds : fs.globStatus(new Path(dir, "*"))){
 //        LOG.info("src : "+ds.getPath().toUri().toString());
 //      }
