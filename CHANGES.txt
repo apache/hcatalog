@@ -5,6 +5,18 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+
+  IMPROVEMENTS
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
+Release 0.2.0 - Unreleased
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
     HCAT-42. Storing across partitions(Dynamic Partitioning) from HCatStorer/HCatOutputFormat (khorgath)
  
     HCAT-46. Send a message on a message bus when a partition is marked done (hashutosh via macyang)
@@ -72,7 +84,7 @@ Trunk (unreleased changes)
     HCAT-15. Replace all occurrences of 'howl' with hcat/hcatalog. 
     (Jakob Homan via macyang)
 
-Release 0.1 - Unreleased
+Release 0.1 - Never released
 
   INCOMPATIBLE CHANGES
 
