@@ -98,13 +98,15 @@ public class PigHCatUtil {
     HiveConf hiveConf = new HiveConf(clazz);
 
     if (serverUri != null){
-
-      hiveConf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, true);
-      hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, serverKerberosPrincipal);
-
       hiveConf.set("hive.metastore.local", "false");
       hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, serverUri.trim());
     }
+    
+    if (serverKerberosPrincipal != null){
+      hiveConf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, true);
+      hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, serverKerberosPrincipal);    	
+    }
+    
     try {
       client = new HiveMetaStoreClient(hiveConf,null);
     } catch (Exception e){

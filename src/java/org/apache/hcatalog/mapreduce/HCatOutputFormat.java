@@ -36,6 +36,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -417,11 +418,17 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       if( url != null ) {
         //User specified a thrift url
 
-        hiveConf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-        hiveConf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, conf.get(HCatConstants.HCAT_METASTORE_PRINCIPAL));
-
         hiveConf.set("hive.metastore.local", "false");
-        hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, url);
+        hiveConf.set(ConfVars.METASTOREURIS.varname, url);
+        
+        String kerberosPrincipal = conf.get(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+        if (kerberosPrincipal == null){
+            kerberosPrincipal = conf.get(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname);
+        }
+        if (kerberosPrincipal != null){
+            hiveConf.setBoolean(ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+            hiveConf.set(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, kerberosPrincipal);
+        }        
         if(conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
           hiveConf.set("hive.metastore.token.signature", conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
         }

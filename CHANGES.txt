@@ -61,6 +61,9 @@ Release 0.2.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-53. HCatLoader, HCatStorer, HCatInputFormat, and HCatOutputFormat assume Hadoop 
+             running in secure mode (hashutosh)
+ 
     HCAT-57. Remove usage of deprecated methods (hashutosh)
    
     HCAT-59. Assimilate new changes in listener interface (hashutosh)
