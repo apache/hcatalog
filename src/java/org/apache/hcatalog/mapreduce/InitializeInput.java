@@ -51,14 +51,16 @@ public class InitializeInput {
   private static final HiveConf hiveConf = new HiveConf(HCatInputFormat.class);
 
   private static HiveMetaStoreClient createHiveMetaClient(Configuration conf, HCatTableInfo inputInfo) throws Exception {
-    if (inputInfo.getServerUri() != null){
 
-      hiveConf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-      hiveConf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-          inputInfo.getServerKerberosPrincipal());
-
+	if (inputInfo.getServerUri() != null){
       hiveConf.set("hive.metastore.local", "false");
       hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, inputInfo.getServerUri());
+    }
+    
+    String kerberosPrincipal = inputInfo.getServerKerberosPrincipal();
+    if(kerberosPrincipal != null){
+      hiveConf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+      hiveConf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, kerberosPrincipal);
     }
 
     return new HiveMetaStoreClient(hiveConf,null);
