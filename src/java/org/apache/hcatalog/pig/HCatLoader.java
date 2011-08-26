@@ -31,7 +31,7 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
-import org.apache.hcatalog.mapreduce.HCatTableInfo;
+import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.pig.Expression;
 import org.apache.pig.Expression.BinaryExpression;
 import org.apache.pig.LoadFunc;
@@ -82,14 +82,12 @@ public class HCatLoader extends HCatBaseLoader {
     // in the hadoop front end mapred.task.id property will not be set in
     // the Configuration
     if (!HCatUtil.checkJobContextIfRunningFromBackend(job)){
-
-      HCatInputFormat.setInput(job, HCatTableInfo.getInputTableInfo(
-              hcatServerUri!=null ? hcatServerUri :
-                  (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
-              PigHCatUtil.getHCatServerPrincipal(job),
-              dbName,
-              tableName,
-              getPartitionFilterString()));
+      HCatInputFormat.setInput(job,
+                                            InputJobInfo.create(dbName,
+                                                                         tableName,
+                                                                         getPartitionFilterString(),
+                                                                         hcatServerUri != null ? hcatServerUri : (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
+                                                                         PigHCatUtil.getHCatServerPrincipal(job)));
     }
 
     // Need to also push projections by calling setOutputSchema on

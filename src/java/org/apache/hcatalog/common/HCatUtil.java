@@ -26,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -181,6 +182,22 @@ public class HCatUtil {
       }
       return tableSchema;
     }
+
+  /**
+   * return the partition columns from a table instance
+   * @param table the instance to extract partition columns from
+   * @return HCatSchema instance which contains the partition columns
+   * @throws IOException
+   */
+  public static HCatSchema getPartitionColumns(Table table) throws IOException{
+    HCatSchema cols = new HCatSchema(new LinkedList<HCatFieldSchema>());
+    if( table.getPartitionKeys().size() != 0 ) {
+      for (FieldSchema fs : table.getPartitionKeys()){
+          cols.append(HCatSchemaUtils.getHCatFieldSchema(fs));
+      }
+    }
+    return cols;
+  }
 
   /**
    * Validate partition schema, checks if the column types match between the partition

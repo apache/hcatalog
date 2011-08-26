@@ -31,13 +31,13 @@ public class HCatInputFormat extends HCatBaseInputFormat {
    * the information in the conf object. The inputInfo object is updated with
    * information needed in the client context
    * @param job the job object
-   * @param inputInfo the table input info
+   * @param inputJobInfo the input info for table to read
    * @throws IOException the exception in communicating with the metadata server
    */
   public static void setInput(Job job,
-      HCatTableInfo inputInfo) throws IOException {
+      InputJobInfo inputJobInfo) throws IOException {
     try {
-      InitializeInput.setInput(job, inputInfo);
+      InitializeInput.setInput(job, inputJobInfo);
     } catch (Exception e) {
       throw new IOException(e);
     }

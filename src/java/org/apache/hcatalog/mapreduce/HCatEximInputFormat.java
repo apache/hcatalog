@@ -68,8 +68,7 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
       Map.Entry<org.apache.hadoop.hive.metastore.api.Table, List<Partition>> tp = EximUtil
       .readMetaData(fs, metadataPath);
       org.apache.hadoop.hive.metastore.api.Table table = tp.getKey();
-      HCatTableInfo inputInfo = HCatTableInfo.getInputTableInfo(null,
-          null, table.getDbName(), table.getTableName());
+      InputJobInfo inputInfo = InputJobInfo.create(table.getDbName(), table.getTableName(),null,null,null);
       List<FieldSchema> partCols = table.getPartitionKeys();
       List<PartInfo> partInfoList = null;
       if (partCols.size() > 0) {
@@ -98,11 +97,11 @@ public class HCatEximInputFormat extends HCatBaseInputFormat {
         PartInfo partInfo = new PartInfo(schema, inputStorageDriverClass,  location + "/data", hcatProperties);
         partInfoList.add(partInfo);
       }
-      JobInfo hcatJobInfo = new JobInfo(inputInfo,
-          HCatUtil.getTableSchemaWithPtnCols(table), partInfoList);
+      inputInfo.setPartitions(partInfoList);
+      inputInfo.setTableInfo(HCatTableInfo.valueOf(table));
       job.getConfiguration().set(
           HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(hcatJobInfo));
+          HCatUtil.serialize(inputInfo));
       List<HCatSchema> rv = new ArrayList<HCatSchema>(2);
       rv.add(HCatSchemaUtils.getHCatSchema(table.getSd().getCols()));
       rv.add(HCatSchemaUtils.getHCatSchema(partCols));

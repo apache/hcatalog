@@ -62,7 +62,7 @@ public class HCatRecordWriter extends RecordWriter<WritableComparable<?>, HCatRe
 
       // If partition columns occur in data, we want to remove them.
       partColsToDel = jobInfo.getPosOfPartCols();
-      dynamicPartitioningUsed = jobInfo.getTableInfo().isDynamicPartitioningUsed();
+      dynamicPartitioningUsed = jobInfo.isDynamicPartitioningUsed();
       dynamicPartCols = jobInfo.getPosOfDynPartCols();
       maxDynamicPartitions = jobInfo.getMaxDynamicPartitions();
 

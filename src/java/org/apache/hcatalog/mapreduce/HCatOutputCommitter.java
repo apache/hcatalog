@@ -80,7 +80,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
     public HCatOutputCommitter(JobContext context, OutputCommitter baseCommitter) throws IOException {
       OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
-      dynamicPartitioningUsed = jobInfo.getTableInfo().isDynamicPartitioningUsed();
+      dynamicPartitioningUsed = jobInfo.isDynamicPartitioningUsed();
       if (!dynamicPartitioningUsed){
         this.baseCommitter = baseCommitter;
         this.partitionsDiscovered = true;
@@ -161,7 +161,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
       try {
         HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(
-            jobInfo.getTableInfo().getServerUri(), jobContext.getConfiguration());
+            jobInfo.getServerUri(), jobContext.getConfiguration());
         // cancel the deleg. tokens that were acquired for this job now that
         // we are done - we should cancel if the tokens were acquired by
         // HCatOutputFormat and not if they were supplied by Oozie. In the latter
@@ -189,7 +189,7 @@ public class HCatOutputCommitter extends OutputCommitter {
       Path src; 
       if (dynamicPartitioningUsed){
         src = new Path(getPartitionRootLocation(
-            jobInfo.getLocation().toString(),jobInfo.getTable().getPartitionKeysSize()
+            jobInfo.getLocation().toString(),jobInfo.getTableInfo().getTable().getPartitionKeysSize()
             ));
       }else{
         src = new Path(jobInfo.getLocation());
@@ -244,7 +244,7 @@ public class HCatOutputCommitter extends OutputCommitter {
 
       OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
       Configuration conf = context.getConfiguration();
-      Table table = jobInfo.getTable();
+      Table table = jobInfo.getTableInfo().getTable();
       Path tblPath = new Path(table.getSd().getLocation());
       FileSystem fs = tblPath.getFileSystem(conf);
 
@@ -283,7 +283,7 @@ public class HCatOutputCommitter extends OutputCommitter {
       List<Partition> partitionsAdded = new ArrayList<Partition>();
 
       try {
-        client = HCatOutputFormat.createHiveClient(tableInfo.getServerUri(), conf);
+        client = HCatOutputFormat.createHiveClient(jobInfo.getServerUri(), conf);
 
         StorerInfo storer = InitializeInput.extractStorerInfo(table.getSd(),table.getParameters());
 
@@ -298,7 +298,7 @@ public class HCatOutputCommitter extends OutputCommitter {
           partitionsToAdd.add(
               constructPartition(
                   context,
-                  tblPath.toString(), tableInfo.getPartitionValues()
+                  tblPath.toString(), jobInfo.getPartitionValues()
                   ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
                   ,table, fs
                   ,grpName,perms));
@@ -316,19 +316,19 @@ public class HCatOutputCommitter extends OutputCommitter {
 
         //Publish the new partition(s)
         if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())){
-          
+
           Path src = new Path(ptnRootLocation);
 
           // check here for each dir we're copying out, to see if it already exists, error out if so
           moveTaskOutputs(fs, src, src, tblPath,true);
-          
+
           moveTaskOutputs(fs, src, src, tblPath,false);
           fs.delete(src, true);
-          
-          
+
+
 //          for (Partition partition : partitionsToAdd){
 //            partitionsAdded.add(client.add_partition(partition));
-//            // currently following add_partition instead of add_partitions because latter isn't 
+//            // currently following add_partition instead of add_partitions because latter isn't
 //            // all-or-nothing and we want to be able to roll back partitions we added if need be.
 //          }
 

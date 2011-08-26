@@ -95,41 +95,41 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      * Set the info about the output to write for the Job. This queries the metadata server
      * to find the StorageDriver to use for the table.  Throws error if partition is already published.
      * @param job the job object
-     * @param outputInfo the table output info
+     * @param outputJobInfo the table output info
      * @throws IOException the exception in communicating with the metadata server
      */
     @SuppressWarnings("unchecked")
-    public static void setOutput(Job job, HCatTableInfo outputInfo) throws IOException {
+    public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
       HiveMetaStoreClient client = null;
 
       try {
 
         Configuration conf = job.getConfiguration();
-        client = createHiveClient(outputInfo.getServerUri(), conf);
-        Table table = client.getTable(outputInfo.getDatabaseName(), outputInfo.getTableName());
+        client = createHiveClient(outputJobInfo.getServerUri(), conf);
+        Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
 
         if (table.getPartitionKeysSize() == 0 ){
-          if ((outputInfo.getPartitionValues() != null) && (!outputInfo.getPartitionValues().isEmpty())){
+          if ((outputJobInfo.getPartitionValues() != null) && (!outputJobInfo.getPartitionValues().isEmpty())){
             // attempt made to save partition values in non-partitioned table - throw error.
             throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES, 
                 "Partition values specified for non-partitioned table");
           }
           // non-partitioned table
-          outputInfo.setPartitionValues(new HashMap<String, String>());
+          outputJobInfo.setPartitionValues(new HashMap<String, String>());
           
         } else {
           // partitioned table, we expect partition values
           // convert user specified map to have lower case key names
           Map<String, String> valueMap = new HashMap<String, String>();
-          if (outputInfo.getPartitionValues() != null){
-            for(Map.Entry<String, String> entry : outputInfo.getPartitionValues().entrySet()) {
+          if (outputJobInfo.getPartitionValues() != null){
+            for(Map.Entry<String, String> entry : outputJobInfo.getPartitionValues().entrySet()) {
               valueMap.put(entry.getKey().toLowerCase(), entry.getValue());
             }
           }
 
           if (
-              (outputInfo.getPartitionValues() == null)
-              || (outputInfo.getPartitionValues().size() < table.getPartitionKeysSize())
+              (outputJobInfo.getPartitionValues() == null)
+              || (outputJobInfo.getPartitionValues().size() < table.getPartitionKeysSize())
           ){
             // dynamic partition usecase - partition values were null, or not all were specified
             // need to figure out which keys are not specified.
@@ -146,7 +146,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
               throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,"Invalid partition keys specified");
             }
                         
-            outputInfo.setDynamicPartitioningKeys(dynamicPartitioningKeys);
+            outputJobInfo.setDynamicPartitioningKeys(dynamicPartitioningKeys);
             String dynHash;
             if ((dynHash = conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID)) == null){
               dynHash = String.valueOf(Math.random());
@@ -158,11 +158,11 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
           }
 
-          outputInfo.setPartitionValues(valueMap);
+          outputJobInfo.setPartitionValues(valueMap);
         }
 
         //Handle duplicate publish
-        handleDuplicatePublish(job, outputInfo, client, table);
+        handleDuplicatePublish(job, outputJobInfo, client, table);
 
         StorageDescriptor tblSD = table.getSd();
         HCatSchema tableSchema = HCatUtil.extractSchemaFromStorageDescriptor(tblSD);
@@ -180,14 +180,15 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         String tblLocation = tblSD.getLocation();
         String location = driver.getOutputLocation(job,
             tblLocation, partitionCols,
-            outputInfo.getPartitionValues(),conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID));
+            outputJobInfo.getPartitionValues(),conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID));
 
         //Serialize the output info into the configuration
-        OutputJobInfo jobInfo = new OutputJobInfo(outputInfo,
-                tableSchema, tableSchema, storerInfo, location, table);
-        jobInfo.setHarRequested(harRequested);
-        jobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
-        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
+        outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
+        outputJobInfo.setOutputSchema(tableSchema);
+        outputJobInfo.setLocation(location);
+        outputJobInfo.setHarRequested(harRequested);
+        outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
+        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
 
         Path tblPath = new Path(tblLocation);
 
@@ -234,7 +235,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             // will correctly pick the right tokens which the committer will use and
             // cancel.
             
-            String tokenSignature = getTokenSignature(outputInfo);
+            String tokenSignature = getTokenSignature(outputJobInfo);
             if(tokenMap.get(tokenSignature) == null) {
               // get delegation tokens from hcat server and store them into the "job"
               // These will be used in the HCatOutputCommitter to publish partitions to
@@ -284,17 +285,17 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
     // a signature string to associate with a HCatTableInfo - essentially
     // a concatenation of dbname, tablename and partition keyvalues.
-    private static String getTokenSignature(HCatTableInfo outputInfo) {
+    private static String getTokenSignature(OutputJobInfo outputJobInfo) {
       StringBuilder result = new StringBuilder("");
-      String dbName = outputInfo.getDatabaseName();
+      String dbName = outputJobInfo.getDatabaseName();
       if(dbName != null) {
         result.append(dbName);
       }
-      String tableName = outputInfo.getTableName();
+      String tableName = outputJobInfo.getTableName();
       if(tableName != null) {
         result.append("+" + tableName);
       }
-      Map<String, String> partValues = outputInfo.getPartitionValues();
+      Map<String, String> partValues = outputJobInfo.getPartitionValues();
       if(partValues != null) {
         for(Entry<String, String> entry: partValues.entrySet()) {
           result.append("+" + entry.getKey() + "=" + entry.getValue());
@@ -315,7 +316,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      * @throws MetaException
      * @throws TException
      */
-    private static void handleDuplicatePublish(Job job, HCatTableInfo outputInfo,
+    private static void handleDuplicatePublish(Job job, OutputJobInfo outputInfo,
         HiveMetaStoreClient client, Table table) throws IOException, MetaException, TException {
 
       /*
@@ -367,7 +368,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     public static void setSchema(final Job job, final HCatSchema schema) throws IOException {
 
         OutputJobInfo jobInfo = getJobInfo(job);
-        Map<String,String> partMap = jobInfo.getTableInfo().getPartitionValues();
+        Map<String,String> partMap = jobInfo.getPartitionValues();
         setPartDetails(jobInfo, schema, partMap);
         job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
     }
@@ -480,7 +481,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       OutputJobInfo info =  HCatBaseOutputFormat.getJobInfo(context);
 //      Path workFile = osd.getWorkFilePath(context,info.getLocation());
       Path workFile = osd.getWorkFilePath(context,context.getConfiguration().get("mapred.output.dir"));
-      Path tblPath = new Path(info.getTable().getSd().getLocation());
+      Path tblPath = new Path(info.getTableInfo().getTable().getSd().getLocation());
       FileSystem fs = tblPath.getFileSystem(context.getConfiguration());
       FileStatus tblPathStat = fs.getFileStatus(tblPath);
       

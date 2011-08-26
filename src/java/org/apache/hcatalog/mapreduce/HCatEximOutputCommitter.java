@@ -65,7 +65,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
     Configuration conf = jobContext.getConfiguration();
     FileSystem fs;
     try {
-      fs = FileSystem.get(new URI(jobInfo.getTable().getSd().getLocation()), conf);
+      fs = FileSystem.get(new URI(jobInfo.getTableInfo().getTable().getSd().getLocation()), conf);
     } catch (URISyntaxException e) {
       throw new IOException(e);
     }
@@ -75,7 +75,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
   private static void doCleanup(OutputJobInfo jobInfo, FileSystem fs) throws IOException,
       HCatException {
     try {
-      Table ttable = jobInfo.getTable();
+      Table ttable = jobInfo.getTableInfo().getTable();
       org.apache.hadoop.hive.ql.metadata.Table table = new org.apache.hadoop.hive.ql.metadata.Table(
           ttable);
       StorageDescriptor tblSD = ttable.getSd();
@@ -96,7 +96,7 @@ public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
         }
       }
       if (!table.getPartitionKeys().isEmpty()) {
-        Map<String, String> partitionValues = jobInfo.getTableInfo().getPartitionValues();
+        Map<String, String> partitionValues = jobInfo.getPartitionValues();
         org.apache.hadoop.hive.ql.metadata.Partition partition =
             new org.apache.hadoop.hive.ql.metadata.Partition(table,
                 partitionValues,

@@ -8,6 +8,8 @@ Trunk (unreleased changes)
 
   IMPROVEMENTS
 
+  HCAT-64. Refactor HCatTableInfo, JobInfo and OutputJobInfo (toffer via gates)
+
   OPTIMIZATIONS
 
   BUG FIXES

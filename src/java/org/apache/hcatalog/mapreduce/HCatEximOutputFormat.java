@@ -128,8 +128,7 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
       }
     }
     StorerInfo storerInfo = new StorerInfo(isdname, osdname, new Properties());
-    HCatTableInfo outputInfo = HCatTableInfo.getOutputTableInfo(null, null, dbname, tablename,
-        partSpec);
+    OutputJobInfo outputJobInfo = OutputJobInfo.create(dbname,tablename,partSpec,null,null);
     org.apache.hadoop.hive.ql.metadata.Table tbl = new
       org.apache.hadoop.hive.ql.metadata.Table(dbname, tablename);
     Table table = tbl.getTTable();
@@ -146,16 +145,17 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
       StorageDescriptor sd = table.getSd();
       sd.setLocation(location);
       String dataLocation = location + "/" + partname;
-      OutputJobInfo jobInfo = new OutputJobInfo(outputInfo,
-          columnSchema, columnSchema, storerInfo, dataLocation, table);
-      setPartDetails(jobInfo, columnSchema, partSpec);
-      sd.setCols(HCatUtil.getFieldSchemaList(jobInfo.getOutputSchema().getFields()));
+      outputJobInfo.setTableInfo(new HCatTableInfo(dbname,tablename,columnSchema,null,storerInfo,table));
+      outputJobInfo.setOutputSchema(columnSchema);
+      outputJobInfo.setLocation(dataLocation);
+      setPartDetails(outputJobInfo, columnSchema, partSpec);
+      sd.setCols(HCatUtil.getFieldSchemaList(outputJobInfo.getOutputSchema().getFields()));
       sd.setInputFormat(ifname);
       sd.setOutputFormat(ofname);
       SerDeInfo serdeInfo = sd.getSerdeInfo();
       serdeInfo.setSerializationLib(serializationLib);
       Configuration conf = job.getConfiguration();
-      conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
+      conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
     } catch (IOException e) {
       throw new HCatException(ErrorType.ERROR_SET_OUTPUT, e);
     } catch (MetaException e) {
