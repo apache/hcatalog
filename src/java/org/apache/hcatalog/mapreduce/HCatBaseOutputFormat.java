@@ -179,7 +179,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   /**
    * Gets the output storage driver instance, with allowing specification 
    * of partvals from which it picks the dynamic partvals
-   * @param jobContext the job context
+   * @param context the job context
    * @param jobInfo the output job info
    * @return the output driver instance
    * @throws IOException

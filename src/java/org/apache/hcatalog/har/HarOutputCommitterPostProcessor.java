@@ -75,7 +75,7 @@ public class HarOutputCommitterPostProcessor {
   /**
    * Creates a har file from the contents of a given directory, using that as root.
    * @param dir Directory to archive
-   * @param harName The HAR file to create
+   * @param harFile The HAR file to create
    */
   public static void makeHar(JobContext context, String dir, String harFile) throws IOException{
 //    Configuration conf = context.getConfiguration();
