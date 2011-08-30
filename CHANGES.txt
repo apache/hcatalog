@@ -26,6 +26,8 @@ Trunk (unreleased changes)
 
   IMPROVEMENTS
 
+  HCAT-67. Utilities for system testing (hashutosh)
+ 
   HCAT-64. Refactor HCatTableInfo, JobInfo and OutputJobInfo (toffer via gates)
 
   OPTIMIZATIONS
