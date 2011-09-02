@@ -58,26 +58,9 @@ for jar in $HCAT_HOME/lib/*.jar ; do
 done
 
 # Put our config file in the classpath
-HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_HOME}/conf/hive-site.xml
+HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_HOME}/conf
 
 export HADOOP_CLASSPATH=$HADOOP_CLASSPATH
-
-# Find our Thrift address from the config file
-THRIFT=`sed -n '/<name>hive.metastore.uris<\/name>/ {
-      n
-      s/.*<value>\(.*\)<\/value>.*/\1/p
-      }' $HCAT_HOME/conf/hive-site.xml`
-HADOOP_OPTS="$HADOOP_OPTS -Dhive.metastore.uris=$THRIFT " 
-
-# Find our Warehouse dir from the config file
-WAREHOUSE_DIR=`sed -n '/<name>hive.metastore.warehouse.dir<\/name>/ {
-      n
-      s/.*<value>\(.*\)<\/value>.*/\1/p
-      }' $HCAT_HOME/conf/hive-site.xml`
-HADOOP_OPTS="$HADOOP_OPTS -Dhive.metastore.warehouse.dir=$WAREHOUSE_DIR " 
-
-
-export HADOOP_OPTS=$HADOOP_OPTS
 
 # run it
 if [ "$debug" == "true" ]; then
@@ -89,5 +72,3 @@ else
 	exec $HADOOP_HOME/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli "$@"
 fi
 
-# Above is the recommended way to launch hcatalog cli. If it doesnt work, you can try the following:
-# java -Dhive.metastore.uris=thrift://localhost:9083 -cp ../lib/commons-logging-1.0.4.jar:../build/hadoopcore/hadoop-0.20.0/hadoop-0.20.0-core.jar:../lib/commons-cli-2.0-SNAPSHOT.jar:../build/cli/hive-cli-0.7.0.jar:../ql/lib/antlr-runtime-3.0.1.jar:$HCAT_JAR_LOC org.apache.hcatalog.cli.HCatCli "$@"
