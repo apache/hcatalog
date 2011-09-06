@@ -50,7 +50,8 @@ for f in $@; do
 done
 
 # Find our hcatalog jar
-HCAT_JAR=$HCAT_HOME/lib/hcatalog-*.jar
+shopt -s extglob
+HCAT_JAR=$HCAT_HOME/lib/hcatalog-!(*server-extensions*).jar
 
 # Add all of the other jars to our classpath
 for jar in $HCAT_HOME/lib/*.jar ; do
