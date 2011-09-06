@@ -33,6 +33,8 @@ Release 0.2.0 - Unreleased
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-91. hcat client not setting the config properly (hashutosh)
+
     HCAT-66. HCatalog 0.2.0 Documentation (chandec via hashutosh)
 
     HCAT-54. Javadoc is not being built as part of HCatalog docs (hashutosh) 
