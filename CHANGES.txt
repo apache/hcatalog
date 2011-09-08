@@ -33,9 +33,11 @@ Release 0.2.0 - Unreleased
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
-   HCAT-43. hcat.sh does not pick up hcatalog.jar correctly (macyang via hashutosh) 
+    HCAT-94. Handle the job tracker tokens properly in har jobs (khorgath via hashutosh)   
+ 
+    HCAT-43. hcat.sh does not pick up hcatalog.jar correctly (macyang via hashutosh) 
 
-   HCAT-91. hcat client not setting the config properly (hashutosh)
+    HCAT-91. hcat client not setting the config properly (hashutosh)
 
     HCAT-66. HCatalog 0.2.0 Documentation (chandec via hashutosh)
 
