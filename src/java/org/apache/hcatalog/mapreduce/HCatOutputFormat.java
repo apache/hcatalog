@@ -248,9 +248,11 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             }
 
             String jcTokenSignature = "jc."+tokenSignature;
-            if(tokenMap.get(jcTokenSignature) == null) {
-              tokenMap.put(jcTokenSignature,
-                  HCatUtil.getJobTrackerDelegationToken(conf,ugi.getUserName()));
+            if (harRequested){
+              if(tokenMap.get(jcTokenSignature) == null) {
+                tokenMap.put(jcTokenSignature,
+                    HCatUtil.getJobTrackerDelegationToken(conf,ugi.getUserName()));
+              }
             }
             
             job.getCredentials().addToken(new Text(ugi.getUserName() + tokenSignature),
@@ -258,15 +260,20 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             // this will be used by the outputcommitter to pass on to the metastore client
             // which in turn will pass on to the TokenSelector so that it can select
             // the right token.
-            job.getCredentials().addToken(new Text(ugi.getUserName() + jcTokenSignature),
-                tokenMap.get(jcTokenSignature));
-            
             job.getConfiguration().set(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE, tokenSignature);
-            job.getConfiguration().set(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE, jcTokenSignature);
-            job.getConfiguration().set(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM, tokenMap.get(jcTokenSignature).encodeToUrlString());
 
-//            LOG.info("Set hive dt["+tokenSignature+"]");
-//            LOG.info("Set jt dt["+jcTokenSignature+"]");
+            if (harRequested){
+              job.getCredentials().addToken(new Text(ugi.getUserName() + jcTokenSignature),
+                  tokenMap.get(jcTokenSignature));
+
+              job.getConfiguration().set(
+                  HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE, jcTokenSignature);
+              job.getConfiguration().set(
+                  HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM, 
+                  tokenMap.get(jcTokenSignature).encodeToUrlString());
+              //          LOG.info("Set hive dt["+tokenSignature+"]");
+              //          LOG.info("Set jt dt["+jcTokenSignature+"]");
+            }
           }
        }
       } catch(Exception e) {

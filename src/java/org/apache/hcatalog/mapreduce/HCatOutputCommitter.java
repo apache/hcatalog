@@ -171,13 +171,13 @@ public class HCatOutputCommitter extends OutputCommitter {
             (HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
           client.cancelDelegationToken(tokenStrForm);
         }
-        
-        String jcTokenStrForm = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
-        String jcTokenSignature = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
-        if(jcTokenStrForm != null && jcTokenSignature != null) {
-          HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
+        if (harProcessor.isEnabled()){
+          String jcTokenStrForm = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+          String jcTokenSignature = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
+          if(jcTokenStrForm != null && jcTokenSignature != null) {
+            HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
+          }
         }
-        
       } catch(Exception e) {
         if( e instanceof HCatException ) {
           throw (HCatException) e;
@@ -376,12 +376,14 @@ public class HCatOutputCommitter extends OutputCommitter {
           client.cancelDelegationToken(tokenStrForm);
         }
 
-        String jcTokenStrForm = 
-            context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
-        String jcTokenSignature = 
-            context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
-        if(jcTokenStrForm != null && jcTokenSignature != null) {
-          HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
+        if (harProcessor.isEnabled()){
+          String jcTokenStrForm = 
+              context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+          String jcTokenSignature = 
+              context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
+          if(jcTokenStrForm != null && jcTokenSignature != null) {
+            HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
+          }
         }
 
       } catch (Exception e) {
