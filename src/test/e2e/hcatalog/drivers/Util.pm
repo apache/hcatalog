@@ -231,7 +231,7 @@ sub getPigCmd
        if(defined($properties->{'additionaljars'})) {
           push( @baseCmd,'-Dpig.additional.jars='.$properties->{'additionaljars'});
         }
-    
+        $ENV{'PIG_CLASSPATH'}=$properties->{'additionaljars'};  
 
       if ( $properties->{'use-pig.pl'} eq 'raw' ) { # add _no_ arguments automatically
         # !!! 

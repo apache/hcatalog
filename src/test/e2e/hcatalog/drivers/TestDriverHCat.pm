@@ -442,8 +442,14 @@ sub runHive
     my @cmd = Util::getHiveCmd($testCmd);
 
     #Add metastore info
-    push(@cmd, " --hiveconf hive.metastore.local=false --hiveconf hive.metastore.uris=thrift://".$testCmd->{'thriftserver'});
+    push(@cmd, "--hiveconf hive.metastore.local=false --hiveconf hive.metastore.uris=thrift://".$testCmd->{'thriftserver'});
    
+   
+ if(defined($testCmd->{'metastore.principal'})){
+     push(@cmd, "--hiveconf hive.metastore.sasl.enabled=true  --hiveconf hive.metastore.kerberos.principal=$testCmd->{'metastore.principal'}");
+
+    }
+
     # Add hive command file
     push(@cmd, '-f', $hivefile); 
 
@@ -624,7 +630,11 @@ sub runHadoopCmdLine
         my $hadoop_classpath = $self->replaceParameters( $testCmd->{'hadoop_classpath'}, $outfile, $testCmd, $log );
         $ENV{'HADOOP_CLASSPATH'} = $ENV{'HCAT_EXTRA_JARS'};
     }
-
+    my $hadoop_opts = "-Dhive.metastore.uris=thrift://".$testCmd->{'thriftserver'}." -Dhcat.metastore.uri=thrift://".$testCmd->{'thriftserver'};
+    if (defined($testCmd->{'metastore.principal'})){
+	$hadoop_opts = join '',$hadoop_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",$testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
+    }    
+    $ENV{'HADOOP_OPTS'} = $hadoop_opts;
     # Run the command
     print $log "$0:$subName Going to run command: $command\n";
     print $log "$0:$subName STD OUT IS IN FILE: $stdoutfile\n";
@@ -840,7 +850,13 @@ sub runPig
     my $locallog = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".log";
     push(@cmd, "-logfile");
     push(@cmd, $locallog);
-
+    
+    my $pig_opts = "-Dhive.metastore.uris=thrift://".$testCmd->{'thriftserver'}." -Dhcat.metastore.uri=thrift://".$testCmd->{'thriftserver'};
+    if (defined($testCmd->{'metastore.principal'})){
+	$pig_opts = join '',$pig_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",$testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
+    }    
+    $ENV{'PIG_OPTS'} = $pig_opts;
+  
     # Add pig parameters if they're provided
     if (defined($testCmd->{'pig_params'})) {
         # Processing :PARAMPATH: in parameters

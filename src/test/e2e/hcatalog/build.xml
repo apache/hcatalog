@@ -27,6 +27,7 @@
    </fileset>
    <fileset dir="${hive.dir}/build/dist/lib/">
      <include name="*.jar" />
+     <exclude name="antlr*.jar" />
    </fileset>
   <pathelement location="${hcat.jar}" />
   </path>
@@ -103,11 +104,7 @@
       <fileset dir="${tool.src}/test"/>
       <fileset dir="${tool.src}/generate"/>
     </copy>
-<!--
-    <copy todir="${tar.dir}/lib">
-      <fileset dir="${lib.dir}"/>
-    </copy>
--->
+
     <copy todir="${tar.dir}/lib/java">
       <fileset file="${udf.jar}"/>
     </copy>
@@ -151,7 +148,7 @@
 
   <target name="test" depends="property-check, udfs, tar, init-test">
     <!-- If they have not specified tests to run then null it out -->
-    <property name="tests.to.run" value=""/>
+     <property name="tests.to.run" value=""/> 
     <echo />
     <exec executable="./test_harness.pl" dir="${test.location}">
       <env key="HARNESS_ROOT" value="."/>
@@ -165,8 +162,8 @@
       <env key="PH_OLDPIG" value="${harness.old.pig}"/>
       <env key="PH_CLUSTER" value="${harness.cluster.conf}"/>
       <env key="HCAT_URL" value="${hcat.server.url}"/>
+      <env key="METASTORE_PRINCIPAL" value="${metastore.principal}"/>
       <arg line="${tests.to.run}"/>
-      <!-- <arg value="${test.location}/tests/bootstrap_hcat.conf"/> -->
       <arg value="${test.location}/tests/hcat.conf"/>
     </exec>
   </target>

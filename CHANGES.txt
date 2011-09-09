@@ -25,6 +25,8 @@ Trunk (unreleased changes)
   NEW FEATURES
 
   IMPROVEMENTS
+  HCAT-97. Make test harness work with secure cluster (hashutosh)
+
   HCAT-94. Handle the job tracker tokens properly in har jobs (khorgath via hashutosh)
 
   HCAT-43. hcat.sh does not pick up hcatalog.jar correctly (macyang via hashutosh)
