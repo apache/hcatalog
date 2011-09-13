@@ -40,6 +40,7 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-100. Change references of hcat.sh to hcat in test harness (hashutosh)
 
   HCAT-78. Update notice.txt and headers and add Disclaimer.txt (hashutosh and gates via gates)
 

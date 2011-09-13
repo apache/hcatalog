@@ -176,7 +176,7 @@ sub getHCatCmd
     $cmd = $properties->{'hcat_bin_location'};
     if ( ! -x "$cmd" ) {
          print STDERR "\n$0::$subName WARNING: Can't find hcat command: $cmd\n";
-         $cmd = `which hcat.sh`;
+         $cmd = `which hcat`;
          chomp $cmd;
          print STDERR "$0::$subName WARNING: Instead using command: $cmd\n";
     }
