@@ -23,6 +23,7 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
   HCAT-97. Make test harness work with secure cluster (hashutosh)

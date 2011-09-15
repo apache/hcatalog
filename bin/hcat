@@ -34,9 +34,13 @@ bin=`dirname "$this"`
 script=`basename "$this"`                                                        
 bin=`unset CDPATH; cd "$bin"; pwd`                                               
 this="$bin/$script"                                                              
-                                                                                 
-# the root of the HCatalog installation                                          
-export HCAT_HOME=`dirname "$this"`/..                                            
+
+
+if [ -e "$bin/../libexec/hcat-config.sh" ]; then
+  . "$bin"/../libexec/hcat-config.sh
+else
+  . "$bin"/hcat-config.sh
+fi
 
 # filter debug command line parameter
 debug=false
@@ -51,25 +55,25 @@ done
 
 # Find our hcatalog jar
 shopt -s extglob
-HCAT_JAR=$HCAT_HOME/lib/hcatalog-!(*server-extensions*).jar
+HCAT_JAR=$HCAT_PREFIX/share/hcatalog/hcatalog-!(*server-extensions*).jar
 
 # Add all of the other jars to our classpath
-for jar in $HCAT_HOME/lib/*.jar ; do
+for jar in $HCAT_PREFIX/share/hcatalog/lib/*.jar ; do
 	HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$jar
 done
 
 # Put our config file in the classpath
-HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_HOME}/conf
+HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_PREFIX}/etc/hcatalog
 
 export HADOOP_CLASSPATH=$HADOOP_CLASSPATH
-
+export HADOOP_OPTS=$HADOOP_OPTS
 # run it
 if [ "$debug" == "true" ]; then
 	echo "Would run:"
-	echo "exec $HADOOP_HOME/bin/hadoop jar $HCAT_JAR org.apache.hcatalog.cli.HCatCli $remaining"
+	echo "exec $HADOOP_PREFIX/bin/hadoop jar $HCAT_JAR org.apache.hcatalog.cli.HCatCli $remaining"
 	echo "with HADOOP_CLASSPATH set to ($HADOOP_CLASSPATH)"
 	echo "and HADOOP_OPTS set to ($HADOOP_OPTS)"
 else
-	exec $HADOOP_HOME/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli "$@"
+	exec $HADOOP_PREFIX/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli "$@"
 fi
 
