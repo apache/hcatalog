@@ -33,6 +33,7 @@
             extends="runtime"
             description="artifacts needed to compile/test the application"/>
         <conf name="test" visibility="private" extends="runtime"/>
+        <conf name="package" visibility="private" extends="master"/>
         <conf name="releaseaudit" visibility="private"/>
     </configurations>
     <dependencies>
@@ -48,5 +49,6 @@
         <dependency org="org.apache.activemq" name="activemq-all" rev="${activemq.version}" conf="common->master" />
         <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}" conf="common->master" /> 
         <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="releaseaudit->default"/>
-</dependencies>
+        <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="package->master"/>
+    </dependencies>
 </ivy-module>
