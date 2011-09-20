@@ -41,6 +41,7 @@
   <property name="package.dir"  location="${basedir}/src/packages"/>
   <property name="docs.src" value="${basedir}/src/docs"/>
   <property name="build.dir" value="${basedir}/build"/>
+  <property name="artifacts.dir" value="${basedir}/artifacts"/>
   <property name="build.classes" value="${build.dir}/classes" />
   <property name="build.docs" value="${build.dir}/docs" />
   <property name="build.javadoc" value="${build.docs}/api" />
@@ -352,9 +353,14 @@
   </target>
 
   <!-- Clean up children -->
-  <target name="clean" depends="hive.clean" description="Cleanup build artifacts">
+  <target name="clean-builds" depends="hive.clean" description="Cleanup build">
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
+  </target>
+ 
+  <!-- Clean up children -->
+  <target name="clean" depends="clean-builds" description="Cleanup all build artifacts">
+    <delete dir="${artifacts.dir}" />
   </target>
  
   <!--
@@ -585,27 +591,46 @@
       </java>
     </target>
 
+    <target name="build-artifacts" depends="jar,docs" description="Build hcatalog artifacts and copy them">
+        <mkdir dir="${artifacts.dir}"/>
+        <copy todir="${artifacts.dir}">
+          <fileset dir="build/hcatalog">
+            <include name="*.jar"/>
+          </fileset>
+        </copy>
+        <mkdir dir="${artifacts.dir}/docs"/>
+        <copy todir="${artifacts.dir}/docs">
+          <fileset dir="build/docs" />
+        </copy>
+    </target>
+
+    <target name="build-artifacts-and-clean" depends="build-artifacts,clean-builds" description="First build artifacts, then clean up"/>
+
+
     <!-- ================================================================== -->
     <!-- Make release tarball                                               -->
     <!-- ================================================================== -->
-    <target name="source" description="Source distribution">
+    <target name="src-release" depends="build-artifacts-and-clean" description="Source distribution">
         <mkdir dir="${build.dir}"/>
-        <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-source-${hcatalog.version}.tar.gz">
-            <tarfileset dir="${basedir}" mode="644">
-                <exclude name="bin"/>
-                <exclude name="bin/*"/>
-                <exclude name="build"/>
-                <exclude name="build/*"/>
+        <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
+            <tarfileset dir="${basedir}" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="conf/**"/>
+                <include name="hive/**"/>
                 <include name="ivy/**"/>
-                <include name="lib/*i*"/>
+                <exclude name="ivy/*.jar"/>
+                <include name="lib/**"/>
+                <include name="license/**"/>
                 <include name="src/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>
-                <include name="**"/>
+                <include name="KEYS"/>
             </tarfileset>
-            <tarfileset dir="" mode="755">
+            <tarfileset dir="" mode="755" prefix="${ant.project.name}-src-${hcatalog.version}">
+                <include name="scripts/**"/>
                 <include name="bin/**"/>
+            </tarfileset>
+            <tarfileset dir="" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
+                <include name="artifacts/**"/>
             </tarfileset>
         </tar>
     </target> 
@@ -616,12 +641,15 @@
     <target name="tar" depends="package" description="Create release tarball">
         <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${final.name}.tar.gz">
             <tarfileset dir="${build.dir}" mode="664">
-                <exclude name="${final.name}/bin/*" />
                 <include name="${final.name}/**" />
+                <exclude name="${final.name}/bin/*" />
+                <exclude name="${final.name}/sbin/*" />
+                <exclude name="${final.name}/share/hcatalog/scripts/*" />
             </tarfileset>
             <tarfileset dir="${build.dir}" mode="755">
                 <include name="${final.name}/bin/*" />
                 <include name="${final.name}/sbin/*" />
+                <include name="${final.name}/share/hcatalog/scripts/*" />
             </tarfileset>
         </tar>
     </target>

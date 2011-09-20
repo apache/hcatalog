@@ -75,11 +75,13 @@ Release 0.2.0 - Sept-2011
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-110. Fix source target (khorgath via hashutosh)    
+
     HCAT-78. Update notice.txt and headers and add Disclaimer.txt (hashutosh and gates via gates)
 
-    HCAT-77. building javadocs has a couple of warnings from faulty param names (sushanth via gates)
+    HCAT-77. building javadocs has a couple of warnings from faulty param names (khorgath via gates)
 
-    HCAT-53. HCatLoader, HCatStorer, HCatInputFormat, and HCatOutputFormat assume Hadoop running in secure mode (ashutoshc via gates)
+    HCAT-53. HCatLoader, HCatStorer, HCatInputFormat, and HCatOutputFormat assume Hadoop running in secure mode (hashutosh via gates)
 
     HCAT-57. Remove usage of deprecated methods (hashutosh)
    
