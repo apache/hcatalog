@@ -94,6 +94,8 @@ Release 0.2.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-110. Fix source target (khorgath via hashutosh)
+
     HCAT-53. HCatLoader, HCatStorer, HCatInputFormat, and HCatOutputFormat assume Hadoop 
              running in secure mode (hashutosh)
  

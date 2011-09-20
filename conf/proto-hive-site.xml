@@ -57,7 +57,7 @@
 
 <property>
   <name>hive.metastore.sasl.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>If true, the metastore thrift interface will be secured with SASL. Clients must authenticate with Kerberos.</description>
 </property>
 
