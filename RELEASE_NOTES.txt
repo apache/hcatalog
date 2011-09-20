@@ -19,19 +19,25 @@ System Requirements
 
 Trying the Release
 ==================
-1. Download hcatalog-0.2.0.tar.gz
-2. Unpack the file: tar -xzvf hcatalog-0.2.0.tar.gz
-3. Move into the installation directory: cd hcatalog-0.2.0
-4. Install the hcatalog client and server using the docs listed in 
-   Relevant Documentation section below.
-4. To use with Hadoop MapReduce jobs, use the HCatInputFormat and
-   HCatOutputFormat classes.
-5. To use with Pig, use the HCatLoader and HCatStorer classes.
-6. To use the command line interface, set HADOOP_CLASSPATH to the directory 
-   that contains the configuration files for your cluster, and use bin/hcat
+1. Download hcatalog-src-0.2.0-incubating.tar.gz
+2. Unpack the file: tar -xzvpf hcatalog-src-0.2.0-incubating.tar.gz
+3. Move into the installation directory: cd hcatalog-0.2.0-incubating
+4. Run ant && ant test to run unit tests.
+5. Run ant tar -Dforrest.home=/path/to/forrest/install -Dhcatalog.version=0.2.0
+   to build installable tarball.
+6. Move into build dir cd build
+7. Untar hcatalog-0.2.0.tar.gz: tar -xvzpf hcatalog-0.2.0.tar.gz
+8. Move into hcatalog-0.2.0
+9. Install the hcatalog server by running share/hcatalog/scripts/hcat_server_install.sh
+   You may find instructions in ../../docs/install.html useful
+10. Export HADOOP_HOME and HADOOP_CONF_DIR to appropriate values.
+11. Run share/hcatalog/scripts/hcat_server_start.sh to start the hcatalog server.
+12. To use the command line interface use bin/hcat
+13. To use with Hadoop MapReduce jobs, use the HCatInputFormat and
+    HCatOutputFormat classes.
+14. To use with Pig, use the HCatLoader and HCatStorer classes.
 
 Relevant Documentation
 ======================
 See http://incubator.apache.org/hcatalog/docs/r0.2.0
 These notes are for HCatalog 0.2.0 release.
-
