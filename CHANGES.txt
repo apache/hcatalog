@@ -75,6 +75,8 @@ Release 0.2.0 - Sept-2011
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-111. Issues with install instructions and release notes in release candidate (gates via hashutosh)    
+
     HCAT-110. Fix source target (khorgath via hashutosh)    
 
     HCAT-78. Update notice.txt and headers and add Disclaimer.txt (hashutosh and gates via gates)
