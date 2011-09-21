@@ -75,6 +75,8 @@ Release 0.2.0 - Sept-2011
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-113. rpm name not properly reflecting the version number (gates via hashutosh)
+
     HCAT-84. Incorrect or missing SVN property settings (sebb via hashutosh)    
 
     HCAT-112. install scripts assumes bash shell but don't set it explictly (hashutosh)

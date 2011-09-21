@@ -95,9 +95,8 @@
   <property name="package.pid.dir" value="/var/run/hcatalog"/>
   <property name="package.var.dir" value="/var/lib/hcatalog"/>
   <property name="package.share.dir" value="/share/hcatalog/${module}"/>
-  <!-- Use fixed path to build rpm for avoiding rpmbuild conflict with dash path names -->
-  <property name="package.buildroot" value="/tmp/hcatalog_package_build_${user.name}"/>
-  <property name="package.build.dir" value="/tmp/hcatalog_package_build_${user.name}/BUILD"/>
+  <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
+  <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
 
   <!-- rats properties -->
   <property name="rat.reporting.classname" value="rat.Report"/>
@@ -669,7 +668,7 @@
             <filterchain>
                 <replacetokens>
                     <token key="final.name" value="${final.name}" />
-                    <token key="version" value="${_version}" />
+                    <token key="version" value="${hcatalog.version}" />
                     <token key="package.release" value="${package.release}" />
                     <token key="package.build.dir" value="${package.build.dir}" />
                     <token key="package.prefix" value="${package.prefix}" />
@@ -711,7 +710,7 @@
             <filterchain>
                 <replacetokens>
                     <token key="final.name" value="${final.name}" />
-                    <token key="version" value="${_version}" />
+                    <token key="version" value="${hcatalog.version}" />
                     <token key="package.release" value="${package.release}" />
                     <token key="package.build.dir" value="${package.build.dir}" />
                     <token key="package.prefix" value="${package.prefix}" />
