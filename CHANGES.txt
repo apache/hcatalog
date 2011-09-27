@@ -45,6 +45,8 @@ Trunk (unreleased changes)
 
   HCAT-78. Update notice.txt and headers and add Disclaimer.txt (hashutosh and gates via gates)
 
+  HCAT-114. README.txt has duplicate info (ctdean via khorgath)
+
 Release 0.2.0 - Unreleased
 
   INCOMPATIBLE CHANGES
