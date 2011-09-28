@@ -47,6 +47,8 @@ Trunk (unreleased changes)
 
   HCAT-114. README.txt has duplicate info (ctdean via khorgath)
 
+  HCAT-115. Superfluous warning on fresh install (ctdean via khorgath)
+
 Release 0.2.0 - Unreleased
 
   INCOMPATIBLE CHANGES

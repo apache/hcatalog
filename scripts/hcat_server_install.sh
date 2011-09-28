@@ -127,7 +127,7 @@ else
 fi
 
 #Create a softlink from distro conf dir to /etc/hcatalog location
-rm $root/share/hcatalog/conf
+rm -f $root/share/hcatalog/conf
 ln -sf $root/etc/hcatalog $root/share/hcatalog/conf
 
 # Put the start and stop scripts into bin
