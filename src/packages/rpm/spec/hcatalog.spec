@@ -139,6 +139,8 @@ if [ ! -f ${RPM_INSTALL_PREFIX1}/hive-site.xml ]; then
 	cp ${RPM_INSTALL_PREFIX1}/proto-hive-site.xml ${RPM_INSTALL_PREFIX1}/hive-site.xml
 fi
 
+ln -sf ${RPM_INSTALL_PREFIX1} ${RPM_INSTALL_PREFIX0}/share/hcatalog/conf 
+
 echo HCatalog installed, please take a moment to verify config in ${RPM_INSTALL_PREFIX1}/hcat-env.sh and ${RPM_INSTALL_PREFIX1}/hive-site.xml
 %preun
 bash ${RPM_INSTALL_PREFIX0}/sbin/update-hcatalog-env.sh \
@@ -149,6 +151,8 @@ bash ${RPM_INSTALL_PREFIX0}/sbin/update-hcatalog-env.sh \
        --log-dir=${RPM_INSTALL_PREFIX2} \
        --pid-dir=${RPM_INSTALL_PREFIX3} \
        --uninstall
+
+rm -f ${RPM_INSTALL_PREFIX0}/share/hcatalog/conf
 
 %files 
 %defattr(-,hcat,hadoop)

@@ -38,6 +38,8 @@ Trunk (unreleased changes)
  
   HCAT-64. Refactor HCatTableInfo, JobInfo and OutputJobInfo (toffer via gates)
 
+  HCAT-118. HIVE_CONF_DIR needs to be set to run hive (khorgath)
+
   OPTIMIZATIONS
 
   BUG FIXES
