@@ -134,7 +134,7 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
   public void testHCatDynamicPartitionMaxPartitions() throws Exception {
     HiveConf hc = new HiveConf(this.getClass());
-    
+
     int maxParts = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
     System.out.println("Max partitions allowed = " + maxParts);
 

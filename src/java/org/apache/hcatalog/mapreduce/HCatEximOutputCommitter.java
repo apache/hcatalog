@@ -39,17 +39,66 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 
-public class HCatEximOutputCommitter extends HCatBaseOutputCommitter {
+public class HCatEximOutputCommitter extends OutputCommitter {
 
   private static final Log LOG = LogFactory.getLog(HCatEximOutputCommitter.class);
 
+  private final OutputCommitter baseCommitter;
+
   public HCatEximOutputCommitter(JobContext context, OutputCommitter baseCommitter) {
-    super(context,baseCommitter);
+    this.baseCommitter = baseCommitter;
+  }
+
+  @Override
+  public void abortTask(TaskAttemptContext context) throws IOException {
+      baseCommitter.abortTask(context);
+  }
+
+  @Override
+  public void commitTask(TaskAttemptContext context) throws IOException {
+      baseCommitter.commitTask(context);
+  }
+
+  @Override
+  public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
+      return baseCommitter.needsTaskCommit(context);
+  }
+
+  @Override
+  public void setupJob(JobContext context) throws IOException {
+    if( baseCommitter != null ) {
+      baseCommitter.setupJob(context);
+    }
+  }
+
+  @Override
+  public void setupTask(TaskAttemptContext context) throws IOException {
+      baseCommitter.setupTask(context);
+  }
+
+  @Override
+  public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
+    if(baseCommitter != null) {
+      baseCommitter.abortJob(jobContext, state);
+    }
+    OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
+
+    Path src = new Path(jobInfo.getLocation());
+    FileSystem fs = src.getFileSystem(jobContext.getConfiguration());
+    fs.delete(src, true);
+  }
+
+  @Override
+  public void commitJob(JobContext jobContext) throws IOException {
+    if(baseCommitter != null) {
+      baseCommitter.commitJob(jobContext);
+    }
   }
 
   @Override

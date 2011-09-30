@@ -20,15 +20,14 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -63,8 +62,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   @Override
   public void checkOutputSpecs(JobContext context
                                         ) throws IOException, InterruptedException {
-      OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getOutputFormat(context);
-      outputFormat.checkOutputSpecs(context);
+      getOutputFormat(context).checkOutputSpecs(context);
   }
 
   /**
@@ -73,13 +71,10 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
    * @return the output format instance
    * @throws IOException
    */
-  protected OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat(JobContext context) throws IOException {
+  protected OutputFormat<WritableComparable<?>, HCatRecord> getOutputFormat(JobContext context) throws IOException {
       OutputJobInfo jobInfo = getJobInfo(context);
       HCatOutputStorageDriver  driver = getOutputDriverInstance(context, jobInfo);
-
-      OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat =
-            driver.getOutputFormat();
-      return outputFormat;
+      return driver.getOutputFormatContainer(driver.getOutputFormat());
   }
 
   /**
@@ -242,5 +237,25 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     jobInfo.setPosOfPartCols(posOfPartCols);
     jobInfo.setPosOfDynPartCols(posOfDynPartCols);
     jobInfo.setOutputSchema(schemaWithoutParts);
+  }
+
+  static void cancelDelegationTokens(JobContext context, OutputJobInfo outputJobInfo) throws Exception {
+    HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(outputJobInfo.getServerUri(), context.getConfiguration());
+    // cancel the deleg. tokens that were acquired for this job now that
+    // we are done - we should cancel if the tokens were acquired by
+    // HCatOutputFormat and not if they were supplied by Oozie. In the latter
+    // case the HCAT_KEY_TOKEN_SIGNATURE property in the conf will not be set
+    String tokenStrForm = client.getTokenStrForm();
+    if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+      client.cancelDelegationToken(tokenStrForm);
+    }
+
+    String jcTokenStrForm =
+      context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+    String jcTokenSignature =
+      context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
+    if(jcTokenStrForm != null && jcTokenSignature != null) {
+      HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
+    }
   }
 }

@@ -41,12 +41,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.mapreduce.HCatOutputCommitter;
-import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.HCatTableInfo;
-import org.apache.hcatalog.mapreduce.InitializeInput;
-import org.apache.hcatalog.mapreduce.OutputJobInfo;
-import org.apache.hcatalog.mapreduce.StorerInfo;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 public class TestHCatOutputFormat extends TestCase {
@@ -159,7 +153,7 @@ public class TestHCatOutputFormat extends TestCase {
   }
 
   public void publishTest(Job job) throws Exception {
-    OutputCommitter committer = new HCatOutputCommitter(job,null);
+    OutputCommitter committer = new FileOutputCommitterContainer(job,null);
     committer.cleanupJob(job);
 
     Partition part = client.getPartition(dbName, tblName, Arrays.asList("p1"));

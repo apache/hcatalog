@@ -35,11 +35,10 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.ErrorType;
@@ -76,8 +75,7 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
   public RecordWriter<WritableComparable<?>, HCatRecord>
       getRecordWriter(TaskAttemptContext context
                       ) throws IOException, InterruptedException {
-    HCatRecordWriter rw = new HCatRecordWriter(context);
-    return rw;
+    return getOutputFormat(context).getRecordWriter(context);
   }
 
   /**
@@ -90,8 +88,18 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
    */
   @Override
   public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-      OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getOutputFormat(context);
-      return new HCatEximOutputCommitter(context,outputFormat.getOutputCommitter(context));
+      return new HCatEximOutputCommitter(context,((OutputCommitterContainer)getOutputFormat(context).getOutputCommitter(context)).getBaseOutputCommitter());
+  }
+
+  /**
+   * Check for validity of the output-specification for the job.
+   * @param context information about the job
+   * @throws IOException when output should not be attempted
+   */
+  @Override
+  public void checkOutputSpecs(JobContext context
+                                        ) throws IOException, InterruptedException {
+      ((OutputFormatContainer)getOutputFormat(context)).getBaseOutputFormat().checkOutputSpecs(context);
   }
 
   public static void setOutput(Job job, String dbname, String tablename, String location,

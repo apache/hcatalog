@@ -17,28 +17,17 @@
 package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
-import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
@@ -118,35 +107,13 @@ public abstract class HCatOutputStorageDriver {
      */
     public String getOutputLocation(JobContext jobContext,
             String tableLocation, List<String> partitionCols, Map<String, String> partitionValues, String dynHash) throws IOException {
-      
-      String parentPath = tableLocation;
-      // For dynamic partitioned writes without all keyvalues specified, 
-      // we create a temp dir for the associated write job
-      if (dynHash != null){
-        parentPath = new Path(tableLocation, HCatOutputFormat.DYNTEMP_DIR_NAME+dynHash).toString();
-      }
-
-      // For non-partitioned tables, we send them to the temp dir
-      if((dynHash == null) && ( partitionValues == null || partitionValues.size() == 0 )) {
-        return new Path(tableLocation, HCatOutputFormat.TEMP_DIR_NAME).toString();
-      }
-
-      List<String> values = new ArrayList<String>();
-      for(String partitionCol : partitionCols) {
-        values.add(partitionValues.get(partitionCol));
-      }
-
-      String partitionLocation = FileUtils.makePartName(partitionCols, values);
-
-      Path path = new Path(parentPath, partitionLocation);
-      return path.toString();
+      return null;
     }
 
-    /** Default implementation assumes FileOutputFormat. Storage drivers wrapping
-     * other OutputFormats should override this method.
+    /** Storage drivers wrapping other OutputFormats should override this method.
      */
     public Path getWorkFilePath(TaskAttemptContext context, String outputLoc) throws IOException{
-      return new Path(new FileOutputCommitter(new Path(outputLoc), context).getWorkPath(), FileOutputFormat.getUniqueFile(context, "part",""));
+      return null;
     }
 
     /**
@@ -202,5 +169,13 @@ public abstract class HCatOutputStorageDriver {
       getOutputFormat().getOutputCommitter(context).abortJob(context,state);
     }
 
-    
+    /**
+     * return an instance of OutputFormatContainer containing the passed outputFormat. DefaultOutputFormatContainer is returned by default.
+     * @param outputFormat format the returned container will contain
+     * @return
+     */
+    OutputFormatContainer getOutputFormatContainer(OutputFormat outputFormat) {
+        return new DefaultOutputFormatContainer(outputFormat);
+    }
+
 }

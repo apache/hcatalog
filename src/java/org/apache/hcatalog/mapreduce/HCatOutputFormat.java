@@ -21,7 +21,6 @@ package org.apache.hcatalog.mapreduce;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -30,10 +29,7 @@ import java.util.Map.Entry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -42,18 +38,13 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
 import org.apache.hadoop.hive.thrift.DelegationTokenSelector;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
@@ -65,7 +56,6 @@ import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.thrift.TException;
 
 /** The OutputFormat to use to write data to HCat. The key value is ignored and
  * and should be given as null. The value is the HCatRecord to write.*/
@@ -73,20 +63,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
 //    static final private Log LOG = LogFactory.getLog(HCatOutputFormat.class);
 
-    /** The directory under which data is initially written for a non partitioned table */
-    protected static final String TEMP_DIR_NAME = "_TEMP";
-    
-    /** */
-    protected static final String DYNTEMP_DIR_NAME = "_DYN";
-    
     private static Map<String, Token<? extends AbstractDelegationTokenIdentifier>> tokenMap = new HashMap<String, Token<? extends AbstractDelegationTokenIdentifier>>();
-
-    private static final PathFilter hiddenFileFilter = new PathFilter(){
-      public boolean accept(Path p){
-        String name = p.getName();
-        return !name.startsWith("_") && !name.startsWith(".");
-      }
-    };
     
     private static int maxDynamicPartitions;
     private static boolean harRequested;
@@ -161,9 +138,6 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           outputJobInfo.setPartitionValues(valueMap);
         }
 
-        //Handle duplicate publish
-        handleDuplicatePublish(job, outputJobInfo, client, table);
-
         StorageDescriptor tblSD = table.getSd();
         HCatSchema tableSchema = HCatUtil.extractSchemaFromStorageDescriptor(tblSD);
         StorerInfo storerInfo = InitializeInput.extractStorerInfo(tblSD,table.getParameters());
@@ -211,7 +185,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           // new Text() do new Text("oozie") below - if this change is made also
           // remember to do:
           //  job.getConfiguration().set(HCAT_KEY_TOKEN_SIGNATURE, "oozie");
-          // Also change code in HCatOutputCommitter.cleanupJob() to cancel the
+          // Also change code in OutputCommitter.cleanupJob() to cancel the
           // token only if token.service is not "oozie" - remove the condition of
           // HCAT_KEY_TOKEN_SIGNATURE != null in that code.
           Token<? extends TokenIdentifier> token = tokenSelector.selectToken(
@@ -238,8 +212,8 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             String tokenSignature = getTokenSignature(outputJobInfo);
             if(tokenMap.get(tokenSignature) == null) {
               // get delegation tokens from hcat server and store them into the "job"
-              // These will be used in the HCatOutputCommitter to publish partitions to
-              // hcat
+              // These will be used in to publish partitions to
+              // hcat normally in OutputCommitter.commitJob()
               // when the JobTracker in Hadoop MapReduce starts supporting renewal of 
               // arbitrary tokens, the renewer should be the principal of the JobTracker
               tokenMap.put(tokenSignature, HCatUtil.extractThriftToken(
@@ -312,61 +286,6 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
     /**
-     * Handles duplicate publish of partition. Fails if partition already exists.
-     * For non partitioned tables, fails if files are present in table directory.
-     * For dynamic partitioned publish, does nothing - check would need to be done at recordwriter time
-     * @param job the job
-     * @param outputInfo the output info
-     * @param client the metastore client
-     * @param table the table being written to
-     * @throws IOException
-     * @throws MetaException
-     * @throws TException
-     */
-    private static void handleDuplicatePublish(Job job, OutputJobInfo outputInfo,
-        HiveMetaStoreClient client, Table table) throws IOException, MetaException, TException {
-
-      /*
-       * For fully specified ptn, follow strict checks for existence of partitions in metadata
-       * For unpartitioned tables, follow filechecks
-       * For partially specified tables:
-       *    This would then need filechecks at the start of a ptn write,
-       *    Doing metadata checks can get potentially very expensive (fat conf) if 
-       *    there are a large number of partitions that match the partial specifications
-       */
-
-      if( table.getPartitionKeys().size() > 0 ) {
-        if (!outputInfo.isDynamicPartitioningUsed()){
-          List<String> partitionValues = HCatOutputCommitter.getPartitionValueList(
-              table, outputInfo.getPartitionValues());
-          // fully-specified partition
-          List<String> currentParts = client.listPartitionNames(outputInfo.getDatabaseName(),
-              outputInfo.getTableName(), partitionValues, (short) 1);
-
-          if( currentParts.size() > 0 ) {
-            throw new HCatException(ErrorType.ERROR_DUPLICATE_PARTITION);
-          }
-        }
-      } else {
-        List<String> partitionValues = HCatOutputCommitter.getPartitionValueList(
-            table, outputInfo.getPartitionValues());
-        // non-partitioned table
-        
-        Path tablePath = new Path(table.getSd().getLocation());
-        FileSystem fs = tablePath.getFileSystem(job.getConfiguration());
-
-        if ( fs.exists(tablePath) ) {
-          FileStatus[] status = fs.globStatus(new Path(tablePath, "*"), hiddenFileFilter);
-
-          if( status.length > 0 ) {
-            throw new HCatException(ErrorType.ERROR_NON_EMPTY_TABLE,
-                      table.getDbName() + "." + table.getTableName());
-          }
-        }
-      }
-    }
-
-    /**
      * Set the schema for the data being written out to the partition. The
      * table schema is used by default for the partition if this is not called.
      * @param job the job object
@@ -391,10 +310,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     public RecordWriter<WritableComparable<?>, HCatRecord>
       getRecordWriter(TaskAttemptContext context
                       ) throws IOException, InterruptedException {
-
-      HCatRecordWriter rw = new HCatRecordWriter(context);
-      rw.prepareForStorageDriverOutput(context);
-      return rw;
+      return getOutputFormat(context).getRecordWriter(context);
     }
 
 
@@ -409,8 +325,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context
                                        ) throws IOException, InterruptedException {
-        OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getOutputFormat(context);
-        return new HCatOutputCommitter(context,outputFormat.getOutputCommitter(context));
+        return getOutputFormat(context).getOutputCommitter(context);
     }
 
     static HiveMetaStoreClient createHiveClient(String url, Configuration conf) throws IOException, MetaException {
@@ -420,7 +335,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
 
-    private static HiveConf getHiveConf(String url, Configuration conf) throws IOException {
+    static HiveConf getHiveConf(String url, Configuration conf) throws IOException {
       HiveConf hiveConf = new HiveConf(HCatOutputFormat.class);
 
       if( url != null ) {
@@ -476,38 +391,5 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       harRequested = hiveConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
       return hiveConf;
     }
-
-    /**
-     * Any initialization of file paths, set permissions and group on freshly created files
-     * This is called at RecordWriter instantiation time which can be at write-time for  
-     * a dynamic partitioning usecase
-     * @param context
-     * @throws IOException
-     */
-    public static void prepareOutputLocation(HCatOutputStorageDriver osd, TaskAttemptContext context) throws IOException {
-      OutputJobInfo info =  HCatBaseOutputFormat.getJobInfo(context);
-//      Path workFile = osd.getWorkFilePath(context,info.getLocation());
-      Path workFile = osd.getWorkFilePath(context,context.getConfiguration().get("mapred.output.dir"));
-      Path tblPath = new Path(info.getTableInfo().getTable().getSd().getLocation());
-      FileSystem fs = tblPath.getFileSystem(context.getConfiguration());
-      FileStatus tblPathStat = fs.getFileStatus(tblPath);
-      
-//      LOG.info("Attempting to set permission ["+tblPathStat.getPermission()+"] on ["+
-//          workFile+"], location=["+info.getLocation()+"] , mapred.locn =["+
-//          context.getConfiguration().get("mapred.output.dir")+"]"); 
-//
-//      FileStatus wFileStatus = fs.getFileStatus(workFile);
-//      LOG.info("Table : "+tblPathStat.getPath());
-//      LOG.info("Working File : "+wFileStatus.getPath());
-      
-      fs.setPermission(workFile, tblPathStat.getPermission());
-      try{
-        fs.setOwner(workFile, null, tblPathStat.getGroup());
-      } catch(AccessControlException ace){
-        // log the messages before ignoring. Currently, logging is not built in HCat.
-      }
-    }
-
-
 
 }

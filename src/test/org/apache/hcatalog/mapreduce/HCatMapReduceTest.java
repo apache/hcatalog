@@ -58,10 +58,6 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.hcatalog.mapreduce.HCatInputFormat;
-import org.apache.hcatalog.mapreduce.HCatOutputCommitter;
-import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
@@ -273,9 +269,8 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     HCatOutputFormat.setSchema(job, new HCatSchema(partitionColumns));
 
-    //new HCatOutputCommitter(null).setupJob(job);
     job.waitForCompletion(true);
-    new HCatOutputCommitter(job,null).cleanupJob(job);
+    new FileOutputCommitterContainer(job,null).cleanupJob(job);
     if (assertWrite){
       // we assert only if we expected to assert with this call.
       Assert.assertEquals(writeCount, MapCreate.writeCount);

@@ -45,17 +45,16 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
+import org.apache.hcatalog.mapreduce.FileOutputStorageDriver;
 
 /**
  * The storage driver for writing RCFile data through HCatOutputFormat.
  */
- public class RCFileOutputDriver extends HCatOutputStorageDriver {
+ public class RCFileOutputDriver extends FileOutputStorageDriver {
 
    /** The serde for serializing the HCatRecord to bytes writable */
    private SerDe serde;

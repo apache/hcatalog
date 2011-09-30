@@ -142,7 +142,7 @@ public class HCatEximStorer extends HCatBaseStorer {
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
     if( job.getConfiguration().get("mapred.job.tracker", "").equalsIgnoreCase("local") ) {
-      //In local mode, mapreduce will not call HCatOutputCommitter.cleanupJob.
+      //In local mode, mapreduce will not call OutputCommitter.cleanupJob.
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
       new HCatEximOutputCommitter(job,null).cleanupJob(job);
