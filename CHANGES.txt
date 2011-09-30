@@ -28,6 +28,8 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-103. Update documentation after rpm changes per HCATALOG-63 (khorgath via hashutosh)
+
   HCAT-99. HCatalog V2 Docs (chandec via hashutosh)  
 
   HCAT-84. Incorrect or missing SVN property settings (sebb via hashutosh)  
