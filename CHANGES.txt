@@ -51,6 +51,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-113. rpm name not properly reflecting the version number (gates via hashutosh)
+
   HCAT-112. install scripts assumes bash shell but don't set it explictly (hashutosh)
 
   HCAT-100. Change references of hcat.sh to hcat in test harness (hashutosh)
