@@ -71,7 +71,7 @@
 
     <p>Use the database installation script found in the package to create the
     database</p>
-    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hcatdb.acme.com</em><code> -p &lt; scripts/hive-schema-0.7.0.mysql.sql</code></p>
+    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hcatdb.acme.com</em><code> -p &lt; share/hcatalog/hive/external/metastore/scripts/upgrade/mysql/hive-schema-0.7.0.mysql.sql</code></p>
 
     <p><strong>Thrift Server Setup</strong></p>
 
@@ -100,13 +100,16 @@
     server installation script.  You will need to know the directory you chose
     as <em>root</em> and the
     directory you installed the MySQL Java connector libraries into (referred
-    to in the command below as <em>dbroot</em>).</p>
+    to in the command below as <em>dbroot</em>).  You will also need your
+    <em>hadoop_home</em>, the directory where you have Hadoop installed, and 
+    the port number you wish HCatalog to operate on which you will use to set
+    <em>portnum</em>.</p>
 
     <p><code>tar zxf hcatalog-</code><em>version</em><code>.tar.gz
     cd hcatalog-</code><em>version</em></p>
-    <p><code>scripts/hcat_server_install.sh -r </code><em>root</em><code> -d </code><em>dbroot</em></p>
+    <p><code>share/hcatalog/scripts/hcat_server_install.sh -r </code><em>root</em><code> -d </code><em>dbroot</em><code> -h </code><em>hadoop_home</em><code> -p </code><em>portnum</em></p>
 
-    <p>Now you need to edit your <em>root</em><code>/conf/hive-site.xml</code> file.
+    <p>Now you need to edit your <em>root</em><code>/etc/hcatalog/hive-site.xml</code> file.
     Open this file in your favorite text editor.  The following table shows the
     values you need to configure.</p>
 
@@ -165,7 +168,7 @@
             
     <p>Start the HCatalog server by switching directories to
     <em>root</em> and invoking the start script
-    <code>bin/hcat_server_start.sh</code></p>
+    <code>share/hcatalog/scripts/hcat_server_start.sh</code></p>
 
   </section>
 
@@ -185,7 +188,7 @@
 
     <p>To stop the HCatalog server, change directories to the <em>root</em>
     directory and invoke the stop script
-    <code>bin/hcat_server_stop.sh</code></p>
+    <code>share/hcatalog/scripts/hcat_server_stop.sh</code></p>
 
   </section>
 
@@ -200,7 +203,7 @@
 
     <p><code>tar zxf hcatalog-</code><em>version</em><code>.tar.gz</code></p>
 
-    <p>Now you need to edit your <em>root</em><code>/conf/hive-site.xml</code> file.
+    <p>Now you need to edit your <em>root</em><code>/etc/hcatalog/hive-site.xml</code> file.
     Open this file in your favorite text editor.  The following table shows the
     values you need to configure.   These values should match the values set on
     the HCatalog server.  Do <strong>NOT</strong> copy the configuration file
@@ -228,7 +231,7 @@
     </table>
 
     <p>The HCatalog command line interface (CLI) can now be invoked as
-    <em>root</em><code>/bin/hcat.sh</code>.</p>
+    <em>root</em><code>/bin/hcat</code>.</p>
 
   </section>
 
