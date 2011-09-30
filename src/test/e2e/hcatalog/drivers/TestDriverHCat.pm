@@ -445,9 +445,11 @@ sub runHive
     push(@cmd, "--hiveconf hive.metastore.local=false --hiveconf hive.metastore.uris=thrift://".$testCmd->{'thriftserver'});
    
    
- if(defined($testCmd->{'metastore.principal'})){
-     push(@cmd, "--hiveconf hive.metastore.sasl.enabled=true  --hiveconf hive.metastore.kerberos.principal=$testCmd->{'metastore.principal'}");
-
+    if( defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/) 
+        &&  ($testCmd->{'metastore.principal'} ne '${metastore.principal}')){
+        push(@cmd, "--hiveconf hive.metastore.sasl.enabled=true  --hiveconf hive.metastore.kerberos.principal=$testCmd->{'metastore.principal'}");
+    } else {
+        push(@cmd, "--hiveconf hive.metastore.sasl.enabled=false");
     }
 
     # Add hive command file
@@ -631,9 +633,13 @@ sub runHadoopCmdLine
         $ENV{'HADOOP_CLASSPATH'} = $ENV{'HCAT_EXTRA_JARS'};
     }
     my $hadoop_opts = "-Dhive.metastore.uris=thrift://".$testCmd->{'thriftserver'}." -Dhcat.metastore.uri=thrift://".$testCmd->{'thriftserver'};
-    if (defined($testCmd->{'metastore.principal'})){
-	$hadoop_opts = join '',$hadoop_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",$testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
-    }    
+    if( defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)
+        &&  ($testCmd->{'metastore.principal'} ne '${metastore.principal}')){
+	$hadoop_opts = join '',$hadoop_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",
+                            $testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
+    } else {
+        $hadoop_opts = join '',$hadoop_opts," -Dhive.metastore.sasl.enabled=false";
+    }
     $ENV{'HADOOP_OPTS'} = $hadoop_opts;
     # Run the command
     print $log "$0:$subName Going to run command: $command\n";
@@ -852,8 +858,12 @@ sub runPig
     push(@cmd, $locallog);
     
     my $pig_opts = "-Dhive.metastore.uris=thrift://".$testCmd->{'thriftserver'}." -Dhcat.metastore.uri=thrift://".$testCmd->{'thriftserver'};
-    if (defined($testCmd->{'metastore.principal'})){
-	$pig_opts = join '',$pig_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",$testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
+    if( defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)
+         &&  ($testCmd->{'metastore.principal'} ne '${metastore.principal}')){
+	$pig_opts = join '',$pig_opts," -Dhive.metastore.sasl.enabled=true -Dhcat.metastore.principal=",
+                         $testCmd->{'metastore.principal'}," -Dhive.metastore.kerberos.principal=",$testCmd->{'metastore.principal'};
+    } else {
+        $pig_opts = join '',$pig_opts," -Dhive.metastore.sasl.enabled=false";
     }    
     $ENV{'PIG_OPTS'} = $pig_opts;
   
