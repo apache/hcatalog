@@ -35,6 +35,8 @@ Release 0.2.0 - Sept-2011
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-99. HCatalog V2 Docs (chandec via hashutosh) 
+
     HCAT-94. Handle the job tracker tokens properly in har jobs (khorgath via hashutosh)   
  
     HCAT-43. hcat.sh does not pick up hcatalog.jar correctly (macyang via hashutosh) 
