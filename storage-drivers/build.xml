@@ -25,7 +25,7 @@
         </condition>
         <!-- add storage drivers here -->
         <echo>Executing storage-driver &quot;${target}&quot; for hbase</echo>
-        <ant target="${target}" dir="hbase" inheritAll="false" useNativeBasedir="true"/>
+        <!-- ant target="${target}" dir="hbase" inheritAll="false" useNativeBasedir="true"/ -->
     </target>
 
 
