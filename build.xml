@@ -19,6 +19,11 @@
 
 
 <project name="hcatalog" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+  <!--  
+  ================================================================================
+  Imports
+  ================================================================================ -->
+  <import file="build-common.xml"/>
 
   <!--
   ================================================================================
@@ -32,9 +37,6 @@
   <property name="hcatalog.jar" value="${ant.project.name}-${hcatalog.version}.jar"/>
   <property name="final.name" value="${ant.project.name}-${hcatalog.version}" />
   <property name="package.release" value="1"/>
-
-  <!-- hive properties -->
-  <property name="hive.root" value="${basedir}/hive/external"/>
 
   <!-- build properties -->
   <property name="lib.dir" value="${basedir}/lib/" />
@@ -107,23 +109,7 @@
 
   <!-- Classpaths for various builds -->
   <path id="classpath">
-    <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
-    <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
-    <fileset dir="${hive.root}/lib" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/cli" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/common" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/serde" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/metastore" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/ql" includes="*.jar"/>
-    <fileset dir="${hive.root}/ql/lib" includes="antlr-3.0.1.jar"/>
-    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
-      includes="hadoop-core-0.20.3-CDH3-SNAPSHOT.jar"/>
-    <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
-    <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-2.3-ec.jar"/>
-    <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-enhancer-2.0.3.jar"/>
-    <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-2.0.3.jar"/>
-    <fileset dir="${lib.dir}" includes="hadoop_archive-0.3.1.jar"/>
- <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
+    <path refid="common.classpath"/>
   </path>
 
   <path id="test.classpath">
@@ -280,7 +266,17 @@
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="clientjar,server-extensions"/>
+  <target name="jar" depends="clientjar,server-extensions,jar-storage-drivers"/>
+
+  <!--
+  ================================================================================
+  Build storage drivers
+  ================================================================================
+  -->
+
+  <target name="jar-storage-drivers">        
+    <ant target="jar" dir="storage-drivers" inheritAll="false" useNativeBasedir="true"/>
+  </target>
 
   <!--
   ================================================================================
@@ -300,6 +296,10 @@
   </target>
 
   <!-- Run the unit tests -->
+  <target name="test-storage-drivers">
+    <ant target="test" dir="storage-drivers" inheritAll="false" useNativeBasedir="true"/>
+  </target>
+
   <target name="test" depends="compile-test">
     <sequential>
       <!-- If anyone knows how to set umask inside ant please do so -->
@@ -340,6 +340,8 @@
       </junit>
       <fail if="tests.failed">Tests failed!</fail>
     </sequential>
+    <!-- test storage drivers -->
+    <antcall target="test-storage-drivers"/>
   </target>
 
   <!--
@@ -398,6 +400,19 @@
   Distribution Section
   ===============================================================================
   -->
+  <target name="package-storage-drivers">
+    <property name="drivers.dir" value="${dist.dir}/share/hcatalog/storage-drivers"/>
+    <mkdir dir="${drivers.dir}"/>
+    <ant target="package" dir="storage-drivers" inheritAll="false" useNativeBasedir="true">     
+        <property name="dist.drivers.dir" value="${drivers.dir}"/>
+    </ant>
+    <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
+      <fileset dir="${dist.dir}/share/${ant.project.name}/storage-drivers">
+        <include name="*/lib/*"/>
+      </fileset>
+    </copy>
+  </target>
+
   <target name="package" depends="jar, docs" description="Create an HCatalog release">
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${dist.dir}/share/${ant.project.name}/lib" />
@@ -581,7 +596,8 @@
       <fileset dir="${dist.dir}/bin" />
       <fileset dir="${dist.dir}/sbin" />
     </chmod>
-
+       <!--package storage-drivers -->
+      <antcall target="package-storage-drivers"/>
     </target>
 
     <target name="releaseaudit" depends="ivy-releaseaudit, package" description="Release Audit activities">

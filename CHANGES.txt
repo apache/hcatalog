@@ -50,6 +50,8 @@ Trunk (unreleased changes)
 
   HCAT-118. HIVE_CONF_DIR needs to be set to run hive (khorgath)
 
+  HCAT-101. storage driver and hbase build scripts (toffer via khorgath)
+
   OPTIMIZATIONS
 
   BUG FIXES
