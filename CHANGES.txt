@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-73. Output Storage Driver for HBase (Direct PUTs) (toffer via khorgath)
+
   HCAT-74. ResultConverter for HBase Storage Drivers (avandana via khorgath)
 
   HCAT-89. Support for creating non-native tables (avandana via gates)
