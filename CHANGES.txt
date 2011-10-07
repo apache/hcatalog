@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-74. ResultConverter for HBase Storage Drivers (avandana via khorgath)
+
   HCAT-89. Support for creating non-native tables (avandana via gates)
 
   HCAT-60. Refactor HCatalog to support non-filebased outputformats (toffer via gates)
