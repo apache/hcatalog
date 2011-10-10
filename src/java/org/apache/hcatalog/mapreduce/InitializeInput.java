@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -48,22 +49,12 @@ public class InitializeInput {
 
   /** The prefix for keys used for storage driver arguments */
   static final String HCAT_KEY_PREFIX = "hcat.";
-  private static final HiveConf hiveConf = new HiveConf(HCatInputFormat.class);
+  private static HiveConf hiveConf;
 
   private static HiveMetaStoreClient createHiveMetaClient(Configuration conf, InputJobInfo inputJobInfo) throws Exception {
 
-	if (inputJobInfo.getServerUri() != null){
-      hiveConf.set("hive.metastore.local", "false");
-      hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, inputJobInfo.getServerUri());
-    }
-    
-    String kerberosPrincipal = inputJobInfo.getServerKerberosPrincipal();
-    if(kerberosPrincipal != null){
-      hiveConf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-      hiveConf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, kerberosPrincipal);
-    }
-
-    return new HiveMetaStoreClient(hiveConf,null);
+      hiveConf = getHiveConf(inputJobInfo, conf);
+      return new HiveMetaStoreClient(hiveConf, null);
   }
 
   /**
@@ -206,5 +197,83 @@ public class InitializeInput {
 
     return new StorerInfo(inputSDClass, outputSDClass, hcatProperties);
   }
+
+    static HiveConf getHiveConf(InputJobInfo iInfo, Configuration conf)
+            throws IOException {
+
+        HiveConf hiveConf = new HiveConf(HCatInputFormat.class);
+
+        if (iInfo.getServerUri() != null) {
+            // User specified a thrift url
+
+            hiveConf.set("hive.metastore.local", "false");
+            hiveConf.set(ConfVars.METASTOREURIS.varname, iInfo.getServerUri());
+
+            String kerberosPrincipal = iInfo.getServerKerberosPrincipal();
+            if (kerberosPrincipal != null) {
+                hiveConf.setBoolean(
+                        HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname,
+                        true);
+                hiveConf.set(
+                        HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
+                        kerberosPrincipal);
+            } else {
+
+                kerberosPrincipal = conf
+                        .get(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+
+                if (kerberosPrincipal == null) {
+                    kerberosPrincipal = conf
+                            .get(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname);
+                }
+                if (kerberosPrincipal != null) {
+                    hiveConf.setBoolean(
+                            ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+                    hiveConf.set(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
+                            kerberosPrincipal);
+                }
+
+                if (conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+                    hiveConf.set("hive.metastore.token.signature",
+                            conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
+                }
+            }
+
+        } else {
+            // Thrift url is null, copy the hive conf into the job conf and
+            // restore it
+            // in the backend context
+
+            if (conf.get(HCatConstants.HCAT_KEY_HIVE_CONF) == null) {
+                conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
+                        HCatUtil.serialize(hiveConf.getAllProperties()));
+            } else {
+                // Copy configuration properties into the hive conf
+                Properties properties = (Properties) HCatUtil.deserialize(conf
+                        .get(HCatConstants.HCAT_KEY_HIVE_CONF));
+
+                for (Map.Entry<Object, Object> prop : properties.entrySet()) {
+                    if (prop.getValue() instanceof String) {
+                        hiveConf.set((String) prop.getKey(),
+                                (String) prop.getValue());
+                    } else if (prop.getValue() instanceof Integer) {
+                        hiveConf.setInt((String) prop.getKey(),
+                                (Integer) prop.getValue());
+                    } else if (prop.getValue() instanceof Boolean) {
+                        hiveConf.setBoolean((String) prop.getKey(),
+                                (Boolean) prop.getValue());
+                    } else if (prop.getValue() instanceof Long) {
+                        hiveConf.setLong((String) prop.getKey(),
+                                (Long) prop.getValue());
+                    } else if (prop.getValue() instanceof Float) {
+                        hiveConf.setFloat((String) prop.getKey(),
+                                (Float) prop.getValue());
+                    }
+                }
+            }
+
+        }
+        return hiveConf;
+    }
 
 }

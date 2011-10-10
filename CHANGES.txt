@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-75. Input storage driver for HBase (avandana via khorgath)
+
   HCAT-73. Output Storage Driver for HBase (Direct PUTs) (toffer via khorgath)
 
   HCAT-74. ResultConverter for HBase Storage Drivers (avandana via khorgath)
