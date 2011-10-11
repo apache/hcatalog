@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-109. HBase Storage Handler for HCatalog (avandana via khorgath)
+
   HCAT-119. Output Storage Driver for HBase (Bulk) and HBaseStorageDriver Composite class (toffer via khorgath)
 
   HCAT-75. Input storage driver for HBase (avandana via khorgath)
