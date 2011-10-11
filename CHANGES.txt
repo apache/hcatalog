@@ -67,6 +67,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-134. Fix hbase build.xml to not affect root package target (khorgath via hashutosh)  
+
   HCAT-133. HCatOutpFormat always pass url as null while trying to create a metastore client (khorgath via hashutosh)  
 
   HCAT-117. Harness incorrectly assumes secure mode (khorgath via hashutosh) 
