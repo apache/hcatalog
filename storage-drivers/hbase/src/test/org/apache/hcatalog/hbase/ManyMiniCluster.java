@@ -279,7 +279,10 @@ public class ManyMiniCluster {
         hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-        hiveConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,"jdbc:derby:"+workDir+"/metastore_db;create=true");
+        hiveConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
+                     "jdbc:derby:"+new File(workDir+"/metastore_db")+";create=true");
+        hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(),
+                     new File(workDir,"warehouse").toString());
         //set where derby logs
         File derbyLogFile = new File(workDir+"/derby.log");
         derbyLogFile.createNewFile();
