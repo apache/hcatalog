@@ -71,7 +71,7 @@ class HBaseSerDeResultConverter implements  ResultConverter {
      * @param hcatProperties table properties
      * @throws IOException thrown if hive's HBaseSerDe couldn't be initialized
      */
-    public HBaseSerDeResultConverter(HCatSchema schema,
+    HBaseSerDeResultConverter(HCatSchema schema,
                                      HCatSchema outputSchema,
                                      Properties hcatProperties) throws IOException {
 

@@ -18,31 +18,43 @@
 
 package org.apache.hcatalog.hbase;
 
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hcatalog.data.HCatRecord;
 
 import java.io.IOException;
 import java.util.Properties;
 
-/**
- * HBase Storage driver implementation which uses "direct" writes to hbase for writing out records.
- */
-public class HBaseDirectOutputStorageDriver extends HBaseBaseOutputStorageDriver {
 
-    private HBaseDirectOutputFormat outputFormat;
+/**
+ * Storage driver which works with {@link HBaseBulkOutputFormat} and makes use
+ * of HBase's "bulk load" feature to get data into HBase. This should be
+ * efficient for large batch writes in comparison to HBaseDirectOutputStorageDriver.
+ */
+public class HBaseBulkOutputStorageDriver extends HBaseBaseOutputStorageDriver {
+    private OutputFormat outputFormat;
+    private final static ImmutableBytesWritable EMPTY_KEY = new ImmutableBytesWritable(new byte[0]);
 
     @Override
     public void initialize(JobContext context, Properties hcatProperties) throws IOException {
         super.initialize(context, hcatProperties);
-        outputFormat = new HBaseDirectOutputFormat();
-        outputFormat.setConf(context.getConfiguration());
+        Path outputDir = new Path(outputJobInfo.getLocation());
+        context.getConfiguration().set("mapred.output.dir", outputDir.toString());
+        outputFormat = new HBaseBulkOutputFormat();
     }
 
     @Override
     public OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat() throws IOException {
         return outputFormat;
+    }
+
+    @Override
+    public WritableComparable<?> generateKey(HCatRecord value) throws IOException {
+        return EMPTY_KEY;
     }
 
 }
