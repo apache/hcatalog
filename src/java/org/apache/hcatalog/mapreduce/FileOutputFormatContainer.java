@@ -76,7 +76,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         try {
             handleDuplicatePublish(context,
                     jobInfo,
-                    HCatOutputFormat.createHiveClient(null,context.getConfiguration()),
+                    HCatOutputFormat.createHiveClient(jobInfo.getServerUri(),context.getConfiguration()),
                     jobInfo.getTableInfo().getTable());
         } catch (MetaException e) {
             throw new IOException(e);

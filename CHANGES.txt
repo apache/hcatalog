@@ -65,6 +65,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-133. HCatOutpFormat always pass url as null while trying to create a metastore client (khorgath via hashutosh)  
+
   HCAT-117. Harness incorrectly assumes secure mode (khorgath via hashutosh) 
 
   HCAT-113. rpm name not properly reflecting the version number (gates via hashutosh)
