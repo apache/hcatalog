@@ -69,6 +69,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-136. Pig storer for export/import does maintain partition order (n_krishna_kumar via khorgath)
+
   HCAT-134. Fix hbase build.xml to not affect root package target (khorgath via hashutosh)  
 
   HCAT-133. HCatOutpFormat always pass url as null while trying to create a metastore client (khorgath via hashutosh)  

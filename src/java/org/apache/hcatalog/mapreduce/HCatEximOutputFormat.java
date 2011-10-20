@@ -28,6 +28,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -145,8 +146,9 @@ public class HCatEximOutputFormat extends HCatBaseOutputFormat {
     try {
       String partname = null;
       if ((partKeys != null) && !partKeys.isEmpty()) {
-        table.setPartitionKeys(HCatSchemaUtils.getFieldSchemas(partKeys));
-        partname = Warehouse.makePartPath(partSpec);
+        List<FieldSchema> partSchema = HCatSchemaUtils.getFieldSchemas(partKeys);
+        table.setPartitionKeys(partSchema);
+        partname = Warehouse.makePartName(partSchema, partitionValues);
       } else {
         partname = "data";
       }

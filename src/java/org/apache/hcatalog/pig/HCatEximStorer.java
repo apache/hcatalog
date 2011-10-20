@@ -107,7 +107,7 @@ public class HCatEximStorer extends HCatBaseStorer {
 
       List<HCatFieldSchema> hcatFields = new ArrayList<HCatFieldSchema>();
       List<String> partVals = new ArrayList<String>();
-      for (String key : partitions.keySet()) {
+      for (String key : partitionKeys) {
         hcatFields.add(new HCatFieldSchema(key, HCatFieldSchema.Type.STRING, ""));
         partVals.add(partitions.get(key));
       }

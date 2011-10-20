@@ -196,6 +196,64 @@ public class TestHCatEximStorer extends TestCase {
         partition.getParameters().get(HCatConstants.HCAT_OSD_CLASS));
   }
 
+  public void testStorePartTable_state_country() throws Exception {
+	    populateDataFile();
+	    PigServer server = new PigServer(ExecType.LOCAL, props);
+	    UDFContext.getUDFContext().setClientSystemProps();
+	    server.setBatchOn();
+	    server.registerQuery("A = load '" + fqdataLocation + "' using PigStorage(',') as (emp_id:int, emp_name:chararray, emp_dob:chararray, emp_sex:chararray);");
+	    server.registerQuery("store A into '" + PARTITIONED_TABLE
+	        + "' using org.apache.hcatalog.pig.HCatEximStorer('" + fqexportLocation + "', 'emp_state=tn,emp_country=in');");
+	    server.executeBatch();
+
+	    FileSystem fs = cluster.getFileSystem();
+
+	    System.out.println("Filesystem class : " + cluster.getFileSystem().getClass().getName() + ", fs.default.name : " + props.getProperty("fs.default.name"));
+
+	    Map.Entry<Table, List<Partition>> metadata = EximUtil.readMetaData(fs, new Path(exportLocation, "_metadata"));
+	    Table table = metadata.getKey();
+	    List<Partition> partitions = metadata.getValue();
+
+	    List<HCatFieldSchema> columns = new ArrayList<HCatFieldSchema>();
+	    columns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("emp_id",
+	        Constants.INT_TYPE_NAME, "")));
+	    columns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("emp_name",
+	        Constants.STRING_TYPE_NAME, "")));
+	    columns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("emp_dob",
+	        Constants.STRING_TYPE_NAME, "")));
+	    columns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("emp_sex",
+	        Constants.STRING_TYPE_NAME, "")));
+
+
+	    assertEquals("default", table.getDbName());
+	    assertEquals(PARTITIONED_TABLE, table.getTableName());
+	    assertTrue(EximUtil.schemaCompare(table.getSd().getCols(),
+	        HCatUtil.getFieldSchemaList(columns)));
+	    assertEquals("org.apache.hcatalog.rcfile.RCFileInputDriver",
+	        table.getParameters().get(HCatConstants.HCAT_ISD_CLASS));
+	    assertEquals("org.apache.hcatalog.rcfile.RCFileOutputDriver",
+	        table.getParameters().get(HCatConstants.HCAT_OSD_CLASS));
+	    assertEquals("org.apache.hadoop.hive.ql.io.RCFileInputFormat",
+	        table.getSd().getInputFormat());
+	    assertEquals("org.apache.hadoop.hive.ql.io.RCFileOutputFormat",
+	        table.getSd().getOutputFormat());
+	    assertEquals("org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe",
+	        table.getSd().getSerdeInfo().getSerializationLib());
+	    assertEquals(2, table.getPartitionKeys().size());
+	    List<FieldSchema> partSchema = table.getPartitionKeys();
+	    assertEquals("emp_state", partSchema.get(0).getName());
+	    assertEquals("emp_country", partSchema.get(1).getName());
+
+	    assertEquals(1, partitions.size());
+	    Partition partition = partitions.get(0);
+	    assertEquals("tn", partition.getValues().get(0));
+	    assertEquals("in", partition.getValues().get(1));
+	    assertEquals("org.apache.hcatalog.rcfile.RCFileInputDriver",
+	        partition.getParameters().get(HCatConstants.HCAT_ISD_CLASS));
+	    assertEquals("org.apache.hcatalog.rcfile.RCFileOutputDriver",
+	        partition.getParameters().get(HCatConstants.HCAT_OSD_CLASS));
+	  }
+
   public void testStoreNonPartCompatSchemaTable() throws Exception {
     populateDataFile();
     PigServer server = new PigServer(ExecType.LOCAL, props);
