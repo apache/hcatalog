@@ -30,6 +30,13 @@ public final class HCatConstants {
   public static final String HCAT_RCFILE_ISD_CLASS = "org.apache.hcatalog.rcfile.RCFileInputDriver";
   public static final String HCAT_RCFILE_OSD_CLASS = "org.apache.hcatalog.rcfile.RCFileOutputDriver";
 
+  public static final String HCAT_PIG_LOADER = "hcat.pig.loader";
+  public static final String HCAT_PIG_LOADER_ARGS = "hcat.pig.loader.args";
+  public static final String HCAT_PIG_STORER = "hcat.pig.storer";
+  public static final String HCAT_PIG_STORER_ARGS = "hcat.pig.storer.args";
+  public static final String HCAT_PIG_ARGS_DELIMIT = "hcat.pig.args.delimiter";
+  public static final String HCAT_PIG_ARGS_DELIMIT_DEFAULT = ",";
+  
   //The keys used to store info into the job Configuration
   public static final String HCAT_KEY_BASE = "mapreduce.lib.hcat";
 

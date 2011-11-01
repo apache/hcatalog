@@ -21,7 +21,9 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -45,8 +47,8 @@ import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.pig.HCatLoader;
-import org.apache.hcatalog.pig.drivers.PigStorageInputDriver;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
@@ -59,6 +61,9 @@ public class TestPigStorageDriver extends TestCase {
   private HiveConf hcatConf;
   private Driver hcatDriver;
   private HiveMetaStoreClient msc;
+  private static String tblLocation = "/tmp/test_pig/data";
+  private static String anyExistingFileInCurDir = "ivy.xml";
+  private static String warehouseDir = "/tmp/hcat_junit_warehouse";
 
   @Override
   protected void setUp() throws Exception {
@@ -81,57 +86,91 @@ public class TestPigStorageDriver extends TestCase {
 
   public void testPigStorageDriver() throws IOException, CommandNeedRetryException{
 
-
     String fsLoc = hcatConf.get("fs.default.name");
-    Path tblPath = new Path(fsLoc, "/tmp/test_pig/data");
-    String anyExistingFileInCurDir = "ivy.xml";
+    Path tblPath = new Path(fsLoc, tblLocation);
+    String tblName = "junit_pigstorage";
     tblPath.getFileSystem(hcatConf).copyFromLocalFile(new Path(anyExistingFileInCurDir),tblPath);
 
-    hcatDriver.run("drop table junit_pigstorage");
+    hcatDriver.run("drop table " + tblName);
     CommandProcessorResponse resp;
-    String createTable = "create table junit_pigstorage (a string) partitioned by (b string) stored as RCFILE";
+    String createTable = "create table " + tblName + " (a string) partitioned by (b string) stored as TEXTFILE";
 
     resp = hcatDriver.run(createTable);
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = hcatDriver.run("alter table junit_pigstorage add partition (b='2010-10-10') location '"+new Path(fsLoc, "/tmp/test_pig")+"'");
+    resp = hcatDriver.run("alter table " + tblName + " add partition (b='2010-10-10') location '"+new Path(fsLoc, "/tmp/test_pig")+"'");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = hcatDriver.run("alter table junit_pigstorage partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
-        +"' outputformat '"+RCFileOutputFormat.class.getName()+"' inputdriver '"+PigStorageInputDriver.class.getName()+"' outputdriver 'non-existent'");
+    resp = hcatDriver.run("alter table " + tblName + " partition (b='2010-10-10') set fileformat TEXTFILE");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp =  hcatDriver.run("desc extended junit_pigstorage partition (b='2010-10-10')");
+    resp =  hcatDriver.run("desc extended " + tblName + " partition (b='2010-10-10')");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
     PigServer server = new PigServer(ExecType.LOCAL, hcatConf.getAllProperties());
     UDFContext.getUDFContext().setClientSystemProps();
-    server.registerQuery(" a = load 'junit_pigstorage' using "+HCatLoader.class.getName()+";");
+    server.registerQuery(" a = load '" + tblName + "' using "+HCatLoader.class.getName()+";");
     Iterator<Tuple> itr = server.openIterator("a");
-    DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(anyExistingFileInCurDir))));
-    while(itr.hasNext()){
-      Tuple t = itr.next();
-      assertEquals(2, t.size());
-      if(t.get(0) != null) {
-        // If underlying data-field is empty. PigStorage inserts null instead
-        // of empty String objects.
-        assertTrue(t.get(0) instanceof String);
-        assertEquals(stream.readLine(), t.get(0));
+    boolean result = compareWithFile(itr, anyExistingFileInCurDir, 2, "2010-10-10", null);
+    assertTrue(result);
+    
+    server.registerQuery("a = load '"+tblPath.toString()+"' using PigStorage() as (a:chararray);");
+    server.store("a", tblName, HCatStorer.class.getName() + "('b=2010-10-11')");
+    
+    server.registerQuery("a = load '" + warehouseDir + "/" + tblName + "/b=2010-10-11' using PigStorage() as (a:chararray);");
+    itr = server.openIterator("a");
+    result = compareWithFile(itr, anyExistingFileInCurDir, 1, "2010-10-11", null);
+    assertTrue(result);
+    
+    // Test multi-store
+    server.registerQuery("a = load '"+tblPath.toString()+"' using PigStorage() as (a:chararray);");
+    server.registerQuery("store a into '" + tblName + "' using " +  HCatStorer.class.getName() + "('b=2010-11-01');");
+    server.registerQuery("store a into '" + tblName + "' using " +  HCatStorer.class.getName() + "('b=2010-11-02');");
+    
+    server.registerQuery("a = load '" + warehouseDir + "/" + tblName + "/b=2010-11-01' using PigStorage() as (a:chararray);");
+    itr = server.openIterator("a");
+    result = compareWithFile(itr, anyExistingFileInCurDir, 1, "2010-11-01", null);
+    assertTrue(result);
+    
+    server.registerQuery("a = load '" + warehouseDir + "/" + tblName + "/b=2010-11-02' using PigStorage() as (a:chararray);");
+    itr = server.openIterator("a");
+    result = compareWithFile(itr, anyExistingFileInCurDir, 1, "2010-11-02", null);
+    assertTrue(result);
+    
+    hcatDriver.run("drop table " + tblName);
+  }
+  
+  private boolean compareWithFile(Iterator<Tuple> itr, String factFile, int numColumn, String key, String valueSuffix) throws IOException {
+      DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(factFile))));
+      while(itr.hasNext()){
+        Tuple t = itr.next();
+        assertEquals(numColumn, t.size());
+        if(t.get(0) != null) {
+          // If underlying data-field is empty. PigStorage inserts null instead
+          // of empty String objects.
+          assertTrue(t.get(0) instanceof String);
+          String expected = stream.readLine();
+          if (valueSuffix!=null)
+              expected += valueSuffix;
+          assertEquals(expected, t.get(0));
+        }
+        else{
+          assertTrue(stream.readLine().isEmpty());
+        }
+        
+        if (numColumn>1) {
+            // The second column must be key
+            assertTrue(t.get(1) instanceof String);
+            assertEquals(key, t.get(1));
+        }
       }
-      else{
-        assertTrue(stream.readLine().isEmpty());
-      }
-      assertTrue(t.get(1) instanceof String);
-
-      assertEquals("2010-10-10", t.get(1));
-    }
-    assertEquals(0,stream.available());
-    stream.close();
-    hcatDriver.run("drop table junit_pigstorage");
+      assertEquals(0,stream.available());
+      stream.close();
+      return true;
   }
 
   public void testDelim() throws MetaException, TException, UnknownTableException, NoSuchObjectException, InvalidOperationException, IOException, CommandNeedRetryException{
@@ -139,7 +178,7 @@ public class TestPigStorageDriver extends TestCase {
     hcatDriver.run("drop table junit_pigstorage_delim");
 
     CommandProcessorResponse resp;
-    String createTable = "create table junit_pigstorage_delim (a string) partitioned by (b string) stored as RCFILE";
+    String createTable = "create table junit_pigstorage_delim (a0 string, a1 string) partitioned by (b string) stored as RCFILE";
 
     resp = hcatDriver.run(createTable);
 
@@ -150,12 +189,12 @@ public class TestPigStorageDriver extends TestCase {
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
 
-    resp = hcatDriver.run("alter table junit_pigstorage_delim partition (b='2010-10-10') set fileformat inputformat '" + RCFileInputFormat.class.getName()
-        +"' outputformat '"+RCFileOutputFormat.class.getName()+"' inputdriver '"+MyPigStorageDriver.class.getName()+"' outputdriver 'non-existent'");
+    resp = hcatDriver.run("alter table junit_pigstorage_delim partition (b='2010-10-10') set fileformat TEXTFILE");
 
     Partition part = msc.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, "junit_pigstorage_delim", "b=2010-10-10");
     Map<String,String> partParms = part.getParameters();
-    partParms.put(PigStorageInputDriver.delim, "control-A");
+    partParms.put(HCatConstants.HCAT_PIG_LOADER_ARGS, "control-A");
+    partParms.put(HCatConstants.HCAT_PIG_STORER_ARGS, "control-A");
 
     msc.alter_partition(MetaStoreUtils.DEFAULT_DATABASE_NAME, "junit_pigstorage_delim", part);
 
@@ -165,5 +204,67 @@ public class TestPigStorageDriver extends TestCase {
     try{
       server.openIterator("a");
     }catch(FrontendException fe){}
+    
+    resp = hcatDriver.run("alter table junit_pigstorage_delim set fileformat TEXTFILE");
+    assertEquals(0, resp.getResponseCode());
+    assertNull(resp.getErrorMessage());
+    resp = hcatDriver.run("alter table junit_pigstorage_delim set TBLPROPERTIES ('hcat.pig.loader.args'=':', 'hcat.pig.storer.args'=':')");
+    assertEquals(0, resp.getResponseCode());
+    assertNull(resp.getErrorMessage());
+    
+    File inputFile = File.createTempFile("hcat_test", "");
+    PrintWriter p = new PrintWriter(new FileWriter(inputFile));
+    p.println("1\t2");
+    p.println("3\t4");
+    p.close();
+    server.registerQuery("a = load '"+inputFile.toString()+"' using PigStorage() as (a0:chararray, a1:chararray);");
+    server.store("a", "junit_pigstorage_delim", HCatStorer.class.getName() + "('b=2010-10-11')");
+    
+    server.registerQuery("a = load '/tmp/hcat_junit_warehouse/junit_pigstorage_delim/b=2010-10-11' using PigStorage() as (a:chararray);");
+    Iterator<Tuple> itr = server.openIterator("a");
+    
+    assertTrue(itr.hasNext());
+    Tuple t = itr.next();
+    assertTrue(t.get(0).equals("1:2"));
+    
+    assertTrue(itr.hasNext());
+    t = itr.next();
+    assertTrue(t.get(0).equals("3:4"));
+    
+    assertFalse(itr.hasNext());
+    inputFile.delete();
   }
+  
+  public void testMultiConstructArgs() throws MetaException, TException, UnknownTableException, NoSuchObjectException, InvalidOperationException, IOException, CommandNeedRetryException{
+
+      String fsLoc = hcatConf.get("fs.default.name");
+      Path tblPath = new Path(fsLoc, tblLocation);
+      String tblName = "junit_pigstorage_constructs";
+      tblPath.getFileSystem(hcatConf).copyFromLocalFile(new Path(anyExistingFileInCurDir),tblPath);
+
+      hcatDriver.run("drop table junit_pigstorage_constructs");
+
+      CommandProcessorResponse resp;
+      String createTable = "create table " + tblName + " (a string) partitioned by (b string) stored as TEXTFILE";
+
+      resp = hcatDriver.run(createTable);
+
+      assertEquals(0, resp.getResponseCode());
+      assertNull(resp.getErrorMessage());
+
+      resp = hcatDriver.run("alter table " + tblName + " set TBLPROPERTIES ('hcat.pig.storer'='org.apache.hcatalog.pig.MyPigStorage', 'hcat.pig.storer.args'=':#hello', 'hcat.pig.args.delimiter'='#')");
+      assertEquals(0, resp.getResponseCode());
+      assertNull(resp.getErrorMessage());
+      
+      PigServer server = new PigServer(ExecType.LOCAL, hcatConf.getAllProperties());
+      UDFContext.getUDFContext().setClientSystemProps();
+      
+      server.registerQuery("a = load '"+tblPath.toString()+"' using PigStorage() as (a:chararray);");
+      server.store("a", tblName, HCatStorer.class.getName() + "('b=2010-10-11')");
+      
+      server.registerQuery("a = load '" + warehouseDir + "/" + tblName + "/b=2010-10-11' using PigStorage() as (a:chararray);");
+      Iterator<Tuple> itr = server.openIterator("a");
+      boolean result = compareWithFile(itr, anyExistingFileInCurDir, 1, "2010-10-11", ":hello");
+      assertTrue(result);
+    }
 }

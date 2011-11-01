@@ -41,7 +41,7 @@ public class HBaseDirectOutputStorageDriver extends HBaseBaseOutputStorageDriver
     }
 
     @Override
-    public OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat() throws IOException {
+    public OutputFormat<? extends WritableComparable<?>, ? extends Writable> getOutputFormat() throws IOException {
         return outputFormat;
     }
 

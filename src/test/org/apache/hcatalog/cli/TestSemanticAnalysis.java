@@ -348,9 +348,7 @@ public class TestSemanticAnalysis extends TestCase{
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as TEXTFILE";
 
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10,response.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. HCatalog doesn't support Text File by default yet. You may specify it through INPUT/OUTPUT storage drivers.",
-        response.getErrorMessage());
+    assertEquals(0,response.getResponseCode());
 
   }
 

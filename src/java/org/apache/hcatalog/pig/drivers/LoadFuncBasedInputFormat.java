@@ -20,14 +20,17 @@ package org.apache.hcatalog.pig.drivers;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.pig.LoadCaster;
 import org.apache.pig.LoadFunc;
+import org.apache.pig.LoadMetadata;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.builtin.PigStorage;
@@ -42,10 +45,15 @@ public class LoadFuncBasedInputFormat extends InputFormat<BytesWritable,Tuple> {
   private final LoadFunc loadFunc;
   private static ResourceFieldSchema[] fields;
 
-  public LoadFuncBasedInputFormat(LoadFunc loadFunc, ResourceSchema dataSchema) {
+  public LoadFuncBasedInputFormat(LoadFunc loadFunc, ResourceSchema dataSchema, String location, Configuration conf) throws IOException {
 
     this.loadFunc = loadFunc;
     fields = dataSchema.getFields();
+    
+    // Simulate the frontend call sequence for LoadFunc, in case LoadFunc need to store something into UDFContext (as JsonLoader does)
+    if (loadFunc instanceof LoadMetadata) {
+        ((LoadMetadata)loadFunc).getSchema(location, new Job(conf));
+    }
   }
 
   @Override
@@ -59,7 +67,6 @@ public class LoadFuncBasedInputFormat extends InputFormat<BytesWritable,Tuple> {
   @Override
   public List<InputSplit> getSplits(JobContext jobContext) throws IOException,
   InterruptedException {
-
     try {
       InputFormat<BytesWritable,Tuple> inpFormat = loadFunc.getInputFormat();
       return inpFormat.getSplits(jobContext);
@@ -103,51 +110,57 @@ public class LoadFuncBasedInputFormat extends InputFormat<BytesWritable,Tuple> {
 
        for(int i = 0; i < tupleFromDisk.size(); i++) {
 
-         DataByteArray dba = (DataByteArray) tupleFromDisk.get(i);
-
-         if(dba == null) {
-           // PigStorage will insert nulls for empty fields.
-          tupleFromDisk.set(i, null);
-          continue;
-        }
-
-         switch(fields[i].getType()) {
-
-         case DataType.CHARARRAY:
-           tupleFromDisk.set(i, caster.bytesToCharArray(dba.get()));
-           break;
-
-         case DataType.INTEGER:
-           tupleFromDisk.set(i, caster.bytesToInteger(dba.get()));
-           break;
-
-         case DataType.FLOAT:
-           tupleFromDisk.set(i, caster.bytesToFloat(dba.get()));
-           break;
-
-         case DataType.LONG:
-           tupleFromDisk.set(i, caster.bytesToLong(dba.get()));
-           break;
-
-         case DataType.DOUBLE:
-           tupleFromDisk.set(i, caster.bytesToDouble(dba.get()));
-           break;
-
-         case DataType.MAP:
-           tupleFromDisk.set(i, caster.bytesToMap(dba.get()));
-           break;
-
-         case DataType.BAG:
-           tupleFromDisk.set(i, caster.bytesToBag(dba.get(), fields[i]));
-           break;
-
-         case DataType.TUPLE:
-           tupleFromDisk.set(i, caster.bytesToTuple(dba.get(), fields[i]));
-           break;
-
-         default:
-           throw new IOException("Unknown Pig type in data: "+fields[i].getType());
-         }
+         Object data = tupleFromDisk.get(i);
+         
+         // We will do conversion for bytes only for now
+         if (data instanceof DataByteArray) {
+         
+             DataByteArray dba = (DataByteArray) data;
+    
+             if(dba == null) {
+               // PigStorage will insert nulls for empty fields.
+              tupleFromDisk.set(i, null);
+              continue;
+            }
+    
+             switch(fields[i].getType()) {
+    
+             case DataType.CHARARRAY:
+               tupleFromDisk.set(i, caster.bytesToCharArray(dba.get()));
+               break;
+    
+             case DataType.INTEGER:
+               tupleFromDisk.set(i, caster.bytesToInteger(dba.get()));
+               break;
+    
+             case DataType.FLOAT:
+               tupleFromDisk.set(i, caster.bytesToFloat(dba.get()));
+               break;
+    
+             case DataType.LONG:
+               tupleFromDisk.set(i, caster.bytesToLong(dba.get()));
+               break;
+    
+             case DataType.DOUBLE:
+               tupleFromDisk.set(i, caster.bytesToDouble(dba.get()));
+               break;
+    
+             case DataType.MAP:
+               tupleFromDisk.set(i, caster.bytesToMap(dba.get()));
+               break;
+    
+             case DataType.BAG:
+               tupleFromDisk.set(i, caster.bytesToBag(dba.get(), fields[i]));
+               break;
+    
+             case DataType.TUPLE:
+               tupleFromDisk.set(i, caster.bytesToTuple(dba.get(), fields[i]));
+               break;
+    
+             default:
+               throw new IOException("Unknown Pig type in data: "+fields[i].getType());
+             }
+           }
        }
 
        return tupleFromDisk;

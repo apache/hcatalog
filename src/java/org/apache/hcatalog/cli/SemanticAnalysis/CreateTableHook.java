@@ -47,13 +47,16 @@ import org.apache.hcatalog.common.AuthUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver;
+import org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.pig.builtin.PigStorage;
 
 final class CreateTableHook extends AbstractSemanticAnalyzerHook {
 
-    private String inStorageDriver, outStorageDriver, tableName;
+    private String inStorageDriver, outStorageDriver, tableName, loader, storer;
 
     @Override
     public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context,
@@ -97,10 +100,14 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
                              + "You may specify it through INPUT/OUTPUT storage drivers.");
 
                 case HiveParser.TOK_TBLTEXTFILE:
-                    throw new SemanticException(
-                            "Operation not supported. HCatalog doesn't support " +
-                            "Text File by default yet. "
-                            + "You may specify it through INPUT/OUTPUT storage drivers.");
+                    inputFormat      = org.apache.hadoop.mapred.TextInputFormat.class.getName();
+                    outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
+                    inStorageDriver  = org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver.class.getName();
+                    outStorageDriver = org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver.class.getName();
+                    loader = PigStorage.class.getName();
+                    storer = PigStorage.class.getName();
+
+                    break;
 
                 case HiveParser.TOK_LIKETABLE:
 
@@ -254,6 +261,14 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
                 new SemanticException(e);
             }
 
+        }
+        
+        if (loader!=null) {
+            tblProps.put(HCatConstants.HCAT_PIG_LOADER, loader);
+        }
+        
+        if (storer!=null) {
+            tblProps.put(HCatConstants.HCAT_PIG_STORER, storer);
         }
 
         if (desc == null) {

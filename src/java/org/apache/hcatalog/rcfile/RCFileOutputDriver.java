@@ -95,7 +95,7 @@ import org.apache.hcatalog.mapreduce.FileOutputStorageDriver;
    */
   @SuppressWarnings("unchecked")
   @Override
-  public OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat() throws IOException {
+  public OutputFormat<? extends WritableComparable<?>, ? extends Writable> getOutputFormat() throws IOException {
     if( outputFormat == null ) {
       outputFormat = new RCFileMapReduceOutputFormat();
     }

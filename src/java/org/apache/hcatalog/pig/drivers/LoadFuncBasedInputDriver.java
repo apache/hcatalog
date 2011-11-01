@@ -18,6 +18,8 @@
 package org.apache.hcatalog.pig.drivers;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +30,17 @@ import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hcatalog.common.ErrorType;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
+import org.apache.hcatalog.pig.HCatLoader;
 import org.apache.hcatalog.pig.PigHCatUtil;
 import org.apache.pig.LoadFunc;
+import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.Tuple;
 
 
@@ -44,7 +51,7 @@ import org.apache.pig.data.Tuple;
  * and override the initialize(). {@link PigStorageInputDriver} illustrates
  * that well.
  */
-public abstract class LoadFuncBasedInputDriver extends HCatInputStorageDriver{
+public class LoadFuncBasedInputDriver extends HCatInputStorageDriver{
 
   private LoadFuncBasedInputFormat inputFormat;
   private HCatSchema dataSchema;
@@ -99,9 +106,51 @@ public abstract class LoadFuncBasedInputDriver extends HCatInputStorageDriver{
 
   @Override
   public void initialize(JobContext context, Properties storageDriverArgs) throws IOException {
-
+    
+    String loaderString = storageDriverArgs.getProperty(HCatConstants.HCAT_PIG_LOADER);
+    if (loaderString==null) {
+        throw new HCatException(ErrorType.ERROR_INIT_LOADER, "Don't know how to instantiate loader, " + HCatConstants.HCAT_PIG_LOADER + " property is not defined for table ");
+    }
+    String loaderArgs = storageDriverArgs.getProperty(HCatConstants.HCAT_PIG_LOADER_ARGS);
+    
+    String[] args;
+    if (loaderArgs!=null) {
+        String delimit = storageDriverArgs.getProperty(HCatConstants.HCAT_PIG_ARGS_DELIMIT);
+        if (delimit==null) {
+            delimit = HCatConstants.HCAT_PIG_ARGS_DELIMIT_DEFAULT;
+        }
+        args = loaderArgs.split(delimit);
+    } else {
+        args = new String[0];
+    }
+    
+    try {
+        Class loaderClass = Class.forName(loaderString);
+    
+        Constructor[] constructors = loaderClass.getConstructors();
+        for (Constructor constructor : constructors) {
+            if (constructor.getParameterTypes().length==args.length) {
+                lf = (LoadFunc)constructor.newInstance(args);
+                break;
+            }
+        }
+    } catch (Exception e) {
+        throw new HCatException(ErrorType.ERROR_INIT_LOADER, "Cannot instantiate " + loaderString, e);
+    }
+    
+    if (lf==null) {
+        throw new HCatException(ErrorType.ERROR_INIT_LOADER, "Cannot instantiate " + loaderString + " with construct args " + loaderArgs);
+    }
+ 
+    // Need to set the right signature in setLocation. The original signature is used by HCatLoader
+    // and it does use this signature to access UDFContext, so we need to invent a new signature for
+    // the wrapped loader.
+    // As for PigStorage/JsonStorage, set signature right before setLocation seems to be good enough,
+    // we may need to set signature more aggressively if we support more loaders
+    String innerSignature = context.getConfiguration().get(HCatLoader.INNER_SIGNATURE);
+    lf.setUDFContextSignature(innerSignature);
     lf.setLocation(location, new Job(context.getConfiguration()));
-    inputFormat = new LoadFuncBasedInputFormat(lf, PigHCatUtil.getResourceSchema(dataSchema));
+    inputFormat = new LoadFuncBasedInputFormat(lf, PigHCatUtil.getResourceSchema(dataSchema), location, context.getConfiguration());
   }
 
   private String location;

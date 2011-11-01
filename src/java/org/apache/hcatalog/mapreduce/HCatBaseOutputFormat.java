@@ -157,10 +157,9 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
           driver.setPartitionValues(jobContext, partitionValues);
           driver.setOutputPath(jobContext, location);
           
-//          HCatUtil.logMap(LOG,"Setting outputPath ["+location+"] for ",partitionValues);
-
           driver.initialize(jobContext, jobInfo.getTableInfo().getStorerInfo().getProperties());
-
+          
+//          HCatUtil.logMap(LOG,"Setting outputPath ["+location+"] for ",partitionValues);
           return driver;
       } catch(Exception e) {
         if (e instanceof HCatException){

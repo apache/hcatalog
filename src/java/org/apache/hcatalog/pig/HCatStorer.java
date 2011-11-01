@@ -48,9 +48,10 @@ import org.apache.pig.impl.util.UDFContext;
 
 public class HCatStorer extends HCatBaseStorer {
 
-  /**
-   *
-   */
+  // Signature for wrapped storer, see comments in LoadFuncBasedInputDriver.initialize
+  final public static String INNER_SIGNATURE = "hcatstorer.inner.signature";
+  final public static String INNER_SIGNATURE_PREFIX = "hcatstorer_inner_signature";
+
 
   public HCatStorer(String partSpecs, String schema) throws Exception {
     super(partSpecs, schema);
@@ -72,6 +73,7 @@ public class HCatStorer extends HCatBaseStorer {
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
 
+    job.getConfiguration().set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + sign);
     Properties p = UDFContext.getUDFContext().getUDFProperties(this.getClass(), new String[]{sign});
 
     String[] userStr = location.split("\\.");

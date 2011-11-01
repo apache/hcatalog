@@ -52,7 +52,7 @@ public abstract class HCatOutputStorageDriver {
      * @return the OutputFormat instance
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    public abstract OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat() throws IOException;
+    public abstract OutputFormat<? extends WritableComparable<?>, ? extends Writable> getOutputFormat() throws IOException;
 
     /**
      * Set the data location for the output.

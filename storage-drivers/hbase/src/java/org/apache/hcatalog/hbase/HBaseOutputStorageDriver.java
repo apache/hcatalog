@@ -60,7 +60,7 @@ public class HBaseOutputStorageDriver extends HCatOutputStorageDriver {
     }
 
     @Override
-    public OutputFormat<? super WritableComparable<?>, ? super Writable> getOutputFormat() throws IOException {
+    public OutputFormat<? extends WritableComparable<?>, ? extends Writable> getOutputFormat() throws IOException {
         return activeOSD.getOutputFormat();
     }
 

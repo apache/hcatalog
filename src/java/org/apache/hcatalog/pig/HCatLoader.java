@@ -53,6 +53,10 @@ public class HCatLoader extends HCatBaseLoader {
   private String hcatServerUri;
   private String partitionFilterString;
   private final PigHCatUtil phutil = new PigHCatUtil();
+  
+  // Signature for wrapped loader, see comments in LoadFuncBasedInputDriver.initialize
+  final public static String INNER_SIGNATURE = "hcatloader.inner.signature";
+  final public static String INNER_SIGNATURE_PREFIX = "hcatloader_inner_signature";
 
   @Override
   public InputFormat<?,?> getInputFormat() throws IOException {
@@ -70,6 +74,7 @@ public class HCatLoader extends HCatBaseLoader {
 @Override
   public void setLocation(String location, Job job) throws IOException {
 
+    job.getConfiguration().set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + signature);
     Pair<String, String> dbTablePair = PigHCatUtil.getDBTableNames(location);
     dbName = dbTablePair.first;
     tableName = dbTablePair.second;

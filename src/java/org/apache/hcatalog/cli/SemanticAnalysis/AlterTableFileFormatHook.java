@@ -40,10 +40,11 @@ import org.apache.hadoop.hive.ql.plan.DDLWork;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
+import org.apache.pig.builtin.PigStorage;
 
 public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
 
-  private String inDriver, outDriver, tableName;
+  private String inDriver, outDriver, tableName, loader, storer;
 
   @Override
   public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast) throws SemanticException {
@@ -65,8 +66,13 @@ public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
       "You may specify it through INPUT/OUTPUT storage drivers.");
 
     case HiveParser.TOK_TBLTEXTFILE:
-      throw new SemanticException("Operation not supported. HCatalog doesn't support Text File by default yet. " +
-      "You may specify it through INPUT/OUTPUT storage drivers.");
+        inputFormat      = org.apache.hadoop.mapred.TextInputFormat.class.getName();
+        outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
+        inDriver  = org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver.class.getName();
+        outDriver = org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver.class.getName();
+        loader = PigStorage.class.getName();
+        storer = PigStorage.class.getName();
+        break;
 
     case HiveParser.TOK_TBLRCFILE:
       inputFormat = RCFileInputFormat.class.getName();
@@ -91,6 +97,14 @@ public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
     hcatProps.put(HCatConstants.HCAT_ISD_CLASS, inDriver);
     hcatProps.put(HCatConstants.HCAT_OSD_CLASS, outDriver);
 
+    if (loader!=null) {
+        hcatProps.put(HCatConstants.HCAT_PIG_LOADER, loader);
+    }
+    
+    if (storer!=null) {
+        hcatProps.put(HCatConstants.HCAT_PIG_STORER, storer);
+    }
+    
     try {
       Hive db = context.getHive();
       Table tbl = db.getTable(tableName);

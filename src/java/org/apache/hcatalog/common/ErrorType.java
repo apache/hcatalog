@@ -42,6 +42,8 @@ public enum ErrorType {
     ERROR_MISSING_PARTITION_KEY         (2011, "Partition key value not provided for publish"),
     ERROR_MOVE_FAILED                   (2012, "Moving of data failed during commit"),
     ERROR_TOO_MANY_DYNAMIC_PTNS         (2013, "Attempt to create too many dynamic partitions"),
+    ERROR_INIT_LOADER                   (2014,  "Error initializing Pig loader"),
+    ERROR_INIT_STORER                   (2015,  "Error initializing Pig storer"),
 
     /* Authorization Errors 3000 - 3999 */
     ERROR_ACCESS_CONTROL           (3000, "Permission denied"),
