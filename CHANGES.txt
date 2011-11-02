@@ -110,6 +110,8 @@ Release 0.2.0 - Unreleased
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-150. Updated documentation specifying the need to call HCatOutputFormat.setSchema() (chandec via toffer)
+
     HCAT-107. Better documentation for "hive.metastore.warehouse.dir" config (chandec via toffer) 
 
     HCAT-66. HCatalog 0.2.0 Documentation (chandec via hashutosh)
