@@ -19,7 +19,7 @@
 
 <document>
   <header>
-    <title>Installing HCatalog</title>
+    <title>Source Installation</title>
   </header>
   <body>
 
@@ -130,8 +130,11 @@
         </tr>
         <tr>
             <td>hive.metastore.warehouse.dir</td>
-            <td>The directory you want to use for the default database in your
-            installation</td>
+            <td>The directory can be a URI or an absolute file path. If it is an absolute file path, it will be resolved to a URI by the metastore:
+            <p>-- If default hdfs was specified in core-site.xml, path resolves to HDFS location. </p>
+            <p>-- Otherwise, path is resolved as local file: URI.</p>
+            <p>This setting becomes effective when creating new tables (takes precedence over default DBS.DB_LOCATION_URI at time of table creation).</p>
+            </td>
         </tr>
         <tr>
             <td>hive.metastore.uris</td>
@@ -193,7 +196,7 @@
   </section>
 
   <section>
-    <title>Client Install</title>
+    <title>Client Installation</title>
 
     <p>Select a <em>root</em> directory for your installation of HCatalog client.
     We recommend <code>/usr/local/hcat</code>.  If necessary, create the directory.</p>
@@ -217,8 +220,11 @@
         </tr>
         <tr>
             <td>hive.metastore.warehouse.dir</td>
-            <td>The directory you want to use for the default database in your
-            installation</td>
+            <td>The directory can be a URI or an absolute file path. If it is an absolute file path, it will be resolved to a URI by the metastore:
+            <p>-- If default hdfs was specified in core-site.xml, path resolves to HDFS location. </p>
+            <p>-- Otherwise, path is resolved as local file: URI.</p>
+            <p>This setting becomes effective when creating new tables (takes precedence over default DBS.DB_LOCATION_URI at time of table creation).</p>
+            </td>
         </tr>
         <tr>
             <td>hive.metastore.uris</td>

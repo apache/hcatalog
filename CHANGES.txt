@@ -77,6 +77,8 @@ Release 0.2.0 - Sept-2011
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-107. Better documentation for "hive.metastore.warehouse.dir" config (chandec via toffer)    
+    
     HCAT-148. Meaningful error message on failure to resolve topic name for partition event (thw via hashutosh)    
 
     HCAT-103. Update documentation after rpm changes per HCATALOG-63 (khorgath via hashutosh)    
