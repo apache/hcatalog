@@ -31,7 +31,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -59,12 +58,11 @@ import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.junit.Test;
 
 public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
-    
+
     private final byte[] FAMILY     = Bytes.toBytes("testFamily");
     private final byte[] QUALIFIER1 = Bytes.toBytes("testQualifier1");
     private final byte[] QUALIFIER2 = Bytes.toBytes("testQualifier2");
-    private final String tableName  = "mytesttable";
-    
+
     List<Put> generatePuts(int num) {
         List<Put> myPuts = new ArrayList<Put>();
         for (int i = 0; i < num; i++) {
@@ -77,16 +75,16 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         }
         return myPuts;
     }
-    
+
     private void registerHBaseTable(String tableName) throws Exception {
-        
+
         String databaseName = MetaStoreUtils.DEFAULT_DATABASE_NAME;
         HiveMetaStoreClient client = getCluster().getHiveMetaStoreClient();
         try {
             client.dropTable(databaseName, tableName);
         } catch (Exception e) {
         } // can fail with NoSuchObjectException
-        
+
         Table tbl = new Table();
         tbl.setDbName(databaseName);
         tbl.setTableName(tableName);
@@ -101,7 +99,7 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         tableParams.put(Constants.SERIALIZATION_FORMAT, "9");
         tableParams.put(Constants.SERIALIZATION_NULL_FORMAT, "NULL");
         tbl.setParameters(tableParams);
-        
+
         StorageDescriptor sd = new StorageDescriptor();
         sd.setCols(HCatUtil.getFieldSchemaList(getSchema().getFields()));
         sd.setBucketCols(new ArrayList<String>(3));
@@ -113,21 +111,21 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         sd.getSerdeInfo().setSerializationLib(HBaseSerDe.class.getName());
         sd.setInputFormat(HBaseInputFormat.class.getName());
         sd.setOutputFormat("NotRequired");
-        
+
         tbl.setSd(sd);
         client.createTable(tbl);
-        
+
     }
-    
-    public void populateTable() throws IOException {
+
+    public void populateTable(String tableName) throws IOException {
         List<Put> myPuts = generatePuts(10);
         HTable table = new HTable(getHbaseConf(), Bytes.toBytes(tableName));
         table.put(myPuts);
     }
-    
+
     @Test
     public void TestHBaseTableReadMR() throws Exception {
-        
+        String tableName  = "testtableone";
         Configuration conf = new Configuration();
         // include hbase config in conf file
         for (Map.Entry<String, String> el : getHbaseConf()) {
@@ -135,14 +133,14 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
                 conf.set(el.getKey(), el.getValue());
             }
         }
-        
+
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
                 HCatUtil.serialize(getHiveConf().getAllProperties()));
-        
+
         // create Hbase table using admin
         createTable(tableName, new String[] { "testFamily" });
         registerHBaseTable(tableName);
-        populateTable();
+        populateTable(tableName);
         // output settings
         Path outputDir = new Path(getTestDir(), "mapred/testHbaseTableMRRead");
         FileSystem fs = getFileSystem();
@@ -153,14 +151,10 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         Job job = new Job(conf, "hbase-mr-read-test");
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapReadHTable.class);
-        
-        job.getConfiguration().set(TableInputFormat.INPUT_TABLE, tableName);
-        
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(
                 MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
                 null);
-        HCatInputFormat.setOutputSchema(job, getSchema());
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
@@ -172,13 +166,60 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         assertTrue(job.waitForCompletion(true));
         assertTrue(MapReadHTable.error == false);
     }
-    
-    public static class MapReadHTable
+
+    @Test
+    public void TestHBaseTableProjectionReadMR() throws Exception {
+
+        String tableName = "testtabletwo";
+        Configuration conf = new Configuration();
+        // include hbase config in conf file
+        for (Map.Entry<String, String> el : getHbaseConf()) {
+            if (el.getKey().startsWith("hbase.")) {
+                conf.set(el.getKey(), el.getValue());
+            }
+        }
+
+        conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
+                HCatUtil.serialize(getHiveConf().getAllProperties()));
+
+        // create Hbase table using admin
+        createTable(tableName, new String[] { "testFamily" });
+        registerHBaseTable(tableName);
+        populateTable(tableName);
+        // output settings
+        Path outputDir = new Path(getTestDir(), "mapred/testHBaseTableProjectionReadMR");
+        FileSystem fs = getFileSystem();
+        if (fs.exists(outputDir)) {
+            fs.delete(outputDir, true);
+        }
+        // create job
+        Job job = new Job(conf, "hbase-column-projection");
+        job.setJarByClass(this.getClass());
+        job.setMapperClass(MapReadProjHTable.class);
+        job.setInputFormatClass(HCatInputFormat.class);
+        InputJobInfo inputJobInfo = InputJobInfo.create(
+                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
+                null);
+        HCatInputFormat.setOutputSchema(job, getProjectionSchema());
+        HCatInputFormat.setInput(job, inputJobInfo);
+        job.setOutputFormatClass(TextOutputFormat.class);
+        TextOutputFormat.setOutputPath(job, outputDir);
+        job.setMapOutputKeyClass(BytesWritable.class);
+        job.setMapOutputValueClass(Text.class);
+        job.setOutputKeyClass(BytesWritable.class);
+        job.setOutputValueClass(Text.class);
+        job.setNumReduceTasks(0);
+        assertTrue(job.waitForCompletion(true));
+        assertTrue(MapReadHTable.error == false);
+    }
+
+
+    static class MapReadHTable
             extends
             Mapper<ImmutableBytesWritable, HCatRecord, WritableComparable, Text> {
-        
+
         static boolean error = false;
-        
+
         @Override
         public void map(ImmutableBytesWritable key, HCatRecord value,
                 Context context) throws IOException, InterruptedException {
@@ -186,21 +227,50 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
                     && (value.get(0).toString()).startsWith("testRow")
                     && (value.get(1).toString()).startsWith("testQualifier1")
                     && (value.get(2).toString()).startsWith("testQualifier2");
-            
+
             if (correctValues == false) {
                 error = true;
             }
         }
     }
-    
+
+    static class MapReadProjHTable
+            extends
+            Mapper<ImmutableBytesWritable, HCatRecord, WritableComparable, Text> {
+
+        static boolean error = false;
+
+        @Override
+        public void map(ImmutableBytesWritable key, HCatRecord value,
+                Context context) throws IOException, InterruptedException {
+            boolean correctValues = (value.size() == 2)
+                    && (value.get(0).toString()).startsWith("testRow")
+                    && (value.get(1).toString()).startsWith("testQualifier1");
+
+            if (correctValues == false) {
+                error = true;
+            }
+        }
+    }
+
     private HCatSchema getSchema() throws HCatException {
-        
+
         HCatSchema schema = new HCatSchema(new ArrayList<HCatFieldSchema>());
         schema.append(new HCatFieldSchema("key", HCatFieldSchema.Type.STRING,
                 ""));
         schema.append(new HCatFieldSchema("testqualifier1",
                 HCatFieldSchema.Type.STRING, ""));
         schema.append(new HCatFieldSchema("testqualifier2",
+                HCatFieldSchema.Type.STRING, ""));
+        return schema;
+    }
+
+ private HCatSchema getProjectionSchema() throws HCatException {
+
+        HCatSchema schema = new HCatSchema(new ArrayList<HCatFieldSchema>());
+        schema.append(new HCatFieldSchema("key", HCatFieldSchema.Type.STRING,
+                ""));
+        schema.append(new HCatFieldSchema("testqualifier1",
                 HCatFieldSchema.Type.STRING, ""));
         return schema;
     }

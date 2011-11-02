@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test HBaseSerdeResultConverter by manually creating records to convert to and from HBase objects
@@ -174,5 +175,20 @@ public class TestHBaseSerDeResultConverter {
         assertEquals(1l,
                 put.get(Bytes.toBytes("my_family2"),
                         Bytes.toBytes("two")).get(0).getTimestamp());
+    }
+
+    @Test
+    public void testScanColumns() throws IOException{
+        HCatSchema schema = createHCatSchema();
+        HBaseSerDeResultConverter converter = new HBaseSerDeResultConverter(schema,
+                null,
+                createProperties());
+
+        String result = converter.getHBaseScanColumns();
+        String scanColumns = "my_family:my_qualifier1 my_family:my_qualifier2 my_family2: ";
+
+        assertTrue(scanColumns.equals(result));
+
+
     }
 }

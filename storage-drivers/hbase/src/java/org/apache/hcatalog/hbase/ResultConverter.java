@@ -47,4 +47,11 @@ interface ResultConverter {
      */
     HCatRecord convert(Result result) throws IOException;
 
+    /**
+     * Returns the hbase columns that are required for the scan.
+     * @return String containing hbase columns delimited by space.
+     * @throws IOException
+     */
+    String getHBaseScanColumns() throws IOException;
+
 }

@@ -52,49 +52,45 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
     private HCatSchema      outputColSchema;
     private HCatSchema      dataSchema;
     private Configuration   jobConf;
-    
+    private String          scanColumns;
+
     /*
      * @param JobContext
-     * 
+     *
      * @param hcatProperties
-     * 
+     *
      * @see org.apache.hcatalog.mapreduce.HCatInputStorageDriver
      * #initialize(org.apache.hadoop.mapreduce.JobContext, java.util.Properties)
      */
     @Override
-    public void initialize(JobContext context, Properties hcatProperties) {
+    public void initialize(JobContext context, Properties hcatProperties) throws IOException {
         jobConf = context.getConfiguration();
-        try {
-            String jobString = context.getConfiguration().get(
-                    HCatConstants.HCAT_KEY_JOB_INFO);
-            if (jobString == null) {
-                throw new IOException(
-                        "InputJobInfo information not found in JobContext. "
-                                + "HCatInputFormat.setInput() not called?");
-            }
-            InputJobInfo jobInfo = (InputJobInfo) HCatUtil
-                    .deserialize(jobString);
-            tableInfo = jobInfo.getTableInfo();
-            dataSchema = tableInfo.getDataColumns();
-            List<FieldSchema> fields = HCatUtil
-                    .getFieldSchemaList(outputColSchema.getFields());
-            hcatProperties.setProperty(Constants.LIST_COLUMNS,
-                    MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
-            hcatProperties.setProperty(Constants.LIST_COLUMN_TYPES,
-                    MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
-            converter = new HBaseSerDeResultConverter(dataSchema,
-                    outputColSchema, hcatProperties);
-        } catch (Exception e) {
-            e.printStackTrace();
+        String jobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
+        if (jobString == null) {
+            throw new IOException(
+                    "InputJobInfo information not found in JobContext. "
+                            + "HCatInputFormat.setInput() not called?");
         }
-        
+        InputJobInfo jobInfo = (InputJobInfo) HCatUtil.deserialize(jobString);
+        tableInfo = jobInfo.getTableInfo();
+        dataSchema = tableInfo.getDataColumns();
+        List<FieldSchema> fields = HCatUtil.getFieldSchemaList(dataSchema
+                .getFields());
+        hcatProperties.setProperty(Constants.LIST_COLUMNS,
+                MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
+        hcatProperties.setProperty(Constants.LIST_COLUMN_TYPES,
+                MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
+        converter = new HBaseSerDeResultConverter(dataSchema, outputColSchema,
+                hcatProperties);
+        scanColumns = converter.getHBaseScanColumns();
+
     }
-    
+
     /*
      * @param hcatProperties
-     * 
+     *
      * @return InputFormat
-     * 
+     *
      * @see org.apache.hcatalog.mapreduce.HCatInputStorageDriver
      * #getInputFormat(java.util.Properties)
      */
@@ -103,22 +99,23 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
             Properties hcatProperties) {
         HBaseInputFormat tableInputFormat = new HBaseInputFormat();
         jobConf.set(TableInputFormat.INPUT_TABLE, tableInfo.getTableName());
+        jobConf.set(TableInputFormat.SCAN_COLUMNS, scanColumns);
         tableInputFormat.setConf(jobConf);
         // TODO: Make the caching configurable by the user
         tableInputFormat.getScan().setCaching(200);
         tableInputFormat.getScan().setCacheBlocks(false);
         return tableInputFormat;
     }
-    
+
     /*
      * @param baseKey
-     * 
+     *
      * @param baseValue
-     * 
+     *
      * @return HCatRecord
-     * 
+     *
      * @throws IOException
-     * 
+     *
      * @see
      * org.apache.hcatalog.mapreduce.HCatInputStorageDriver#convertToHCatRecord
      * (org.apache.hadoop.io.WritableComparable, org.apache.hadoop.io.Writable)
@@ -128,14 +125,14 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
             Writable baseValue) throws IOException {
         return this.converter.convert((Result) baseValue);
     }
-    
+
     /*
      * @param jobContext
-     * 
+     *
      * @param howlSchema
-     * 
+     *
      * @throws IOException
-     * 
+     *
      * @see org.apache.hcatalog.mapreduce.HCatInputStorageDriver#
      * setOutputSchema(org.apache.hadoop.mapreduce.JobContext,
      * org.apache.hcatalog.data.schema.HCatSchema)
@@ -143,16 +140,16 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
     @Override
     public void setOutputSchema(JobContext jobContext, HCatSchema howlSchema)
             throws IOException {
-        outputColSchema = howlSchema;
+        this.outputColSchema = howlSchema;
     }
-    
+
     /*
      * @param jobContext
-     * 
+     *
      * @param partitionValues
-     * 
+     *
      * @throws IOException
-     * 
+     *
      * @see org.apache.hcatalog.mapreduce.HCatInputStorageDriver
      * #setPartitionValues(org.apache.hadoop.mapreduce.JobContext,
      * java.util.Map)
@@ -161,14 +158,14 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
     public void setPartitionValues(JobContext jobContext,
             Map<String, String> partitionValues) throws IOException {
     }
-    
+
     /*
      * @param jobContext
-     * 
+     *
      * @param hcatSchema
-     * 
+     *
      * @throws IOException
-     * 
+     *
      * @see org.apache.hcatalog.mapreduce.HCatInputStorageDriver
      * #setOriginalSchema(org.apache.hadoop.mapreduce.JobContext,
      * org.apache.hcatalog.data.schema.HCatSchema)

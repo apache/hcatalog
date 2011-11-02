@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-143. Projection pushdown for HBaseInputStorageDriver (avandana via toffer)
+
   HCAT-121. TextStorageOutputDriver for Pig (daijyc via hashutosh)  
 
   HCAT-129. HBase Storage Driver Test doesn't use unique test dir for warehouse (toffer via khorgath)

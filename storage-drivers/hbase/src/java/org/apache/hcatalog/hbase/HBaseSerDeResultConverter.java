@@ -63,6 +63,7 @@ class HBaseSerDeResultConverter implements  ResultConverter {
     private HCatSchema outputSchema;
     private StructObjectInspector hCatRecordOI;
     private StructObjectInspector lazyHBaseRowOI;
+    private String hbaseColumnMapping;
     private final Long outputVersion;
 
     /**
@@ -75,8 +76,8 @@ class HBaseSerDeResultConverter implements  ResultConverter {
                                      HCatSchema outputSchema,
                                      Properties hcatProperties) throws IOException {
 
-        hcatProperties.setProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING,
-                hcatProperties.getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY));
+        hbaseColumnMapping =  hcatProperties.getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
+        hcatProperties.setProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING,hbaseColumnMapping);
 
         if(hcatProperties.containsKey(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY))
             outputVersion = Long.parseLong(hcatProperties.getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY));
@@ -263,5 +264,45 @@ class HBaseSerDeResultConverter implements  ResultConverter {
             default :
                 throw new IOException("Unknown field schema type");
         }
+    }
+
+    public String getHBaseScanColumns() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        if(hbaseColumnMapping == null){
+            throw new IOException("HBase column mapping found to be null.");
+        }
+
+        List<String> outputFieldNames = this.outputSchema.getFieldNames();
+        List<Integer> outputColumnMapping = new ArrayList<Integer>();
+        for(String fieldName: outputFieldNames){
+            int position = schema.getPosition(fieldName);
+            outputColumnMapping.add(position);
+        }
+
+        try {
+            List<String> columnFamilies = new ArrayList<String>();
+            List<String> columnQualifiers = new ArrayList<String>();
+            HBaseSerDe.parseColumnMapping(hbaseColumnMapping, columnFamilies, null, columnQualifiers, null);
+            for(int i = 0; i < outputColumnMapping.size(); i++){
+                int cfIndex = outputColumnMapping.get(i);
+                String cf = columnFamilies.get(cfIndex);
+                // We skip the key column.
+                if (cf.equals(HBaseSerDe.HBASE_KEY_COL) == false) {
+                    String qualifier = columnQualifiers.get(i);
+                    sb.append(cf);
+                    sb.append(":");
+                    if (qualifier != null) {
+                        sb.append(qualifier);
+                    }
+                    sb.append(" ");
+                }
+            }
+
+        } catch (SerDeException e) {
+
+            throw new IOException(e);
+        }
+
+        return sb.toString();
     }
 }
