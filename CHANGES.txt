@@ -110,6 +110,8 @@ Release 0.2.0 - Unreleased
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-107. Better documentation for "hive.metastore.warehouse.dir" config (chandec via toffer) 
+
     HCAT-66. HCatalog 0.2.0 Documentation (chandec via hashutosh)
 
     HCAT-54. Javadoc is not being built as part of HCatalog docs (hashutosh) 
