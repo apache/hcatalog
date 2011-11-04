@@ -31,6 +31,8 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.HCatArrayBag;
@@ -44,6 +46,7 @@ import org.apache.pig.ResourceSchema;
 import org.apache.pig.LoadPushDown.RequiredField;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
+import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.DefaultDataBag;
 import org.apache.pig.data.Tuple;
@@ -275,6 +278,10 @@ public class PigHCatUtil {
       return DataType.DOUBLE;
     }
 
+    if (type == Type.BINARY){
+        return DataType.BYTEARRAY;
+    }
+    
     if (type == Type.BOOLEAN){
       errMsg = "HCatalog column type 'BOOLEAN' is not supported in " +
       "Pig as a column type";
@@ -293,18 +300,20 @@ public class PigHCatUtil {
     }
 
   @SuppressWarnings("unchecked")
-public static Object extractPigObject(Object o, HCatFieldSchema hfs) throws Exception {
+  public static Object extractPigObject(Object o, HCatFieldSchema hfs) throws Exception {
       Type itemType = hfs.getType();
-      if ( ! hfs.isComplex()){
-        return o;
-      } else  if (itemType == Type.STRUCT) {
-        return transformToTuple((List<Object>)o,hfs);
-      } else  if (itemType == Type.ARRAY) {
-        return transformToBag((List<? extends Object>) o,hfs);
-      } else  if (itemType == Type.MAP) {
-        return transformToPigMap((Map<String, Object>)o,hfs);
+      switch (itemType){
+	case BINARY:
+	  return new DataByteArray(((ByteArrayRef)o).getData());
+	case STRUCT:
+          return transformToTuple((List<Object>)o,hfs);
+	case ARRAY:
+          return transformToBag((List<? extends Object>) o,hfs);
+	case MAP:
+          return transformToPigMap((Map<String, Object>)o,hfs);
+	default:
+	  return o;
       }
-      return null; // never invoked.
   }
 
   public static Tuple transformToTuple(List<? extends Object> objList, HCatFieldSchema hfs) throws Exception {

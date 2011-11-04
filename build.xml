@@ -451,6 +451,7 @@
         <include name="commons-pool-*.jar"/>
         <include name="commons-dbcp-*.jar"/>
         <include name="guava-*.jar"/>
+        <include name="libthrift-*.jar"/>
       </fileset>
 
       <fileset dir="hive/external/build/shims">
@@ -488,7 +489,6 @@
         <include name="commons-lang-*.jar"/>
         <include name="asm-api-*.jar"/>
         <include name="derby-*.jar"/>
-        <include name="thrift-fb303-*.jar"/>
       </fileset>
 
       <fileset dir="hive/external/cli/lib">

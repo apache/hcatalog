@@ -15,7 +15,6 @@
     <!-- common classpaths for various builds -->
     <path id="common.classpath">
         <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
-        <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
         <fileset dir="${hive.root}/lib" includes="*.jar"/>
         <fileset dir="${hive.root}/build/cli" includes="*.jar"/>
         <fileset dir="${hive.root}/build/common" includes="*.jar"/>
@@ -29,6 +28,7 @@
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-2.3-ec.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-enhancer-2.0.3.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-2.0.3.jar"/>
+        <fileset dir="${hive.root}/build/ivy/lib/default" includes="libfb303-*.jar"/>
         <fileset dir="${common.lib.dir}" includes="hadoop_archive-0.3.1.jar"/>
         <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
     </path>

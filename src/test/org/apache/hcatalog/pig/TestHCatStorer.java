@@ -37,6 +37,7 @@ import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigException;
 import org.apache.pig.PigServer;
+import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.LogUtils;
@@ -498,7 +499,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreFuncAllSimpleTypes() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string) stored as RCFILE " +
+    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string, f binary) stored as RCFILE " +
         "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
         "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
     int retCode = driver.run(createTable).getResponseCode();
@@ -509,17 +510,17 @@ public class TestHCatStorer extends TestCase {
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat";
+      input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat"+"\tbinary-data";
     }
 
     MiniCluster.createInputFile(cluster, fileName, input);
     PigServer server = new PigServer(ExecType.LOCAL, props);
     UDFContext.getUDFContext().setClientSystemProps();
     server.setBatchOn();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:float, c:double, d:long, e:chararray);");
-    server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int, b:float, c:double, d:long, e:chararray');");
+    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:float, c:double, d:long, e:chararray, f:bytearray);");
+    server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int, b:float, c:double, d:long, e:chararray,f:bytearray');");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
+
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -531,8 +532,19 @@ public class TestHCatStorer extends TestCase {
     }
 
     assertFalse(itr.hasNext());
+    server.registerQuery("B = load 'junit_unparted' using "+HCatLoader.class.getName()+";");
+    Iterator<Tuple> i = server.openIterator("B");
+    int count = 0;
+    while(i.hasNext()){
+    	Object o = i.next().get(5);
+    	assertTrue(o instanceof DataByteArray);
+    	count++;
+    }
+    assertEquals(LOOP_SIZE  * LOOP_SIZE, count);
+    MiniCluster.deleteFile(cluster, fileName);
     driver.run("drop table junit_unparted");
   }
+  
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();

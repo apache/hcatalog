@@ -35,6 +35,7 @@ public class HCatFieldSchema implements Serializable {
         ARRAY,
         MAP,
         STRUCT,
+        BINARY,
     }
 
     public enum Category {

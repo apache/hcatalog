@@ -218,8 +218,8 @@ public class TestSemanticAnalysis extends TestCase{
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
     List<FieldSchema> cols = tbl.getSd().getCols();
     assertEquals(3, cols.size());
-    assertTrue(cols.get(0).equals(new FieldSchema("a", "int", "from deserializer")));
-    assertTrue(cols.get(1).equals(new FieldSchema("c", "string", "from deserializer")));
+    assertTrue(cols.get(0).equals(new FieldSchema("a", "int", null)));
+    assertTrue(cols.get(1).equals(new FieldSchema("c", "string", null)));
     assertTrue(cols.get(2).equals(new FieldSchema("d", "tinyint", null)));
     hcatDriver.run("drop table junit_sem_analysis");
   }

@@ -38,10 +38,11 @@ import org.apache.commons.cli.Parser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.cli.CliSessionState;
+import org.apache.hadoop.hive.common.LogUtils;
+import org.apache.hadoop.hive.common.LogUtils.LogInitializationException;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
-import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.SetProcessor;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
@@ -53,7 +54,11 @@ public class HCatCli {
   @SuppressWarnings("static-access")
   public static void main(String[] args) {
 
-    SessionState.initHiveLog4j();
+	  try {
+		  LogUtils.initHiveLog4j();
+	  } catch (LogInitializationException e) {
+
+	  }
 
     CliSessionState ss = new CliSessionState(new HiveConf(SessionState.class));
     ss.in = System.in;

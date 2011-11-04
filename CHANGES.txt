@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-145. Add support for binary data type (hashutosh)  
+
   HCAT-151. Fixed native table names used for tables stored in non-default DBs in HBaseInputStorageDriver (avandana via toffer)
 
   HCAT-143. Projection pushdown for HBaseInputStorageDriver (avandana via toffer)

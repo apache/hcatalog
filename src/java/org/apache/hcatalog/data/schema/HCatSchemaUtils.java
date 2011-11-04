@@ -151,6 +151,8 @@ public class HCatSchemaUtils {
             return Type.SMALLINT;
         case STRING:
             return Type.STRING;
+        case BINARY:
+        	return Type.BINARY;
         default:
             throw new TypeNotPresentException(((PrimitiveTypeInfo)basePrimitiveTypeInfo).getTypeName(), null);
         }

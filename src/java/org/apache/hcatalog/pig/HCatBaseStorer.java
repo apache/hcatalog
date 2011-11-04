@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -42,6 +43,7 @@ import org.apache.pig.StoreMetadata;
 import org.apache.pig.backend.BackendException;
 import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
+import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
@@ -187,6 +189,9 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     case DataType.DOUBLE:
       return new HCatFieldSchema(fSchema.alias, Type.DOUBLE, null);
 
+    case DataType.BYTEARRAY:
+    	return new HCatFieldSchema(fSchema.alias, Type.BINARY, null);
+    	
     case DataType.BAG:
       Schema bagSchema = fSchema.schema;
       List<HCatFieldSchema> arrFields = new ArrayList<HCatFieldSchema>(1);
@@ -219,6 +224,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
         case INT:
         case FLOAT:
         case DOUBLE:
+        case BINARY:
           valFS = new HCatFieldSchema(fSchema.alias, mapValType, null);
           break;
         default:
@@ -269,6 +275,12 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
 
     switch(type){
 
+    case BINARY:
+    	ByteArrayRef ba = new ByteArrayRef();
+    	byte[] bytes = (null == pigObj) ? new byte[0] : ((DataByteArray)pigObj).get(); 
+    	ba.setData(bytes);
+    	return ba;
+    	
     case STRUCT:
       // Unwrap the tuple.
       return ((Tuple)pigObj).getAll();
