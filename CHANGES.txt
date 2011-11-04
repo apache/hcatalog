@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-151. Fixed native table names used for tables stored in non-default DBs in HBaseInputStorageDriver (avandana via toffer)
+
   HCAT-143. Projection pushdown for HBaseInputStorageDriver (avandana via toffer)
 
   HCAT-121. TextStorageOutputDriver for Pig (daijyc via hashutosh)  

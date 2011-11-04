@@ -17,36 +17,37 @@
  */
 package org.apache.hcatalog.hbase;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hive.hbase.HBaseSerDe;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.cli.CliSessionState;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.metastore.TableType;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hcatalog.cli.HCatDriver;
+import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
@@ -59,6 +60,8 @@ import org.junit.Test;
 
 public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
 
+    private static HiveConf   hcatConf;
+    private static HCatDriver hcatDriver;
     private final byte[] FAMILY     = Bytes.toBytes("testFamily");
     private final byte[] QUALIFIER1 = Bytes.toBytes("testQualifier1");
     private final byte[] QUALIFIER2 = Bytes.toBytes("testQualifier2");
@@ -76,71 +79,66 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         return myPuts;
     }
 
-    private void registerHBaseTable(String tableName) throws Exception {
+    public void Initialize() throws Exception {
+        hcatConf = getHiveConf();
+        hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
+                HCatSemanticAnalyzer.class.getName());
+        URI fsuri = getFileSystem().getUri();
+        Path whPath = new Path(fsuri.getScheme(), fsuri.getAuthority(),
+                getTestDir());
+        hcatConf.set(HiveConf.ConfVars.HADOOPFS.varname, fsuri.toString());
+        hcatConf.set(ConfVars.METASTOREWAREHOUSE.varname, whPath.toString());
 
-        String databaseName = MetaStoreUtils.DEFAULT_DATABASE_NAME;
-        HiveMetaStoreClient client = getCluster().getHiveMetaStoreClient();
-        try {
-            client.dropTable(databaseName, tableName);
-        } catch (Exception e) {
-        } // can fail with NoSuchObjectException
+        //Add hbase properties
 
-        Table tbl = new Table();
-        tbl.setDbName(databaseName);
-        tbl.setTableName(tableName);
-        tbl.setTableType(TableType.EXTERNAL_TABLE.toString());
-        tbl.setPartitionKeys(new ArrayList<FieldSchema>());
-        Map<String, String> tableParams = new HashMap<String, String>();
-        tableParams.put(HCatConstants.HCAT_ISD_CLASS,
-                HBaseInputStorageDriver.class.getName());
-        tableParams.put(HCatConstants.HCAT_OSD_CLASS, "NotRequired");
-        tableParams.put(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY,
-                ":key,testFamily:testQualifier1,testFamily:testQualifier2");
-        tableParams.put(Constants.SERIALIZATION_FORMAT, "9");
-        tableParams.put(Constants.SERIALIZATION_NULL_FORMAT, "NULL");
-        tbl.setParameters(tableParams);
+        for (Map.Entry<String, String> el : getHbaseConf()) {
+            if (el.getKey().startsWith("hbase.")) {
+                hcatConf.set(el.getKey(), el.getValue());
+            }
+        }
 
-        StorageDescriptor sd = new StorageDescriptor();
-        sd.setCols(HCatUtil.getFieldSchemaList(getSchema().getFields()));
-        sd.setBucketCols(new ArrayList<String>(3));
-        sd.setSerdeInfo(new SerDeInfo());
-        sd.getSerdeInfo().setName(tbl.getTableName());
-        sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-        sd.getSerdeInfo().getParameters()
-                .put(Constants.SERIALIZATION_FORMAT, "9");
-        sd.getSerdeInfo().setSerializationLib(HBaseSerDe.class.getName());
-        sd.setInputFormat(HBaseInputFormat.class.getName());
-        sd.setOutputFormat("NotRequired");
-
-        tbl.setSd(sd);
-        client.createTable(tbl);
+        SessionState.start(new CliSessionState(hcatConf));
+        hcatDriver = new HCatDriver();
 
     }
 
-    public void populateTable(String tableName) throws IOException {
+    public void populateHBaseTable(String tName) throws IOException {
         List<Put> myPuts = generatePuts(10);
-        HTable table = new HTable(getHbaseConf(), Bytes.toBytes(tableName));
+        HTable table = new HTable(getHbaseConf(), Bytes.toBytes(tName));
         table.put(myPuts);
     }
 
     @Test
     public void TestHBaseTableReadMR() throws Exception {
-        String tableName  = "testtableone";
-        Configuration conf = new Configuration();
-        // include hbase config in conf file
-        for (Map.Entry<String, String> el : getHbaseConf()) {
-            if (el.getKey().startsWith("hbase.")) {
-                conf.set(el.getKey(), el.getValue());
-            }
-        }
+        Initialize();
+        String tableName = newTableName("mytable");
+        String databaseName = newTableName("mydatabase");
+        String db_dir = getTestDir() + "/hbasedb";
 
+        String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '"
+                            + db_dir + "'";
+        String tableQuery = "CREATE TABLE " + databaseName + "." + tableName
+                              + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
+                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
+                              + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
+                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
+                              "'hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')" ;
+
+        CommandProcessorResponse responseOne = hcatDriver.run(dbquery);
+        assertEquals(0, responseOne.getResponseCode());
+        CommandProcessorResponse responseTwo = hcatDriver.run(tableQuery);
+        assertEquals(0, responseTwo.getResponseCode());
+
+        HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
+        String hbaseTableName = databaseName + "." + tableName;
+        boolean doesTableExist = hAdmin.tableExists(hbaseTableName);
+        assertTrue(doesTableExist);
+
+        populateHBaseTable(hbaseTableName);
+        Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
                 HCatUtil.serialize(getHiveConf().getAllProperties()));
 
-        // create Hbase table using admin
-        createTable(tableName, new String[] { "testFamily" });
-        registerHBaseTable(tableName);
-        populateTable(tableName);
         // output settings
         Path outputDir = new Path(getTestDir(), "mapred/testHbaseTableMRRead");
         FileSystem fs = getFileSystem();
@@ -151,10 +149,10 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         Job job = new Job(conf, "hbase-mr-read-test");
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapReadHTable.class);
+
         job.setInputFormatClass(HCatInputFormat.class);
-        InputJobInfo inputJobInfo = InputJobInfo.create(
-                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
-                null);
+        InputJobInfo inputJobInfo = InputJobInfo.create(databaseName, tableName,
+                null, null, null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
@@ -165,27 +163,44 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
         assertTrue(MapReadHTable.error == false);
+
+        String dropTableQuery = "DROP TABLE " + hbaseTableName ;
+        CommandProcessorResponse responseThree = hcatDriver.run(dropTableQuery);
+        assertEquals(0, responseThree.getResponseCode());
+
+        boolean isHbaseTableThere = hAdmin.tableExists(hbaseTableName);
+        assertTrue(isHbaseTableThere == false);
+
+        String dropDB = "DROP DATABASE " + databaseName;
+        CommandProcessorResponse responseFour = hcatDriver.run(dropDB);
+        assertEquals(0, responseFour.getResponseCode());
     }
 
     @Test
     public void TestHBaseTableProjectionReadMR() throws Exception {
 
-        String tableName = "testtabletwo";
-        Configuration conf = new Configuration();
-        // include hbase config in conf file
-        for (Map.Entry<String, String> el : getHbaseConf()) {
-            if (el.getKey().startsWith("hbase.")) {
-                conf.set(el.getKey(), el.getValue());
-            }
-        }
+        Initialize();
+        String tableName = newTableName("mytable");
+        String tableQuery = "CREATE TABLE " + tableName
+                              + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
+                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
+                              + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
+                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
+                              "'hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')" ;
 
+        CommandProcessorResponse responseTwo = hcatDriver.run(tableQuery);
+        assertEquals(0, responseTwo.getResponseCode());
+
+        HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
+        boolean doesTableExist = hAdmin.tableExists(tableName);
+        assertTrue(doesTableExist);
+
+        populateHBaseTable(tableName);
+
+        Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
                 HCatUtil.serialize(getHiveConf().getAllProperties()));
 
-        // create Hbase table using admin
-        createTable(tableName, new String[] { "testFamily" });
-        registerHBaseTable(tableName);
-        populateTable(tableName);
         // output settings
         Path outputDir = new Path(getTestDir(), "mapred/testHBaseTableProjectionReadMR");
         FileSystem fs = getFileSystem();
@@ -211,6 +226,13 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
         assertTrue(MapReadHTable.error == false);
+
+        String dropTableQuery = "DROP TABLE " + tableName ;
+        CommandProcessorResponse responseThree = hcatDriver.run(dropTableQuery);
+        assertEquals(0, responseThree.getResponseCode());
+
+        boolean isHbaseTableThere = hAdmin.tableExists(tableName);
+        assertTrue(isHbaseTableThere == false);
     }
 
 
@@ -251,18 +273,6 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
                 error = true;
             }
         }
-    }
-
-    private HCatSchema getSchema() throws HCatException {
-
-        HCatSchema schema = new HCatSchema(new ArrayList<HCatFieldSchema>());
-        schema.append(new HCatFieldSchema("key", HCatFieldSchema.Type.STRING,
-                ""));
-        schema.append(new HCatFieldSchema("testqualifier1",
-                HCatFieldSchema.Type.STRING, ""));
-        schema.append(new HCatFieldSchema("testqualifier2",
-                HCatFieldSchema.Type.STRING, ""));
-        return schema;
     }
 
  private HCatSchema getProjectionSchema() throws HCatException {

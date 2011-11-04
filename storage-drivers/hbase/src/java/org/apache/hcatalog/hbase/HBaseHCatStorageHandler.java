@@ -49,6 +49,7 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
+import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
 
 /**
@@ -379,6 +380,20 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
         } catch (IOException ie) {
             throw new MetaException(StringUtils.stringifyException(ie));
         }
+    }
+
+    static String getFullyQualifiedName(HCatTableInfo tableInfo){
+        String qualifiedName;
+        String databaseName = tableInfo.getDatabaseName();
+        String tableName = tableInfo.getTableName();
+
+        if ((databaseName == null) || (databaseName.equals(MetaStoreUtils.DEFAULT_DATABASE_NAME))) {
+            qualifiedName = tableName;
+        } else {
+            qualifiedName = databaseName + "." + tableName;
+        }
+
+        return qualifiedName;
     }
 
 }

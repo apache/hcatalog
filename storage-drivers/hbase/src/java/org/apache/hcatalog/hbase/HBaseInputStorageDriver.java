@@ -98,7 +98,8 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
     public InputFormat<ImmutableBytesWritable, Result> getInputFormat(
             Properties hcatProperties) {
         HBaseInputFormat tableInputFormat = new HBaseInputFormat();
-        jobConf.set(TableInputFormat.INPUT_TABLE, tableInfo.getTableName());
+        String hbaseTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
+        jobConf.set(TableInputFormat.INPUT_TABLE, hbaseTableName);
         jobConf.set(TableInputFormat.SCAN_COLUMNS, scanColumns);
         tableInputFormat.setConf(jobConf);
         // TODO: Make the caching configurable by the user
