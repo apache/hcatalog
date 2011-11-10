@@ -440,18 +440,26 @@
       <fileset dir="${lib.dir}"/>
 
       <fileset dir="hive/external/build/ivy/lib/default">
-        <include name="jdo2-api-*.jar"/>
-        <include name="log4j-*.jar"/>
-        <include name="slf4j-*.jar"/>
+        <include name="antlr-runtime-*.jar"/>
+        <include name="asm-*.jar"/>
+        <include name="commons-cli-*.jar"/>
+        <include name="commons-collections-*.jar"/>
+        <include name="commons-dbcp-*.jar"/>
+        <include name="commons-lang-*.jar"/>
+        <include name="commons-logging-*.jar"/>
+        <include name="commons-logging-api-*.jar"/>
+        <include name="commons-pool-*.jar"/>
         <include name="datanucleus-connectionpool-*.jar"/>
         <include name="datanucleus-core-*.jar"/>
-        <include name="datanucleus-rdbms-*.jar"/>
         <include name="datanucleus-enhancer-*.jar"/>
-        <include name="commons-cli-*.jar"/>
-        <include name="commons-pool-*.jar"/>
-        <include name="commons-dbcp-*.jar"/>
+        <include name="datanucleus-rdbms-*.jar"/>
+        <include name="derby-*.jar"/>
         <include name="guava-*.jar"/>
+        <include name="jdo2-api-*.jar"/>
+        <include name="jline-*.jar"/>
         <include name="libthrift-*.jar"/>
+        <include name="log4j-*.jar"/>
+        <include name="slf4j-*.jar"/>
       </fileset>
 
       <fileset dir="hive/external/build/shims">
@@ -482,22 +490,6 @@
         <include name="hive-metastore-*.jar"/>
       </fileset>
 
-      <fileset dir="hive/external/lib">
-        <include name="commons-collections-*.jar"/>
-        <include name="commons-logging-*.jar"/>
-        <include name="commons-logging-api-*.jar"/>
-        <include name="commons-lang-*.jar"/>
-        <include name="asm-api-*.jar"/>
-        <include name="derby-*.jar"/>
-      </fileset>
-
-      <fileset dir="hive/external/cli/lib">
-        <include name="jline-*.jar"/>
-      </fileset>
-
-      <fileset dir="hive/external/ql/lib">
-        <include name="antlr-runtime-*.jar"/>
-      </fileset>
     </copy>
 
     <copy todir="${dist.dir}/bin">
