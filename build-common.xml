@@ -32,7 +32,6 @@
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="libfb303-*.jar"/>
-        <fileset dir="${common.lib.dir}" includes="hadoop_archive-0.3.1.jar"/>
         <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
     </path>
 

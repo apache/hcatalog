@@ -45,6 +45,7 @@
         <dependency org="org.apache.hadoop" name="hadoop-core" rev="${hadoop-core.version}"
           conf="common->master"/>
           -->
+        <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop-tools.version}" conf="common->master" />
         <dependency org="javax.jms" name="jms" rev="${jms.version}" conf="common->master" />
         <dependency org="org.apache.activemq" name="activemq-all" rev="${activemq.version}" conf="common->master" />
         <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}" conf="common->master" /> 
