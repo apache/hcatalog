@@ -150,7 +150,78 @@ public void onMessage(Message msg) {
   System.out.println("Message: "+msg);
 </source>
 
-<p>Notification is enabled by default. To disable notification, you need to leave <code>hive.metastore.event.listeners</code> blank or remove it from <code>hive-site.xml.</code></p>
+
+</section>
+
+<section>
+	<title>Server Configuration</title>
+	<p>To enable notification, you need to configure the server (see below). </p>
+	<p>To disable notification, you need to leave <code>hive.metastore.event.listeners</code> blank or remove it from <code>hive-site.xml.</code></p>
+	
+	<p><strong>Enable JMS Notifications</strong></p>
+	<p>You need to make (add/modify) the following changes to the hive-site.xml file of your HCatalog server to turn on notifications.</p>
+	
+<source>
+&lt;property&gt;
+&lt;name&gt;hive.metastore.event.expiry.duration&lt;/name&gt;
+&lt;value&gt;300L&lt;/value&gt;
+&lt;description&gt;Duration after which events expire from events table (in seconds)&lt;/description&gt;
+&lt;/property&gt;
+
+&lt;property&gt;
+&lt;name&gt;hive.metastore.event.clean.freq&lt;/name&gt;
+&lt;value&gt;360L&lt;/value&gt;
+&lt;description&gt;Frequency at which timer task runs to purge expired events in metastore(in seconds).&lt;/description&gt;
+&lt;/property&gt;
+
+&lt;property&gt;
+&lt;name&gt;msgbus.brokerurl&lt;/name&gt;
+&lt;value&gt;tcp://localhost:61616&lt;/value&gt;
+&lt;description&gt;&lt;/description&gt;
+&lt;/property&gt;
+
+&lt;property&gt;
+&lt;name&gt;msgbus.username&lt;/name&gt;
+&lt;value&gt;&lt;/value&gt;
+&lt;description&gt;&lt;/description&gt;
+&lt;/property&gt;
+
+&lt;property&gt;
+&lt;name&gt;msgbus.password&lt;/name&gt;
+&lt;value&gt;&lt;/value&gt;
+&lt;description&gt;&lt;/description&gt;
+&lt;/property&gt;
+</source>
+
+<p>For the server to start with support for notifications, the following must be in the classpath:</p>
+<ul>
+	<li>(a) activemq jar </li>
+    <li>(b) jndi.properties file with properties suitably configured for notifications</li>
+</ul>
+<p></p>
+<p>Then, follow these steps:</p>
+<ol>
+<li>HCatalog server start script is $YOUR_HCAT_SERVER/share/hcatalog/scripts/hcat_server_start.sh</li>
+<li>This script expects classpath to be set by the AUX_CLASSPATH environment variable.</li>
+<li>Therefore set AUX_CLASSPATH to satisfy (a) and (b) above.</li>
+<li>jndi.properties file is located at $YOUR_HCAT_SERVER/etc/hcatalog/jndi.properties</li>
+<li>You need to uncomment and set the following properties in this file: -
+<ul>
+<li>java.naming.factory.initial = org.apache.activemq.jndi.ActiveMQInitialContextFactory</li>
+<li>java.naming.provider.url = tcp://localhost:61616 (this is activemq url in your setup)
+</li>
+</ul>
+</li>
+</ol>
+
+<p><strong>Topic Names</strong></p>
+<p>If tables are created while the server is configured for notifications, a default topic name is automatically set as table property. To use notifications with tables created previously (previous HCatalog installations or created prior to enabling notifications), you will have to manually set a topic name, an example will be: </p>
+<source>
+$YOUR_HCAT_CLIENT_HOME/bin/hcat -e "ALTER TABLE access SET hcat.msgbus.topic.name=$TOPIC_NAME"
+</source>
+	
+<p>You then need to configure your activemq Consumer(s) to listen for messages on the topic you gave in $TOPIC_NAME. A good default policy for TOPIC_NAME = "$database.$table" (that is a literal dot)</p>	
+	
 </section>
     
   </body>

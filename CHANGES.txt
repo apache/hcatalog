@@ -35,6 +35,8 @@ Release 0.2.0 - Sept-2011
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-153. More comprehensive documentation for notification
+
     HCAT-99. HCatalog V2 Docs (chandec via hashutosh) 
 
     HCAT-94. Handle the job tracker tokens properly in har jobs (khorgath via hashutosh)   
