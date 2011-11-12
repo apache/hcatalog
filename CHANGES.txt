@@ -116,6 +116,8 @@ Release 0.2.0 - Unreleased
     (Krishna Kumar via macyang)
     
   IMPROVEMENTS
+    HCAT-153. More comprehensive documentation for notification
+
     HCAT-150. Updated documentation specifying the need to call HCatOutputFormat.setSchema() (chandec via toffer)
 
     HCAT-107. Better documentation for "hive.metastore.warehouse.dir" config (chandec via toffer) 
