@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-159. Build broken by recent Hive changes that move around jar files  part-2 (thw via hashutosh)
+
   HCAT-159. Build broken by recent Hive changes that move around jar files (gates)
 
   HCAT-148. Meaningful error message on failure to resolve topic name for partition event (thw via hashutosh)
