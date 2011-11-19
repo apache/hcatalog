@@ -77,6 +77,17 @@ public class TestSemanticAnalysis extends TestCase{
   String query;
   private final String tblName = "junit_sem_analysis";
 
+  public void testDescDB() throws CommandNeedRetryException, IOException {
+	hcatDriver.run("drop database mydb cascade");
+	assertEquals(0, hcatDriver.run("create database mydb").getResponseCode());
+	CommandProcessorResponse resp = hcatDriver.run("describe database mydb");
+	assertEquals(0, resp.getResponseCode());
+	ArrayList<String> result = new ArrayList<String>();
+	hcatDriver.getResults(result);
+	assertTrue(result.get(0).contains("mydb.db"));
+	hcatDriver.run("drop database mydb cascade");
+  }
+  
   public void testCreateTblWithLowerCasePartNames() throws CommandNeedRetryException, MetaException, TException, NoSuchObjectException{
     hiveDriver.run("drop table junit_sem_analysis");
     CommandProcessorResponse resp = hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (B string) stored as TEXTFILE");

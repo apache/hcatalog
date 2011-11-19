@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-125. HCat doesn't support hive's describe database DDL (hashutosh)
+
   HCAT-159. Build broken by recent Hive changes that move around jar files  part-2 (thw via hashutosh)
 
   HCAT-159. Build broken by recent Hive changes that move around jar files (gates)

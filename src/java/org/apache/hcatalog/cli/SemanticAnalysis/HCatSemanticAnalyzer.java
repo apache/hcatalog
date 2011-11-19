@@ -63,13 +63,12 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       hook = new CreateDatabaseHook();
       return hook.preAnalyze(context, ast);
 
-    // DML commands used in HCat where we use the same implementation as default Hive.
+    // HCat will allow these operations to be performed since they are DDL statements.
     case HiveParser.TOK_SHOWDATABASES:
     case HiveParser.TOK_DROPDATABASE:
     case HiveParser.TOK_SWITCHDATABASE:
-      return ast;
+    case HiveParser.TOK_DESCDATABASE:
 
-    // HCat will allow these operations to be performed since they are DDL statements.
     case HiveParser.TOK_DROPTABLE:
     case HiveParser.TOK_DESCTABLE:
     case HiveParser.TOK_ALTERTABLE_ADDCOLS:
@@ -138,6 +137,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
         authorize(BaseSemanticAnalyzer.unescapeIdentifier(((ASTNode)ast.getChild(0)).getChild(0).getText()), context, FsAction.WRITE, false);
         break;
 
+      case HiveParser.TOK_DESCDATABASE:
       case HiveParser.TOK_SWITCHDATABASE:
         authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.READ, true);
         break;
