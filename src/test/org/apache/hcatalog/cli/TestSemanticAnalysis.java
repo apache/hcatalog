@@ -126,6 +126,11 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+
+  public void testUsNonExistentDB() throws CommandNeedRetryException {
+	assertEquals(9, hcatDriver.run("use no_such_db").getResponseCode());  
+  }
+  
   public void testDatabaseOperations() throws MetaException, CommandNeedRetryException {
 
     List<String> dbs = msc.getAllDatabases();

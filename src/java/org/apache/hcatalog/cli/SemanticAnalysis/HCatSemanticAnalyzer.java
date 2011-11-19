@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -212,7 +213,12 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       }
     } else{
       // Else, its a DB operation.
-      AuthUtils.authorize(wh.getDatabasePath(cntxt.getHive().getDatabase(name)), action, cntxt.getConf());
+    	Database db = cntxt.getHive().getDatabase(name); 
+    	if(null == db){
+    		// Database doesn't exist, nothing to authorize
+    		return;
+    	}
+      AuthUtils.authorize(wh.getDatabasePath(db), action, cntxt.getConf());
     }
   }
 
