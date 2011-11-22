@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-155. HBase bulkOSD requires value to be Put rather than HCatRecord (toffer via hashutosh) 
+
   HCAT-157. HBaseOutputFormat assumes hbase table name is hcat table name (toffer via hashutosh) 
  
   HCAT-154. HBase bulkOSD and directOSD return inconsistent path for getOutputLocation() (toffer via hashutosh)

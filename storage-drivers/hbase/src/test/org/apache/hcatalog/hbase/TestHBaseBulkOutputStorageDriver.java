@@ -14,11 +14,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
@@ -34,8 +33,6 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -82,7 +79,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         }
     }
 
-    public static class MapHCatWrite extends Mapper<LongWritable, Text, ImmutableBytesWritable, HCatRecord> {
+    public static class MapHCatWrite extends Mapper<LongWritable, Text, BytesWritable, HCatRecord> {
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             OutputJobInfo jobInfo = (OutputJobInfo)HCatUtil.deserialize(context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
@@ -143,10 +140,10 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         SequenceFileOutputFormat.setOutputPath(job,interPath);
 
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
-        job.setMapOutputValueClass(Put.class);
+        job.setMapOutputValueClass(HCatRecord.class);
 
         job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
 
@@ -287,10 +284,12 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         // input/output settings
         Path inputPath = new Path(methodTestDir,"mr_input");
         getFileSystem().mkdirs(inputPath);
-        FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
-        for(String line: data)
-            os.write(Bytes.toBytes(line + "\n"));
-        os.close();
+        //create multiple files so we can test with multiple mappers
+        for(int i=0;i<data.length;i++) {
+            FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile"+i+".txt"));
+            os.write(Bytes.toBytes(data[i] + "\n"));
+            os.close();
+        }
 
         //create job
         Job job = new Job(conf,testName);
@@ -306,11 +305,11 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null,null,null);
         HCatOutputFormat.setOutput(job,outputJobInfo);
 
-        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
 
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputKeyClass(BytesWritable.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
 
@@ -390,10 +389,12 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         // input/output settings
         Path inputPath = new Path(methodTestDir,"mr_input");
         getFileSystem().mkdirs(inputPath);
-        FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
-        for(String line: data)
-            os.write(Bytes.toBytes(line + "\n"));
-        os.close();
+        //create multiple files so we can test with multiple mappers
+        for(int i=0;i<data.length;i++) {
+            FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile"+i+".txt"));
+            os.write(Bytes.toBytes(data[i] + "\n"));
+            os.close();
+        }
 
         //create job
         Job job = new Job(conf,testName);
@@ -410,11 +411,11 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         outputJobInfo.getProperties().put(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY, "1");
         HCatOutputFormat.setOutput(job,outputJobInfo);
 
-        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
 
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputKeyClass(BytesWritable.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
 
@@ -495,11 +496,11 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null,null,null);
         HCatOutputFormat.setOutput(job,outputJobInfo);
 
-        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
 
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputKeyClass(BytesWritable.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
 

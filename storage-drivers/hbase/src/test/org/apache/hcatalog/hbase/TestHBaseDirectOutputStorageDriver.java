@@ -183,10 +183,10 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         job.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
 
         job.setMapOutputKeyClass(BytesWritable.class);
-        job.setMapOutputValueClass(Put.class);
+        job.setMapOutputValueClass(HCatRecord.class);
 
         job.setOutputKeyClass(BytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
@@ -280,7 +280,7 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         job.setMapOutputValueClass(HCatRecord.class);
 
         job.setOutputKeyClass(BytesWritable.class);
-        job.setOutputValueClass(Put.class);
+        job.setOutputValueClass(HCatRecord.class);
 
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
