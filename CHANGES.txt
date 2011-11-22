@@ -79,6 +79,10 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-157. HBaseOutputFormat assumes hbase table name is hcat table name (toffer via hashutosh) 
+ 
+  HCAT-154. HBase bulkOSD and directOSD return inconsistent path for getOutputLocation() (toffer via hashutosh)
+
   HCAT-124. null pointer execption on 'use no_such_db' (hashutosh)
 
   HCAT-125. HCat doesn't support hive's describe database DDL (hashutosh)

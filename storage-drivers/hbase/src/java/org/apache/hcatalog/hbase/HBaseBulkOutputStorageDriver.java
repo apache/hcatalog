@@ -24,9 +24,13 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 
@@ -36,15 +40,29 @@ import java.util.Properties;
  * efficient for large batch writes in comparison to HBaseDirectOutputStorageDriver.
  */
 public class HBaseBulkOutputStorageDriver extends HBaseBaseOutputStorageDriver {
+    private String PROPERTY_TABLE_LOCATION = "hcat.hbase.mapreduce.table.location";
+    private String PROPERTY_INT_OUTPUT_LOCATION = "hcat.hbase.mapreduce.intermediateOutputLocation";
     private OutputFormat outputFormat;
     private final static ImmutableBytesWritable EMPTY_KEY = new ImmutableBytesWritable(new byte[0]);
 
     @Override
     public void initialize(JobContext context, Properties hcatProperties) throws IOException {
         super.initialize(context, hcatProperties);
-        Path outputDir = new Path(outputJobInfo.getLocation());
-        context.getConfiguration().set("mapred.output.dir", outputDir.toString());
+
+        //initialize() gets called multiple time in the lifecycle of an MR job, client, mapper, reducer, etc
+        //depending on the case we have to make sure for some context variables we set here that they don't get set again
+        if(!outputJobInfo.getProperties().containsKey(PROPERTY_INT_OUTPUT_LOCATION)) {
+            String location = new  Path(context.getConfiguration().get(PROPERTY_TABLE_LOCATION),
+                                                    "REVISION_"+outputJobInfo.getProperties()
+                                                                                               .getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY)).toString();
+            outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION, location);
+            //We are writing out an intermediate sequenceFile hence location is not passed in OutputJobInfo.getLocation()
+            //TODO replace this with a mapreduce constant when available
+            context.getConfiguration().set("mapred.output.dir", location);
+        }
+
         outputFormat = new HBaseBulkOutputFormat();
+        context.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
     }
 
     @Override
@@ -57,4 +75,11 @@ public class HBaseBulkOutputStorageDriver extends HBaseBaseOutputStorageDriver {
         return EMPTY_KEY;
     }
 
+    @Override
+    public String getOutputLocation(JobContext jobContext, String tableLocation, List<String> partitionCols, Map<String, String> partitionValues, String dynHash) throws IOException {
+        //TODO have HCatalog common objects expose more information
+        //this is the only way to pickup table location for storageDrivers
+        jobContext.getConfiguration().set(PROPERTY_TABLE_LOCATION, tableLocation);
+        return null;
+    }
 }

@@ -73,7 +73,7 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
         if(revision == null) {
             outputJobInfo.getProperties()
                          .setProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY,
-                                      new Path(outputJobInfo.getLocation()).getName());
+                                            Long.toString(System.currentTimeMillis()));
         }
 
         tableInfo = outputJobInfo.getTableInfo();
@@ -89,7 +89,7 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
         converter = new HBaseSerDeResultConverter(schema,
                                                   outputSchema,
                                                   hcatProperties);
-        context.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY,tableInfo.getTableName());
+        context.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo));
     }
 
     @Override
@@ -125,7 +125,6 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
 
     @Override
     public String getOutputLocation(JobContext jobContext, String tableLocation, List<String> partitionCols, Map<String, String> partitionValues, String dynHash) throws IOException {
-        //TODO figure out a way to include user specified revision number as part of dir
-        return new Path(tableLocation, Long.toString(System.currentTimeMillis())).toString();
+        return null;
     }
 }

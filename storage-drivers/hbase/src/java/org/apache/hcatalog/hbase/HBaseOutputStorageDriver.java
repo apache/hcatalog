@@ -47,11 +47,12 @@ public class HBaseOutputStorageDriver extends HCatOutputStorageDriver {
     public String getOutputLocation(JobContext jobContext, String tableLocation, List<String> partitionCols, Map<String, String> partitionValues, String dynHash) throws IOException {
         //sanity check since we can't determine which will be used till initialize
         //and this method gets called before that
-        String location = bulkOSD.getOutputLocation(jobContext, tableLocation, partitionCols, partitionValues, dynHash);
-        if(!location.equals(directOSD.getOutputLocation(jobContext, tableLocation, partitionCols, partitionValues, dynHash))) {
-            throw new IOException("bulkOSD and directOSD return inconsistent path for getOutputLocation()");
+        String l1 = bulkOSD.getOutputLocation(jobContext, tableLocation, partitionCols, partitionValues, dynHash);
+        String l2 = directOSD.getOutputLocation(jobContext, tableLocation, partitionCols, partitionValues, dynHash);
+        if(l1 != null || l2 != null) {
+            throw new IOException("bulkOSD or directOSD returns a non-null path for getOutputLocation()");
         }
-        return location;
+        return null;
     }
 
     @Override
