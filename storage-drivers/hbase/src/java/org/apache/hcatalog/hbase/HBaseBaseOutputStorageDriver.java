@@ -50,6 +50,14 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
     protected HCatSchema schema;
     protected HCatSchema outputSchema;
 
+    /**
+     *  Subclasses are required to serialize OutputJobInfo back into jobContext.
+     *  Since initialize() sets some properties in OutputJobInfo, requiring
+     *  an update of the instance stored in jobContext.
+     * @param context the job context object
+     * @param hcatProperties the properties for the storage driver
+     * @throws IOException
+     */
     @Override
     public void initialize(JobContext context, Properties hcatProperties) throws IOException {
         hcatProperties = (Properties)hcatProperties.clone();

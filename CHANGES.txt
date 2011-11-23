@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-160. HBaseDirectOutputStorageDriver outputVersion isn't consitent within the same MR job (toffer via hashutosh)
+
   HCAT-155. HBase bulkOSD requires value to be Put rather than HCatRecord (toffer via hashutosh) 
 
   HCAT-157. HBaseOutputFormat assumes hbase table name is hcat table name (toffer via hashutosh) 

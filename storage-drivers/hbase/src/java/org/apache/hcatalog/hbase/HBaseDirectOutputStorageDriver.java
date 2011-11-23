@@ -22,6 +22,8 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -36,6 +38,7 @@ public class HBaseDirectOutputStorageDriver extends HBaseBaseOutputStorageDriver
     @Override
     public void initialize(JobContext context, Properties hcatProperties) throws IOException {
         super.initialize(context, hcatProperties);
+        context.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
         outputFormat = new HBaseDirectOutputFormat();
         outputFormat.setConf(context.getConfiguration());
     }
