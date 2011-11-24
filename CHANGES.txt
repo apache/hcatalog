@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-169. Creating a table with HCatStorageHandler does not correctly store the hcat.isd and hcat.osd names (avandana via toffer)
+
   HCAT-160. HBaseDirectOutputStorageDriver outputVersion isn't consitent within the same MR job (toffer via hashutosh)
 
   HCAT-155. HBase bulkOSD requires value to be Put rather than HCatRecord (toffer via hashutosh) 

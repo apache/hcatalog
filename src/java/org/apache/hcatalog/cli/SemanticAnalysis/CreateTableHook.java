@@ -249,24 +249,22 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
                         .getAuthorizationProvider();
 
                 // TBD: To pass in the exact read and write privileges.
-                auth.authorize(context.getHive().getTable(tableName), null,
-                        null);
+                String databaseName = context.getHive().newTable(desc.getTableName()).getDbName();
+                auth.authorize(context.getHive().getDatabase(databaseName), null, null);
 
                 tblProps.put(HCatConstants.HCAT_ISD_CLASS, storageHandlerInst
-                        .getInputStorageDriver().toString());
+                        .getInputStorageDriver().getName());
                 tblProps.put(HCatConstants.HCAT_OSD_CLASS, storageHandlerInst
-                        .getOutputStorageDriver().toString());
+                        .getOutputStorageDriver().getName());
 
             } catch (HiveException e) {
-                new SemanticException(e);
+                throw new SemanticException(e);
             }
 
         }
-        
         if (loader!=null) {
             tblProps.put(HCatConstants.HCAT_PIG_LOADER, loader);
         }
-        
         if (storer!=null) {
             tblProps.put(HCatConstants.HCAT_PIG_STORER, storer);
         }

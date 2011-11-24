@@ -120,9 +120,7 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName
                               + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                              + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')" ;
+                              + "TBLPROPERTIES ('hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')" ;
 
         CommandProcessorResponse responseOne = hcatDriver.run(dbquery);
         assertEquals(0, responseOne.getResponseCode());
@@ -184,9 +182,8 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + tableName
                               + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                              + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'hbase.columns.mapping'=':key,testFamily:testQualifier1,testFamily:testQualifier2')" ;
+                              + "TBLPROPERTIES ('hbase.columns.mapping'=':key," +
+                              		"testFamily:testQualifier1,testFamily:testQualifier2')" ;
 
         CommandProcessorResponse responseTwo = hcatDriver.run(tableQuery);
         assertEquals(0, responseTwo.getResponseCode());
@@ -284,4 +281,6 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
                 HCatFieldSchema.Type.STRING, ""));
         return schema;
     }
+
+
 }

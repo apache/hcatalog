@@ -166,9 +166,7 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='false',"+
+                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='false',"+
                               "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
@@ -264,9 +262,7 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='false',"+
+                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='false',"+
                               "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());

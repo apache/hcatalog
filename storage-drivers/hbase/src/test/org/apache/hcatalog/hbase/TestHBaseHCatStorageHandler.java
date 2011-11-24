@@ -76,9 +76,7 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
         CommandProcessorResponse response = hcatDriver
                 .run("create table test_table(key int, value string) STORED BY " +
                 		     "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                    + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                    		"'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                    		"'hbase.columns.mapping'=':key,cf1:val')");
+                    + "TBLPROPERTIES ('hbase.columns.mapping'=':key,cf1:val')");
 
         assertEquals(0, response.getResponseCode());
 
@@ -102,9 +100,7 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
         CommandProcessorResponse response = hcatDriver
                 .run("create table mytable(key int, value string) STORED BY " +
                      "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                    + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                    "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                    "'hbase.columns.mapping'=':key,cf1:val')");
+                    + "TBLPROPERTIES ('hbase.columns.mapping'=':key,cf1:val')");
 
         assertEquals(0, response.getResponseCode());
 
@@ -140,13 +136,11 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
         boolean doesTableExist = hAdmin.tableExists(tableName);
         assertTrue(doesTableExist);
 
-        hcatDriver.run("drop table mytable");
+        hcatDriver.run("drop table mytabletwo");
         CommandProcessorResponse response = hcatDriver
-                .run("create external table mytable(key int, valueone string, valuetwo string) STORED BY " +
+                .run("create external table mytabletwo(key int, valueone string, valuetwo string) STORED BY " +
                      "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                    + "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                    "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                    "'hbase.columns.mapping'=':key,familyone:val,familytwo:val'," +
+                    + "TBLPROPERTIES ('hbase.columns.mapping'=':key,familyone:val,familytwo:val'," +
                     "'hbase.table.name'='testTable')");
 
         assertEquals(0, response.getResponseCode());

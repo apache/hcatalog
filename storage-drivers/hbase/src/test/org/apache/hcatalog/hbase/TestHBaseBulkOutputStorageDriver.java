@@ -270,9 +270,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+                              "TBLPROPERTIES ('hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
@@ -375,9 +373,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+                              "TBLPROPERTIES ('hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
@@ -463,9 +459,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hcat.isd'='org.apache.hcatalog.hbase.HBaseInputStorageDriver', " +
-                              "'hcat.osd'='org.apache.hcatalog.hbase.HBaseOutputStorageDriver'," +
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+                              "TBLPROPERTIES ('hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
