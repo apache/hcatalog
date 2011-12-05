@@ -35,7 +35,6 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -182,34 +181,39 @@ class ImportSequenceFile {
             job.getConfiguration().set(TotalOrderPartitioner.PARTITIONER_PATH,partitionFile.toString());
         }
 
-        //add hbase dependency jars
-        TableMapReduceUtil.addDependencyJars(job);
-        TableMapReduceUtil.addDependencyJars(job.getConfiguration());
         return job;
     }
 
     /**
      * Method to run the Importer MapReduce Job. Normally will be called by another MR job
-     * during OutputCommitter.commitJob().
-      * @param otherConf configuration of the parent job
+     * during OutputCommitter.commitJob(). It wil inherit
+      * @param parentConf configuration of the parent job
      * @param tableName name of table to bulk load data into
      * @param InputDir path of SequenceFile formatted data to read
      * @param scratchDir temporary path for the Importer MR job to build the HFiles which will be imported
      * @return
      */
-    static boolean runJob(Configuration otherConf, String tableName, Path InputDir, Path scratchDir) {
-        Configuration conf = HBaseConfiguration.create();
-        for(Map.Entry<String,String> el: otherConf) {
+    static boolean runJob(Configuration parentConf, String tableName, Path InputDir, Path scratchDir) {
+        Configuration conf = new Configuration();
+        for(Map.Entry<String,String> el: parentConf) {
             if(el.getKey().startsWith("hbase."))
                 conf.set(el.getKey(),el.getValue());
+            if(el.getKey().startsWith("mapred.cache.archives"))
+                conf.set(el.getKey(),el.getValue());
         }
+
+        //Inherit jar dependencies added to distributed cache loaded by parent job
+        conf.set("mapred.job.classpath.archives",parentConf.get("mapred.job.classpath.archives", ""));
+        conf.set("mapreduce.job.cache.archives.visibilities",parentConf.get("mapreduce.job.cache.archives.visibilities",""));
+
         conf.set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
 
         boolean localMode = "local".equals(conf.get("mapred.job.tracker"));
+
         boolean success = false;
         try {
-            FileSystem fs = FileSystem.get(conf);
-            Path workDir = new Path(new Job(otherConf).getWorkingDirectory(),IMPORTER_WORK_DIR);
+            FileSystem fs = FileSystem.get(parentConf);
+            Path workDir = new Path(new Job(parentConf).getWorkingDirectory(),IMPORTER_WORK_DIR);
             if(!fs.mkdirs(workDir))
                 throw new IOException("Importer work directory already exists: "+workDir);
             Job job = createSubmittableJob(conf, tableName, InputDir, scratchDir, localMode);

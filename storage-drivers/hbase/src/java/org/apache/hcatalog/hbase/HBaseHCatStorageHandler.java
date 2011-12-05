@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.facebook.fb303.FacebookBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -34,6 +35,7 @@ import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
@@ -46,11 +48,15 @@ import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
+import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.thrift.TBase;
+import org.apache.zookeeper.ZooKeeper;
 
 /**
  * This class HBaseHCatStorageHandler provides functionality to create HBase
@@ -394,6 +400,39 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
         }
 
         return qualifiedName;
+    }
+
+    /**
+     * Helper method for users to add the required depedency jars to distributed cache.
+     * @param conf
+     * @throws IOException
+     */
+    public static void addDependencyJars(Configuration conf) throws IOException {
+        //TODO provide a facility/interface for loading/specifying dependencies
+        //Ideally this method shouldn't be exposed to the user
+        TableMapReduceUtil.addDependencyJars(conf,
+                //hadoop-core
+                Writable.class,
+                //ZK
+                ZooKeeper.class,
+                //HBase
+                HTable.class,
+                //Hive
+                HiveException.class,
+                //HCatalog jar
+                HCatOutputFormat.class,
+                //hive hbase storage handler jar
+                HBaseSerDe.class,
+                //hcat hbase storage driver jar
+                HBaseOutputStorageDriver.class,
+                //hive jar
+                Table.class,
+                //libthrift jar
+                TBase.class,
+                //hbase jar
+                Bytes.class,
+                //thrift-fb303 .jar
+                FacebookBase.class);
     }
 
 }

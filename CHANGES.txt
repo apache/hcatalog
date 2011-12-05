@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-170. HBaseBulkOSD fails to launch ImportSequenceFile because of missing jars in dist cache (toffer via khorgath)
+
   HCAT-176. Class not found exception when running TestPigStorageDriver (daijy via khorgath)
 
   HCAT-175. HCat fail to build on trunk (daijy via khorgath)
