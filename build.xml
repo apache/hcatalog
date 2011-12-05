@@ -223,7 +223,7 @@
 
   <!-- Build the external hive code -->
   <target name="hive.jar">
-    <ant antfile="build.xml" dir="${hive.root}" target="package"/>
+    <ant antfile="build.xml" dir="${hive.root}" target="package" useNativeBasedir='true'/>
   </target>
 
   <!--

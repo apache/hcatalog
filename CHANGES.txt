@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-175. HCat fail to build on trunk (daijy via khorgath)
+
   HCAT-173. Make StorerInfo class public (toffer via khorgath)
 
   HCAT-169. Creating a table with HCatStorageHandler does not correctly store the hcat.isd and hcat.osd names (avandana via toffer)
