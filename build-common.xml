@@ -16,6 +16,7 @@
     <path id="common.classpath">
         <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
         <fileset dir="${hive.root}/lib" includes="*.jar"/>
+        <fileset dir="${hive.root}/build/builtins" includes="*.jar"/>
         <fileset dir="${hive.root}/build/cli" includes="*.jar"/>
         <fileset dir="${hive.root}/build/common" includes="*.jar"/>
         <fileset dir="${hive.root}/build/serde" includes="*.jar"/>

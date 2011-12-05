@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-176. Class not found exception when running TestPigStorageDriver (daijy via khorgath)
+
   HCAT-175. HCat fail to build on trunk (daijy via khorgath)
 
   HCAT-173. Make StorerInfo class public (toffer via khorgath)
