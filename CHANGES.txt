@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-173. Make StorerInfo class public (toffer via khorgath)
+
   HCAT-169. Creating a table with HCatStorageHandler does not correctly store the hcat.isd and hcat.osd names (avandana via toffer)
 
   HCAT-160. HBaseDirectOutputStorageDriver outputVersion isn't consitent within the same MR job (toffer via hashutosh)

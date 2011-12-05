@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.Properties;
 
 /** Info about the storer to use for writing the data */
-class StorerInfo implements Serializable {
+public class StorerInfo implements Serializable {
 
     /** The serialization version */
     private static final long serialVersionUID = 1L;
