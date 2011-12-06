@@ -1,26 +1,28 @@
 #!/usr/bin/env perl
-############################################################################           
-#  Licensed to the Apache Software Foundation (ASF) under one or more                  
-#  contributor license agreements.  See the NOTICE file distributed with               
-#  this work for additional information regarding copyright ownership.                 
-#  The ASF licenses this file to You under the Apache License, Version 2.0             
-#  (the "License"); you may not use this file except in compliance with                
-#  the License.  You may obtain a copy of the License at                               
-#                                                                                      
-#      http://www.apache.org/licenses/LICENSE-2.0                                      
-#                                                                                      
-#  Unless required by applicable law or agreed to in writing, software                 
-#  distributed under the License is distributed on an "AS IS" BASIS,                   
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.            
-#  See the License for the specific language governing permissions and                 
-#  limitations under the License.                                                      
-                                                                                       
+############################################################################
+#  Licensed to the Apache Software Foundation (ASF) under one or more
+#  contributor license agreements.  See the NOTICE file distributed with
+#  this work for additional information regarding copyright ownership.
+#  The ASF licenses this file to You under the Apache License, Version 2.0
+#  (the "License"); you may not use this file except in compliance with
+#  the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 # A utility to generate test data for pig test harness tests.
 # 
 #
 
 use strict;
 use charnames ();
+use Cwd;
+use IPC::Run qw(run);
 
 our @firstName = ("alice", "bob", "calvin", "david", "ethan", "fred",
     "gabriella", "holly", "irene", "jessica", "katie", "luke", "mike", "nick",
@@ -137,16 +139,15 @@ sub randomGreekLetter()
 sub randomNameAgeGpaMap()
 {
     my $size = int(rand(3));
-    my $map = "[";
     my @mapValues = ( "name#" . randomName(), "age#" . randomAge(), "gpa#" . randomGpa() );
     $size = ($size == 0 ? 1 : $size);
+    my $map;
     for(my $i = 0; $i <= $size; $i++) {
         $map .= $mapValues[$i];
         if($i != $size) {
             $map .= ",";
         }
     }
-    $map .= "]";
     return $map;
 }
 
@@ -169,47 +170,103 @@ sub getMapFields($) {
 sub randomNameAgeGpaTuple()
 {
     my $gpa = sprintf("%0.2f", randomGpa());
-    return "(" . randomName() . "," . randomAge() . "," . $gpa . ")" ;
+    return randomName() . "," . randomAge() . "," . $gpa ;
 }
 
-sub randomNameAgeGpaBag()
+sub randomList()
 {
-    my $size = int(rand(int(3)));
-    my $bag = "{";
-    $size = ($size == 0 ? 1 : $size);
+    my $size = int(rand(int(3))) + 1;
+    my $bag;
     for(my $i = 0; $i <= $size; $i++) {
-        $bag .= randomNameAgeGpaTuple();
-        if($i != $size) {
-            $bag .= ",";
-        }
+        $bag .= randomAge();
+        $bag .= "," if ($i != $size);
     }
-    $bag .= "}";
     return $bag;
 }
 
-our @textDoc = (
-    "The cosmological proof, which we are now about to ex-",
-    "amine, retains the connection of absolute necessity with the",
-    "highest reality, but instead of reasoning, like the former proof,",
-    "from the highest reality to necessity of existence, it reasons",
-    "from the previously given unconditioned necessity of some",
-    "being to the unlimited reality of that being. It thus enters upon",
-    "a course of reasoning which, whether rational or only pseudo-",
-    "rational, is at any rate natural, and the most convincing not",
-    "only for common sense but even for speculative understand-",
-    "ing. It also sketches the first outline of all the proofs in natural",
-    "theology, an outline which has always been and always will",
-    "be followed, however much embellished and disguised by",
-    "superfluous additions. This proof, termed by Leibniz the proof",
-    "a contingentia mundi, we shall now proceed to expound and",
-    "examine.");
+sub randomEscape()
+{
+    my $r = rand(1);
+    if ($r < 0.16) {
+        return '\"';
+    } elsif ($r < 0.32) {
+        return '\\\\';
+    } elsif ($r < 0.48) {
+        return '\/';
+    } elsif ($r < 0.64) {
+        return '\n';
+    } elsif ($r < 0.80) {
+        return '\t';
+    } else {
+        return randomUnicodeHex();
+    }
+}
+
+
+sub randomJsonString()
+{
+    my $r = rand(1);
+    #if ($r < 0.05) {
+    #    return "null";
+    #} elsif ($r < 0.10) {
+    #    return randomName() . randomEscape() . randomName();
+    #} else {
+        return randomName();
+    #}
+}
+
+sub randomNullBoolean()
+{
+    my $r = rand(1);
+    if ($r < 0.05) {
+        return 'null';
+    } elsif ($r < 0.525) {
+        return 'true';
+    } else {
+        return 'false';
+    }
+}
+
+sub randomJsonMap()
+{
+    if (rand(1) < 0.05) {
+        return 'null';
+    }
+
+    my $str = "{";
+    my $num = rand(5) + 1;
+    for (my $i = 0; $i < $num; $i++) {
+        $str .= "," unless $i == 0;
+        $str .= '"' . randomCity() . '" : "' . randomName() . '"';
+    }
+    $str .= "}";
+    return $str;
+}
+
+sub randomJsonBag()
+{
+    if (rand(1) < 0.05) {
+        return 'null';
+    }
+
+    my $str = "[";
+    my $num = rand(5) + 1;
+    for (my $i = 0; $i < $num; $i++) {
+        $str .= "," unless $i == 0;
+        $str .= '{"a":' . int(rand(2**32) - 2**31) . ',"b":"' .
+            randomJsonString() . '"}';
+    }
+    $str .= "]";
+}
 
 sub usage()
 {
-    warn "Usage: $0 filetype numrows tablename targetdir [nosql]\n";
-    warn "\tValid filetypes [studenttab, studentcolon, \n";
-    warn "\t\tstudentnulltab, studentcomplextab, studentctrla, voternulltab\n";
-    warn "\t\tvotertab, reg1459894, textdoc, unicode, manual]\n";
+    warn "Usage: $0 filetype numrows tablename hdfstargetdir [format]\n";
+    warn "\tValid filetypes [studenttab, studentparttab, \n";
+    warn "\t\tstudentnull, allscalars, studentcomplextab, \n";
+    warn "\t\tvoternulltab votertab, unicode]\n";
+    warn "hdfstargetdir is the directory in hdfs that data will be copied to for loading into tables\n";
+    warn "format is one of rc, csv, or json.  csv is the default";
 }
 
 our @greekUnicode = ("\N{U+03b1}", "\N{U+03b2}", "\N{U+03b3}", "\N{U+03b4}",
@@ -226,26 +283,93 @@ sub randomUnicodeNonAscii()
     return $name;
 }
 
+sub randomUnicodeHex()
+{
+    return sprintf "\\u%04x", 0x3b1 + int(rand(25));
+}
+
 my $testvar = "\N{U+03b1}\N{U+03b3}\N{U+03b1}\N{U+03c0}\N{U+03b7}";
 
-sub getBulkCopyCmd(){
-        my $sourceDir= shift;
-        my $tableName = shift;
-        my $delimeter = shift;
-        $delimeter = '\t' if ( !$delimeter );
+sub getBulkCopyCmd($$;$)
+{
+    my ($tableName, $delimeter, $filename) = @_;
 
-#               . "\nCOPY $tableName FROM \'$sourceDir/$tableName' using DELIMITERS \'". '\t' . "\' WITH NULL AS '\n';";
+    $filename = $tableName if (!defined($filename));
+        
+    return "load data local infile '" . cwd . "/$filename'
+            into table $tableName
+            columns terminated by '$delimeter';" 
+}
 
-        my $cmd= "\nbegin transaction;" 
-                  . "\nCOPY $tableName FROM \'$sourceDir/$tableName' using DELIMITERS \'$delimeter\';" 
-                  . "\ncommit;"
-                  . "\n";
+sub generateSecondHalfCreateTable($$$;$$$)
+{
+    my ($hivefp, $format, $location, $fieldDelim, $structDelim, $mapDelim) = @_;
 
-        return $cmd;
+    if ($format eq "csv") {
+        print $hivefp "
+row format delimited
+fields terminated by '$fieldDelim'
+stored as textfile
+location '$location';\n";
+    } elsif ($format eq "rc") {
+        print $hivefp "
+stored as rcfile
+location '$location'
+TBLPROPERTIES (
+    'hcat.isd'='org.apache.hcatalog.rcfile.RCFileInputDriver',
+    'hcat.osd'='org.apache.hcatalog.rcfile.RCFileOutputDriver'
+);\n";
+    } elsif ($format eq "json") {
+        print $hivefp " STORED AS
+INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat' 
+INPUTDRIVER 'org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver' OUTPUTDRIVER 'org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver';
+location '$location'
+TBLPROPERTIES ('hcat.pig.loader'='org.apache.pig.builtin.JsonLoader', 'hcat.pig.storer'='org.apache.pig.builtin.JsonStorage', 'hcat.pig.loader.args'=
+'s:chararray, i:int, d:double, m:map[chararray], bb:{t:(a:int, b:chararray)}, 'hcat.pig.args.delimiter'='\t')
+;\n";
+    } else {
+        die "Unknown format $format\n";
+    }
+}
+
+our $hadoopCoreJar = undef;
+
+sub findHadoopJars()
+{
+    if (not defined $ENV{'HADOOP_HOME'}) {
+        die 'Please set $HADOOP_HOME\n';
+    }
+
+    my $coreJar = `ls $ENV{'HADOOP_HOME'}/hadoop-core-*.jar`;
+    my $loggingJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-logging-*.jar | grep -v api`;
+    my $cfgJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-configuration-*.jar`;
+    my $langJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-lang-*.jar`;
+    my $cliJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-cli-*.jar`;
+    chomp $coreJar;
+    chomp $loggingJar;
+    chomp $cfgJar;
+    chomp $langJar;
+    chomp $cliJar;
+    return ($coreJar, $loggingJar, $cfgJar, $langJar, $cliJar);
+}
+
+sub findHiveJars()
+{
+    if (not defined $ENV{'HIVE_HOME'}) {
+        die 'Please set $HIVE_HOME\n';
+    }
+
+    my $execJar = `ls ../../../../../hive/external/build/ql/hive-exec-*.jar`;
+    my $cliJar = `ls ../../../../../hive/external/build/cli/hive-cli-*.jar`;
+    chomp $execJar;
+    chomp $cliJar;
+    return ($execJar, $cliJar);
 }
 
 
-# main($)
+
+
+# main
 {
     # explicitly call srand so we get the same data every time
     # we generate it.  However, we set it individually for each table type.
@@ -255,50 +379,121 @@ sub getBulkCopyCmd(){
     my $filetype = shift;
     my $numRows = shift;
     my $tableName = shift;
-    my $targetDir= shift;
-    my $nosql = shift;
+    my $hdfsTargetDir= shift;
+    my $format = shift;
 
-    die usage() if (!defined($filetype) || !defined($numRows));
+    die usage() if (!defined($filetype) || !defined($numRows) || !defined($tableName) || !defined($hdfsTargetDir));
 
     if ($numRows <= 0) { usage(); }
 
-    if ( $targetDir ) {
-       open(HDFS, "> $targetDir/$tableName") or die("Cannot open file $tableName, $!\n");
-       open(PSQL, "> $targetDir/$tableName.sql") or die("Cannot open file $tableName.sql, $!\n") unless defined $nosql;
-    } else {
-       open(HDFS, "> $tableName") or die("Cannot open file $tableName, $!\n");
-       open(PSQL, "> $tableName.sql") or die("Cannot open file $tableName.sql, $!\n") unless defined $nosql;
+    $format = "csv" if not defined $format;
+
+    if ($format eq "csv") {
+        open(HDFS, "> $tableName") or die("Cannot open file $tableName, $!\n");
     }
+    open(MYSQL, "> $tableName.mysql.sql") or
+        die("Cannot open file $tableName.mysql.sql, $!\n");
+    open(my $hivefp, "> $tableName.hcat.sql") or
+        die("Cannot open file $tableName.hive.sql, $!\n");
 
-    if ($filetype eq "manual") {
-    } elsif ($filetype eq "studenttab") {
+    if ($filetype eq "studenttab") {
         srand(3.14159 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n" unless defined $nosql;
-        print PSQL &getBulkCopyCmd( $targetDir, $tableName ) unless defined $nosql;
-        for (my $i = 0; $i < $numRows; $i++) {
-            my $name = randomName();
-            my $age = randomAge();
-            my $gpa = randomGpa();
-            printf HDFS "%s\t%d\t%.2f\n", $name, $age, $gpa;
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n";
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string,
+            age int,
+            gpa double)";
+
+        generateSecondHalfCreateTable($hivefp, $format,
+            "$hdfsTargetDir/$tableName", '\\t');
+        if ($format eq "csv") {
+            print MYSQL &getBulkCopyCmd($tableName, "\t", "$tableName");
+            for (my $i = 0; $i < $numRows; $i++) {
+                my $name = randomName();
+                my $age = randomAge();
+                my $gpa = randomGpa();
+                printf HDFS "%s\t%d\t%.2f\n", $name, $age, $gpa;
+            }
+        } elsif ($format eq "rc") {
+            print MYSQL &getBulkCopyCmd($tableName, "\t", "$tableName.plain");
+            my ($hadoopCoreJar, $commonsLoggingJar, $commonsConfigJar,
+                $commonsLangJar, $commonsCliJar) = findHadoopJars();
+            my ($hiveExecJar, $hiveCliJar) = findHiveJars();
+            my @cmd = ('java', '-cp',
+                "../tools/generate/java/hive-gen.jar:$hadoopCoreJar:" .
+                "$commonsLoggingJar:$commonsConfigJar:$commonsLangJar:" .
+                "$hiveExecJar",
+                'org.apache.hadoop.hive.tools.generate.RCFileGenerator',
+                'student', $numRows, "$tableName", "$tableName.plain");
+            run(\@cmd) or die "Unable to run command [" . join(" ", @cmd) 
+                . "]\n";
+            #@cmd = ('java', '-cp',
+            #    "$hiveCliJar:$hiveExecJar:$hadoopCoreJar:" .
+            #    "$commonsLoggingJar:$commonsCliJar:$commonsConfigJar",
+            #    "org.apache.hadoop.hive.cli.RCFileCat", "$tableName");
+            #run(\@cmd, '>', $tableName) or
+            #    die "Unable to run command [" . join(" ", @cmd) . "]\n";
+        } else {
+            die "Unknown format $format\n";
         }
-
-    } elsif ($filetype eq "studentnulltab") {
+    } elsif ($filetype eq "studentparttab") {
         srand(3.14159 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n";
-        print PSQL "begin transaction;\n";
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(100), age integer, gpa float(3), ds char(8));\n";
+        print MYSQL &getBulkCopyCmd($tableName, "\t", "$tableName.mysql");
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string,
+            age int,
+            gpa double)
+        partitioned by (ds string)
+        row format delimited
+        fields terminated by '\\t'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';
+        alter table $tableName add IF NOT EXISTS partition (ds='20110924') location '$hdfsTargetDir/$tableName/$tableName.20110924';
+        alter table $tableName add IF NOT EXISTS partition (ds='20110925') location '$hdfsTargetDir/$tableName/$tableName.20110925';
+        alter table $tableName add IF NOT EXISTS partition (ds='20110926') location '$hdfsTargetDir/$tableName/$tableName.20110926';
+        ";
+        open(MYSQLDATA, "> $tableName.mysql") or die("Cannot open file $tableName.mysql, $!\n");
+        for (my $ds = 20110924; $ds < 20110927; $ds++) {
+            close(HDFS);
+            open(HDFS, "> $tableName.$ds") or die("Cannot open file $tableName.$ds, $!\n");
+            for (my $i = 0; $i < $numRows; $i++) {
+                my $name = randomName();
+                my $age = randomAge();
+                my $gpa = randomGpa();
+                printf HDFS "%s\t%d\t%.2f\n", $name, $age, $gpa;
+                printf MYSQLDATA "%s\t%d\t%.3f\t%d\n", $name, $age, $gpa, $ds;
+            }
+        }
+        close(MYSQLDATA);
+
+    } elsif ($filetype eq "studentnull") {
+        srand(3.14159 + $numRows);
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n";
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string,
+            age int,
+            gpa double)
+        row format delimited
+        fields terminated by '\\001'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n";
         for (my $i = 0; $i < $numRows; $i++) {
             # generate nulls in a random fashion
             my $name = rand(1) < 0.05 ? '' : randomName();
             my $age = rand(1) < 0.05 ? '' : randomAge();
             my $gpa = rand(1) < 0.05 ? '' : randomGpa();
-            printf PSQL "insert into $tableName (name, age, gpa) values(";
-            print PSQL ($name eq ''? "null, " : "'$name', "), ($age eq ''? "null, " : "$age, ");
+            printf MYSQL "insert into $tableName (name, age, gpa) values(";
+            print MYSQL ($name eq ''? "null, " : "'$name', "), ($age eq ''? "null, " : "$age, ");
             if($gpa eq '') {
-                print PSQL "null);\n"
+                print MYSQL "null);\n"
             } else {
-                printf PSQL "%.2f);\n", $gpa;    
+                printf MYSQL "%.2f);\n", $gpa;    
             }
-            print HDFS "$name\t$age\t";
+            print HDFS "$name$age";
             if($gpa eq '') {
                 print HDFS "\n"
             } else {
@@ -306,69 +501,65 @@ sub getBulkCopyCmd(){
             }
             
         }
-        print PSQL "commit;\n" unless defined $nosql;
+        print MYSQL "commit;\n";
 
-    } elsif ($filetype eq "studentcolon") {
+    } elsif ($filetype eq "allscalars") {
         srand(2.718281828459 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n" unless defined $nosql;
-        print PSQL &getBulkCopyCmd( $targetDir, $tableName, ':' ) unless defined $nosql;
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (t tinyint, si smallint, i int, b
+            bigint, f double, d double, s varchar(25));\n";
+        print MYSQL &getBulkCopyCmd($tableName, ':');
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            t tinyint,
+            si smallint,
+            i int,
+            b bigint,
+            f float,
+            d double,
+            s string)
+        row format delimited
+        fields terminated by ':'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n
+        alter table $tableName set TBLPROPERTIES 
+         ('hcat.pig.loader.args'=':', 'hcat.pig.storer.args'=':');\n";
         for (my $i = 0; $i < $numRows; $i++) {
-            my $name = randomName();
-            my $age = randomAge();
-            my $gpa = randomGpa();
-            printf HDFS "%s:%d:%.2f\n", $name, $age, $gpa;
-=begin
-    } elsif ($filetype eq "studentusrdef") {
-        srand(6.62606896 + $numRows);
-        for (my $i = 0; $i < $numRows; $i++) {
-            # TODO need to add SQL info.
-            printf("%s,%d,%.2f,", randomName(), randomAge(), randomGpa());
-            printf("<%s,%s,%s,%d>,", randomStreet(), randomCity(), randomState(),
-                randomZip());
-            printf("[%s:<%s,%s>],", randomClass(), randomClass(), randomName());
-            printf("{");
-            my $elementsInBag = int(rand(100));
-            for (my $j = 0; $j < $elementsInBag; $j++) {
-                if ($j != 0) { printf(","); }
-                printf("<%s,%s,%s>", randomClass(), randomName(), randomGrade());
-            }
-            printf("}\n");
+            printf HDFS "%d:%d:%d:%ld:%.2f:%.2f:%s\n",
+                (int(rand(2**8) - 2**7)),
+                (int(rand(2**16) - 2**15)),
+                (int(rand(2**32) - 2**31)),
+                (int(rand(2**64) - 2**61)),
+                rand(100000.0) - 50000.0,
+                rand(10000000.0) - 5000000.0,
+                randomName();
         }
-=cut
-        }
-        print PSQL "commit;\n" unless defined $nosql;
-
-    } elsif ($filetype eq "studentctrla") {
-        srand(6.14159 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, gpa float(3));\n";
-        print PSQL "begin transaction;\n";
-        for (my $i = 0; $i < $numRows; $i++) {
-            my $name = randomName();
-            my $age = randomAge();
-            my $gpa = randomGpa();
-            printf PSQL "insert into $tableName (name, age, gpa) values('%s', %d, %.2f);\n",
-                $name, $age, $gpa;
-            printf HDFS "%s%d%.2f\n", $name, $age, $gpa;
-        }
-        print PSQL "commit;\n" unless defined $nosql;
-
-
     } elsif ($filetype eq "studentcomplextab") {
         srand(3.14159 + $numRows);
-        print PSQL "create table $tableName (nameagegpamap varchar(500), nameagegpatuple varchar(500), nameagegpabag varchar(500), nameagegpamap_name varchar(500), nameagegpamap_age integer, nameagegpamap_gpa float(3));\n";
-        print PSQL "begin transaction;\n";
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (nameagegpamap varchar(500), nameagegpatuple varchar(500), nameagegpabag varchar(500), nameagegpamap_name varchar(500), nameagegpamap_age integer, nameagegpamap_gpa float(3));\n";
+        print MYSQL "begin transaction;\n";
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            nameagegpamap map<string, string>,
+            struct <name: string, age: int, gpa: float>,
+            array <int>)
+        row format delimited
+        fields terminated by '\\t'
+        collection items terminated by ','
+        map keys terminated by '#'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n";
         for (my $i = 0; $i < $numRows; $i++) {
             # generate nulls in a random fashion
             my $map = rand(1) < 0.05 ? '' : randomNameAgeGpaMap();
             my $tuple = rand(1) < 0.05 ? '' : randomNameAgeGpaTuple();
-            my $bag = rand(1) < 0.05 ? '' : randomNameAgeGpaBag();
-            printf PSQL "insert into $tableName (nameagegpamap, nameagegpatuple, nameagegpabag, nameagegpamap_name, nameagegpamap_age, nameagegpamap_gpa) values(";
+            my $bag = rand(1) < 0.05 ? '' : randomList();
+            printf MYSQL "insert into $tableName (nameagegpamap, nameagegpatuple, nameagegpabag, nameagegpamap_name, nameagegpamap_age, nameagegpamap_gpa) values(";
             my $mapHash;
             if($map ne '') {
                 $mapHash = getMapFields($map);
             }
 
-            print PSQL ($map eq ''? "null, " : "'$map', "), 
+            print MYSQL ($map eq ''? "null, " : "'$map', "), 
                         ($tuple eq ''? "null, " : "'$tuple', "),
                         ($bag eq '' ? "null, " : "'$bag', "),
                         ($map eq '' ? "null, " : (exists($mapHash->{'name'}) ? "'".$mapHash->{'name'}."', " : "null, ")),
@@ -376,13 +567,23 @@ sub getBulkCopyCmd(){
                         ($map eq '' ? "null);\n" : (exists($mapHash->{'gpa'}) ? "'".$mapHash->{'gpa'}."');\n" : "null);\n"));
             print HDFS "$map\t$tuple\t$bag\n";
         }
-        print PSQL "commit;\n" unless defined $nosql;
+        print MYSQL "commit;\n";
 
     } elsif ($filetype eq "votertab") {
         srand(299792458 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, registration varchar(20), contributions float);\n" unless defined $nosql;
-        print PSQL &getBulkCopyCmd( $targetDir, $tableName ) unless defined $nosql;
-        for (my $i = 0; $i < $numRows; $i++) {
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(100), age integer, registration varchar(20), contributions float);\n";
+        print MYSQL &getBulkCopyCmd($tableName, "\t");
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string,
+            age int,
+            registration string,
+            contributions float)
+        row format delimited
+        fields terminated by '\\t'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n";
+for (my $i = 0; $i < $numRows; $i++) {
             my $name = randomName();
             my $age = randomAge();
             my $registration = randomRegistration();
@@ -393,22 +594,32 @@ sub getBulkCopyCmd(){
 
     } elsif ($filetype eq "voternulltab") {
         srand(299792458 + $numRows);
-        print PSQL "create table $tableName (name varchar(100), age integer, registration varchar(20), contributions float);\n" unless defined $nosql;
-        print PSQL "begin transaction;\n" unless defined $nosql;
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(100), age integer, registration varchar(20), contributions float);\n";
+        print MYSQL "begin transaction;\n";
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string,
+            age int,
+            registration string,
+            contributions float)
+        row format delimited
+        fields terminated by '\\t'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n";
         for (my $i = 0; $i < $numRows; $i++) {
             # generate nulls in a random fashion
             my $name = rand(1) < 0.05 ? '' : randomName();
             my $age = rand(1) < 0.05 ? '' : randomAge();
             my $registration = rand(1) < 0.05 ? '' : randomRegistration();
             my $contribution = rand(1) < 0.05 ? '' : randomContribution();
-            printf PSQL "insert into $tableName (name, age, registration, contributions) values(";
-            print PSQL ($name eq ''? "null, " : "'$name', "), 
+            printf MYSQL "insert into $tableName (name, age, registration, contributions) values(";
+            print MYSQL ($name eq ''? "null, " : "'$name', "), 
                             ($age eq ''? "null, " : "$age, "),
                             ($registration eq ''? "null, " : "'$registration', ");
             if($contribution eq '') {
-                print PSQL "null);\n"
+                print MYSQL "null);\n"
             } else {
-                printf PSQL "%.2f);\n", $contribution;    
+                printf MYSQL "%.2f);\n", $contribution;    
             }
             print HDFS "$name\t$age\t$registration\t";
             if($contribution eq '') {
@@ -417,42 +628,64 @@ sub getBulkCopyCmd(){
                 printf HDFS "%.2f\n", $contribution;    
             }
         }
-        print PSQL "commit;\n" unless defined $nosql;
-
-    } elsif ($filetype eq "reg1459894") {
-        srand(6.67428 + $numRows);
-        print PSQL "create table $tableName (first varchar(10), second varchar(10));\n" unless defined $nosql;
-        print PSQL &getBulkCopyCmd( $targetDir, $tableName ) unless defined $nosql;
-        for (my $i = 0; $i < $numRows; $i++) {
-            my $letter = randomNumLetter(); 
-            my $gkLetter = randomGreekLetter(); 
-            printf HDFS "%s\t%s\n", $letter, $gkLetter;
-        }
-
-    } elsif ($filetype eq "textdoc") {
-        # This one ignores the number of lines.  It isn't random either.
-        print PSQL "create table $tableName (name varchar(255));\n" unless defined $nosql;
-        print PSQL "begin transaction;\n" unless defined $nosql;
-        for (my $i = 0; $i < @textDoc; $i++) {
-            my $sqlWords = $textDoc[$i];
-            $sqlWords =~ s/([\w-]+)/$1,/g;
-            print PSQL  "insert into $tableName (name) values('($sqlWords)');\n" unless defined $nosql;
-            print HDFS "$textDoc[$i]\n";
-        }
-        print PSQL "commit;\n" unless defined $nosql;
-
+        print MYSQL "commit;\n";
 
     } elsif ($filetype eq "unicode") {
         srand(1.41421 + $numRows);
-        print PSQL "create table $tableName (name varchar(255));\n" unless defined $nosql;
-        print PSQL "begin transaction;\n" unless defined $nosql;
+        print MYSQL "drop table if exists $tableName;\n";
+        print MYSQL "create table $tableName (name varchar(255));\n";
+        print MYSQL "begin transaction;\n";
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            name string)
+        row format delimited
+        fields terminated by '\\t'
+        stored as textfile
+        location '$hdfsTargetDir/$tableName';\n";
         for (my $i = 0; $i < $numRows; $i++) {
             my $name = randomUnicodeNonAscii(); 
-            printf PSQL "insert into $tableName (name) values('%s');\n",
-                $name unless defined $nosql;
+            printf MYSQL "insert into $tableName (name) values('%s');\n", $name;
             printf HDFS "%s\n", $name;
         }
-        print PSQL "commit;\n" unless defined $nosql;
+        print MYSQL "commit;\n";
+    } elsif ($filetype eq "json") {
+        srand(6.0221415 + $numRows);
+        print MYSQL "drop table if exists $tableName;";
+        print MYSQL "create table $tableName(
+            s varchar(100),
+            i int,
+            d double);";
+        print MYSQL &getBulkCopyCmd($tableName, "\t", "$tableName.plain");
+        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
+            s string,
+            i int,
+            d double,
+            m map<string, string>,
+            bb array<struct<a: int, b: string>>)
+            STORED AS INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+            INPUTDRIVER 'org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver' OUTPUTDRIVER 'org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver'
+            location '$hdfsTargetDir/$tableName'
+            TBLPROPERTIES ('hcat.pig.loader'='org.apache.pig.builtin.JsonLoader', 'hcat.pig.storer'='org.apache.pig.builtin.JsonStorage', 'hcat.pig.loader.args'=
+'s:chararray, i:int, d:double, m:map[chararray], bb:{t:(a:int, b:chararray)}', 'hcat.pig.args.delimiter'='\t');\n";
+        open(PLAIN, ">$tableName.plain") or
+            die("Cannot open file $tableName.hive.sql, $!\n");
+        for (my $i = 0; $i < $numRows; $i++) {
+            my $s = randomJsonString();
+            my $i = int(rand(2**32) - 2**31),
+            my $d = rand(2**10) - 2**9,
+#            my $i = rand(1) < 0.05 ? 'null' : (int(rand(2**32) - 2**31)),
+#            my $d = rand(1) < 0.05 ? 'null' : (rand(2**10) - 2**9),
+            my $m = randomJsonMap();
+            my $bb = randomJsonBag();
+
+#           printf MYSQL "insert into $tableName (name) values('%s');\n", $name;
+            print HDFS qq@{"s":"$s", "i":$i, "d":$d, "m":$m, "bb":$bb}\n@;
+            if ($s eq 'null') {
+                $s="";
+            }
+            print PLAIN "$s\t$i\t$d\n";
+        }
+        close PLAIN;
+        print MYSQL "commit;\n";
 
     } else {
         warn "Unknown filetype $filetype\n";

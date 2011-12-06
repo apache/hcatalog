@@ -14,16 +14,19 @@
 #  See the License for the specific language governing permissions and                 
 #  limitations under the License.                                                      
                                                                                        
-package ExistingClusterDeployer;
+package HCatExistingClusterDeployer;
 
 use IPC::Run qw(run);
 use TestDeployer;
+use Util;
 
 use strict;
 use English;
 
+our @ISA = "TestDeployer";
+
 ###########################################################################
-# Class: ExistingClusterDeployer
+# Class: HiveExistingClusterDeployer
 # Deploy the Pig harness to a cluster and database that already exists.
 
 ##############################################################################
@@ -63,22 +66,13 @@ sub checkPrerequisites
 {
     my ($self, $cfg, $log) = @_;
 
-    # They must have declared the conf directory for their Hadoop installation
-    if (! defined $cfg->{'testconfigpath'} || $cfg->{'testconfigpath'} eq "") {
-        print $log "You must set the key 'hadoopconfdir' to your Hadoop conf directory "
-            . "in existing.conf\n";
-        die "hadoopconfdir is not set in existing.conf\n";
-    }
-    
-    # They must have declared the executable path for their Hadoop installation
-    if (! defined $cfg->{'hadoopbin'} || $cfg->{'hadoopbin'} eq "") {
-        print $log "You must set the key 'hadoopbin' to your Hadoop bin path"
-            . "in existing.conf\n";
-        die "hadoopbin is not set in existing.conf\n";
+    if (! defined $ENV{'HADOOP_HOME'} || $ENV{'HADOOP_HOME'} eq "") {
+        print $log "You must set the environment variable HADOOP_HOME";
+        die "HADOOP_HOME not defined";
     }
 
     # Run a quick and easy Hadoop command to make sure we can
-    $self->runHadoopCmd($cfg, $log, "fs -ls /");
+    Util::runHadoopCmd($cfg, $log, "fs -ls /");
 
 }
 
@@ -132,38 +126,120 @@ sub generateData
     my ($self, $cfg, $log) = @_;
     my @tables = (
         {
-            'name' => "numbers",
-            'filetype' => "rcfile",
-            'hdfs' => "numbers_pig",
+            'name' => "studenttab10k",
+            'filetype' => "studenttab",
+            'rows' => 10000,
+            'hdfs' => "studenttab10k",
         }, {
-            'name' => "boolean",
-            'filetype' => "rcfile",
-            'hdfs' => "boolean",
+            'name' => "votertab10k",
+            'filetype' => "votertab",
+            'rows' => 10000,
+            'hdfs' => "votertab10k",
         }, {
-            'name' => "complex",
-            'filetype' => "rcfile",
-            'hdfs' => "complex",
-        }, {
-            'name' => "numbers",
-            'filetype' => "txt",
-            'hdfs' => "txt",
-        }, {
-            'name' => "numbers",
-            'filetype' => "rcfile",
-            'hdfs' => "numbers",
-        },
+            'name' => "studentparttab30k",
+            'filetype' => "studentparttab",
+            'rows' => 10000,
+            'hdfs' => "studentparttab30k",
+            'partitions' => ['20110924', '20110925', '20110926']
+        },{
+            'name' => "studentnull10k",
+            'filetype' => "studentnull",
+            'rows' => 10000,
+            'hdfs' => "studentnull10k",
+        },{
+            'name' => "all100k",
+            'filetype' => "allscalars",
+            'rows' => 100000,
+            'hdfs' => "all100k",
+        },{
+            'name' => "all100kjson",
+            'filetype' => "json",
+            'rows' => 100000,
+            'hdfs' => "all100kjson",
+        },{
+            'name' => "all100krc",
+            'filetype' => "studenttab",
+            'rows' => 100000,
+            'hdfs' => "all100krc",
+            'format' => "rc",
+        }
     );
 
-	# Create the HDFS directories
-	$self->runHadoopCmd($cfg, $log, "fs -mkdir $cfg->{'inpathbase'}");
+    
+    if (defined($cfg->{'load_hive_only'}) && $cfg->{'load_hive_only'} == 1) {
+        return $self->hiveMetaOnly($cfg, $log, \@tables);
+    }
+
+    # Create the HDFS directories
+    Util::runHadoopCmd($cfg, $log, "fs -mkdir $cfg->{'hcat_data_dir'}");
 
     foreach my $table (@tables) {
-		print "Generating data for $table->{'name'}\n";
-       		# Copy the data to HDFS
-		my $hadoop = "fs -copyFromLocal data/$table->{'name'}.$table->{'filetype'} ".
-			"$cfg->{'inpathbase'}/$table->{'hdfs'}/$table->{'name'}.$table->{'filetype'}";
-		$self->runHadoopCmd($cfg, $log, $hadoop);
+        print "Generating data for $table->{'name'}\n";
+        # Generate the data
+        my @cmd;
+        if (defined($table->{'format'})) {
+            @cmd = ($cfg->{'gentool'}, $table->{'filetype'}, $table->{'rows'},
+                $table->{'name'}, $cfg->{'hcat_data_dir'}, $table->{'format'});
+        } else {
+            @cmd = ($cfg->{'gentool'}, $table->{'filetype'}, $table->{'rows'},
+                $table->{'name'}, $cfg->{'hcat_data_dir'});
+        }
+        $self->runCmd($log, \@cmd);
 
+        # Copy the data to HDFS
+        my $hadoop = "fs -mkdir $cfg->{'hcat_data_dir'}/$table->{'hdfs'}";
+        Util::runHadoopCmd($cfg, $log, $hadoop);
+
+        if (defined($table->{'partitions'})) {
+            foreach my $part (@{$table->{'partitions'}}) {
+                my $hadoop = "fs -mkdir
+                    $cfg->{'hcat_data_dir'}/$table->{'hdfs'}/$table->{'name'}.$part";
+                Util::runHadoopCmd($cfg, $log, $hadoop);
+                my $hadoop = "fs -copyFromLocal $table->{'name'}.$part " .
+                    "$cfg->{'hcat_data_dir'}/$table->{'hdfs'}/$table->{'name'}.$part/$table->{'name'}.$part";
+                Util::runHadoopCmd($cfg, $log, $hadoop);
+            }
+        } else {
+            my $hadoop = "fs -copyFromLocal $table->{'name'} ".
+                "$cfg->{'hcat_data_dir'}/$table->{'hdfs'}/$table->{'name'}";
+            Util::runHadoopCmd($cfg, $log, $hadoop);
+        }
+
+        print "Loading data into Hive for $table->{'name'}\n";
+        Util::runHCatCmdFromFile($cfg, $log,
+            "./" . $table->{'name'} .  ".hcat.sql");
+
+        print "Loading data into MySQL for $table->{'name'}\n";
+        Util::runDbCmd($cfg, $log, $table->{'name'} . ".mysql.sql");
+    }
+
+}
+
+###########################################################################
+# Sub: hiveMetaOnly                                                        
+# Load metadata into Hive, but don't load Mysql or HDFS, as we assume      
+# these have already been loaded.                                          
+#                                                                          
+# Paramaters:                                                              
+# cfg - hash from config file, including deployment config                 
+# log - log file handle                                                    
+#                                                                          
+# Returns:                                                                 
+# None                                                                     
+#                                                                          
+sub hiveMetaOnly
+{
+    my ($self, $cfg, $log, $tables) = @_;
+    foreach my $table (@{$tables}) {
+        print "Generating data for $table->{'name'}\n";
+        # Generate the data
+        my @cmd = ($cfg->{'gentool'}, $table->{'filetype'}, $table->{'rows'},
+            $table->{'name'}, $cfg->{'hcat_data_dir'});
+        $self->runCmd($log, \@cmd);
+
+        print "Loading data into Hive for $table->{'name'}\n";
+        Util::runHCatCmdFromFile($cfg, $log, "./" . $table->{'name'} .
+             ".hive.sql");
     }
 }
 
@@ -251,24 +327,11 @@ sub confirmUndeployment
     die "$0 INFO : confirmUndeployment is a virtual function!";
 }
 
-sub runHadoopCmd($$$$)
-{
-    my ($self, $cfg, $log, $c) = @_;
-
-    # set the PIG_CLASSPATH environment variable
-    $ENV{'HADOOP_CLASSPATH'} = "$cfg->{'testconfigpath'}";
-                          
-    my @cmd = ("$cfg->{'hadoopbin'}");
-    push(@cmd, split(' ', $c));
-
-    $self->runCmd($log, \@cmd);
-}
-
 sub runCmd($$$)
 {
     my ($self, $log, $cmd) = @_;
 
-    print $log "Going to run " . join(" ", @$cmd) . "\n";
+    print $log "Going to run [" . join(" ", @$cmd) . "]\n";
 
     run($cmd, \undef, $log, $log) or
         die "Failed running " . join(" ", @$cmd) . "\n";

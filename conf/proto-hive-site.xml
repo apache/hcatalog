@@ -57,7 +57,7 @@
 
 <property>
   <name>hive.metastore.sasl.enabled</name>
-    <value>false</value>
+    <value>SASL_ENABLED</value>
     <description>If true, the metastore thrift interface will be secured with SASL. Clients must authenticate with Kerberos.</description>
 </property>
 
@@ -81,7 +81,7 @@
 
 <property>
   <name>hive.metastore.uris</name>
-  <value>thrift://SVRHOST:9933</value>
+  <value>thrift://SVRHOST:PORT</value>
   <description>URI for client to contact metastore server</description>
 </property>
 
