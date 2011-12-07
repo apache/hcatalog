@@ -81,6 +81,8 @@ Release 0.2.0 - Sept-2011
   OPTIMIZATIONS
 
   BUG FIXES
+    HCAT-136. Pig storer for export/import does maintain partition order (Krishna Kumar via hashutosh)
+
     HCAT-150. Updated documentation specifying the need to call HCatOutputFormat.setSchema() (chandec via toffer)
 
     HCAT-107. Better documentation for "hive.metastore.warehouse.dir" config (chandec via toffer)    

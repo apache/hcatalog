@@ -62,6 +62,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
    *
    */
   protected static final String COMPUTED_OUTPUT_SCHEMA = "hcat.output.schema";
+  protected final List<String> partitionKeys;
   protected final Map<String,String> partitions;
   protected Schema pigSchema;
   private RecordWriter<WritableComparable<?>, HCatRecord> writer;
@@ -71,13 +72,16 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
 
   public HCatBaseStorer(String partSpecs, String schema) throws Exception {
 
+    partitionKeys = new ArrayList<String>();
     partitions = new HashMap<String, String>();
     if(partSpecs != null && !partSpecs.trim().isEmpty()){
       String[] partKVPs = partSpecs.split(",");
       for(String partKVP : partKVPs){
         String[] partKV = partKVP.split("=");
         if(partKV.length == 2) {
-          partitions.put(partKV[0].trim(), partKV[1].trim());
+          String partKey = partKV[0].trim(); 
+          partitionKeys.add(partKey);
+          partitions.put(partKey, partKV[1].trim());
         } else {
           throw new FrontendException("Invalid partition column specification. "+partSpecs, PigHCatUtil.PIG_EXCEPTION_CODE);
         }
