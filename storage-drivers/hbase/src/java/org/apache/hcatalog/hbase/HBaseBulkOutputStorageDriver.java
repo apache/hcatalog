@@ -18,7 +18,10 @@
 
 package org.apache.hcatalog.hbase;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -52,13 +55,27 @@ public class HBaseBulkOutputStorageDriver extends HBaseBaseOutputStorageDriver {
         //initialize() gets called multiple time in the lifecycle of an MR job, client, mapper, reducer, etc
         //depending on the case we have to make sure for some context variables we set here that they don't get set again
         if(!outputJobInfo.getProperties().containsKey(PROPERTY_INT_OUTPUT_LOCATION)) {
-            String location = new  Path(context.getConfiguration().get(PROPERTY_TABLE_LOCATION),
+            String tableLocation = context.getConfiguration().get(PROPERTY_TABLE_LOCATION);
+            String location = new  Path(tableLocation,
                                                     "REVISION_"+outputJobInfo.getProperties()
                                                                                                .getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY)).toString();
             outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION, location);
             //We are writing out an intermediate sequenceFile hence location is not passed in OutputJobInfo.getLocation()
             //TODO replace this with a mapreduce constant when available
             context.getConfiguration().set("mapred.output.dir", location);
+            //Temporary fix until support for secure hbase is available
+            //We need the intermediate directory to be world readable
+            //so that the hbase user can import the generated hfiles
+            if(context.getConfiguration().getBoolean("hadoop.security.authorization",false)) {
+                Path p = new Path(tableLocation);
+                FileSystem fs = FileSystem.get(context.getConfiguration());
+                fs.setPermission(new Path(tableLocation),
+                                        FsPermission.valueOf("drwx--x--x"));
+                while((p = p.getParent()) != null) {
+                    if(!fs.getFileStatus(p).getPermission().getOtherAction().implies(FsAction.EXECUTE))
+                        throw new IOException("Table's parent directories must at least have global execute permissions.");
+                }
+            }
         }
 
         outputFormat = new HBaseBulkOutputFormat();

@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.PutSortReducer;
@@ -186,14 +187,15 @@ class ImportSequenceFile {
 
     /**
      * Method to run the Importer MapReduce Job. Normally will be called by another MR job
-     * during OutputCommitter.commitJob(). It wil inherit
-      * @param parentConf configuration of the parent job
+     * during OutputCommitter.commitJob().
+      * @param parentContext JobContext of the parent job
      * @param tableName name of table to bulk load data into
      * @param InputDir path of SequenceFile formatted data to read
      * @param scratchDir temporary path for the Importer MR job to build the HFiles which will be imported
      * @return
      */
-    static boolean runJob(Configuration parentConf, String tableName, Path InputDir, Path scratchDir) {
+    static boolean runJob(JobContext parentContext, String tableName, Path InputDir, Path scratchDir) {
+        Configuration parentConf = parentContext.getConfiguration();
         Configuration conf = new Configuration();
         for(Map.Entry<String,String> el: parentConf) {
             if(el.getKey().startsWith("hbase."))
@@ -205,6 +207,13 @@ class ImportSequenceFile {
         //Inherit jar dependencies added to distributed cache loaded by parent job
         conf.set("mapred.job.classpath.archives",parentConf.get("mapred.job.classpath.archives", ""));
         conf.set("mapreduce.job.cache.archives.visibilities",parentConf.get("mapreduce.job.cache.archives.visibilities",""));
+
+        //Temporary fix until hbase security is ready
+        //We need the written HFile to be world readable so
+        //hbase regionserver user has the privileges to perform a hdfs move
+        if(parentConf.getBoolean("hadoop.security.authorization", false)) {
+            FsPermission.setUMask(conf, FsPermission.valueOf("----------"));
+        }
 
         conf.set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
 
@@ -218,6 +227,7 @@ class ImportSequenceFile {
                 throw new IOException("Importer work directory already exists: "+workDir);
             Job job = createSubmittableJob(conf, tableName, InputDir, scratchDir, localMode);
             job.setWorkingDirectory(workDir);
+            job.getCredentials().addAll(parentContext.getCredentials());
             success = job.waitForCompletion(true);
             fs.delete(workDir, true);
             //We only cleanup on success because failure might've been caused by existence of target directory

@@ -1,5 +1,7 @@
 package org.apache.hcatalog.hbase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -30,6 +32,7 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
+
 import org.junit.Test;
 
 import java.io.IOException;
@@ -44,6 +47,8 @@ import static org.junit.Assert.assertTrue;
  * Including ImprtSequenceFile, HBaseOutputStorageDrivers and HBaseBulkOutputFormat
  */
 public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
+    private final static Log LOG = LogFactory.getLog(TestHBaseBulkOutputStorageDriver.class);
+
     private final HiveConf allConf;
     private final HCatDriver hcatDriver;
 
@@ -65,6 +70,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     }
 
     public static class MapWrite extends Mapper<LongWritable, Text, ImmutableBytesWritable, Put> {
+
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String vals[] = value.toString().split(",");
@@ -99,6 +105,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     public void hbaseBulkOutputFormatTest() throws IOException, ClassNotFoundException, InterruptedException {
         String testName = "hbaseBulkOutputFormatTest";
         Path methodTestDir = new Path(getTestDir(),testName);
+        LOG.info("starting: "+testName);
 
         String tableName = newTableName(testName).toLowerCase();
         byte[] tableNameBytes = Bytes.toBytes(tableName);
@@ -120,15 +127,14 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
 
         // input/output settings
         Path inputPath = new Path(methodTestDir,"mr_input");
-        getFileSystem().mkdirs(inputPath);
         FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
         for(String line: data)
             os.write(Bytes.toBytes(line + "\n"));
         os.close();
         Path interPath = new Path(methodTestDir,"inter");
-
         //create job
         Job job = new Job(conf, testName);
+        HBaseHCatStorageHandler.addDependencyJars(job.getConfiguration());
         job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapWrite.class);
@@ -174,6 +180,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     public void importSequenceFileTest() throws IOException, ClassNotFoundException, InterruptedException {
         String testName = "importSequenceFileTest";
         Path methodTestDir = new Path(getTestDir(),testName);
+        LOG.info("starting: "+testName);
 
         String tableName = newTableName(testName).toLowerCase();
         byte[] tableNameBytes = Bytes.toBytes(tableName);
@@ -205,6 +212,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
 
         //create job
         Job job = new Job(conf, testName);
+        HBaseHCatStorageHandler.addDependencyJars(job.getConfiguration());
         job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapWrite.class);
@@ -225,7 +233,9 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
 
         assertTrue(job.waitForCompletion(true));
 
-        assertTrue(ImportSequenceFile.runJob(job.getConfiguration(),tableName,interPath,scratchPath));
+        job = new Job(new Configuration(allConf),testName+"_importer");
+        HBaseHCatStorageHandler.addDependencyJars(job.getConfiguration());
+        assertTrue(ImportSequenceFile.runJob(job, tableName, interPath, scratchPath));
 
         //verify
         HTable table = new HTable(conf, tableName);
@@ -252,6 +262,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     public void hbaseBulkOutputStorageDriverTest() throws Exception {
         String testName = "hbaseBulkOutputStorageDriverTest";
         Path methodTestDir = new Path(getTestDir(),testName);
+        LOG.info("starting: "+testName);
 
         String databaseName = testName.toLowerCase();
         String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
@@ -291,6 +302,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
 
         //create job
         Job job = new Job(conf,testName);
+        HBaseHCatStorageHandler.addDependencyJars(job.getConfiguration());
         job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapHCatWrite.class);
@@ -355,6 +367,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     public void hbaseBulkOutputStorageDriverTestWithRevision() throws Exception {
         String testName = "hbaseBulkOutputStorageDriverTestWithRevision";
         Path methodTestDir = new Path(getTestDir(),testName);
+        LOG.info("starting: "+testName);
 
         String databaseName = testName.toLowerCase();
         String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
@@ -394,6 +407,7 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
 
         //create job
         Job job = new Job(conf,testName);
+        HBaseHCatStorageHandler.addDependencyJars(job.getConfiguration());
         job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapHCatWrite.class);
@@ -459,7 +473,8 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+                              "TBLPROPERTIES (" +
+                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
@@ -520,3 +535,4 @@ public class TestHBaseBulkOutputStorageDriver extends SkeletonHBaseTest {
     }
 
 }
+

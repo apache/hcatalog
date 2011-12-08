@@ -81,6 +81,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-171. HBaseBulkOutputStorageDriver should work with secured hadoop (toffer via khorgath)
+
   HCAT-170. HBaseBulkOSD fails to launch ImportSequenceFile because of missing jars in dist cache (toffer via khorgath)
 
   HCAT-176. Class not found exception when running TestPigStorageDriver (daijy via khorgath)

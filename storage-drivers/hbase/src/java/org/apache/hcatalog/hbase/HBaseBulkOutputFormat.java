@@ -5,7 +5,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -33,6 +36,12 @@ class HBaseBulkOutputFormat extends OutputFormat<WritableComparable<?>,Put> {
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         baseOutputFormat.checkOutputSpecs(context);
+        //Get jobTracker delegation token if security is enabled
+        //we need to launch the ImportSequenceFile job
+        if(context.getConfiguration().getBoolean("hadoop.security.authorization",false)) {
+            JobClient jobClient = new JobClient(new JobConf(context.getConfiguration()));
+            context.getCredentials().addToken(new Text("my mr token"), jobClient.getDelegationToken(null));
+        }
     }
 
     @Override
@@ -124,7 +133,7 @@ class HBaseBulkOutputFormat extends OutputFormat<WritableComparable<?>,Put> {
                 Configuration conf = jobContext.getConfiguration();
                 Path srcPath = FileOutputFormat.getOutputPath(jobContext);
                 Path destPath = new Path(srcPath.getParent(),srcPath.getName()+"_hfiles");
-                ImportSequenceFile.runJob(conf,
+                ImportSequenceFile.runJob(jobContext,
                                                         conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
                                                         srcPath,
                                                         destPath);
