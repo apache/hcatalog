@@ -50,6 +50,8 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-10. Shouldn't assume the secure hadoop installation (julienledem via hashutosh)
+
   HCAT-172. End-to-end test framework for HCatalog (daijyc via hashutosh)
 
   HCAT-158. Update HAR support to work with Hadoop 205 (thw via hashutosh)
