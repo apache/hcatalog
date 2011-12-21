@@ -41,6 +41,11 @@
             <artifact name="hbase" type="jar" ext="jar"/>
             <artifact name="hbase" type="test-jar" ext="jar" m:classifier="tests"/>
         </dependency>
-        <dependency org="org.apache.zookeeper" name="zookeeper" rev="${zookeeper.version}" conf="common->master"/>
+        <dependency org="org.apache.zookeeper" name="zookeeper" rev="${zookeeper.version}"
+                    conf="common->master">
+            <artifact name="zookeeper" type="jar" ext="jar"/>
+            <artifact name="zookeeper" type="test-jar" ext="jar" m:classifier="tests"/>
+        </dependency>
+	<dependency org="org.apache.thrift" name="libthrift" rev="${thrift.version}" conf="common->master"/>
     </dependencies>
 </ivy-module>

@@ -35,7 +35,6 @@
     <property name="driver.version" value="0.1.0"/>
     <property name="driver.jar" value="${ant.project.name}-${driver.version}.jar"/>
     <property name="final.name" value="${ant.project.name}-${driver.version}" />
-
     <property name="hcatalog.dir" value="${basedir}/../../" />
 
     <!-- hive properties -->
@@ -65,6 +64,8 @@
     <property name="test.build.dir" value="${build.dir}/test" />
     <property name="test.build.classes" value="${test.build.dir}/classes" />
     <property name="test.log.dir" value="${test.build.dir}/logs" />
+    <property name="test.tmp.dir" value="${test.build.dir}/temp" />
+    <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.timeout" value="2700000" />
     <property name="test.junit.output.format" value="plain" />
     <property name="test.all.file" value="${test.src.dir}/all-tests"/>
@@ -110,10 +111,37 @@
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
         <pathelement location="${hive.conf.dir}"/>
+        <!-- jars Thrift depends on -->
+        <fileset dir="${ivy.lib.dir}" includes="libthrift*.jar"/>
         <!-- jars Hive depends on -->
         <fileset dir="${hive.root}/build/ivy/lib/default/">
             <include name="**/*.jar" />
             <exclude name="*hbase*.jar" />
+        </fileset>
+        <!-- jars Hadoop depends on -->
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
+            <include name="**/*.jar" />
+        </fileset>
+        <pathelement location="${driver.jar}"/>
+        <path refid="classpath"/>
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
+                 includes="hadoop-test-0.20.3-CDH3-SNAPSHOT.jar"/>
+    </path>
+
+    <path id="test.zookeeper.classpath">
+        <pathelement location="${test.build.classes}" />
+        <pathelement location="${build.classes}" />
+        <pathelement location="conf"/>
+        <pathelement location="${hive.conf.dir}"/>
+        <!-- jars Zookeeper depends on -->
+        <fileset dir="${ivy.lib.dir}" includes="zookeeper*.jar"/>
+        <!-- jars Thrift depends on -->
+        <fileset dir="${ivy.lib.dir}" includes="libthrift*.jar"/>
+        <!-- jars Hive depends on -->
+        <fileset dir="${hive.root}/build/ivy/lib/default/">
+            <include name="**/*.jar" />
+            <exclude name="*hbase*.jar" />
+            <exclude name="*zookeeper*.jar" />
         </fileset>
         <!-- jars Hadoop depends on -->
         <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
@@ -195,7 +223,6 @@
         <mkdir dir="${build.classes}" />
         <mkdir dir="${test.build.classes}" />
     </target>
-
     <!--
     ================================================================================
     Main Build and Jar Section
@@ -203,7 +230,7 @@
     -->
     <!-- Compile src files -->
     <target name="compile-src" depends="init">
-        <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
+        <javac encoding="${build.encoding}" srcdir="${src.dir}:${basedir}/src/gen-java" excludes="${excludes}"
                includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
                optimize="${javac.optimize}" target="${javac.version}"
                source="${javac.version}" deprecation="${javac.deprecation}"
@@ -240,8 +267,12 @@
         <sequential>
 
             <delete dir="${test.log.dir}"/>
+	    <delete dir="${test.tmp.dir}" />
+            <delete dir="${test.data.dir}" />
             <mkdir dir="${test.log.dir}"/>
-            <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
+	    <mkdir dir="${test.tmp.dir}" />
+            <mkdir dir="${test.data.dir}" />
+	    <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
                    fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}"
                    errorProperty="tests.failed" failureProperty="tests.failed">
                 <classpath>
@@ -261,9 +292,34 @@
                 </batchtest>
                 <!-- Run one test case.  To use this define -Dtestcase=X on the command line -->
                 <batchtest fork="yes" todir="${test.log.dir}" if="testcase">
-                    <fileset dir="src/test" includes="**/${testcase}.java"/>
+                    <fileset dir="src/test" includes="**/${testcase}.java" excludes="**/lock/*.java"/>
                 </batchtest>
 
+                <assertions>
+                    <enable />
+                </assertions>
+
+            </junit>
+           <!-- TODO: Remove the following when using HBase 0.92 -->
+            <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
+                   fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}"
+                   errorProperty="tests.failed" failureProperty="tests.failed">
+            	<sysproperty key="build.test.dir" value="${test.tmp.dir}" />
+            	<sysproperty key="test.data.dir" value="${test.data.dir}" />
+            	<sysproperty key="log4j.configuration" value="file:${basedir}/log4j.properties" />
+                <classpath>
+                    <pathelement location="${test.build.classes}" />
+                    <pathelement location="." />
+                    <path refid="test.zookeeper.classpath"/>
+                </classpath>
+                <formatter type="${test.junit.output.format}" />
+                <batchtest fork="yes" todir="${test.log.dir}" unless="testcase">                
+                    <fileset dir="src/test" includes="**/lock/*Test.java"/>
+                </batchtest>
+                <!-- Run one test case.  To use this define -Dtestcase=X on the command line -->
+                <batchtest fork="yes" todir="${test.log.dir}" if="testcase">
+                    <fileset dir="src/test" includes="**/lock/${testcase}.java"/>
+                </batchtest>                
                 <assertions>
                     <enable />
                 </assertions>
@@ -325,8 +381,10 @@
                 <include name="**/*"/>
                 <!-- exclude test jars -->
                 <exclude name="*-tests.jar"/>
+                <exclude name="*zookeeper*.jar"/>
             </fileset>
             <fileset dir="${hive.root}/build/hbase-handler" includes="*.jar"/>
+            <fileset dir="${hive.root}/build/ivy/lib/default" includes="*zookeeper*.jar"/>
         </copy>
 
 
