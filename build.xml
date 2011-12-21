@@ -467,6 +467,10 @@
         <include name="hive-shims-*.jar"/>
       </fileset>
 
+      <fileset dir="hive/external/build/builtins">
+        <include name="hive-builtins-*.jar"/>
+      </fileset>
+
       <fileset dir="hive/external/build/common">
         <include name="hive-common-*.jar"/>
       </fileset>

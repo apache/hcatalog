@@ -52,6 +52,10 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-187. HCatalog release missing Hive builtins (traviscrawford via hashutosh)
+
+  HCAT-186. Downgrade ivy to 2.1.0 (currently 2.2.0) per HIVE-2580 (traviscrawford via hashutosh)
+
   HCAT-10. Shouldn't assume the secure hadoop installation (julienledem via hashutosh)
 
   HCAT-172. End-to-end test framework for HCatalog (daijyc via hashutosh)
