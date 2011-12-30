@@ -370,7 +370,11 @@
   Docs Section
   ================================================================================
   -->
-  <target name="docs" depends="javadoc, forrest.check" description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line." if="forrest.home">
+  <target name="docs" depends="forrest, javadoc"
+          description="Generate Javadoc and Forrest documentation" />
+
+  <target name="forrest" if="forrest.home"
+          description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line.">
     <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
           failonerror="true">
     </exec>
@@ -379,21 +383,24 @@
     </copy>
   </target>
 
-  <target name="forrest.check" unless="forrest.home" >
-    <fail message="'forrest.home' is not defined. Please pass -Dforrest.home=&lt;base of Apache Forrest installation&gt; to Ant on the command-line." />
+  <target name="javadoc" depends="jar" description="Generate Javadoc documentation">
+    <mkdir dir="${build.javadoc}" />
+    <javadoc overview="${src.dir}/../docs/overview.html"
+             packagenames="org.apache.hcatalog.*"
+             destdir="${build.javadoc}"
+             author="true"
+             version="true"
+             use="true"
+             windowtitle="HCatalog ${hcatalog.version} API"
+             doctitle="HCatalog ${hcatalog.version} API"
+             failonerror="true">
+      <packageset dir="${src.dir}" />
+        <classpath>
+          <path refid="classpath" />
+        </classpath>
+        <group title="hcatalog" packages="org.apache.hcatalog.*" />
+    </javadoc>
   </target>
-
-  <target name="javadoc" depends="jar" description="Create documentation">
-      <mkdir dir="${build.javadoc}" />
-      <javadoc overview="${src.dir}/../docs/overview.html" packagenames="org.apache.hcatalog.*" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="HCatalog ${hcatalog.version} API" doctitle="HCatalog ${hcatalog.version} API">
-          <packageset dir="${src.dir}" />
-          <classpath>
-              <path refid="classpath" />
-          </classpath>
-          <group title="hcatalog" packages="org.apache.hcatalog.*" />
-      </javadoc>
-  </target>
-
 
   <!--
   ===============================================================================
