@@ -91,6 +91,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-195. New storage-drivers directory not picked up in src-release target (gates via khorgath)
+
   HCAT-171. HBaseBulkOutputStorageDriver should work with secured hadoop (toffer via khorgath)
 
   HCAT-170. HBaseBulkOSD fails to launch ImportSequenceFile because of missing jars in dist cache (toffer via khorgath)

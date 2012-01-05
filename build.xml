@@ -641,6 +641,7 @@
                 <include name="lib/**"/>
                 <include name="license/**"/>
                 <include name="src/**"/>
+                <include name="storage-drivers/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>
                 <include name="KEYS"/>
