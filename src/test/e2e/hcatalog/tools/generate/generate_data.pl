@@ -336,15 +336,23 @@ our $hadoopCoreJar = undef;
 
 sub findHadoopJars()
 {
-    if (not defined $ENV{'HADOOP_HOME'}) {
+    my $hadoopClassRoot;
+    if (defined $ENV{'HADOOP_HOME'}) {
+        $hadoopClassRoot = $ENV{'HADOOP_HOME'};
+    } else {
+        $hadoopClassRoot = "/usr/share/hadoop";
+    }
+
+    my $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
+    my $loggingJar = `ls $hadoopClassRoot/lib/commons-logging-*.jar | grep -v api`;
+    my $cfgJar = `ls $hadoopClassRoot/lib/commons-configuration-*.jar`;
+    my $langJar = `ls $hadoopClassRoot/lib/commons-lang-*.jar`;
+    my $cliJar = `ls $hadoopClassRoot/lib/commons-cli-*.jar`;
+
+    if ($coreJar=="") {
         die 'Please set $HADOOP_HOME\n';
     }
 
-    my $coreJar = `ls $ENV{'HADOOP_HOME'}/hadoop-core-*.jar`;
-    my $loggingJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-logging-*.jar | grep -v api`;
-    my $cfgJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-configuration-*.jar`;
-    my $langJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-lang-*.jar`;
-    my $cliJar = `ls $ENV{'HADOOP_HOME'}/lib/commons-cli-*.jar`;
     chomp $coreJar;
     chomp $loggingJar;
     chomp $cfgJar;

@@ -91,6 +91,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-197. Data generator for e2e assumes hadoop tarball installation (daijy via khorgath)
+
   HCAT-196. Remove dependency on pig.jar for hcatalog server (daijy via khorgath)
 
   HCAT-195. New storage-drivers directory not picked up in src-release target (gates via khorgath)
