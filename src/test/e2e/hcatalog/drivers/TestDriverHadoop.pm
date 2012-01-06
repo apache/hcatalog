@@ -339,6 +339,7 @@ sub runHadoop
         my $hadoop_classpath = $self->replaceParameters( $testCmd->{'hadoop_classpath'}, $outfile, $testCmd, $log );
         my $cp = $testCmd->{'hcatalog.jar'};
         $cp =~ s/,/:/g;
+        $cp .= ":" . Util::findPigWithoutHadoopJar($testCmd, $log);
         $ENV{'HADOOP_CLASSPATH'} = $cp;
     }
 

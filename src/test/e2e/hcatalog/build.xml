@@ -197,7 +197,7 @@
       <env key="HIVE_HOME" value="${basedir}/../../../../hive/external/build/dist"/>
       <env key="PH_CLUSTER_BIN" value="${harness.cluster.bin}"/>
       <env key="PIG_HOME" value="${harness.pig.home}"/>
-      <env key="PIG_ROOT" value="${harness.pig.home}"/>
+      <env key="PIG_JAR" value="${harness.pig.jar}"/> <!-- Pig jar without antlr -->
       <arg line="${tests.to.run}"/>
       <arg value="${test.location}/tests/pig.conf"/>
       <arg value="${test.location}/tests/hive.conf"/>
@@ -232,6 +232,8 @@
       <env key="PH_CLUSTER_BIN" value="${harness.cluster.bin}"/>
       <env key="HIVE_HOME" value="../../../../hive/external"/>
       <env key="PH_METASTORE_THRIFT" value="${harness.metastore.thrift}"/>
+      <env key="PIG_HOME" value="${harness.pig.home}"/>
+      <env key="PIG_JAR" value="${harness.pig.jar}"/> <!-- Pig jar without antlr -->
       <arg value="-deploycfg"/>
       <arg value="${deploy.conf}"/>
       <arg value="${deploy.opt}"/>

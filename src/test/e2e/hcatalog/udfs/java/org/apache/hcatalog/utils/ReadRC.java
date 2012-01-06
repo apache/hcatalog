@@ -68,6 +68,7 @@ public class ReadRC extends Configured implements Tool {
         name = (String)value.get(0);
         age = (Integer)value.get(1);
         gpa = (Double)value.get(2);
+        gpa = Math.floor(gpa) + 0.1;
         
         HCatRecord record = new DefaultHCatRecord(3);
         record.set(0, name);
