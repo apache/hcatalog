@@ -52,7 +52,6 @@ import org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
-import org.apache.pig.builtin.PigStorage;
 
 final class CreateTableHook extends AbstractSemanticAnalyzerHook {
 
@@ -104,8 +103,8 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
                     outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
                     inStorageDriver  = org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver.class.getName();
                     outStorageDriver = org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver.class.getName();
-                    loader = PigStorage.class.getName();
-                    storer = PigStorage.class.getName();
+                    loader = HCatConstants.HCAT_PIG_STORAGE_CLASS;
+                    storer = HCatConstants.HCAT_PIG_STORAGE_CLASS;
 
                     break;
 

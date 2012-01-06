@@ -40,7 +40,6 @@ import org.apache.hadoop.hive.ql.plan.DDLWork;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
-import org.apache.pig.builtin.PigStorage;
 
 public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
 
@@ -70,8 +69,8 @@ public class AlterTableFileFormatHook extends AbstractSemanticAnalyzerHook {
         outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
         inDriver  = org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver.class.getName();
         outDriver = org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver.class.getName();
-        loader = PigStorage.class.getName();
-        storer = PigStorage.class.getName();
+        loader = HCatConstants.HCAT_PIG_STORAGE_CLASS;
+        storer = HCatConstants.HCAT_PIG_STORAGE_CLASS;
         break;
 
     case HiveParser.TOK_TBLRCFILE:
