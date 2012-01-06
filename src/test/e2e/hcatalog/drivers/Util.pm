@@ -558,4 +558,13 @@ sub getLocaleCmd
           ."export LC_IDENTIFICATION=\"$locale\"";
 }
 
+sub findPigWithoutHadoopJar($$)
+{
+    my ($cfg, $log) = @_;
+
+    my $jar = `ls $cfg->{'pigpath'}/pig-*-withouthadoop.jar`;
+    chomp $jar;
+    return $jar;
+}
+
 1;
