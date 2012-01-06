@@ -18,7 +18,7 @@
 
 Apache HCatalog Change Log
 
-Trunk (unreleased changes)
+Release 0.3.0 (unreleased changes)
 
   INCOMPATIBLE CHANGES
 
@@ -91,6 +91,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-198. A few issues keep e2e tests from running in an automated environment (gates)
+
   HCAT-197. Data generator for e2e assumes hadoop tarball installation (daijy via khorgath)
 
   HCAT-196. Remove dependency on pig.jar for hcatalog server (daijy via khorgath)
@@ -147,7 +149,7 @@ Trunk (unreleased changes)
 
   HCAT-115. Superfluous warning on fresh install (ctdean via khorgath)
 
-Release 0.2.0 - Unreleased
+Release 0.2.0
 
   INCOMPATIBLE CHANGES
 

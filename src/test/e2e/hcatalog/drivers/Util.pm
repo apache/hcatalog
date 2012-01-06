@@ -1,21 +1,21 @@
 #!/usr/bin/env perl 
 
-############################################################################           
-#  Licensed to the Apache Software Foundation (ASF) under one or more                  
-#  contributor license agreements.  See the NOTICE file distributed with               
-#  this work for additional information regarding copyright ownership.                 
-#  The ASF licenses this file to You under the Apache License, Version 2.0             
-#  (the "License"); you may not use this file except in compliance with                
-#  the License.  You may obtain a copy of the License at                               
-#                                                                                      
-#      http://www.apache.org/licenses/LICENSE-2.0                                      
-#                                                                                      
-#  Unless required by applicable law or agreed to in writing, software                 
-#  distributed under the License is distributed on an "AS IS" BASIS,                   
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.            
-#  See the License for the specific language governing permissions and                 
-#  limitations under the License.                                                      
-                                                                                       
+############################################################################
+#  Licensed to the Apache Software Foundation (ASF) under one or more
+#  contributor license agreements.  See the NOTICE file distributed with
+#  this work for additional information regarding copyright ownership.
+#  The ASF licenses this file to You under the Apache License, Version 2.0
+#  (the "License"); you may not use this file except in compliance with
+#  the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 
 ###########################################################################
 # Class: Util
@@ -27,7 +27,6 @@
 package Util;
 
 use IPC::Run qw(run);
-use Log::Log4perl qw(:easy);
 
 sub prepareHCat
 {
@@ -237,6 +236,7 @@ sub runHCatCmdFromFile($$;$$$$)
 
     # unset HADOOP_CLASSPATH
     $ENV{'HADOOP_CLASSPATH'} = "";
+    $ENV{'HADOOP_CLASSPATH'} = $cfg->{'pigjar'};
 
     my @cmd;
     if (defined($sql)) {
@@ -309,137 +309,6 @@ sub runHadoopCmd($$$)
         die "Failed running " . join(" ", @cmd) . "\n";
 }
 
-##############################################################################
-#  Sub: localTime
-# 
-#  Returns:
-#  A string with the local time
-
-sub  localTime() {
-
-   my $retval = time();
-   
-   my $local_time = gmtime( $retval);
-
-   return $local_time;
-
-}
-
-##############################################################################
-#  Sub: formatedTime
-#  Returns the time with following format "$mday/$mon/$year $hour:$min:$sec $weekday[$wday]"
-#
-#  Returns:
-#  formated time
-
-sub  formatedTime() {
-
-   my @weekday = ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat");
-
-   my $retval = time();
-   
-   my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime(time);
-   $year = $year + 1900; 
-   $mon += 1;
-   return  "$mday/$mon/$year $hour:$min:$sec $weekday[$wday]\n";
-   
-
-}
-
-##############################################################################
-# Sub: execCmd
-# Records the command in the log and prints it to stdout before executing.
-#
-# Paramaters:
-# $log     - The log object 
-# $subName - The name of the subroutine the message originated at
-# $lineNo  - The line number  of the subroutine the message originated at
-# $cmd     - The command string to execute
-# $msg     - A string, the message to print
-# $level   - (optional)The logging level for the message: DEBUG, INFO, WARN, ERROR, FATAL
-#            defaults to DEBUG.
-#
-#  Returns:
-#  An array containing the  output from the executed command.
-#
-
-sub execCmd() {
-
-    my ( $log, $subName, $lineNo, $cmd, $level ) = @_ ;
-
-    my $count = @_;
-    my $thisSubName = (caller(0))[3];
-
-   #Check for errors in arguments
-   if ( $count < 4 ){
-
-       if ( $log ) {
-          $log->msg( $level, $thisSubName, __LINE__ , "Invalid number of arguments, got $count=( @_ )" );
-
-       } else {
-          print "ERROR: $0 $thisSubName at ".__LINE__."Invalid number of arguments\n";
-    
-       }
-       return 1;
-   }
-
-   #Log command,  execute commdand, return results
-   $level  = "DEBUG" if ( !$level );
-   $log->msg( $level, $subName, $lineNo , "$cmd");
-
-    my @result = `$cmd`;
-
-    $log->msg( $level, $subName, $lineNo , "@cmd") if ( @cmd );
-
-    return @result;
-}
-
-sub getHiveCmd
-{
-    my ( $properties ) = @_;
-
-    my $subName        = (caller(0))[3];
-    my @baseCmd;
-
-    die "$0.$subName: null properties" if (! $properties );
-
-    my $cmd;
-
-    $cmd = $properties->{'hive_bin_location'} . "/hive";
-    if ( ! -x "$cmd" ) {
-      die "\n$0::$subName FATAL: Hive command does not exist: $cmd\n";
-    }
-    push (@baseCmd, $cmd);
-
-#   push (@baseCmd, '--config', $properties->{'testconfigpath'}) if defined($properties->{'testconfigpath'});
-
-    return @baseCmd;
-}
-
-sub getHCatCmd
-{
-    my ( $properties ) = @_;
-
-    my $subName        = (caller(0))[3];
-    my @baseCmd;
-
-    die "$0.$subName: null properties" if (! $properties );
-
-    my $cmd;
-
-    $cmd = $properties->{'hcat_bin_location'};
-    if ( ! -x "$cmd" ) {
-         print STDERR "\n$0::$subName WARNING: Can't find hcat command: $cmd\n";
-         $cmd = `which hcat`;
-         chomp $cmd;
-         print STDERR "$0::$subName WARNING: Instead using command: $cmd\n";
-    }
-    die "\n$0::$subName FATAL: hcat command does not exist: $cmd\n" if ( ! -x $cmd  ); 
-    $ENV{"hive.metastore.local"} = "false"; 
-    $ENV{"hive.metastore.uris"}  = "thrift://".$properties->{'thriftserver'}; 
-    push (@baseCmd, $cmd);
-    return @baseCmd;
-}
 
 sub show_call_stack {
   my ( $path, $line, $subr );
@@ -651,43 +520,6 @@ print 'not use-pig.pl?????';
 }
 
 
-sub getBasePigSqlCmd 
-{
-
-    my $subName        = (caller(0))[3];
-   
-   Util::getPigCmd( 'testsql', @_ );
-
-}
-
-sub getBasePigCmd 
-{
-
-    my $subName        = (caller(0))[3];
-   
-   Util::getPigCmd( 'testjar', @_ );
-
-}
-
-sub getLatestBasePigCmd 
-{
-
-    my $subName        = (caller(0))[3];
-   
-   Util::getPigCmd( 'latesttestjar', @_ );
-
-}
-
-
-sub getBenchmarkBasePigCmd 
-{
-    my $subName        = (caller(0))[3];
-    my ( $properties ) = @_;
-
-   Util::getPigCmd( 'benchmarkjar', @_ );
-
-}
-
 sub setLocale
 {
    my $locale= shift;
@@ -725,4 +557,5 @@ sub getLocaleCmd
           ."export LC_MEASUREMENT=\"$locale\";"
           ."export LC_IDENTIFICATION=\"$locale\"";
 }
+
 1;

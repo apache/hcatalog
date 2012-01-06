@@ -67,6 +67,8 @@ public class WriteRC extends Configured implements Tool {
             name = value.get(0)==null?null:(String)value.get(0);
             age = value.get(1)==null?null:(Integer)value.get(1);
             gpa = value.get(2)==null?null:(Double)value.get(2);
+
+            if (gpa != null) gpa = Math.floor(gpa) + 0.1;
             
             HCatRecord record = new DefaultHCatRecord(5);
             record.set(0, name);

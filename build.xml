@@ -72,6 +72,9 @@
   <property name="hive.conf.dir" value="${hive.root}/conf"/>
   <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
 
+  <!-- e2e test properties -->
+  <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
+
   <!-- ivy properteis set here -->
   <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
   <property name="ivy.dir" location="ivy" />
@@ -363,6 +366,7 @@
   <!-- Clean up children -->
   <target name="clean" depends="clean-builds" description="Cleanup all build artifacts">
     <delete dir="${artifacts.dir}" />
+    <ant dir="${test.e2e.dir}" target="clean"/>
   </target>
  
   <!--
@@ -800,4 +804,22 @@
         </copy>
         <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
     </target>
+
+    <!-- ================================================================== -->
+    <!-- End to end tests                                                   -->
+    <!-- ================================================================== -->
+
+    <target name="test-e2e" description="run end-to-end tests">
+        <ant dir="${test.e2e.dir}"/>
+    </target>
+
+    <target name="test-e2e-install" description="deploy end-to-end tests to existing cluster">
+        <ant dir="${test.e2e.dir}" target="install"/>
+    </target>
+
+    <target name="test-e2e-deploy" description="deploy end-to-end tests to existing cluster">
+        <ant dir="${test.e2e.dir}" target="deploy"/>
+    </target>
+
+
 </project>
