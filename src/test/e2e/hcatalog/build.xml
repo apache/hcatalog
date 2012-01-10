@@ -25,7 +25,7 @@
     <fileset dir="${hive.dir}/lib/">
      <include name="*.jar" />
    </fileset>
-   <fileset dir="${hive.dir}/build/dist/lib/">
+   <fileset dir="${hive.dir}/build/dist/lib/" erroronmissingdir="false">
      <include name="*.jar" />
      <exclude name="antlr*.jar" />
    </fileset>

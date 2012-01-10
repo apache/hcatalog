@@ -91,6 +91,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-202. ant clean target is failing (thw via toffer)
+
   HCAT-200. e2e test build.xml does not work with rpms (arpitgupta via khorgath)
 
   HCAT-198. A few issues keep e2e tests from running in an automated environment (gates)
