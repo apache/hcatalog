@@ -52,6 +52,8 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
+
   HCAT-184. Optionally do not generate forrest docs (traviscrawford via hashutosh)
 
   HCAT-187. HCatalog release missing Hive builtins (traviscrawford via hashutosh)

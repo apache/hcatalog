@@ -87,9 +87,9 @@ public class TestEximSemanticAnalysis extends TestCase {
         .run("export table junit_sem_analysis to 'pfile://local:9080/tmp/hcat/exports/junit_sem_analysis'");
 
     assertEquals(10, response.getResponseCode());
-    assertEquals(
-        "FAILED: Error in semantic analysis: org.apache.hcatalog.common.HCatException : 3000 : Permission denied",
-        response.getErrorMessage());
+    assertTrue("Permission denied expected : "+response.getErrorMessage(),
+        response.getErrorMessage().startsWith(
+            "FAILED: Error in semantic analysis: org.apache.hcatalog.common.HCatException : 3000 : Permission denied"));
     Runtime.getRuntime().exec("rm -rf /tmp/hcat");
     response = hcatDriver.run("drop table junit_sem_analysis");
     if (response.getResponseCode() != 0) {
@@ -121,9 +121,10 @@ public class TestEximSemanticAnalysis extends TestCase {
         .run("import table junit_sem_analysis from 'pfile://local:9080/tmp/hcat/exports/junit_sem_analysis'");
 
     assertEquals(10, response.getResponseCode());
-    assertEquals(
-        "FAILED: Error in semantic analysis: org.apache.hcatalog.common.HCatException : 3000 : Permission denied",
-        response.getErrorMessage());
+    assertTrue(
+        "Permission denied expected: "+response.getErrorMessage() ,
+        response.getErrorMessage().startsWith(
+            "FAILED: Error in semantic analysis: org.apache.hcatalog.common.HCatException : 3000 : Permission denied"));
     Runtime.getRuntime().exec("rm -rf /tmp/hcat");
 
     cluster.getFileSystem().setPermission(whPath, FsPermission.valueOf("-rwxrwxrwx"));

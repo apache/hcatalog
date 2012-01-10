@@ -63,10 +63,10 @@ public class AuthUtils {
       return;
     }
     catch (AccessControlException ace) {
-      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, ace);
+      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "for path " + path, ace);
     } catch (org.apache.hadoop.fs.permission.AccessControlException ace){
       // Older hadoop version will throw this @deprecated Exception.
-      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, ace);
+      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "for path " + path, ace);
     } catch (IOException ioe){
       throw new SemanticException(ioe);
     }
@@ -75,7 +75,7 @@ public class AuthUtils {
     try {
       ugi = ShimLoader.getHadoopShims().getUGIForConf(conf);
     } catch (LoginException le) {
-      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL,le);
+      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "for path " + path, le);
     } catch (IOException ioe) {
       throw new SemanticException(ioe);
     }
@@ -89,19 +89,18 @@ public class AuthUtils {
       if(dirPerms.getUserAction().implies(action)){
         return;
       }
-      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL);
+      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "action " + action + " not permitted on path " + path + " for user " + user);
     }
     if(ArrayUtils.contains(ugi.getGroupNames(), grp)){
       if(dirPerms.getGroupAction().implies(action)){
         return;
       }
-      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL);
-
+      throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "action " + action + " not permitted on path " + path + " for group " + grp);
     }
     if(dirPerms.getOtherAction().implies(action)){
       return;
     }
-    throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL);
+    throw new HCatException(ErrorType.ERROR_ACCESS_CONTROL, "action " + action + " not permitted on path " + path + " for others");
 
 
   }

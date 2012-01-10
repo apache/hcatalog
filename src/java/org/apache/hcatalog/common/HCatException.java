@@ -112,7 +112,7 @@ public class HCatException extends IOException {
     }
 
     if( type.appendCauseMessage() ) {
-      if( cause != null && cause.getMessage() != null ) {
+      if( cause != null ) {
         //Add the cause message to buffer
         message.append(". Cause : " + cause.toString());
       }
