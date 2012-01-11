@@ -336,11 +336,9 @@ our $hadoopCoreJar = undef;
 
 sub findHadoopJars()
 {
-    my $hadoopClassRoot;
-    if (defined $ENV{'HADOOP_HOME'}) {
-        $hadoopClassRoot = $ENV{'HADOOP_HOME'};
-    } else {
-        $hadoopClassRoot = "/usr/share/hadoop";
+    my $hadoopClassRoot=$ENV{'HADOOP_HOME'};
+    if ( -d "$hadoopClassRoot/share/hadoop" ) {
+      $hadoopClassRoot="$hadoopClassRoot/share/hadoop"
     }
 
     my $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
@@ -349,7 +347,7 @@ sub findHadoopJars()
     my $langJar = `ls $hadoopClassRoot/lib/commons-lang-*.jar`;
     my $cliJar = `ls $hadoopClassRoot/lib/commons-cli-*.jar`;
 
-    if ($coreJar=="") {
+    if (! $coreJar) {
         die 'Please set $HADOOP_HOME\n';
     }
 

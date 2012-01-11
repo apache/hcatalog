@@ -93,6 +93,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-197. data generator for e2e assumes hadoop tarball installation (arpitgupta via hashutosh)  
+
   HCAT-202. ant clean target is failing (thw via hashutosh)
 
   HCAT-200. e2e test build.xml does not work with rpms (arpitgupta via khorgath)
