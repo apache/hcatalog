@@ -436,9 +436,6 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             hiveConf.setBoolean(ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
             hiveConf.set(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, kerberosPrincipal);
         }        
-        if(conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-          hiveConf.set("hive.metastore.token.signature", conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
-        }
       } else {
         //Thrift url is null, copy the hive conf into the job conf and restore it
         //in the backend context
@@ -465,7 +462,11 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         }
 
       }
-      
+
+      if(conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+        hiveConf.set("hive.metastore.token.signature", conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
+      }
+
       // figure out what the maximum number of partitions allowed is, so we can pass it on to our outputinfo
       if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
         maxDynamicPartitions = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
