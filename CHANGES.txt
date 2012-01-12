@@ -91,6 +91,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-199. HCatOutputCommitter::cleanupJob() fails : Unable to connect to metastore. (mithun via khorgath)
+
   HCAT-202. ant clean target is failing (thw via toffer)
 
   HCAT-200. e2e test build.xml does not work with rpms (arpitgupta via khorgath)
