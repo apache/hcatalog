@@ -93,6 +93,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-199. HCatOutputCommitter::cleanupJob() fails : Unable to connect to metastore. (mithun via khorgath)
+
   HCAT-197. data generator for e2e assumes hadoop tarball installation (arpitgupta via hashutosh)  
 
   HCAT-202. ant clean target is failing (thw via hashutosh)
