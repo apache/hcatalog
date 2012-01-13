@@ -52,6 +52,8 @@ Release 0.3.0 (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-166. Making configuration/installation automatable (vikram.dixit via khorgath)
+
   HCAT-184. Optionally do not generate forrest docs (traviscrawford via hashutosh)
 
   HCAT-187. HCatalog release missing Hive builtins (traviscrawford via hashutosh)

@@ -133,7 +133,7 @@ bash ${RPM_INSTALL_PREFIX0}/sbin/update-hcatalog-env.sh \
        --conf-dir=${RPM_INSTALL_PREFIX1} \
        --log-dir=${RPM_INSTALL_PREFIX2} \
        --pid-dir=${RPM_INSTALL_PREFIX3} \
-       --mysql-dir=/usr/share/java
+       --dbjars=/usr/share/java
 
 if [ ! -f ${RPM_INSTALL_PREFIX1}/hive-site.xml ]; then
 	cp ${RPM_INSTALL_PREFIX1}/proto-hive-site.xml ${RPM_INSTALL_PREFIX1}/hive-site.xml

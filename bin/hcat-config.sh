@@ -49,11 +49,11 @@ fi
  
 # Allow alternate conf dir location.
 if [ -e "${HCAT_PREFIX}/conf/hcat-env.sh" ]; then
-  DEFAULT_CONF_DIR="conf"
+  DEFAULT_CONF_DIR=${HCAT_PREFIX}/"conf"
 else
-  DEFAULT_CONF_DIR="etc/hcatalog"
+  DEFAULT_CONF_DIR="/etc/hcatalog"
 fi
-HCAT_CONF_DIR="${HCAT_CONF_DIR:-$HCAT_PREFIX/$DEFAULT_CONF_DIR}"
+HCAT_CONF_DIR="${HCAT_CONF_DIR:-$DEFAULT_CONF_DIR}"
 
 if [ -e $HCAT_PREFIX/bin/hadoop ]; then
   HADOOP_PREFIX=$HCAT_PREFIX
