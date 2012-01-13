@@ -45,7 +45,7 @@ function start_hcat() {
     exit 1
   fi
 
-  HIVE_SITE_XML=${HCAT_PREFIX}/etc/hcatalog/hive-site.xml
+  HIVE_SITE_XML=${HCAT_CONF_DIR}/hive-site.xml
   if [ ! -e $HIVE_SITE_XML ]
   then
     echo "Missing hive-site.xml, expected at [$HIVE_SITE_XML]";

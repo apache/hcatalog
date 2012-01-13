@@ -22,4 +22,4 @@ bash /usr/sbin/update-hcatalog-env.sh \
   --conf-dir=/etc/hcatalog \
   --log-dir=/var/log/hcatalog \
   --pid-dir=/var/run/hcatalog \
-  --mysql-dir=/usr/share/java
+  --dbjars=/usr/share/java
