@@ -30,7 +30,6 @@ import org.apache.hadoop.hive.serde2.columnar.BytesRefArrayWritable;
 import org.apache.hadoop.hive.serde2.columnar.BytesRefWritable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobID;
-import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
@@ -39,14 +38,13 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
-import org.apache.hcatalog.rcfile.RCFileInputDriver;
-import org.apache.hcatalog.rcfile.RCFileOutputDriver;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
 public class TestRCFileOutputStorageDriver extends TestCase {
 
   public void testConversion() throws IOException {
     Configuration conf = new Configuration();
-    JobContext jc = new JobContext(conf, new JobID());
+    JobContext jc = HCatHadoopShims.Instance.get().createJobContext(conf, new JobID());
     String jobString = HCatUtil.serialize(OutputJobInfo.create(null,null,null,null,null));
     jc.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO,jobString);
 

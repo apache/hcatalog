@@ -125,23 +125,17 @@
       <include name="**/*.jar" />
     </fileset>
     <!-- jars Hadoop depends on -->
-    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
-      <include name="**/*.jar" />
-    </fileset>
-    <!--
-    <pathelement location="${test.src.data.dir}/conf"/>
-    <pathelement location="${hadoop.oldstyle-name.test.jar}"/>
-    <pathelement location="${hadoop.newstyle-name.test.jar}"/>
-    <pathelement location="${common.jar}"/>
-    <pathelement location="${jsp.test.jar}"/>
-    -->
     <pathelement location="${hcatalog.jar}"/>
-    <!--
-    <pathelement location="${hadoop.root}/lib/jsp-2.1/jsp-api-2.1.jar"/>
-    -->
     <path refid="classpath"/>
-    <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
-      includes="hadoop-test-0.20.3-CDH3-SNAPSHOT.jar"/>
+    <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/">
+      <include name="**/hadoop-*.jar" />
+      <include name="lib/**/*.jar" />
+      <exclude name="lib/**/excluded/" />
+      <!-- below is for 0.23 onwards -->
+      <include name="share/hadoop/common/lib/*.jar" />
+      <exclude name="share/hadoop/common/lib/hadoop-mapreduce-*.jar" />
+      <exclude name="share/hadoop/common/lib/hadoop-yarn-*.jar" />
+    </fileset>
   </path>
 
   <!--
@@ -226,7 +220,13 @@
 
   <!-- Build the external hive code -->
   <target name="hive.jar">
-    <ant antfile="build.xml" dir="${hive.root}" target="package" useNativeBasedir='true'/>
+    <echo message="Building hive with hadoop.version ${hadoop.version}" />
+    <local name="param.shims.include"/>
+    <expandToProperty name="param.shims.include" value="shims.${shims.name}.hive.shims.include"/>
+    <ant antfile="build.xml" dir="${hive.root}" target="package" useNativeBasedir='true'>
+       <property name="shims.include" value="${param.shims.include}"/>
+       <property name="hadoop.version" value="${hadoop.version}"/>
+    </ant>
   </target>
 
   <!--
@@ -237,6 +237,17 @@
   <!-- Build HCatalog src files -->
   <target name="compile-src" depends="hive.jar,init">
     <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
+        includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
+        optimize="${javac.optimize}" target="${javac.version}"
+        source="${javac.version}" deprecation="${javac.deprecation}"
+        includeantruntime="false">
+      <compilerarg line="${javac.args}"/>
+      <classpath refid="classpath" />
+    </javac>
+    <!-- compile shim for selected hadoop version -->
+    <!--property name="debugclasspath" refid="classpath"/>
+    <echo message="classpath = ${debugclasspath}"/-->
+    <javac encoding="${build.encoding}" srcdir="${basedir}/shims/src/${shims.name}/java" excludes="${excludes}"
         includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
         source="${javac.version}" deprecation="${javac.deprecation}"

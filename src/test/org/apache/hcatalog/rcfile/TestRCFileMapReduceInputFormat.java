@@ -45,6 +45,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hcatalog.rcfile.RCFileMapReduceInputFormat;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
   /**
    * TestRCFile.
@@ -232,7 +233,7 @@ import org.apache.hcatalog.rcfile.RCFileMapReduceInputFormat;
       assertEquals("splits length should be " + splitNumber, splits.size(), splitNumber);
       int readCount = 0;
       for (int i = 0; i < splits.size(); i++) {
-        TaskAttemptContext tac = new TaskAttemptContext(jonconf, new TaskAttemptID());
+        TaskAttemptContext tac = HCatHadoopShims.Instance.get().createTaskAttemptContext(jonconf, new TaskAttemptID());
         RecordReader<LongWritable, BytesRefArrayWritable> rr = inputFormat.createRecordReader(splits.get(i), tac);
         rr.initialize(splits.get(i), tac);
         while (rr.nextKeyValue()) {
