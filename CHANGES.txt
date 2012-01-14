@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-87. Newly added partition should inherit table properties. (hashutosh at HIVE-2589 via khorgath)
+
   HCAT-189. Zookpeeper based revision manager for HBase Storage Driver (avandana via toffer)
 
   HCAT-145. Add support for binary data type (hashutosh)  
