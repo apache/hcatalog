@@ -55,15 +55,21 @@ else
 fi
 HCAT_CONF_DIR="${HCAT_CONF_DIR:-$DEFAULT_CONF_DIR}"
 
-if [ -e $HCAT_PREFIX/bin/hadoop ]; then
-  HADOOP_PREFIX=$HCAT_PREFIX
-elif [ -e $HADOOP_HOME/bin/hadoop ]; then
-  HADOOP_PREFIX=$HADOOP_HOME
-else
-  echo "Hadoop not found."
-  exit 1
-fi
-
+#users can add various env vars to hcat-env.sh in the conf
+#rather than having to export them before running the command
 if [ -f "${HCAT_CONF_DIR}/hcat-env.sh" ]; then
   . "${HCAT_CONF_DIR}/hcat-env.sh"
+fi
+
+#determine where hadoop is
+#check HADOOP_HOME and then check HADOOP_PREFIX
+if [ -f ${HADOOP_HOME}/bin/hadoop ]; then
+  HADOOP_PREFIX=$HADOOP_HOME
+#if this is an rpm install check for /usr/bin/hadoop
+elif [ -f ${HCAT_PREFIX}/bin/hadoop ]; then
+  HADOOP_PREFIX=$HCAT_PREFIX
+#otherwise see if HADOOP_PREFIX is defined
+elif [ ! -f ${HADOOP_PREFIX}/bin/hadoop ]; then
+  echo "Hadoop not found."
+  exit 1
 fi
