@@ -99,6 +99,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-213. determine HIVE_CONF_DIR in hive-config.sh based on rpm or tar ball installs (arpitgupta via khorgath)
+
   HCAT-214. HCat commandline does not set location for config dir correctly (khorgath)
 
   HCAT-197. data generator for e2e assumes hadoop tarball installation (arpitgupta via khorgath)  

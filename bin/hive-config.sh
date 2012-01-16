@@ -59,14 +59,19 @@ while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
   esac
 done
 
+#check if /etc/hcatalog/hcat-env.sh file exists in case of rpm installs
+if [ -f "/etc/hcatalog/hcat-env.sh" ]; then
+  DEFAULT_CONF_DIR="/etc/hcatalog"
+else
+  #assume that conf is in HIVE_HOME 
+  DEFAULT_CONF_DIR="${HIVE_HOME}/conf"
+fi
 
 # Allow alternate conf dir location.
-HIVE_CONF_DIR="${HIVE_CONF_DIR:-$HIVE_HOME/conf}"
+HIVE_CONF_DIR="${HIVE_CONF_DIR:-$DEFAULT_CONF_DIR}"
 
 export HIVE_CONF_DIR=$HIVE_CONF_DIR
 export HIVE_AUX_JARS_PATH=$HIVE_AUX_JARS_PATH
 
 # Default to use 256MB 
 export HADOOP_HEAPSIZE=${HADOOP_HEAPSIZE:-256}
-
-
