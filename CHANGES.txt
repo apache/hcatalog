@@ -95,6 +95,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-214. HCat commandline does not set location for config dir correctly (khorgath)
+
   HCAT-197. Data generator for e2e assumes hadoop tarball installation (arpitgupta via khorgath)
 
   HCAT-199. HCatOutputCommitter::cleanupJob() fails : Unable to connect to metastore. (mithun via khorgath)
