@@ -337,11 +337,13 @@ our $hadoopCoreJar = undef;
 sub findHadoopJars()
 {
     my $hadoopClassRoot=$ENV{'HADOOP_HOME'};
-    if ( -d "$hadoopClassRoot/share/hadoop" ) {
-      $hadoopClassRoot="$hadoopClassRoot/share/hadoop"
+    my $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
+    #if you do not find hadoop core jar under hadoop home change the path for rpm's
+    if (! $coreJar) {
+      $hadoopClassRoot="$hadoopClassRoot/share/hadoop";
+      $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
     }
 
-    my $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
     my $loggingJar = `ls $hadoopClassRoot/lib/commons-logging-*.jar | grep -v api`;
     my $cfgJar = `ls $hadoopClassRoot/lib/commons-configuration-*.jar`;
     my $langJar = `ls $hadoopClassRoot/lib/commons-lang-*.jar`;
