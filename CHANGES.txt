@@ -23,6 +23,8 @@ Release 0.3.0 (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-193. Snapshot class for HCatalog tables. (avandana via toffer) 
+
   HCAT-87. Newly added partition should inherit table properties. (hashutosh at HIVE-2589 via khorgath)
 
   HCAT-189. Zookpeeper based revision manager for HBase Storage Driver (avandana via toffer)
