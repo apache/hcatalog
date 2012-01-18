@@ -23,7 +23,7 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
-  HCAT-192. HBase output storage driver integration with zookeeper based revision manager. (avandana via toffer)  
+  HCAT-191. HBase input storage driver integration with zookeeper based revision manager. (avandana via toffer)
 
   HCAT-193. Snapshot class for HCatalog tables. (avandana via toffer)
 
