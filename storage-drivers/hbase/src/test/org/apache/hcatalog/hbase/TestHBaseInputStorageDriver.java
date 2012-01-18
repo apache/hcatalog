@@ -18,11 +18,13 @@
 package org.apache.hcatalog.hbase;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +56,8 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.junit.Test;
@@ -66,20 +70,34 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
     private final byte[] QUALIFIER1 = Bytes.toBytes("testQualifier1");
     private final byte[] QUALIFIER2 = Bytes.toBytes("testQualifier2");
 
-    List<Put> generatePuts(int num) {
-        List<Put> myPuts = new ArrayList<Put>();
-        for (int i = 0; i < num; i++) {
-            Put put = new Put(Bytes.toBytes("testRow" + i));
-            put.add(FAMILY, QUALIFIER1, 0,
-                    Bytes.toBytes("testQualifier1-" + "textValue-" + i));
-            put.add(FAMILY, QUALIFIER2, 0,
-                    Bytes.toBytes("testQualifier2-" + "textValue-" + i));
-            myPuts.add(put);
+    private List<Put> generatePuts(int num, String tableName) throws IOException {
+
+        List<String> columnFamilies = Arrays.asList("testFamily");
+        RevisionManager rm = null;
+        List<Put> myPuts;
+        try {
+            rm = HBaseHCatStorageHandler
+                    .getOpenedRevisionManager(getHbaseConf());
+            rm.open();
+            myPuts = new ArrayList<Put>();
+            for (int i = 1; i <= num; i++) {
+                Put put = new Put(Bytes.toBytes("testRow"));
+                put.add(FAMILY, QUALIFIER1, i, Bytes.toBytes("textValue-" + i));
+                put.add(FAMILY, QUALIFIER2, i, Bytes.toBytes("textValue-" + i));
+                myPuts.add(put);
+                Transaction tsx = rm.beginWriteTransaction(tableName,
+                        columnFamilies);
+                rm.commitWriteTransaction(tsx);
+            }
+        } finally {
+            if (rm != null)
+                rm.close();
         }
+
         return myPuts;
     }
 
-    public void Initialize() throws Exception {
+   private void Initialize() throws Exception {
         hcatConf = getHiveConf();
         hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
                 HCatSemanticAnalyzer.class.getName());
@@ -102,8 +120,8 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
 
     }
 
-    public void populateHBaseTable(String tName) throws IOException {
-        List<Put> myPuts = generatePuts(10);
+   private void populateHBaseTable(String tName, int revisions) throws IOException {
+        List<Put> myPuts = generatePuts(revisions, tName);
         HTable table = new HTable(getHbaseConf(), Bytes.toBytes(tName));
         table.put(myPuts);
     }
@@ -132,7 +150,7 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         boolean doesTableExist = hAdmin.tableExists(hbaseTableName);
         assertTrue(doesTableExist);
 
-        populateHBaseTable(hbaseTableName);
+        populateHBaseTable(hbaseTableName, 5);
         Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
                 HCatUtil.serialize(getHiveConf().getAllProperties()));
@@ -160,14 +178,15 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
-        assertTrue(MapReadHTable.error == false);
+        assertFalse(MapReadHTable.error);
+        assertEquals(MapReadHTable.count, 1);
 
         String dropTableQuery = "DROP TABLE " + hbaseTableName ;
         CommandProcessorResponse responseThree = hcatDriver.run(dropTableQuery);
         assertEquals(0, responseThree.getResponseCode());
 
         boolean isHbaseTableThere = hAdmin.tableExists(hbaseTableName);
-        assertTrue(isHbaseTableThere == false);
+        assertFalse(isHbaseTableThere);
 
         String dropDB = "DROP DATABASE " + databaseName;
         CommandProcessorResponse responseFour = hcatDriver.run(dropDB);
@@ -192,7 +211,7 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         boolean doesTableExist = hAdmin.tableExists(tableName);
         assertTrue(doesTableExist);
 
-        populateHBaseTable(tableName);
+        populateHBaseTable(tableName, 5);
 
         Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
@@ -222,14 +241,15 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
-        assertTrue(MapReadHTable.error == false);
+        assertFalse(MapReadProjHTable.error);
+        assertEquals(MapReadProjHTable.count, 1);
 
         String dropTableQuery = "DROP TABLE " + tableName ;
         CommandProcessorResponse responseThree = hcatDriver.run(dropTableQuery);
         assertEquals(0, responseThree.getResponseCode());
 
         boolean isHbaseTableThere = hAdmin.tableExists(tableName);
-        assertTrue(isHbaseTableThere == false);
+        assertFalse(isHbaseTableThere);
     }
 
 
@@ -238,18 +258,20 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
             Mapper<ImmutableBytesWritable, HCatRecord, WritableComparable, Text> {
 
         static boolean error = false;
-
+        static int count = 0;
         @Override
         public void map(ImmutableBytesWritable key, HCatRecord value,
                 Context context) throws IOException, InterruptedException {
+            System.out.println("HCat record value" + value.toString());
             boolean correctValues = (value.size() == 3)
-                    && (value.get(0).toString()).startsWith("testRow")
-                    && (value.get(1).toString()).startsWith("testQualifier1")
-                    && (value.get(2).toString()).startsWith("testQualifier2");
+                    && (value.get(0).toString()).equalsIgnoreCase("testRow")
+                    && (value.get(1).toString()).equalsIgnoreCase("textValue-5")
+                    && (value.get(2).toString()).equalsIgnoreCase("textValue-5");
 
             if (correctValues == false) {
                 error = true;
             }
+            count++;
         }
     }
 
@@ -258,17 +280,19 @@ public class TestHBaseInputStorageDriver extends SkeletonHBaseTest {
             Mapper<ImmutableBytesWritable, HCatRecord, WritableComparable, Text> {
 
         static boolean error = false;
-
+        static int count = 0;
         @Override
         public void map(ImmutableBytesWritable key, HCatRecord value,
                 Context context) throws IOException, InterruptedException {
+            System.out.println("HCat record value" + value.toString());
             boolean correctValues = (value.size() == 2)
-                    && (value.get(0).toString()).startsWith("testRow")
-                    && (value.get(1).toString()).startsWith("testQualifier1");
+                    && (value.get(0).toString()).equalsIgnoreCase("testRow")
+                    && (value.get(1).toString()).equalsIgnoreCase("textValue-5");
 
             if (correctValues == false) {
                 error = true;
             }
+            count++;
         }
     }
 

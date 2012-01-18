@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import com.facebook.fb303.FacebookBase;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
@@ -50,13 +50,22 @@ import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
+import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
+import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
+import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
 import org.apache.thrift.TBase;
 import org.apache.zookeeper.ZooKeeper;
+
+import com.facebook.fb303.FacebookBase;
 
 /**
  * This class HBaseHCatStorageHandler provides functionality to create HBase
@@ -191,8 +200,10 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
                     uniqueColumnFamilies.remove(hbaseColumnFamilies.get(iKey));
 
                     for (String columnFamily : uniqueColumnFamilies) {
-                        tableDesc.addFamily(new HColumnDescriptor(Bytes
-                                .toBytes(columnFamily)));
+                        HColumnDescriptor familyDesc = new HColumnDescriptor(Bytes
+                                .toBytes(columnFamily));
+                        familyDesc.setMaxVersions(Integer.MAX_VALUE);
+                        tableDesc.addFamily(familyDesc);
                     }
 
                     getHBaseAdmin().createTable(tableDesc);
@@ -434,5 +445,132 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
                 //thrift-fb303 .jar
                 FacebookBase.class);
     }
+
+
+    /**
+     * Creates the latest snapshot of the table.
+     *
+     * @param jobConf The job configuration.
+     * @param hbaseTableName The fully qualified name of the HBase table.
+     * @return An instance of HCatTableSnapshot
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public static HCatTableSnapshot createSnapshot(Configuration jobConf,
+            String hbaseTableName ) throws IOException {
+
+        RevisionManager rm = null;
+        TableSnapshot snpt;
+        try {
+            rm = getOpenedRevisionManager(jobConf);
+            snpt = rm.createSnapshot(hbaseTableName);
+        } finally {
+            if (rm != null)
+                rm.close();
+        }
+
+        String inputJobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
+        if(inputJobString == null){
+            throw new IOException(
+                    "InputJobInfo information not found in JobContext. "
+                            + "HCatInputFormat.setInput() not called?");
+        }
+        InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(inputJobString);
+        HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver
+                .convertSnapshot(snpt, inputInfo.getTableInfo());
+
+        return hcatSnapshot;
+    }
+
+    /**
+     * Creates the snapshot using the revision specified by the user.
+     *
+     * @param jobConf The job configuration.
+     * @param tableName The fully qualified name of the table whose snapshot is being taken.
+     * @param revision The revision number to use for the snapshot.
+     * @return An instance of HCatTableSnapshot.
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    public static HCatTableSnapshot createSnapshot(Configuration jobConf,
+            String tableName, long revision)
+            throws IOException {
+
+        TableSnapshot snpt;
+        RevisionManager rm = null;
+        try {
+            rm = getOpenedRevisionManager(jobConf);
+            snpt = rm.createSnapshot(tableName, revision);
+        } finally {
+            if (rm != null)
+                rm.close();
+        }
+
+        String inputJobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
+        if(inputJobString == null){
+            throw new IOException(
+                    "InputJobInfo information not found in JobContext. "
+                            + "HCatInputFormat.setInput() not called?");
+        }
+        InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(inputJobString);
+        HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver
+                .convertSnapshot(snpt, inputInfo.getTableInfo());
+
+        return hcatSnapshot;
+    }
+
+    /**
+     * Gets an instance of revision manager which is opened.
+     *
+     * @param jobConf The job configuration.
+     * @return RevisionManager An instance of revision manager.
+     * @throws IOException
+     */
+    static RevisionManager getOpenedRevisionManager(Configuration jobConf) throws IOException {
+
+        Properties properties = new Properties();
+        String zkHostList = jobConf.get(HConstants.ZOOKEEPER_QUORUM);
+        int port = jobConf.getInt("hbase.zookeeper.property.clientPort",
+                HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
+
+        if (zkHostList != null) {
+            String[] splits = zkHostList.split(",");
+            StringBuffer sb = new StringBuffer();
+            for (String split : splits) {
+                sb.append(split);
+                sb.append(':');
+                sb.append(port);
+                sb.append(',');
+            }
+
+            sb.deleteCharAt(sb.length() - 1);
+            properties.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
+        }
+        String dataDir = jobConf.get(ZKBasedRevisionManager.DATADIR);
+        if (dataDir != null) {
+            properties.put(ZKBasedRevisionManager.DATADIR, dataDir);
+        }
+        String rmClassName = jobConf.get(
+                RevisionManager.REVISION_MGR_IMPL_CLASS,
+                ZKBasedRevisionManager.class.getName());
+        properties.put(RevisionManager.REVISION_MGR_IMPL_CLASS, rmClassName);
+        RevisionManager revisionManger = RevisionManagerFactory
+                .getRevisionManager(properties);
+        revisionManger.open();
+        return revisionManger;
+    }
+
+    /**
+     * Set snapshot as a property.
+     *
+     * @param snapshot The HCatTableSnapshot to be passed to the job.
+     * @param inpJobInfo The InputJobInfo for the job.
+     * @throws IOException
+     */
+    public void setSnapshot(HCatTableSnapshot snapshot, InputJobInfo inpJobInfo)
+            throws IOException {
+        String serializedSnp = HCatUtil.serialize(snapshot);
+        inpJobInfo.getProperties().setProperty(
+                HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY, serializedSnp);
+    }
+
 
 }

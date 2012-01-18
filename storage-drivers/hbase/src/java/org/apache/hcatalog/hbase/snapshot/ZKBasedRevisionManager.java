@@ -38,6 +38,8 @@ public class ZKBasedRevisionManager implements RevisionManager{
 
     public static final String HOSTLIST = "revision.manager.zk.HostList";
     public static final String DATADIR = "revision.manager.zk.DataDir";
+    public static final String DEFAULT_DATADIR = "/revision-management";
+    public static final String DEFAULT_HOSTLIST = "localhost:2181";
     private static  int DEFAULT_WRITE_TRANSACTION_TIMEOUT = 14400000;
     private static final Log LOG = LogFactory.getLog(ZKBasedRevisionManager.class);
     private String zkHostList;
@@ -50,8 +52,11 @@ public class ZKBasedRevisionManager implements RevisionManager{
      */
     @Override
     public void initialize(Properties properties) {
-        this.zkHostList = properties.getProperty(ZKBasedRevisionManager.HOSTLIST, "localhost:2181");
-        this.baseDir = properties.getProperty(ZKBasedRevisionManager.DATADIR,"/revision-management");
+        this.zkHostList = properties.getProperty(
+                ZKBasedRevisionManager.HOSTLIST,
+                ZKBasedRevisionManager.DEFAULT_HOSTLIST);
+        this.baseDir = properties.getProperty(ZKBasedRevisionManager.DATADIR,
+                ZKBasedRevisionManager.DEFAULT_DATADIR);
     }
 
     /**
