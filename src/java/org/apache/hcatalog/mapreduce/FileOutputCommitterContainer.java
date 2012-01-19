@@ -47,6 +47,7 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.har.HarOutputCommitterPostProcessor;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 import org.apache.thrift.TException;
 
 import java.io.IOException;
@@ -146,7 +147,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             for(HCatOutputStorageDriver baseOsd : storageDriversDiscoveredByPath.values()){
                 try {
                     baseOsd.abortOutputCommitterJob(
-                            new TaskAttemptContext(
+                            HCatHadoopShims.Instance.get().createTaskAttemptContext(
                                     jobContext.getConfiguration(), TaskAttemptID.forName(ptnRootLocation)
                             ),state);
                 } catch (Exception e) {
@@ -256,7 +257,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 for(HCatOutputStorageDriver baseOsd : storageDriversDiscoveredByPath.values()){
                     try {
                         baseOsd.cleanupOutputCommitterJob(
-                                new TaskAttemptContext(
+                                HCatHadoopShims.Instance.get().createTaskAttemptContext(
                                         context.getConfiguration(), TaskAttemptID.forName(ptnRootLocation)
                                 ));
                     } catch (Exception e) {

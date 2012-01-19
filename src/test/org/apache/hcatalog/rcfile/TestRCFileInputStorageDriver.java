@@ -48,12 +48,14 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
 
 public class TestRCFileInputStorageDriver extends TestCase{
   private static final Configuration conf = new Configuration();
   private static final Path dir =  new Path(System.getProperty("test.data.dir", ".") + "/mapred");
   private static final Path file = new Path(dir, "test_rcfile");
+  private final HCatHadoopShims shim = HCatHadoopShims.Instance.get();
 
   // Generate sample records to compare against
   private byte[][][] getRecords() throws UnsupportedEncodingException {
@@ -99,7 +101,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
 
     HCatSchema schema = buildHiveSchema();
     RCFileInputDriver sd = new RCFileInputDriver();
-    JobContext jc = new JobContext(conf, new JobID());
+    JobContext jc = shim.createJobContext(conf, new JobID());
     sd.setInputPath(jc, file.toString());
     InputFormat<?,?> iF = sd.getInputFormat(null);
     InputSplit split = iF.getSplits(jc).get(0);
@@ -107,7 +109,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
     sd.setOutputSchema(jc, schema);
     sd.initialize(jc, getProps());
 
-    TaskAttemptContext tac = new TaskAttemptContext(conf, new TaskAttemptID());
+    TaskAttemptContext tac = shim.createTaskAttemptContext(conf, new TaskAttemptID());
     RecordReader<?,?> rr = iF.createRecordReader(split,tac);
     rr.initialize(split, tac);
     HCatRecord[] tuples = getExpectedRecords();
@@ -125,7 +127,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
     BytesRefArrayWritable[] bytesArr = initTestEnvironment();
 
     RCFileInputDriver sd = new RCFileInputDriver();
-    JobContext jc = new JobContext(conf, new JobID());
+    JobContext jc = shim.createJobContext(conf, new JobID());
     sd.setInputPath(jc, file.toString());
     InputFormat<?,?> iF = sd.getInputFormat(null);
     InputSplit split = iF.getSplits(jc).get(0);
@@ -134,7 +136,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
 
     sd.initialize(jc, getProps());
     conf.set(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR,jc.getConfiguration().get(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR));
-    TaskAttemptContext tac = new TaskAttemptContext(conf, new TaskAttemptID());
+    TaskAttemptContext tac = shim.createTaskAttemptContext(conf, new TaskAttemptID());
     RecordReader<?,?> rr = iF.createRecordReader(split,tac);
     rr.initialize(split, tac);
     HCatRecord[] tuples = getPrunedRecords();
@@ -154,7 +156,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
     BytesRefArrayWritable[] bytesArr = initTestEnvironment();
 
     RCFileInputDriver sd = new RCFileInputDriver();
-    JobContext jc = new JobContext(conf, new JobID());
+    JobContext jc = shim.createJobContext(conf, new JobID());
     sd.setInputPath(jc, file.toString());
     InputFormat<?,?> iF = sd.getInputFormat(null);
     InputSplit split = iF.getSplits(jc).get(0);
@@ -166,7 +168,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
     map.put("part1", "first-part");
     sd.setPartitionValues(jc, map);
     conf.set(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR,jc.getConfiguration().get(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR));
-    TaskAttemptContext tac = new TaskAttemptContext(conf, new TaskAttemptID());
+    TaskAttemptContext tac = shim.createTaskAttemptContext(conf, new TaskAttemptID());
     RecordReader<?,?> rr = iF.createRecordReader(split,tac);
     rr.initialize(split, tac);
     HCatRecord[] tuples = getReorderedCols();

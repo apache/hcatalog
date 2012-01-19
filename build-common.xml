@@ -11,6 +11,22 @@
 
     <!-- hive -->
     <property name="hive.root" value="${common.basedir}/hive/external"/>
+    <property file="${hive.root}/build.properties" prefix="hive."/>
+    <property name="shims.name" value="20S" />
+    <property name="shims.20S.hive.shims.include" value="0.20,0.20S" />
+    <property name="shims.20S.hadoop.version" value="${hive.hadoop-0.20S.version}" />
+    <property name="shims.23.hive.shims.include" value="0.23" />
+    <property name="shims.23.hadoop.version" value="${hive.hadoop-0.23.version}" />
+
+    <!-- macro to accomplish nested expansion like ${p1.${p2}.name} -->
+    <macrodef name="expandToProperty">
+     <attribute name="name"/>
+     <attribute name="value"/>
+     <sequential>
+        <property name="@{name}" value="${@{value}}" />
+     </sequential>
+    </macrodef>
+    <expandToProperty name="hadoop.version" value="shims.${shims.name}.hadoop.version"/>
 
     <!-- common classpaths for various builds -->
     <path id="common.classpath">
@@ -22,8 +38,14 @@
         <fileset dir="${hive.root}/build/serde" includes="*.jar"/>
         <fileset dir="${hive.root}/build/metastore" includes="*.jar"/>
         <fileset dir="${hive.root}/build/ql" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
-                 includes="hadoop-core-0.20.3-CDH3-SNAPSHOT.jar"/>
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/">
+          <include name="**/hadoop-*.jar" />
+          <exclude name="**/*test*.jar" />
+          <!-- below is for 0.23 onwards -->
+          <!--include name="share/hadoop/common/lib/*.jar" /-->
+          <exclude name="share/hadoop/common/lib/hadoop-mapreduce-*.jar" />
+          <exclude name="share/hadoop/common/lib/hadoop-yarn-*.jar" />
+        </fileset>
         <fileset dir="${common.ivy.lib.dir}" includes="*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="antlr-3.0.1.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-lang-*.jar"/>
@@ -35,5 +57,4 @@
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="libfb303-*.jar"/>
         <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
     </path>
-
 </project>
