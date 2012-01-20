@@ -517,6 +517,14 @@
         <include name="hive-metastore-*.jar"/>
       </fileset>
 
+      <fileset dir="hive/external/build/hwi">
+        <include name="hive-hwi-*.war"/>
+      </fileset>
+
+      <fileset dir="hive/external/build/hwi">
+        <include name="hive-hwi-*.jar"/>
+      </fileset>
+
     </copy>
 
     <copy todir="${dist.dir}/bin">
@@ -549,6 +557,7 @@
       <fileset file="hive/external/bin/ext/metastore.sh"/>
       <fileset file="hive/external/bin/ext/cli.sh"/>
       <fileset file="hive/external/bin/ext/help.sh"/>
+      <fileset file="hive/external/bin/ext/hwi.sh"/>
     </copy>
 
     <copy todir="${dist.dir}/bin/ext/util">
