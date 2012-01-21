@@ -39,6 +39,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -58,6 +59,7 @@ import java.util.Properties;
  * {@link HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY}
  */
 class HBaseSerDeResultConverter implements  ResultConverter {
+
     private HBaseSerDe serDe;
     private HCatSchema schema;
     private HCatSchema outputSchema;
@@ -75,14 +77,25 @@ class HBaseSerDeResultConverter implements  ResultConverter {
     HBaseSerDeResultConverter(HCatSchema schema,
                                      HCatSchema outputSchema,
                                      Properties hcatProperties) throws IOException {
+        this(schema,outputSchema,hcatProperties,null);
+    }
+
+    /**
+     * @param schema table schema
+     * @param outputSchema schema of projected output
+     * @param hcatProperties table properties
+     * @param outputVersion value to write in timestamp field
+     * @throws IOException thrown if hive's HBaseSerDe couldn't be initialized
+     */
+    HBaseSerDeResultConverter(HCatSchema schema,
+                                     HCatSchema outputSchema,
+                                     Properties hcatProperties,
+                                     Long outputVersion) throws IOException {
 
         hbaseColumnMapping =  hcatProperties.getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
         hcatProperties.setProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING,hbaseColumnMapping);
 
-        if(hcatProperties.containsKey(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY))
-            outputVersion = Long.parseLong(hcatProperties.getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY));
-        else
-            outputVersion = null;
+        this.outputVersion = outputVersion;
 
         this.schema = schema;
         if(outputSchema == null) {

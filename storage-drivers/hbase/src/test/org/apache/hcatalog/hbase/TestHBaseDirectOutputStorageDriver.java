@@ -39,11 +39,15 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -117,6 +121,19 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         job.setOutputFormatClass(HBaseDirectOutputFormat.class);
         job.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
 
+        //manually create transaction
+        RevisionManager rm = HBaseHCatStorageHandler.getOpenedRevisionManager(conf);
+        try {
+            OutputJobInfo outputJobInfo = OutputJobInfo.create("default", tableName, null, null, null);
+            Transaction txn = rm.beginWriteTransaction(tableName, Arrays.asList(familyName));
+            outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
+                                                      HCatUtil.serialize(txn));
+            job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO,
+                                       HCatUtil.serialize(outputJobInfo));
+        } finally {
+            rm.close();
+        }
+
         job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
 
@@ -149,7 +166,7 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         String testName = "directOutputStorageDriverTest";
         Path methodTestDir = new Path(getTestDir(),testName);
 
-        String databaseName = "default";
+        String databaseName = testName.toLowerCase();
         String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
         String tableName = newTableName(testName).toLowerCase();
         byte[] tableNameBytes = Bytes.toBytes(tableName);
@@ -198,103 +215,6 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
 
         job.setOutputFormatClass(HCatOutputFormat.class);
         OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null,null,null);
-        long lbTimestamp = System.currentTimeMillis();
-        HCatOutputFormat.setOutput(job,outputJobInfo);
-
-        job.setMapOutputKeyClass(BytesWritable.class);
-        job.setMapOutputValueClass(HCatRecord.class);
-
-        job.setOutputKeyClass(BytesWritable.class);
-        job.setOutputValueClass(Put.class);
-
-        job.setNumReduceTasks(0);
-
-        assertTrue(job.waitForCompletion(true));
-        long ubTimestamp = System.currentTimeMillis();
-
-        //verify
-        HTable table = new HTable(conf, tableName);
-        Scan scan = new Scan();
-        scan.addFamily(familyNameBytes);
-        ResultScanner scanner = table.getScanner(scan);
-        int index = 0;
-        long prevTimestamp = -1;
-        for(Result result: scanner) {
-            String vals[] = data[index].toString().split(",");
-            for(int i=1;i<vals.length;i++) {
-                String pair[] = vals[i].split(":");
-                assertTrue(result.containsColumn(familyNameBytes,Bytes.toBytes(pair[0])));
-                assertEquals(pair[1],Bytes.toString(result.getValue(familyNameBytes,Bytes.toBytes(pair[0]))));
-                long timestamp = result.getColumn(familyNameBytes,Bytes.toBytes(pair[0])).get(0).getTimestamp();
-                if(prevTimestamp < 1)
-                    prevTimestamp = timestamp;
-                else
-                    assertEquals(prevTimestamp+"="+timestamp,
-                                       prevTimestamp,
-                                       timestamp);
-                assertTrue(lbTimestamp+"<="+timestamp+"<="+ubTimestamp,
-                           timestamp >= lbTimestamp && timestamp <= ubTimestamp);
-            }
-            index++;
-        }
-        assertEquals(data.length,index);
-    }
-
-    @Test
-    public void directOutputStorageDriverTestWithRevision() throws Exception {
-        String testName = "directOutputStorageDriverTestWithRevision";
-        Path methodTestDir = new Path(getTestDir(),testName);
-
-        String databaseName = "default";
-        String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
-        String tableName = newTableName(testName).toLowerCase();
-        byte[] tableNameBytes = Bytes.toBytes(tableName);
-        String familyName = "my_family";
-        byte[] familyNameBytes = Bytes.toBytes(familyName);
-
-
-        //include hbase config in conf file
-        Configuration conf = new Configuration(allConf);
-        conf.set(HCatConstants.HCAT_KEY_HIVE_CONF, HCatUtil.serialize(allConf.getAllProperties()));
-
-
-        String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '" + dbDir + "'";
-        String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
-                              "(key int, english string, spanish string) STORED BY " +
-                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='false',"+
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
-
-        assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
-        assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
-
-        String data[] = {"1,english:ONE,spanish:UNO",
-                               "2,english:ONE,spanish:DOS",
-                               "3,english:ONE,spanish:TRES"};
-
-        // input/output settings
-        Path inputPath = new Path(methodTestDir,"mr_input");
-        getFileSystem().mkdirs(inputPath);
-        //create multiple files so we can test with multiple mappers
-        for(int i=0;i<data.length;i++) {
-            FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile"+i+".txt"));
-            os.write(Bytes.toBytes(data[i] + "\n"));
-            os.close();
-        }
-
-        //create job
-        Job job = new Job(conf, testName);
-        job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
-        job.setJarByClass(this.getClass());
-        job.setMapperClass(MapHCatWrite.class);
-
-        job.setInputFormatClass(TextInputFormat.class);
-        TextInputFormat.setInputPaths(job, inputPath);
-
-
-        job.setOutputFormatClass(HCatOutputFormat.class);
-        OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null,null,null);
-        outputJobInfo.getProperties().put(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY, "1");
         HCatOutputFormat.setOutput(job,outputJobInfo);
 
         job.setMapOutputKeyClass(BytesWritable.class);
@@ -306,8 +226,18 @@ public class TestHBaseDirectOutputStorageDriver extends SkeletonHBaseTest {
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
 
+        RevisionManager rm = HBaseHCatStorageHandler.getOpenedRevisionManager(conf);
+        try {
+            TableSnapshot snapshot = rm.createSnapshot(databaseName+"."+tableName);
+            for(String el: snapshot.getColumnFamilies()) {
+                assertEquals(1,snapshot.getRevision(el));
+            }
+        } finally {
+            rm.close();
+        }
+
         //verify
-        HTable table = new HTable(conf, tableName);
+        HTable table = new HTable(conf, databaseName+"."+tableName);
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);

@@ -24,10 +24,12 @@ import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 
 
 import java.io.IOException;
@@ -57,7 +59,7 @@ class HBaseDirectOutputFormat extends OutputFormat<WritableComparable<?>,Writabl
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return outputFormat.getOutputCommitter(context);
+        return new HBaseDirectOutputCommitter(outputFormat.getOutputCommitter(context));
     }
 
     @Override
@@ -71,5 +73,64 @@ class HBaseDirectOutputFormat extends OutputFormat<WritableComparable<?>,Writabl
     @Override
     public Configuration getConf() {
         return outputFormat.getConf();
+    }
+
+    private static class HBaseDirectOutputCommitter extends OutputCommitter {
+        private OutputCommitter baseOutputCommitter;
+
+        public HBaseDirectOutputCommitter(OutputCommitter baseOutputCommitter) throws IOException {
+            this.baseOutputCommitter = baseOutputCommitter;
+        }
+
+        @Override
+        public void abortTask(TaskAttemptContext context) throws IOException {
+            baseOutputCommitter.abortTask(context);
+        }
+
+        @Override
+        public void commitTask(TaskAttemptContext context) throws IOException {
+            baseOutputCommitter.commitTask(context);
+        }
+
+        @Override
+        public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
+            return baseOutputCommitter.needsTaskCommit(context);
+        }
+
+        @Override
+        public void setupJob(JobContext context) throws IOException {
+            baseOutputCommitter.setupJob(context);
+        }
+
+        @Override
+        public void setupTask(TaskAttemptContext context) throws IOException {
+            baseOutputCommitter.setupTask(context);
+        }
+
+        @Override
+        public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
+            RevisionManager rm = null;
+            try {
+                baseOutputCommitter.abortJob(jobContext, state);
+                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.abortWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+            } finally {
+                if(rm != null)
+                    rm.close();
+            }
+        }
+
+        @Override
+        public void commitJob(JobContext jobContext) throws IOException {
+            RevisionManager rm = null;
+            try {
+                baseOutputCommitter.commitJob(jobContext);
+                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.commitWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+            } finally {
+                if(rm != null)
+                    rm.close();
+            }
+        }
     }
 }

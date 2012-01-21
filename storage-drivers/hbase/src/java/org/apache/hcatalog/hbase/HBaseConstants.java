@@ -26,8 +26,8 @@ import org.apache.hcatalog.common.HCatConstants;
  */
 class HBaseConstants {
 
-    /** key used to define th version number HBaseOutputStorage driver to use when writing out data for a job */
-    public static final String PROPERTY_OUTPUT_VERSION_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.mapreduce.outputVersion";
+    /** key used to store write transaction object */
+    public static final String PROPERTY_WRITE_TXN_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.mapreduce.writeTxn";
 
     /** key used to define the name of the table to write to */
     public static final String PROPERTY_OUTPUT_TABLE_NAME_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.mapreduce.outputTableName";

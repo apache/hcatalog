@@ -1,5 +1,7 @@
 package org.apache.hcatalog.hbase;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -17,6 +19,12 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
+import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
+import org.apache.hcatalog.mapreduce.HCatOutputFormat;
+import org.apache.hcatalog.mapreduce.OutputJobInfo;
 
 import java.io.IOException;
 
@@ -28,6 +36,7 @@ import java.io.IOException;
 class HBaseBulkOutputFormat extends OutputFormat<WritableComparable<?>,Put> {
     private final static ImmutableBytesWritable EMPTY_LIST = new ImmutableBytesWritable(new byte[0]);
     private SequenceFileOutputFormat<WritableComparable<?>,Put> baseOutputFormat;
+    private final static Log LOG = LogFactory.getLog(HBaseBulkOutputFormat.class);
 
     public HBaseBulkOutputFormat() {
         baseOutputFormat = new SequenceFileOutputFormat<WritableComparable<?>,Put>();
@@ -110,35 +119,36 @@ class HBaseBulkOutputFormat extends OutputFormat<WritableComparable<?>,Put> {
 
         @Override
         public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
+            RevisionManager rm = null;
             try {
                 baseOutputCommitter.abortJob(jobContext,state);
+                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.abortWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
             } finally {
                 cleanIntermediate(jobContext);
-            }
-        }
-
-        @Override
-        public void cleanupJob(JobContext context) throws IOException {
-            try {
-                baseOutputCommitter.cleanupJob(context);
-            } finally {
-                cleanIntermediate(context);
+                if(rm != null)
+                    rm.close();
             }
         }
 
         @Override
         public void commitJob(JobContext jobContext) throws IOException {
+            RevisionManager rm = null;
             try {
                 baseOutputCommitter.commitJob(jobContext);
                 Configuration conf = jobContext.getConfiguration();
                 Path srcPath = FileOutputFormat.getOutputPath(jobContext);
                 Path destPath = new Path(srcPath.getParent(),srcPath.getName()+"_hfiles");
                 ImportSequenceFile.runJob(jobContext,
-                                                        conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
-                                                        srcPath,
-                                                        destPath);
-            } finally {
+                                          conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
+                                          srcPath,
+                                          destPath);
+                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.commitWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
                 cleanIntermediate(jobContext);
+            } finally {
+                if(rm != null)
+                    rm.close();
             }
         }
 

@@ -55,7 +55,6 @@ public class TestHBaseSerDeResultConverter {
         tbl.setProperty(HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+"."+ HBaseSerDe.HBASE_COLUMNS_MAPPING,
                 ":key,my_family:my_qualifier1,my_family:my_qualifier2,my_family2:");
         tbl.setProperty(Constants.SERIALIZATION_NULL_FORMAT, "NULL");
-        tbl.setProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY,"1");
         return tbl;
     }
 
@@ -74,8 +73,9 @@ public class TestHBaseSerDeResultConverter {
     @Test
     public void testDeserialize() throws IOException {
         HBaseSerDeResultConverter converter = new HBaseSerDeResultConverter(createHCatSchema(),
-                null,
-                createProperties());
+                                                                                                                    null,
+                                                                                                                    createProperties(),
+                                                                                                                    1l);
         //test integer
         Result result = new Result(new KeyValue[]{new KeyValue(Bytes.toBytes("row"),
                 Bytes.toBytes("my_family"),
@@ -127,8 +127,9 @@ public class TestHBaseSerDeResultConverter {
     public void testSerialize() throws IOException {
         HCatSchema schema = createHCatSchema();
         HBaseSerDeResultConverter converter = new HBaseSerDeResultConverter(schema,
-                null,
-                createProperties());
+                                                                                                                    null,
+                                                                                                                    createProperties(),
+                                                                                                                    1l);
         HCatRecord in = new DefaultHCatRecord(4);
         //row key
         in.set(0,"row");

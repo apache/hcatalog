@@ -30,11 +30,14 @@ import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -62,7 +65,6 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
         hcatProperties = (Properties)hcatProperties.clone();
         super.initialize(context, hcatProperties);
 
-
         String jobString = context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
         if( jobString == null ) {
             throw new IOException("OutputJobInfo information not found in JobContext. HCatInputFormat.setOutput() not called?");
@@ -75,16 +77,9 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
         outputJobInfo.getProperties().putAll(hcatProperties);
         hcatProperties = outputJobInfo.getProperties();
 
-
-        String revision = outputJobInfo.getProperties().getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY);
-        if(revision == null) {
-            outputJobInfo.getProperties()
-                         .setProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY,
-                                            Long.toString(System.currentTimeMillis()));
-        }
-
         tableInfo = outputJobInfo.getTableInfo();
         schema = tableInfo.getDataColumns();
+        String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
 
         List<FieldSchema> fields = HCatUtil.getFieldSchemaList(outputSchema.getFields());
         hcatProperties.setProperty(Constants.LIST_COLUMNS,
@@ -92,11 +87,36 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
         hcatProperties.setProperty(Constants.LIST_COLUMN_TYPES,
                 MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
 
-        //outputSchema should be set by HCatOutputFormat calling setSchema, prior to initialize being called
-        converter = new HBaseSerDeResultConverter(schema,
-                                                  outputSchema,
-                                                  hcatProperties);
-        context.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo));
+        context.getConfiguration().set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, qualifiedTableName);
+
+        String txnString = outputJobInfo.getProperties().getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
+        if(txnString == null) {
+            //outputSchema should be set by HCatOutputFormat calling setSchema, prior to initialize being called
+            //TODO reconcile output_revision passing to HBaseSerDeResultConverter
+            //on the first call to this method hcatProperties will not contain an OUTPUT_VERSION but that doesn't
+            //matter since we won't use any facilities that require that property set during that run
+            converter = new HBaseSerDeResultConverter(schema,
+                                                                                outputSchema,
+                                                                                hcatProperties);
+            RevisionManager rm = HBaseHCatStorageHandler.getOpenedRevisionManager(context.getConfiguration());
+            Transaction txn = null;
+            try {
+                txn = rm.beginWriteTransaction(qualifiedTableName,
+                                               Arrays.asList(converter.getHBaseScanColumns().split(" ")));
+            } finally {
+                rm.close();
+            }
+            outputJobInfo.getProperties()
+                         .setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
+                                      HCatUtil.serialize(txn));
+        }
+        else {
+            Transaction txn = (Transaction)HCatUtil.deserialize(txnString);
+            converter = new HBaseSerDeResultConverter(schema,
+                                                                                outputSchema,
+                                                                                hcatProperties,
+                                                                                txn.getRevisionNumber());
+        }
     }
 
     @Override
