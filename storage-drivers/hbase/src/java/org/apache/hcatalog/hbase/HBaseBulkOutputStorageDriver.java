@@ -30,6 +30,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,10 +56,10 @@ public class HBaseBulkOutputStorageDriver extends HBaseBaseOutputStorageDriver {
         //initialize() gets called multiple time in the lifecycle of an MR job, client, mapper, reducer, etc
         //depending on the case we have to make sure for some context variables we set here that they don't get set again
         if(!outputJobInfo.getProperties().containsKey(PROPERTY_INT_OUTPUT_LOCATION)) {
+            Transaction txn = (Transaction)
+                    HCatUtil.deserialize(outputJobInfo.getProperties().getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
             String tableLocation = context.getConfiguration().get(PROPERTY_TABLE_LOCATION);
-            String location = new  Path(tableLocation,
-                                                    "REVISION_"+outputJobInfo.getProperties()
-                                                                                               .getProperty(HBaseConstants.PROPERTY_OUTPUT_VERSION_KEY)).toString();
+            String location = new  Path(tableLocation, "REVISION_"+txn.getRevisionNumber()).toString();
             outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION, location);
             //We are writing out an intermediate sequenceFile hence location is not passed in OutputJobInfo.getLocation()
             //TODO replace this with a mapreduce constant when available

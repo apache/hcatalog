@@ -55,12 +55,14 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
 import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
+import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.apache.hcatalog.storagehandler.HCatStorageHandler;
 import org.apache.thrift.TBase;
 import org.apache.zookeeper.ZooKeeper;
@@ -572,5 +574,26 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
                 HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY, serializedSnp);
     }
 
+    static Transaction getWriteTransaction(Configuration conf) throws IOException {
+        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+        return (Transaction) HCatUtil.deserialize(outputJobInfo.getProperties()
+                                                               .getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
+    }
+
+    static void setWriteTransaction(Configuration conf, Transaction txn) throws IOException {
+        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+        outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY, HCatUtil.serialize(txn));
+        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
+    }
+
+    /**
+     * Get the Revision number that will be assigned to this job's output data
+     * @param conf configuration of the job
+     * @return the revision number used
+     * @throws IOException
+     */
+    public static long getOutputRevision(Configuration conf) throws IOException {
+        return getWriteTransaction(conf).getRevisionNumber();
+    }
 
 }
