@@ -105,6 +105,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-225. Fix trunk compile issue, method signature change in thrift client. (hashutosh via toffer)
+
   HCAT-216. we should source hcat-env.sh in hcat-config before we determine where hadoop is (arpitgupta via khorgath)
 
   HCAT-213. determine HIVE_CONF_DIR in hive-config.sh based on rpm or tar ball installs (arpitgupta via khorgath)

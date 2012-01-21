@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -82,6 +83,8 @@ class FileOutputFormatContainer extends OutputFormatContainer {
             throw new IOException(e);
         } catch (TException e) {
             throw new IOException(e);
+        } catch (NoSuchObjectException e) {
+            throw new IOException(e);        	
         }
         of.checkOutputSpecs(context);
     }
@@ -104,7 +107,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
      * @throws org.apache.thrift.TException
      */
     private static void handleDuplicatePublish(JobContext context, OutputJobInfo outputInfo,
-                                               HiveMetaStoreClient client, Table table) throws IOException, MetaException, TException {
+      HiveMetaStoreClient client, Table table) throws IOException, MetaException, TException, NoSuchObjectException {
 
         /*
         * For fully specified ptn, follow strict checks for existence of partitions in metadata
