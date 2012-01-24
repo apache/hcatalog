@@ -320,7 +320,9 @@ public class ZKBasedRevisionManager implements RevisionManager{
             cfMap.put(cfName, version);
         }
 
-        return new TableSnapshot(tableName, cfMap);
+        TableSnapshot snapshot = new TableSnapshot(tableName, cfMap,latestID);
+        LOG.debug("Created snapshot For table: "+tableName+" snapshot: "+snapshot);
+        return snapshot;
     }
 
     /* This method allows the user to create snapshot of a
@@ -346,7 +348,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
             cfMap.put(cf, revision);
         }
 
-        return new TableSnapshot(tableName, cfMap);
+        return new TableSnapshot(tableName, cfMap, revision);
     }
 
     /**

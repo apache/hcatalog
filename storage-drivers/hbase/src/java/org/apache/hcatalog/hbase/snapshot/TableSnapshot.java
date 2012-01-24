@@ -30,10 +30,13 @@ public class TableSnapshot {
 
     private Map<String, Long> cfRevisionMap;
 
+    private long latestRevision;
 
-    public TableSnapshot(String name, Map<String, Long> cfRevMap) {
+
+    public TableSnapshot(String name, Map<String, Long> cfRevMap, long latestRevision) {
         this.name = name;
         this.cfRevisionMap = cfRevMap;
+        this.latestRevision = latestRevision;
     }
 
     /**
@@ -61,12 +64,21 @@ public class TableSnapshot {
      * @return the revision
      */
     public long getRevision(String familyName){
-        return this.cfRevisionMap.get(familyName);
+        if(cfRevisionMap.containsKey(familyName))
+            return cfRevisionMap.get(familyName);
+        return latestRevision;
+    }
+
+    /**
+     * @return the latest committed revision when this snapshot was taken
+     */
+    public long getLatestRevision() {
+        return latestRevision;
     }
 
     @Override
     public String toString() {
-        String snapshot = "Table Name : " + name
+        String snapshot = "Table Name : " + name +" Latest Revision: " + latestRevision
                 + " Column Familiy revision : " + cfRevisionMap.toString();
         return snapshot;
     }

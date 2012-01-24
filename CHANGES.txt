@@ -111,6 +111,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-227. NPE on HBaseInputStorageDriver when table contains a CF that's never been successfully written to (toffer via hashutosh)
+
   HCAT-224. hcatalog e2e tests have the hive version hard coded we should read that from the hive build.properties (Arpit Gupta via hashutosh)
 
   HCAT-225. Fix trunk compile issue, method signature change in thrift client. (hashutosh via toffer)
