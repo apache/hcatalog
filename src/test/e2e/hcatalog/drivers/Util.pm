@@ -562,7 +562,7 @@ sub findPigWithoutHadoopJar($$)
 {
     my ($cfg, $log) = @_;
 
-    my $jar = `ls $cfg->{'pigpath'}/pig-*-withouthadoop.jar`;
+    my $jar = `ls $cfg->{'pigpath'}/pig-*withouthadoop.jar`;
     chomp $jar;
     return $jar;
 }
