@@ -19,6 +19,7 @@
 package org.apache.hcatalog.hbase;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.serde.Constants;
@@ -91,6 +92,7 @@ abstract  class HBaseBaseOutputStorageDriver extends HCatOutputStorageDriver {
 
         String txnString = outputJobInfo.getProperties().getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
         if(txnString == null) {
+            HBaseConfiguration.addHbaseResources(context.getConfiguration());
             //outputSchema should be set by HCatOutputFormat calling setSchema, prior to initialize being called
             //TODO reconcile output_revision passing to HBaseSerDeResultConverter
             //on the first call to this method hcatProperties will not contain an OUTPUT_VERSION but that doesn't

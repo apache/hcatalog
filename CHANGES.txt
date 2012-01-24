@@ -60,6 +60,8 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-226. HBase storage drivers should load hbase resources (hbase-site, hbase-default) for the user (hashutosh via toffer)
+
   HCAT-223. Include HWI (vikram.dixit via khorgath)
 
   HCAT-166. Making configuration/installation automatable (vikram.dixit via khorgath)
