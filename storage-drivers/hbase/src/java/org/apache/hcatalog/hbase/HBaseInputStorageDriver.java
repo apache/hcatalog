@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
@@ -98,9 +99,10 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
         String serSnapshot = (String) inpJobInfo.getProperties().get(
                 HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
         if(serSnapshot == null){
-        snapshot = HBaseHCatStorageHandler.createSnapshot(jobConf,
+            HBaseConfiguration.addHbaseResources(context.getConfiguration());
+            snapshot = HBaseHCatStorageHandler.createSnapshot(jobConf,
                 hbaseTableName);
-        inpJobInfo.getProperties().setProperty(
+            inpJobInfo.getProperties().setProperty(
                 HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY,
                 HCatUtil.serialize(snapshot));
         }
