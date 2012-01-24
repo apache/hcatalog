@@ -33,11 +33,13 @@ public class HCatTableSnapshot implements Serializable{
     private String tableName;
     private String databaseName;
     private Map<String, Long> columnMap;
+    private long latestRevision;
 
-    HCatTableSnapshot(String databaseName, String tableName, Map<String, Long> columnMap) {
+    HCatTableSnapshot(String databaseName, String tableName, Map<String, Long> columnMap, long latestRevision) {
         this.tableName = tableName;
         this.databaseName = databaseName;
         this.columnMap = columnMap;
+        this.latestRevision = latestRevision;
     }
 
     /**
@@ -58,7 +60,9 @@ public class HCatTableSnapshot implements Serializable{
      * @return The revision number of a column in a snapshot.
      */
     long getRevision(String column){
-        return this.columnMap.get(column);
+        if(columnMap.containsKey(column))
+            return this.columnMap.get(column);
+        return latestRevision;
     }
 
     /**
@@ -71,10 +75,17 @@ public class HCatTableSnapshot implements Serializable{
         return this.columnMap.containsKey(column);
     }
 
+    /**
+     * @return latest committed revision when snapshot was taken
+     */
+    long getLatestRevision() {
+        return latestRevision;
+    }
+
     @Override
     public String toString() {
         String snapshot = " Database Name: " + this.databaseName +" Table Name : " + tableName +
-                 " Column revision : " + columnMap.toString();
+                 "Latest Revision: "+latestRevision+" Column revision : " + columnMap.toString();
         return snapshot;
     }
 }

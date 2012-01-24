@@ -221,7 +221,7 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
         }
 
         HCatTableSnapshot hcatSnapshot = new HCatTableSnapshot(
-                 hcatTableInfo.getDatabaseName(), hcatTableInfo.getTableName(),revisionMap);
+                 hcatTableInfo.getDatabaseName(), hcatTableInfo.getTableName(),revisionMap,hbaseSnapshot.getLatestRevision());
         return hcatSnapshot;
     }
 
@@ -241,7 +241,7 @@ public class HBaseInputStorageDriver extends HCatInputStorageDriver {
 
         String fullyQualifiedName = hcatSnapshot.getDatabaseName() + "."
                 + hcatSnapshot.getTableName();
-        return new TableSnapshot(fullyQualifiedName, revisionMap);
+        return new TableSnapshot(fullyQualifiedName, revisionMap,hcatSnapshot.getLatestRevision());
 
     }
 

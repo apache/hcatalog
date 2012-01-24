@@ -81,7 +81,7 @@ public class TestSnapshots extends SkeletonHBaseTest {
         Map<String, Long> revMap = new HashMap<String, Long>();
         revMap.put("cf1", 3L);
         revMap.put("cf2", 5L);
-        TableSnapshot hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap);
+        TableSnapshot hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap,-1);
         HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver.convertSnapshot(hbaseSnapshot, inputInfo.getTableInfo());
 
         assertEquals(hcatSnapshot.getRevision("value1"), 3);
@@ -101,7 +101,7 @@ public class TestSnapshots extends SkeletonHBaseTest {
         assertEquals(0, cmdResponse.getResponseCode());
         revMap.clear();
         revMap.put("cf1", 3L);
-        hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap);
+        hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap, -1);
         inputInfo = InputJobInfo.create(databaseName, tableName, null, null, null);
         InitializeInput.setInput(job, inputInfo);
         modifiedInputInfo = job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
