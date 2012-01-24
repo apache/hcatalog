@@ -105,6 +105,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-224. hcatalog e2e tests have the hive version hard coded we should read that from the hive build.properties (Arpit Gupta via hashutosh)
+
   HCAT-216. we should source hcat-env.sh in hcat-config before we determine where hadoop is (arpitgupta via khorgath)
 
   HCAT-213. determine HIVE_CONF_DIR in hive-config.sh based on rpm or tar ball installs (arpitgupta via khorgath)
