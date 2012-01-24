@@ -198,6 +198,7 @@
       <env key="PH_CLUSTER_BIN" value="${harness.cluster.bin}"/>
       <env key="PIG_HOME" value="${harness.pig.home}"/>
       <env key="PIG_JAR" value="${harness.pig.jar}"/> <!-- Pig jar without antlr -->
+      <env key="HBASE_CONF_DIR" value="${hbase.conf.dir}"/>
       <arg line="${tests.to.run}"/>
       <arg value="${test.location}/tests/pig.conf"/>
       <arg value="${test.location}/tests/hive.conf"/>

@@ -375,6 +375,7 @@ sub getPigCmd($$$)
     $pcp .= ":" . $testCmd->{'additionaljars'} if (defined($testCmd->{'additionaljars'}));
     # Only add testconfigpath to PIG_CLASSPATH if HADOOP_HOME isn't defined
     $pcp .= ":" . $testCmd->{'testconfigpath'} if ($testCmd->{'exectype'} ne "local"); #&& (! defined $ENV{'HADOOP_HOME'});
+    $pcp .= ":" . $testCmd->{'hbaseconfigpath'} if ($testCmd->{'exectype'} ne "local" && defined($testCmd->{'hbaseconfigpath'} && $testCmd->{'hbaseconfigpath'} ne ""));
 
     # Set it in our current environment.  It will get inherited by the IPC::Run
     # command.
@@ -396,7 +397,7 @@ sub getPigCmd($$$)
         $opts = $opts . " " . join(" ", @{$testCmd->{'java_params'}});
     }
 
-    $ENV{'PIG_OPTS'} = $opts;
+    $ENV{'PIG_OPTS'} = $ENV{'PIG_OPTS'} . " " . $opts;
 
 	print $log "Returning Pig command " . join(" ", @pigCmd) . "\n";
 	print $log "With PIG_CLASSPATH set to " . $ENV{'PIG_CLASSPATH'} . " and PIG_OPTS set to " . $ENV{'PIG_OPTS'} . "\n";

@@ -60,6 +60,8 @@ Release 0.3.0 (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-219. Adding HBase e2e tests (daijy via toffer)
+
   HCAT-223. Include HWI (vikram.dixit via khorgath)
 
   HCAT-179. Make HCatalog compile against Hadoop 0.23 (thw via khorgath)

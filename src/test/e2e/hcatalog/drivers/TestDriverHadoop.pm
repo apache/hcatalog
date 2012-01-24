@@ -343,6 +343,10 @@ sub runHadoop
         $ENV{'HADOOP_CLASSPATH'} = $cp;
     }
 
+    if (defined($testCmd->{'hbaseconfigpath'})) {
+        $ENV{'HADOOP_CLASSPATH'} = "$ENV{'HADOOP_CLASSPATH'}:$testCmd->{'hbaseconfigpath'}";
+    }
+
     if (defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)) {
         $ENV{'HADOOP_OPTS'} = "-Dhcat.metastore.principal=" . $testCmd->{'metastore.principal'};
         $ENV{'HADOOP_CLIENT_OPTS'} = "-Dhcat.metastore.principal=" . $testCmd->{'metastore.principal'};
@@ -624,6 +628,7 @@ sub getPigCmd($$$)
     $pcp .= ":" . $testCmd->{'additionaljars'} if (defined($testCmd->{'additionaljars'}));
     # Only add testconfigpath to PIG_CLASSPATH if HADOOP_HOME isn't defined
     $pcp .= ":" . $testCmd->{'testconfigpath'} if ($testCmd->{'exectype'} ne "local"); #&& (! defined $ENV{'HADOOP_HOME'});
+    $pcp .= ":" . $testCmd->{'hbaseconfigpath'} if ($testCmd->{'exectype'} ne "local" && defined($testCmd->{'hbaseconfigpath'} && $testCmd->{'hbaseconfigpath'} ne ""));
 
     # Set it in our current environment.  It will get inherited by the IPC::Run
     # command.
