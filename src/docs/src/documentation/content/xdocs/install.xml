@@ -163,6 +163,16 @@
         </tr>
     </table>
 
+    <p>A more potent script exists in the form of src/packages/hcat-configure.sh
+      which can configure the hive-site.xml to conform to the changes mentioned
+      above. It has predefined values for the most of the above mentioned fields
+      except for the ConnectionPassword and keytabs. It is capable of taking 
+      those fields too as parameters in the command line. Just run it once 
+      without parameters to see a full description of the usage of the script.
+      Users looking to automate the hcat installation should look to leverage
+      this script.
+      This script is highly recommended for automation.
+    </p>
     <p>You can now procede to starting the server.</p>
   </section>
 
