@@ -111,6 +111,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-212. hcat trunk version should be updated (hashutosh)
+
   HCAT-230. Remove log4j compilation dependencies (enis via hashutosh)
 
   HCAT-227. NPE on HBaseInputStorageDriver when table contains a CF that's never been successfully written to (toffer via hashutosh)
