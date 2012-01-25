@@ -17,7 +17,8 @@
  */
 package org.apache.hcatalog.hbase.snapshot.lock;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -41,7 +42,7 @@ import java.util.TreeSet;
  *  made is a TODO for sorting using suffixes and the package name.
  */
 public class WriteLock extends ProtocolSupport {
-    private static final Logger LOG = Logger.getLogger(WriteLock.class);
+    private static final Log LOG = LogFactory.getLog(WriteLock.class);
 
     private final String dir;
     private String id;

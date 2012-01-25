@@ -17,7 +17,9 @@
  */
 package org.apache.hcatalog.hbase.snapshot.lock;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 /**
  * Represents an ephemeral znode name which has an ordered sequence number
@@ -29,7 +31,7 @@ public class ZNodeName implements Comparable<ZNodeName> {
     private final String name;
     private String prefix;
     private int sequence = -1;
-    private static final Logger LOG = Logger.getLogger(ZNodeName.class);
+    private static final Log LOG = LogFactory.getLog(ZNodeName.class);
 
     public ZNodeName(String name) {
         if (name == null) {

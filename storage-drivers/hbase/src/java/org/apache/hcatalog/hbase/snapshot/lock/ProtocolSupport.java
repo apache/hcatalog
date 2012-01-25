@@ -17,8 +17,9 @@
  */
 package org.apache.hcatalog.hbase.snapshot.lock;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hcatalog.hbase.snapshot.lock.ZooKeeperOperation;
-import org.apache.log4j.Logger;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -38,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *  changes in the retry delay, retry count values and package name.
  */
 class ProtocolSupport {
-    private static final Logger LOG = Logger.getLogger(ProtocolSupport.class);
+    private static final Log LOG = LogFactory.getLog(ProtocolSupport.class);
 
     protected final ZooKeeper zookeeper;
     private AtomicBoolean closed = new AtomicBoolean(false);
