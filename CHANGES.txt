@@ -113,6 +113,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-234. bin/hcat need to add hbase-site.xml in classpath (daijy via toffer)
+
   HCAT-212. hcat trunk version should be updated (hashutosh)
 
   HCAT-230. Remove log4j compilation dependencies (enis via hashutosh)

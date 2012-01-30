@@ -65,6 +65,10 @@ done
 # Put our config file in the classpath
 HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_CONF_DIR}
 
+if [ -n "$HBASE_CONF_DIR" ] && [ -d $HBASE_CONF_DIR ]; then
+    HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HBASE_CONF_DIR}
+fi
+
 export HADOOP_CLASSPATH=$HADOOP_CLASSPATH
 export HADOOP_OPTS=$HADOOP_OPTS
 # run it
