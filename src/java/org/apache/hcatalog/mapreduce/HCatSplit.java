@@ -132,7 +132,7 @@ class HCatSplit extends InputSplit implements Writable {
             ((Writable)split).readFields(input);
             this.baseSplit = split;
         }catch(Exception e){
-            throw new IOException ("Exception from " +baseSplitClassName + " : " + e.getMessage());
+            throw new IOException ("Exception from " + baseSplitClassName, e);
         }
 
         String tableSchemaString = WritableUtils.readString(input);
