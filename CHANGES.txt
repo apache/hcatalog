@@ -60,6 +60,8 @@ Trunk (unreleased changes)
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-246. Exception masked in HCatSplit class (avandana via toffer)
+
   HCAT-211. Update tar ball installation documentation (vikram.dixit via khorgath)
 
   HCAT-219. Adding HBase e2e tests (daijy via toffer) 
