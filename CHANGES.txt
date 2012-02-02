@@ -115,6 +115,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-229. bin/hcat should put hcatalog.jar into classpath (daiky via gates)
+    
   HCAT-234. bin/hcat need to add hbase-site.xml in classpath (daijy via toffer)
 
   HCAT-227. NPE on HBaseInputStorageDriver when table contains a CF that's never been successfully written to (toffer via hashutosh)
