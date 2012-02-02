@@ -23,6 +23,8 @@ Release 0.3.0 (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-204. HCatRecord SerDe (khorgath via gates)
+
   HCAT-192. HBase output storage driver integration with zookeeper based revision manager (toffer via hashutosh)
 
   HCAT-191. HBase input storage driver integration with zookeeper based revision manager (avandana via toffer)
@@ -191,7 +193,7 @@ Release 0.3.0 (unreleased changes)
 
   HCAT-115. Superfluous warning on fresh install (ctdean via khorgath)
 
-Release 0.2.0
+Release 0.2.0 October 2, 2011
 
   INCOMPATIBLE CHANGES
 

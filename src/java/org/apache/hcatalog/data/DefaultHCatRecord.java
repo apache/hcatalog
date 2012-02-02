@@ -29,7 +29,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 
 public class DefaultHCatRecord extends HCatRecord {
 
-    private final List<Object> contents;
+    private List<Object> contents;
 
     public DefaultHCatRecord(){
         contents = new ArrayList<Object>();
@@ -148,6 +148,11 @@ public class DefaultHCatRecord extends HCatRecord {
     @Override
     public void set(String fieldName, HCatSchema recordSchema, Object value) throws HCatException {
         set(recordSchema.getPosition(fieldName),value);
+    }
+
+    @Override
+    public void copy(HCatRecord r) throws HCatException {
+      this.contents = r.getAll();
     }
 
 }
