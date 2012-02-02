@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatArrayBag;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.Pair;
@@ -68,12 +69,9 @@ public class PigHCatUtil {
     // <database name>.<table name> - parse it and
     // communicate the information to HCatInputFormat
 
-    String[] dbTableNametokens = location.split("\\.");
-    if(dbTableNametokens.length == 1) {
-      return new Pair<String,String>(DEFAULT_DB,location);
-    }else if (dbTableNametokens.length == 2) {
-      return new Pair<String, String>(dbTableNametokens[0], dbTableNametokens[1]);
-    }else{
+    try {
+      return HCatUtil.getDbAndTableName(location);
+    } catch (IOException e) {
       String locationErrMsg = "The input location in load statement " +
       "should be of the form " +
       "<databasename>.<table name> or <table name>. Got " + location;

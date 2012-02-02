@@ -22,6 +22,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -29,8 +31,10 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
 /** The HCatSplit wrapper around the InputSplit returned by the underlying InputFormat */
-class HCatSplit extends InputSplit implements Writable {
+public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.mapred.InputSplit {
 
+    Log LOG = LogFactory.getLog(HCatSplit.class);
+    
     /** The partition info for the split. */
     private PartInfo partitionInfo;
 
@@ -94,16 +98,34 @@ class HCatSplit extends InputSplit implements Writable {
      * @see org.apache.hadoop.mapreduce.InputSplit#getLength()
      */
     @Override
-    public long getLength() throws IOException, InterruptedException {
-        return baseSplit.getLength();
+    public long getLength() {
+        try {
+          return baseSplit.getLength();
+        } catch (IOException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        } catch (InterruptedException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        }
+        return 0; // we errored
     }
 
     /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.InputSplit#getLocations()
      */
     @Override
-    public String[] getLocations() throws IOException, InterruptedException {
-        return baseSplit.getLocations();
+    public String[] getLocations() {
+        try {
+          return baseSplit.getLocations();
+        } catch (IOException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        } catch (InterruptedException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        }
+        return new String[0]; // we errored
     }
 
     /* (non-Javadoc)

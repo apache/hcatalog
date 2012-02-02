@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -46,6 +48,8 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  * info required in the client process context.
  */
 public class InitializeInput {
+  
+  private static final Log LOG = LogFactory.getLog(InitializeInput.class);
 
   /** The prefix for keys used for storage driver arguments */
   static final String HCAT_KEY_PREFIX = "hcat.";
@@ -69,10 +73,23 @@ public class InitializeInput {
     //* Create and initialize an InputJobInfo object
     //* Serialize the InputJobInfo and save in the Job's Configuration object
 
+    job.getConfiguration().set(
+        HCatConstants.HCAT_KEY_JOB_INFO, 
+        getSerializedHcatKeyJobInfo(job, inputJobInfo,null));
+  }
+
+  public static String getSerializedHcatKeyJobInfo(Job job, InputJobInfo inputJobInfo, String locationFilter) throws Exception {
+    //* Create and initialize an InputJobInfo object
+
     HiveMetaStoreClient client = null;
 
     try {
-      client = createHiveMetaClient(job.getConfiguration(),inputJobInfo);
+      if (job != null){
+        client = createHiveMetaClient(job.getConfiguration(),inputJobInfo);
+      } else {
+        hiveConf = new HiveConf(HCatInputFormat.class);
+        client = new HiveMetaStoreClient(hiveConf, null);
+      }
       Table table = client.getTable(inputJobInfo.getDatabaseName(),
                                                 inputJobInfo.getTableName());
 
@@ -107,17 +124,15 @@ public class InitializeInput {
       inputJobInfo.setPartitions(partInfoList);
       inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
 
-      job.getConfiguration().set(
-          HCatConstants.HCAT_KEY_JOB_INFO,
-          HCatUtil.serialize(inputJobInfo)
-      );
+      return HCatUtil.serialize(inputJobInfo);
     } finally {
       if (client != null ) {
         client.close();
       }
     }
-  }
 
+  }
+  
   private static Map<String, String> createPtnKeyValueMap(Table table, Partition ptn) throws IOException{
     List<String> values = ptn.getValues();
     if( values.size() != table.getPartitionKeys().size() ) {

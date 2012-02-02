@@ -26,6 +26,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -55,6 +57,7 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
@@ -418,12 +421,17 @@ public class HCatUtil {
 
     public static void logEntrySet(Log logger, String itemName,
             Set<? extends Entry> entrySet) {
-        logger.info(itemName + ":");
-        for (Entry e : entrySet) {
-            logger.info("\t[" + e.getKey() + "]=>[" + e.getValue() + "]");
-        }
+        logIterableSet(logger,itemName,entrySet.iterator());
     }
 
+    public static void logIterableSet(Log logger, String itemName, Iterator<? extends Entry> iterator){
+      logger.info(itemName + ":");
+      while (iterator.hasNext()){
+        Entry e = iterator.next();
+        logger.debug("\t[" + e.getKey() + "]=>[" + e.getValue() + "]");
+      }
+    }
+    
     public static void logAllTokens(Log logger, JobContext context)
             throws IOException {
         for (Token<? extends TokenIdentifier> t : context.getCredentials()
@@ -459,4 +467,15 @@ public class HCatUtil {
         }
     }
 
+    public static Pair<String,String> getDbAndTableName(String tableName) throws IOException{
+      String[] dbTableNametokens = tableName.split("\\.");
+      if(dbTableNametokens.length == 1) {
+        return new Pair<String,String>(MetaStoreUtils.DEFAULT_DATABASE_NAME,tableName);
+      }else if (dbTableNametokens.length == 2) {
+        return new Pair<String, String>(dbTableNametokens[0], dbTableNametokens[1]);
+      }else{
+        throw new IOException("tableName expected in the form "
+            +"<databasename>.<table name> or <table name>. Got " + tableName);
+      }
+    }
 }
