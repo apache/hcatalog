@@ -75,6 +75,15 @@ public final class HCatConstants {
   public static final String HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE = HCAT_KEY_OUTPUT_BASE + ".jobclient.token.sig";
   public static final String HCAT_KEY_JOBCLIENT_TOKEN_STRFORM = HCAT_KEY_OUTPUT_BASE + ".jobclient.token.strform";
 
+  public static final String[] OUTPUT_CONFS_TO_SAVE = {
+    HCAT_KEY_OUTPUT_INFO,
+    HCAT_KEY_HIVE_CONF,
+    HCAT_KEY_TOKEN_SIGNATURE,
+    HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE,
+    HCAT_KEY_JOBCLIENT_TOKEN_STRFORM
+    };
+
+
   public static final String HCAT_MSG_CLEAN_FREQ = "hcat.msg.clean.freq";
   public static final String HCAT_MSG_EXPIRY_DURATION = "hcat.msg.expiry.duration";
   

@@ -19,17 +19,24 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 
 /** The HCat wrapper for the underlying RecordReader, this ensures that the initialize on
  * the underlying record reader is done with the underlying split, not with HCatSplit.
  */
-class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
+class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> 
+  implements org.apache.hadoop.mapred.RecordReader {
+  
+    Log LOG = LogFactory.getLog(HCatRecordReader.class);
+    int lineCount = 0;
 
     /** The underlying record reader to delegate to. */
     private final RecordReader<? extends WritableComparable, ? extends Writable> baseRecordReader;
@@ -74,15 +81,25 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      */
     @Override
     public HCatRecord getCurrentValue() throws IOException, InterruptedException {
-        return storageDriver.convertToHCatRecord(baseRecordReader.getCurrentKey(),baseRecordReader.getCurrentValue());
+        HCatRecord r = storageDriver.convertToHCatRecord(baseRecordReader.getCurrentKey(),baseRecordReader.getCurrentValue());
+        return r; 
     }
 
     /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.RecordReader#getProgress()
      */
     @Override
-    public float getProgress() throws IOException, InterruptedException {
-        return baseRecordReader.getProgress();
+    public float getProgress()  {
+        try {
+          return baseRecordReader.getProgress();
+        } catch (IOException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        } catch (InterruptedException e) {
+          LOG.warn(e.getMessage());
+          LOG.warn(e.getStackTrace());
+        }
+        return 0.0f; // errored
     }
 
     /* (non-Javadoc)
@@ -90,6 +107,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
+        lineCount++;
         return baseRecordReader.nextKeyValue();
     }
 
@@ -99,5 +117,47 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
     @Override
     public void close() throws IOException {
         baseRecordReader.close();
+    }
+
+    @Override
+    public Object createKey() {
+      WritableComparable o = null;
+      try {
+        o = getCurrentKey();
+      } catch (IOException e) {
+        LOG.warn(e.getMessage());
+        LOG.warn(e.getStackTrace());
+      } catch (InterruptedException e) {
+        LOG.warn(e.getMessage());
+        LOG.warn(e.getStackTrace());
+      }
+      return o;
+    }
+
+    @Override
+    public Object createValue() {
+      return new DefaultHCatRecord();
+    }
+
+    @Override
+    public long getPos() throws IOException {
+      return lineCount;
+    }
+
+    @Override
+    public boolean next(Object key, Object value) throws IOException {
+      try {
+        if (!nextKeyValue()){
+          return false;
+        }
+        
+        ((HCatRecord)value).copy(getCurrentValue());
+        
+        return true;
+      } catch (InterruptedException e) {
+        LOG.warn(e.getMessage());
+        LOG.warn(e.getStackTrace());
+      }
+      return false;
     }
 }
