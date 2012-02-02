@@ -103,4 +103,10 @@
   <description>MetaStore Client socket timeout in seconds</description>
 </property>
 
+<property>
+  <name>hive.metastore.partition.inherit.table.properties</name>
+  <value>hcat.isd,hcat.osd</value>
+  <description>HCatalog sets this property value to hcat.isd, hcat.osd so that there is no need to do alter table set file format after adding partitions to the table.</description>
+</property>
+
 </configuration>
