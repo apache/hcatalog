@@ -63,7 +63,7 @@ for jar in $HCAT_PREFIX/share/hcatalog/lib/*.jar ; do
 done
 
 # Put our config file in the classpath
-HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_CONF_DIR}
+HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HCAT_JAR}:${HCAT_CONF_DIR}
 
 if [ -n "$HBASE_CONF_DIR" ] && [ -d $HBASE_CONF_DIR ]; then
     HADOOP_CLASSPATH=${HADOOP_CLASSPATH}:${HBASE_CONF_DIR}

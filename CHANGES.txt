@@ -131,6 +131,8 @@ Release 0.3.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-229. bin/hcat should put hcatalog.jar into classpath (daiky via gates)
+
   HCAT-234. bin/hcat need to add hbase-site.xml in classpath (daijy via toffer)
 
   HCAT-212. hcat trunk version should be updated (hashutosh)
