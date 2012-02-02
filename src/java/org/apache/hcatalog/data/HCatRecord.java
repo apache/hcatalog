@@ -35,6 +35,7 @@ public abstract class HCatRecord implements HCatRecordable {
     public abstract Object get(String fieldName, HCatSchema recordSchema) throws HCatException;
     public abstract void set(String fieldName, HCatSchema recordSchema, Object value ) throws HCatException;
     public abstract void remove(int idx) throws HCatException;
+    public abstract void copy(HCatRecord r) throws HCatException;
 
     protected Object get(String fieldName, HCatSchema recordSchema, Class clazz) throws HCatException{
         // TODO : if needed, verify that recordschema entry for fieldname matches appropriate type.
