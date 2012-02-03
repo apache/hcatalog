@@ -69,7 +69,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
         super(context,baseWriter);
         this.context = context;
         jobInfo = HCatOutputFormat.getJobInfo(context);
-        storageDriver = HCatOutputFormat.getOutputDriverInstance(context,jobInfo);
 
         // If partition columns occur in data, we want to remove them.
         partColsToDel = jobInfo.getPosOfPartCols();
@@ -84,12 +83,14 @@ class FileRecordWriterContainer extends RecordWriterContainer {
 
 
         if (!dynamicPartitioningUsed) {
+            storageDriver = HCatOutputFormat.getOutputDriverInstance(context,jobInfo);
             this.baseDynamicStorageDrivers = null;
             this.baseDynamicWriters = null;
             this.baseDynamicCommitters = null;
             prepareForStorageDriverOutput(context);
         }
         else {
+            storageDriver = null;
             this.baseDynamicStorageDrivers = new HashMap<Integer,HCatOutputStorageDriver>();
             this.baseDynamicWriters = new HashMap<Integer,RecordWriter<? super WritableComparable<?>, ? super Writable>>();
             this.baseDynamicCommitters = new HashMap<Integer,OutputCommitter>();
