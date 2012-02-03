@@ -68,7 +68,12 @@ class FileOutputFormatContainer extends OutputFormatContainer {
 
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return new FileRecordWriterContainer(of.getRecordWriter(context),context);
+        // When Dynamic partitioning is used, the RecordWriter instance initialized here isn't used. Can use null.
+        // (That's because records can't be written until the values of the dynamic partitions are deduced.
+        // By that time, a new local instance of RecordWriter, with the correct output-path, will be constructed.)
+        return new FileRecordWriterContainer(HCatOutputFormat.getJobInfo(context)
+                                                   .isDynamicPartitioningUsed()? null : of.getRecordWriter(context),
+                                             context);
     }
 
     @Override
