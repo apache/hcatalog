@@ -91,16 +91,9 @@ public class NotificationListener extends MetaStoreEventListener{
 	private static String getTopicName(Partition partition,
 			ListenerEvent partitionEvent) throws MetaException {
 		try {
-			String topicName = partitionEvent.getHandler()
+			return partitionEvent.getHandler()
 					.get_table(partition.getDbName(), partition.getTableName())
 					.getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME);
-			if (topicName == null) {
-				throw new MetaException(
-						"Topic name not found in metastore. Please do alter table set properties ("
-								+ HCatConstants.HCAT_MSGBUS_TOPIC_NAME
-								+ "=dbname.tablename) or whatever you want topic name to be.");
-			}
-			return topicName;
 		} catch (NoSuchObjectException e) {
 			throw new MetaException(e.toString());
 		}
@@ -115,7 +108,16 @@ public class NotificationListener extends MetaStoreEventListener{
 
 			Partition partition = partitionEvent.getPartition();
 			String topicName = getTopicName(partition, partitionEvent);
-			send(partition, topicName, HCatConstants.HCAT_ADD_PARTITION_EVENT);			
+      if (topicName != null && !topicName.equals("")) {
+			  send(partition, topicName, HCatConstants.HCAT_ADD_PARTITION_EVENT);
+      }
+      else {
+        LOG.info("Topic name not found in metastore. Suppressing HCatalog notification for " + partition.getDbName()
+            + "." + partition.getTableName()
+            + " To enable notifications for this table, please do alter table set properties ("
+            + HCatConstants.HCAT_MSGBUS_TOPIC_NAME
+            + "=<dbname>.<tablename>) or whatever you want topic name to be.");
+      }
 		}
 
 	}
@@ -137,7 +139,16 @@ public class NotificationListener extends MetaStoreEventListener{
 			sd.setParameters(new HashMap<String, String>());
 			sd.getSerdeInfo().setParameters(new HashMap<String, String>());
 			String topicName = getTopicName(partition, partitionEvent);
-			send(partition, topicName, HCatConstants.HCAT_DROP_PARTITION_EVENT);
+      if (topicName != null && !topicName.equals("")) {
+			  send(partition, topicName, HCatConstants.HCAT_DROP_PARTITION_EVENT);
+      }
+      else {
+        LOG.info("Topic name not found in metastore. Suppressing HCatalog notification for " + partition.getDbName()
+            + "." + partition.getTableName()
+            + " To enable notifications for this table, please do alter table set properties ("
+            + HCatConstants.HCAT_MSGBUS_TOPIC_NAME
+            + "=<dbname>.<tablename>) or whatever you want topic name to be.");
+      }
 		}
 	}
 
