@@ -76,6 +76,8 @@ Release 0.3.0 - Unreleased
   HCAT-63. RPM package integration with Hadoop (khorgath via hashutosh)
 
   IMPROVEMENTS
+  HCAT-238. Absence of msgbus.topic.name should not be deemed as notification-failure. (mithun via gates)
+
   HCAT-246. Exception masked in HCatSplit class (avandana via toffer)
 
   HCAT-211. Update tar ball installation documentation (vikram.dixit via khorgath)
