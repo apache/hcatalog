@@ -35,6 +35,8 @@ Release 0.3.0 - Unreleased
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-208. mapred HCatInputFormat/HCatOutputFomat changes to make it work from hive (khorgath via gates)
+
   HCAT-207. Changes to current HCat subsystem to allow it to work with hive (khorgath via gates)
 
   HCAT-204. HCatRecord SerDe (khorgath via gates)
