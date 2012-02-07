@@ -186,7 +186,7 @@ public abstract class HCatStorageHandler implements HiveMetaHook,
      * ()
      */
     @Override
-    public final Class<? extends InputFormat> getInputFormatClass() {
+    public Class<? extends InputFormat> getInputFormatClass() {
         return DummyInputFormat.class;
     }
     
@@ -198,7 +198,7 @@ public abstract class HCatStorageHandler implements HiveMetaHook,
      * ()
      */
     @Override
-    public final Class<? extends OutputFormat> getOutputFormatClass() {
+    public Class<? extends OutputFormat> getOutputFormatClass() {
         return DummyOutputFormat.class;
     }
     
