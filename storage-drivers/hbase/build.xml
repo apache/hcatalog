@@ -119,13 +119,13 @@
             <exclude name="*hbase*.jar" />
         </fileset>
         <!-- jars Hadoop depends on -->
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/lib/" >
             <include name="**/*.jar" />
         </fileset>
         <pathelement location="${driver.jar}"/>
         <path refid="classpath"/>
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
-                 includes="hadoop-test-0.20.3-CDH3-SNAPSHOT.jar"/>
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/"
+                 includes="hadoop-test-1.0.0.jar"/>
     </path>
 
     <path id="test.zookeeper.classpath">
@@ -144,13 +144,13 @@
             <exclude name="*zookeeper*.jar" />
         </fileset>
         <!-- jars Hadoop depends on -->
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/lib/" >
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/lib/" >
             <include name="**/*.jar" />
         </fileset>
         <pathelement location="${driver.jar}"/>
         <path refid="classpath"/>
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-0.20.3-CDH3-SNAPSHOT/"
-                 includes="hadoop-test-0.20.3-CDH3-SNAPSHOT.jar"/>
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/"
+                 includes="hadoop-test-1.0.0.jar"/>
     </path>
 
     <!--

@@ -135,6 +135,8 @@ Release 0.3.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-254. Fix storage-drives build.xml (hashutosh via khorgath)
+
   HCAT-232. Dynamic Partitioning broken: keys set to HIVE_DEFAULT_PARTITION (mithun via gates)
 
   HCAT-229. bin/hcat should put hcatalog.jar into classpath (daiky via gates)
