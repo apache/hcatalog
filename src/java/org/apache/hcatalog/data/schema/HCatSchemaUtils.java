@@ -18,6 +18,7 @@
 package org.apache.hcatalog.data.schema;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -35,26 +36,24 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
 
 public class HCatSchemaUtils {
 
-    private static HCatSchemaUtils ref = new HCatSchemaUtils();
-
     public static CollectionBuilder getStructSchemaBuilder(){
-        return ref.new CollectionBuilder();
+        return new CollectionBuilder();
     }
 
     public static CollectionBuilder getListSchemaBuilder(){
-        return ref.new CollectionBuilder();
+        return new CollectionBuilder();
     }
 
     public static MapBuilder getMapSchemaBuilder(){
-        return ref.new MapBuilder();
+        return new MapBuilder();
     }
 
 
-    public abstract class HCatSchemaBuilder {
+    public static abstract class HCatSchemaBuilder {
         public abstract HCatSchema build() throws HCatException;
     }
 
-    public class CollectionBuilder extends HCatSchemaBuilder { // for STRUCTS(multiple-add-calls) and LISTS(single-add-call)
+    public static class CollectionBuilder extends HCatSchemaBuilder { // for STRUCTS(multiple-add-calls) and LISTS(single-add-call)
         List<HCatFieldSchema> fieldSchemas = null;
 
         CollectionBuilder(){
@@ -77,7 +76,7 @@ public class HCatSchemaUtils {
 
     }
 
-    public class MapBuilder extends HCatSchemaBuilder {
+    public static class MapBuilder extends HCatSchemaBuilder {
 
         Type keyType = null;
         HCatSchema valueSchema = null;
@@ -116,21 +115,23 @@ public class HCatSchemaUtils {
 
     private static HCatFieldSchema getHCatFieldSchema(String fieldName, TypeInfo fieldTypeInfo) throws HCatException {
         Category typeCategory = fieldTypeInfo.getCategory();
+        HCatFieldSchema hCatFieldSchema;
         if (Category.PRIMITIVE == typeCategory){
-            return new HCatFieldSchema(fieldName,getPrimitiveHType(fieldTypeInfo),null);
+            hCatFieldSchema = new HCatFieldSchema(fieldName,getPrimitiveHType(fieldTypeInfo),null);
         } else if (Category.STRUCT == typeCategory) {
             HCatSchema subSchema = constructHCatSchema((StructTypeInfo)fieldTypeInfo);
-            return new HCatFieldSchema(fieldName,HCatFieldSchema.Type.STRUCT,subSchema,null);
+            hCatFieldSchema = new HCatFieldSchema(fieldName,HCatFieldSchema.Type.STRUCT,subSchema,null);
         } else if (Category.LIST == typeCategory) {
             HCatSchema subSchema = getHCatSchema(((ListTypeInfo)fieldTypeInfo).getListElementTypeInfo());
-            return new HCatFieldSchema(fieldName,HCatFieldSchema.Type.ARRAY,subSchema,null);
+            hCatFieldSchema = new HCatFieldSchema(fieldName,HCatFieldSchema.Type.ARRAY,subSchema,null);
         } else if (Category.MAP == typeCategory) {
             HCatFieldSchema.Type mapKeyType =  getPrimitiveHType(((MapTypeInfo)fieldTypeInfo).getMapKeyTypeInfo());
             HCatSchema subSchema = getHCatSchema(((MapTypeInfo)fieldTypeInfo).getMapValueTypeInfo());
-            return new HCatFieldSchema(fieldName,HCatFieldSchema.Type.MAP,mapKeyType,subSchema,null);
+            hCatFieldSchema = new HCatFieldSchema(fieldName,HCatFieldSchema.Type.MAP,mapKeyType,subSchema,null);
         } else{
             throw new TypeNotPresentException(fieldTypeInfo.getTypeName(),null);
         }
+        return hCatFieldSchema;
     }
 
     private static Type getPrimitiveHType(TypeInfo basePrimitiveTypeInfo) {
@@ -180,23 +181,25 @@ public class HCatSchemaUtils {
 
     public static HCatSchema getHCatSchema(TypeInfo typeInfo) throws HCatException {
         Category typeCategory = typeInfo.getCategory();
+        HCatSchema hCatSchema;
         if (Category.PRIMITIVE == typeCategory){
-            return getStructSchemaBuilder().addField(new HCatFieldSchema(null,getPrimitiveHType(typeInfo),null)).build();
+            hCatSchema = getStructSchemaBuilder().addField(new HCatFieldSchema(null,getPrimitiveHType(typeInfo),null)).build();
         } else if (Category.STRUCT == typeCategory) {
             HCatSchema subSchema = constructHCatSchema((StructTypeInfo) typeInfo);
-            return getStructSchemaBuilder().addField(new HCatFieldSchema(null,Type.STRUCT,subSchema,null)).build();
+            hCatSchema = getStructSchemaBuilder().addField(new HCatFieldSchema(null,Type.STRUCT,subSchema,null)).build();
         } else if (Category.LIST == typeCategory) {
-            CollectionBuilder builder = getStructSchemaBuilder();
+            CollectionBuilder builder = getListSchemaBuilder();
             builder.addField(getHCatFieldSchema(null,((ListTypeInfo)typeInfo).getListElementTypeInfo()));
-            return builder.build();
+            hCatSchema = new HCatSchema(Arrays.asList(new HCatFieldSchema("",Type.ARRAY, builder.build(), "")));
         } else if (Category.MAP == typeCategory) {
             HCatFieldSchema.Type mapKeyType =  getPrimitiveHType(((MapTypeInfo)typeInfo).getMapKeyTypeInfo());
             HCatSchema subSchema = getHCatSchema(((MapTypeInfo)typeInfo).getMapValueTypeInfo());
             MapBuilder builder = getMapSchemaBuilder();
-            return builder.withKeyType(mapKeyType).withValueSchema(subSchema).build();
+            hCatSchema = builder.withKeyType(mapKeyType).withValueSchema(subSchema).build();
         } else{
             throw new TypeNotPresentException(typeInfo.getTypeName(),null);
         }
+        return hCatSchema;
     }
 
     public static HCatSchema getHCatSchemaFromTypeString(String typeString) throws HCatException {

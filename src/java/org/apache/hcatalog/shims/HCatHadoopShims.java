@@ -48,7 +48,7 @@ public interface HCatHadoopShims {
 						Class.forName(shimFQN).asSubclass(HCatHadoopShims.class);
 				return clasz.newInstance();
 			} catch (Exception e) {
-				throw new RuntimeException("Failed to instantiate: " + shimFQN);
+				throw new RuntimeException("Failed to instantiate: " + shimFQN, e);
 			}
 		}
 	}

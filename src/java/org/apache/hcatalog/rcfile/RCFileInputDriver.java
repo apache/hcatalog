@@ -156,6 +156,10 @@ public class RCFileInputDriver extends HCatInputStorageDriver{
     // with crisp Java objects inside it. We have to do it because higher layer
     // may not know how to do it.
 
+    if (data == null) {
+      return null;
+    }
+
     switch(oi.getCategory()){
 
     case PRIMITIVE:

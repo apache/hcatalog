@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
@@ -81,7 +82,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       for(String partKVP : partKVPs){
         String[] partKV = partKVP.split("=");
         if(partKV.length == 2) {
-          String partKey = partKV[0].trim(); 
+          String partKey = partKV[0].trim();
           partitionKeys.add(partKey);
           partitions.put(partKey, partKV[1].trim());
         } else {
@@ -118,58 +119,33 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
    * schema of the table in metastore.
    */
   protected HCatSchema convertPigSchemaToHCatSchema(Schema pigSchema, HCatSchema tableSchema) throws FrontendException{
-
     List<HCatFieldSchema> fieldSchemas = new ArrayList<HCatFieldSchema>(pigSchema.size());
     for(FieldSchema fSchema : pigSchema.getFields()){
-      byte type = fSchema.type;
-      HCatFieldSchema hcatFSchema;
-
       try {
+        HCatFieldSchema hcatFieldSchema = getColFromSchema(fSchema.alias, tableSchema);
 
-        // Find out if we need to throw away the tuple or not.
-        if(type == DataType.BAG && removeTupleFromBag(tableSchema, fSchema)){
-          List<HCatFieldSchema> arrFields = new ArrayList<HCatFieldSchema>(1);
-          arrFields.add(getHCatFSFromPigFS(fSchema.schema.getField(0).schema.getField(0), tableSchema));
-          hcatFSchema = new HCatFieldSchema(fSchema.alias, Type.ARRAY, new HCatSchema(arrFields), null);
-      }
-      else{
-          hcatFSchema = getHCatFSFromPigFS(fSchema, tableSchema);
-      }
-      fieldSchemas.add(hcatFSchema);
+        fieldSchemas.add(getHCatFSFromPigFS(fSchema, hcatFieldSchema));
       } catch (HCatException he){
           throw new FrontendException(he.getMessage(),PigHCatUtil.PIG_EXCEPTION_CODE,he);
       }
     }
-
     return new HCatSchema(fieldSchemas);
   }
 
-  private void validateUnNested(Schema innerSchema) throws FrontendException{
-
-    for(FieldSchema innerField : innerSchema.getFields()){
-      validateAlias(innerField.alias);
-      if(DataType.isComplex(innerField.type)) {
-        throw new FrontendException("Complex types cannot be nested. "+innerField, PigHCatUtil.PIG_EXCEPTION_CODE);
-      }
-    }
-  }
-
-  private boolean removeTupleFromBag(HCatSchema tableSchema, FieldSchema bagFieldSchema) throws HCatException{
-
-    String colName = bagFieldSchema.alias;
-    for(HCatFieldSchema field : tableSchema.getFields()){
-      if(colName.equalsIgnoreCase(field.getName())){
-        return (field.getArrayElementSchema().get(0).getType() == Type.STRUCT) ? false : true;
-      }
+  public static boolean removeTupleFromBag(HCatFieldSchema hcatFieldSchema, FieldSchema bagFieldSchema) throws HCatException{
+    if (hcatFieldSchema != null && hcatFieldSchema.getArrayElementSchema().get(0).getType() != Type.STRUCT) {
+      return true;
     }
     // Column was not found in table schema. Its a new column
     List<FieldSchema> tupSchema = bagFieldSchema.schema.getFields();
-    return (tupSchema.size() == 1 && tupSchema.get(0).schema == null) ? true : false;
+    if (hcatFieldSchema == null && tupSchema.size() == 1 && (tupSchema.get(0).schema == null || (tupSchema.get(0).type == DataType.TUPLE && tupSchema.get(0).schema.size() == 1))) {
+      return true;
+    }
+    return false;
   }
 
 
-  private HCatFieldSchema getHCatFSFromPigFS(FieldSchema fSchema, HCatSchema hcatTblSchema) throws FrontendException, HCatException{
-
+  private HCatFieldSchema getHCatFSFromPigFS(FieldSchema fSchema, HCatFieldSchema hcatFieldSchema) throws FrontendException, HCatException{
     byte type = fSchema.type;
     switch(type){
 
@@ -191,19 +167,29 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
 
     case DataType.BYTEARRAY:
     	return new HCatFieldSchema(fSchema.alias, Type.BINARY, null);
-    	
+
     case DataType.BAG:
       Schema bagSchema = fSchema.schema;
       List<HCatFieldSchema> arrFields = new ArrayList<HCatFieldSchema>(1);
-      arrFields.add(getHCatFSFromPigFS(bagSchema.getField(0), hcatTblSchema));
+      FieldSchema field;
+      // Find out if we need to throw away the tuple or not.
+      if (removeTupleFromBag(hcatFieldSchema, fSchema)) {
+        field = bagSchema.getField(0).schema.getField(0);
+      } else {
+        field = bagSchema.getField(0);
+      }
+      arrFields.add(getHCatFSFromPigFS(field, hcatFieldSchema == null ? null : hcatFieldSchema.getArrayElementSchema().get(0)));
       return new HCatFieldSchema(fSchema.alias, Type.ARRAY, new HCatSchema(arrFields), "");
 
     case DataType.TUPLE:
       List<String> fieldNames = new ArrayList<String>();
       List<HCatFieldSchema> hcatFSs = new ArrayList<HCatFieldSchema>();
-      for( FieldSchema fieldSchema : fSchema.schema.getFields()){
-        fieldNames.add( fieldSchema.alias);
-        hcatFSs.add(getHCatFSFromPigFS(fieldSchema, hcatTblSchema));
+      HCatSchema structSubSchema = hcatFieldSchema == null ? null : hcatFieldSchema.getStructSubSchema();
+      List<FieldSchema> fields = fSchema.schema.getFields();
+      for (int i = 0; i < fields.size(); i++) {
+        FieldSchema fieldSchema = fields.get(i);
+        fieldNames.add(fieldSchema.alias);
+        hcatFSs.add(getHCatFSFromPigFS(fieldSchema, structSubSchema == null ? null : structSubSchema.get(i)));
       }
       return new HCatFieldSchema(fSchema.alias, Type.STRUCT, new HCatSchema(hcatFSs), "");
 
@@ -211,27 +197,12 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       // Pig's schema contain no type information about map's keys and
       // values. So, if its a new column assume <string,string> if its existing
       // return whatever is contained in the existing column.
-      HCatFieldSchema mapField = getTableCol(fSchema.alias, hcatTblSchema);
+
       HCatFieldSchema valFS;
       List<HCatFieldSchema> valFSList = new ArrayList<HCatFieldSchema>(1);
 
-      if(mapField != null){
-        Type mapValType = mapField.getMapValueSchema().get(0).getType();
-
-        switch(mapValType){
-        case STRING:
-        case BIGINT:
-        case INT:
-        case FLOAT:
-        case DOUBLE:
-        case BINARY:
-          valFS = new HCatFieldSchema(fSchema.alias, mapValType, null);
-          break;
-        default:
-          throw new FrontendException("Only pig primitive types are supported as map value types.", PigHCatUtil.PIG_EXCEPTION_CODE);
-        }
-        valFSList.add(valFS);
-        return new HCatFieldSchema(fSchema.alias,Type.MAP,Type.STRING, new HCatSchema(valFSList),"");
+      if(hcatFieldSchema != null){
+        return new HCatFieldSchema(fSchema.alias, Type.MAP, Type.STRING, hcatFieldSchema.getMapValueSchema(), "");
       }
 
       // Column not found in target table. Its a new column. Its schema is map<string,string>
@@ -267,55 +238,83 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     }
   }
 
-  private Object getJavaObj(Object pigObj, HCatFieldSchema hcatFS) throws ExecException, HCatException{
+  private Object getJavaObj(Object pigObj, HCatFieldSchema hcatFS) throws HCatException, BackendException{
+    try {
 
-    // The real work-horse. Spend time and energy in this method if there is
-    // need to keep HCatStorer lean and go fast.
-    Type type = hcatFS.getType();
+      // The real work-horse. Spend time and energy in this method if there is
+      // need to keep HCatStorer lean and go fast.
+      Type type = hcatFS.getType();
+      switch(type){
 
-    switch(type){
+      case BINARY:
+        ByteArrayRef ba = new ByteArrayRef();
+        byte[] bytes = (null == pigObj) ? new byte[0] : ((DataByteArray)pigObj).get();
+        ba.setData(bytes);
+        return ba;
 
-    case BINARY:
-    	ByteArrayRef ba = new ByteArrayRef();
-    	byte[] bytes = (null == pigObj) ? new byte[0] : ((DataByteArray)pigObj).get(); 
-    	ba.setData(bytes);
-    	return ba;
-    	
-    case STRUCT:
-      // Unwrap the tuple.
-      return ((Tuple)pigObj).getAll();
-      //        Tuple innerTup = (Tuple)pigObj;
-      //
-      //      List<Object> innerList = new ArrayList<Object>(innerTup.size());
-      //      int i = 0;
-      //      for(HCatTypeInfo structFieldTypeInfo : typeInfo.getAllStructFieldTypeInfos()){
-      //        innerList.add(getJavaObj(innerTup.get(i++), structFieldTypeInfo));
-      //      }
-      //      return innerList;
-    case ARRAY:
-      // Unwrap the bag.
-      DataBag pigBag = (DataBag)pigObj;
-      HCatFieldSchema tupFS = hcatFS.getArrayElementSchema().get(0);
-      boolean needTuple = tupFS.getType() == Type.STRUCT;
-      List<Object> bagContents = new ArrayList<Object>((int)pigBag.size());
-      Iterator<Tuple> bagItr = pigBag.iterator();
+      case STRUCT:
+        if (pigObj == null) {
+          return null;
+        }
+        HCatSchema structSubSchema = hcatFS.getStructSubSchema();
+        // Unwrap the tuple.
+        List<Object> all = ((Tuple)pigObj).getAll();
+        ArrayList<Object> converted = new ArrayList<Object>(all.size());
+        for (int i = 0; i < all.size(); i++) {
+          converted.add(getJavaObj(all.get(i), structSubSchema.get(i)));
+        }
+        return converted;
 
-      while(bagItr.hasNext()){
-        // If there is only one element in tuple contained in bag, we throw away the tuple.
-        bagContents.add(needTuple ? getJavaObj(bagItr.next(), tupFS) : bagItr.next().get(0));
+      case ARRAY:
+        if (pigObj == null) {
+          return null;
+        }
+        // Unwrap the bag.
+        DataBag pigBag = (DataBag)pigObj;
+        HCatFieldSchema tupFS = hcatFS.getArrayElementSchema().get(0);
+        boolean needTuple = tupFS.getType() == Type.STRUCT;
+        List<Object> bagContents = new ArrayList<Object>((int)pigBag.size());
+        Iterator<Tuple> bagItr = pigBag.iterator();
 
+        while(bagItr.hasNext()){
+          // If there is only one element in tuple contained in bag, we throw away the tuple.
+          bagContents.add(getJavaObj(needTuple ? bagItr.next() : bagItr.next().get(0), tupFS));
+
+        }
+        return bagContents;
+      case MAP:
+        if (pigObj == null) {
+          return null;
+        }
+        Map<?,?> pigMap = (Map<?,?>)pigObj;
+        Map<Object,Object> typeMap = new HashMap<Object, Object>();
+        for(Entry<?, ?> entry: pigMap.entrySet()){
+          // the value has a schema and not a FieldSchema
+          typeMap.put(
+              // Schema validation enforces that the Key is a String
+              (String)entry.getKey(),
+              getJavaObj(entry.getValue(), hcatFS.getMapValueSchema().get(0)));
+        }
+        return typeMap;
+      case STRING:
+      case INT:
+      case BIGINT:
+      case FLOAT:
+      case DOUBLE:
+        return pigObj;
+      case SMALLINT:
+      case TINYINT:
+      case BOOLEAN:
+        // would not pass schema validation anyway
+        throw new BackendException("Incompatible type "+type+" found in hcat table schema: "+hcatFS, PigHCatUtil.PIG_EXCEPTION_CODE);
+      default:
+        throw new BackendException("Unexpected type "+type+" for value "+pigObj + (pigObj == null ? "" : " of class " + pigObj.getClass().getName()), PigHCatUtil.PIG_EXCEPTION_CODE);
       }
-      return bagContents;
-
-      //    case MAP:
-      //     Map<String,DataByteArray> pigMap = (Map<String,DataByteArray>)pigObj;
-      //     Map<String,Long> typeMap = new HashMap<String, Long>();
-      //     for(Entry<String, DataByteArray> entry: pigMap.entrySet()){
-      //       typeMap.put(entry.getKey(), new Long(entry.getValue().toString()));
-      //     }
-      //     return typeMap;
-    default:
-      return pigObj;
+    } catch (BackendException e) {
+      // provide the path to the field in the error message
+      throw new BackendException(
+          (hcatFS.getName() == null ? " " : hcatFS.getName()+".") + e.getMessage(),
+          e.getCause() == null ? e : e.getCause());
     }
   }
 
@@ -339,84 +338,51 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
     // dictated by semantics, consult HCatSchema of table when need be.
 
     for(FieldSchema pigField : pigSchema.getFields()){
-      byte type = pigField.type;
-      String alias = pigField.alias;
-      validateAlias(alias);
-      HCatFieldSchema hcatField = getTableCol(alias, tblSchema);
+      HCatFieldSchema hcatField = getColFromSchema(pigField.alias, tblSchema);
 
-      if(DataType.isComplex(type)){
-        switch(type){
-
-        case DataType.MAP:
-          if(hcatField != null){
-            if(hcatField.getMapKeyType() != Type.STRING){
-              throw new FrontendException("Key Type of map must be String "+hcatField,  PigHCatUtil.PIG_EXCEPTION_CODE);
-            }
-            if(hcatField.getMapValueSchema().get(0).isComplex()){
-              throw new FrontendException("Value type of map cannot be complex" + hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-            }
-          }
-          break;
-
-        case DataType.BAG:
-          // Only map is allowed as complex type in tuples inside bag.
-          for(FieldSchema innerField : pigField.schema.getField(0).schema.getFields()){
-            if(innerField.type == DataType.BAG || innerField.type == DataType.TUPLE) {
-              throw new FrontendException("Complex types cannot be nested. "+innerField, PigHCatUtil.PIG_EXCEPTION_CODE);
-            }
-            validateAlias(innerField.alias);
-          }
-          if(hcatField != null){
-            // Do the same validation for HCatSchema.
-            HCatFieldSchema arrayFieldScehma = hcatField.getArrayElementSchema().get(0);
-            Type hType = arrayFieldScehma.getType();
-            if(hType == Type.STRUCT){
-              for(HCatFieldSchema structFieldInBag : arrayFieldScehma.getStructSubSchema().getFields()){
-                if(structFieldInBag.getType() == Type.STRUCT || structFieldInBag.getType() == Type.ARRAY){
-                  throw new FrontendException("Nested Complex types not allowed "+ hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-                }
-              }
-            }
-            if(hType == Type.MAP){
-              if(arrayFieldScehma.getMapKeyType() != Type.STRING){
-                throw new FrontendException("Key Type of map must be String "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-              }
-              if(arrayFieldScehma.getMapValueSchema().get(0).isComplex()){
-                throw new FrontendException("Value type of map cannot be complex "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-              }
-            }
-            if(hType == Type.ARRAY) {
-              throw new FrontendException("Arrays cannot contain array within it. "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-            }
-          }
-          break;
-
-        case DataType.TUPLE:
-          validateUnNested(pigField.schema);
-          if(hcatField != null){
-            for(HCatFieldSchema structFieldSchema : hcatField.getStructSubSchema().getFields()){
-              if(structFieldSchema.isComplex()){
-                throw new FrontendException("Nested Complex types are not allowed."+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
-              }
-            }
-          }
-          break;
-
-        default:
-          throw new FrontendException("Internal Error.", PigHCatUtil.PIG_EXCEPTION_CODE);
-        }
-      }
+      validateSchema(pigField, hcatField);
     }
 
-    for(HCatFieldSchema hcatField : tblSchema.getFields()){
+    try {
+      PigHCatUtil.validateHCatTableSchemaFollowsPigRules(tblSchema);
+    } catch (IOException e) {
+      throw new FrontendException("HCatalog schema is not compatible with Pig: "+e.getMessage(),  PigHCatUtil.PIG_EXCEPTION_CODE, e);
+    }
+  }
 
-      // We dont do type promotion/demotion.
-      Type hType = hcatField.getType();
-      switch(hType){
-      case SMALLINT:
-      case TINYINT:
-      case BOOLEAN:
-        throw new FrontendException("Incompatible type found in hcat table schema: "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
+
+  private void validateSchema(FieldSchema pigField, HCatFieldSchema hcatField)
+      throws HCatException, FrontendException {
+    validateAlias(pigField.alias);
+    byte type = pigField.type;
+    if(DataType.isComplex(type)){
+      switch(type){
+
+      case DataType.MAP:
+        if(hcatField != null){
+          if(hcatField.getMapKeyType() != Type.STRING){
+            throw new FrontendException("Key Type of map must be String "+hcatField,  PigHCatUtil.PIG_EXCEPTION_CODE);
+          }
+          // Map values can be primitive or complex
+        }
+        break;
+
+      case DataType.BAG:
+        HCatSchema arrayElementSchema = hcatField == null ? null : hcatField.getArrayElementSchema();
+        for(FieldSchema innerField : pigField.schema.getField(0).schema.getFields()){
+          validateSchema(innerField, getColFromSchema(pigField.alias, arrayElementSchema));
+        }
+        break;
+
+      case DataType.TUPLE:
+        HCatSchema structSubSchema = hcatField == null ? null : hcatField.getStructSubSchema();
+        for(FieldSchema innerField : pigField.schema.getFields()){
+          validateSchema(innerField, getColFromSchema(pigField.alias, structSubSchema));
+        }
+        break;
+
+      default:
+        throw new FrontendException("Internal Error.", PigHCatUtil.PIG_EXCEPTION_CODE);
       }
     }
   }
@@ -431,11 +397,12 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
   }
 
   // Finds column by name in HCatSchema, if not found returns null.
-  private HCatFieldSchema getTableCol(String alias, HCatSchema tblSchema){
-
-    for(HCatFieldSchema hcatField : tblSchema.getFields()){
-      if(hcatField.getName().equalsIgnoreCase(alias)){
-        return hcatField;
+  private HCatFieldSchema getColFromSchema(String alias, HCatSchema tblSchema){
+    if (tblSchema != null) {
+      for(HCatFieldSchema hcatField : tblSchema.getFields()){
+        if(hcatField!=null && hcatField.getName()!= null && hcatField.getName().equalsIgnoreCase(alias)){
+          return hcatField;
+        }
       }
     }
     // Its a new column

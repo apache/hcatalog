@@ -20,9 +20,11 @@ package org.apache.hcatalog.pig;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -32,19 +34,18 @@ import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
-import org.apache.hcatalog.data.HCatArrayBag;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
-import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
+import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.pig.LoadPushDown.RequiredField;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
-import org.apache.pig.LoadPushDown.RequiredField;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
@@ -92,7 +93,7 @@ public class PigHCatUtil {
   static HiveMetaStoreClient client = null;
 
   private static HiveMetaStoreClient createHiveMetaClient(String serverUri,
-      String serverKerberosPrincipal, Class clazz) throws Exception {
+      String serverKerberosPrincipal, Class<?> clazz) throws Exception {
     if (client != null){
       return client;
     }
@@ -102,12 +103,12 @@ public class PigHCatUtil {
       hiveConf.set("hive.metastore.local", "false");
       hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, serverUri.trim());
     }
-    
+
     if (serverKerberosPrincipal != null){
       hiveConf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL, true);
-      hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, serverKerberosPrincipal);    	
+      hiveConf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL, serverKerberosPrincipal);
     }
-    
+
     try {
       client = new HiveMetaStoreClient(hiveConf,null);
     } catch (Exception e){
@@ -209,6 +210,11 @@ public class PigHCatUtil {
     HCatFieldSchema arrayElementFieldSchema = hfs.getArrayElementSchema().get(0);
     if(arrayElementFieldSchema.getType() == Type.STRUCT) {
       bagSubFieldSchemas[0].setSchema(getTupleSubSchema(arrayElementFieldSchema));
+    } else if(arrayElementFieldSchema.getType() == Type.ARRAY) {
+      ResourceSchema s = new ResourceSchema();
+      List<ResourceFieldSchema> lrfs = Arrays.asList(getResourceSchemaFromFieldSchema(arrayElementFieldSchema));
+      s.setFields(lrfs.toArray(new ResourceFieldSchema[0]));
+      bagSubFieldSchemas[0].setSchema(s);
     } else {
       ResourceFieldSchema[] innerTupleFieldSchemas = new ResourceFieldSchema[1];
       innerTupleFieldSchemas[0] = new ResourceFieldSchema().setName("innerfield")
@@ -217,7 +223,8 @@ public class PigHCatUtil {
         .setSchema(null); // the element type is not a tuple - so no subschema
       bagSubFieldSchemas[0].setSchema(new ResourceSchema().setFields(innerTupleFieldSchemas));
     }
-    return new ResourceSchema().setFields(bagSubFieldSchemas);
+    ResourceSchema s = new ResourceSchema().setFields(bagSubFieldSchemas);
+    return s;
 
   }
 
@@ -279,7 +286,7 @@ public class PigHCatUtil {
     if (type == Type.BINARY){
         return DataType.BYTEARRAY;
     }
-    
+
     if (type == Type.BOOLEAN){
       errMsg = "HCatalog column type 'BOOLEAN' is not supported in " +
       "Pig as a column type";
@@ -291,27 +298,34 @@ public class PigHCatUtil {
   }
 
   public static Tuple transformToTuple(HCatRecord hr, HCatSchema hs) throws Exception {
-      if (hr == null){
-        return null;
-      }
-      return transformToTuple(hr.getAll(),hs);
+    if (hr == null){
+      return null;
     }
+    return transformToTuple(hr.getAll(),hs);
+  }
 
   @SuppressWarnings("unchecked")
   public static Object extractPigObject(Object o, HCatFieldSchema hfs) throws Exception {
-      Type itemType = hfs.getType();
-      switch (itemType){
-	case BINARY:
-	  return new DataByteArray(((ByteArrayRef)o).getData());
-	case STRUCT:
-          return transformToTuple((List<Object>)o,hfs);
-	case ARRAY:
-          return transformToBag((List<? extends Object>) o,hfs);
-	case MAP:
-          return transformToPigMap((Map<String, Object>)o,hfs);
-	default:
-	  return o;
-      }
+    Object result;
+    Type itemType = hfs.getType();
+    switch (itemType){
+    case BINARY:
+      result = new DataByteArray(((ByteArrayRef)o).getData());
+      break;
+    case STRUCT:
+      result = transformToTuple((List<Object>)o,hfs);
+      break;
+    case ARRAY:
+      result = transformToBag((List<? extends Object>) o,hfs);
+      break;
+    case MAP:
+      result = transformToPigMap((Map<String, Object>)o,hfs);
+      break;
+    default:
+      result = o;
+      break;
+    }
+    return result;
   }
 
   public static Tuple transformToTuple(List<? extends Object> objList, HCatFieldSchema hfs) throws Exception {
@@ -319,7 +333,7 @@ public class PigHCatUtil {
           return transformToTuple(objList,hfs.getStructSubSchema());
       } catch (Exception e){
           if (hfs.getType() != Type.STRUCT){
-              throw new Exception("Expected Struct type, got "+hfs.getType());
+              throw new Exception("Expected Struct type, got "+hfs.getType(), e);
           } else {
               throw e;
           }
@@ -327,20 +341,28 @@ public class PigHCatUtil {
   }
 
   public static Tuple transformToTuple(List<? extends Object> objList, HCatSchema hs) throws Exception {
-        if (objList == null){
-          return null;
-        }
-        Tuple t = tupFac.newTuple(objList.size());
-        List<HCatFieldSchema> subFields = hs.getFields();
-        for (int i = 0; i < subFields.size(); i++){
-          t.set(i,extractPigObject(objList.get(i), subFields.get(i)));
-        }
-        return t;
+    if (objList == null){
+      return null;
+    }
+    Tuple t = tupFac.newTuple(objList.size());
+    List<HCatFieldSchema> subFields = hs.getFields();
+    for (int i = 0; i < subFields.size(); i++){
+      t.set(i,extractPigObject(objList.get(i), subFields.get(i)));
+    }
+    return t;
   }
 
   public static Map<String,Object> transformToPigMap(Map<String,Object> map, HCatFieldSchema hfs) throws Exception {
-      return map;
+    if (map == null) {
+      return null;
     }
+
+    Map<String,Object> result = new HashMap<String, Object>();
+    for (Entry<String, Object> entry : map.entrySet()) {
+      result.put(entry.getKey(), extractPigObject(entry.getValue(), hfs.getMapValueSchema().get(0)));
+    }
+    return result;
+  }
 
   @SuppressWarnings("unchecked")
   public static DataBag transformToBag(List<? extends Object> list, HCatFieldSchema hfs) throws Exception {
@@ -349,70 +371,55 @@ public class PigHCatUtil {
     }
 
     HCatFieldSchema elementSubFieldSchema = hfs.getArrayElementSchema().getFields().get(0);
-    if (elementSubFieldSchema.getType() == Type.STRUCT){
-      DataBag db = new DefaultDataBag();
-      for (Object o : list){
-        db.add(transformToTuple((List<Object>)o,elementSubFieldSchema));
+    DataBag db = new DefaultDataBag();
+    for (Object o : list){
+      Tuple tuple;
+      if (elementSubFieldSchema.getType() == Type.STRUCT){
+        tuple = transformToTuple((List<Object>)o, elementSubFieldSchema);
+      } else {
+        // bags always contain tuples
+        tuple = tupFac.newTuple(extractPigObject(o, elementSubFieldSchema));
       }
-      return db;
-    } else {
-      return  new HCatArrayBag(list);
+      db.add(tuple);
+    }
+    return db;
+  }
+
+
+  private static void validateHCatSchemaFollowsPigRules(HCatSchema tblSchema) throws PigException {
+    for(HCatFieldSchema hcatField : tblSchema.getFields()){
+      validateHcatFieldFollowsPigRules(hcatField);
+    }
+  }
+
+  private static void validateHcatFieldFollowsPigRules(HCatFieldSchema hcatField) throws PigException {
+    try {
+      Type hType = hcatField.getType();
+      switch(hType){
+      // We don't do type promotion/demotion.
+      case SMALLINT:
+      case TINYINT:
+      case BOOLEAN:
+        throw new PigException("Incompatible type found in hcat table schema: "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
+      case ARRAY:
+        validateHCatSchemaFollowsPigRules(hcatField.getArrayElementSchema());
+        break;
+      case STRUCT:
+        validateHCatSchemaFollowsPigRules(hcatField.getStructSubSchema());
+        break;
+      case MAP:
+        // key is only string
+        validateHCatSchemaFollowsPigRules(hcatField.getMapValueSchema());
+        break;
+      }
+    } catch (HCatException e) {
+      throw new PigException("Incompatible type found in hcat table schema: "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE, e);
     }
   }
 
 
   public static void validateHCatTableSchemaFollowsPigRules(HCatSchema hcatTableSchema) throws IOException {
-      for (HCatFieldSchema hfs : hcatTableSchema.getFields()){
-          Type htype = hfs.getType();
-          if (htype == Type.ARRAY){
-              validateIsPigCompatibleArrayWithPrimitivesOrSimpleComplexTypes(hfs);
-          }else if (htype == Type.STRUCT){
-              validateIsPigCompatibleStructWithPrimitives(hfs);
-          }else if (htype == Type.MAP){
-              validateIsPigCompatibleMapWithPrimitives(hfs);
-          }else {
-              validateIsPigCompatiblePrimitive(hfs);
-          }
-      }
-  }
-
-  private static void validateIsPigCompatibleArrayWithPrimitivesOrSimpleComplexTypes(
-          HCatFieldSchema hfs) throws IOException {
-      HCatFieldSchema subFieldSchema = hfs.getArrayElementSchema().getFields().get(0);
-      if (subFieldSchema.getType() == Type.STRUCT){
-          validateIsPigCompatibleStructWithPrimitives(subFieldSchema);
-      }else if (subFieldSchema.getType() == Type.MAP) {
-          validateIsPigCompatiblePrimitive(subFieldSchema.getMapValueSchema().getFields().get(0));
-      }else {
-          validateIsPigCompatiblePrimitive(subFieldSchema);
-      }
-  }
-
-  private static void validateIsPigCompatibleMapWithPrimitives(HCatFieldSchema hfs) throws IOException{
-      if (hfs.getMapKeyType() != Type.STRING){
-          throw new PigException("Incompatible type in schema, found map with " +
-                  "non-string key type in :"+hfs.getTypeString(), PIG_EXCEPTION_CODE);
-      }
-      validateIsPigCompatiblePrimitive(hfs.getMapValueSchema().getFields().get(0));
-  }
-
-  private static void validateIsPigCompatibleStructWithPrimitives(HCatFieldSchema hfs) throws IOException {
-      for ( HCatFieldSchema subField : hfs.getStructSubSchema().getFields()){
-          validateIsPigCompatiblePrimitive(subField);
-      }
-  }
-
-  private static void validateIsPigCompatiblePrimitive(HCatFieldSchema hfs) throws IOException {
-      Type htype = hfs.getType();
-      if (
-              (hfs.isComplex()) ||
-              (htype == Type.TINYINT) ||
-              (htype == Type.SMALLINT)
-              ){
-            throw new PigException("Incompatible type in schema, expected pig " +
-                      "compatible primitive for:" + hfs.getTypeString());
-          }
-
+    validateHCatSchemaFollowsPigRules(hcatTableSchema);
   }
 
   public static void getConfigFromUDFProperties(Properties p, Configuration config, String propName) {

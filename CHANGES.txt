@@ -23,12 +23,15 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
-
+  HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
+  
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-254. Fix storage-drives build.xml (hashutosh via khorgath)
 
 Release 0.3.0 - Unreleased
 
@@ -94,7 +97,7 @@ Release 0.3.0 - Unreleased
 
   HCAT-179. Make HCatalog compile against Hadoop 0.23 (thw via khorgath)
 
-  HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
+
 
   HCAT-184. Optionally do not generate forrest docs (traviscrawford via hashutosh)
 

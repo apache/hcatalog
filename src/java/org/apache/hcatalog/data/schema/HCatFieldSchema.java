@@ -122,7 +122,7 @@ public class HCatFieldSchema implements Serializable {
      * @throws HCatException if call made on non-primitive types
      */
     public HCatFieldSchema(String fieldName, Type type, String comment) throws HCatException {
-        assertTypeInCategory(type,Category.PRIMITIVE);
+        assertTypeInCategory(type,Category.PRIMITIVE,fieldName);
         this.fieldName = fieldName;
         this.type = type;
         this.category = Category.PRIMITIVE;
@@ -162,8 +162,8 @@ public class HCatFieldSchema implements Serializable {
      * @throws HCatException if call made on non-Map types
      */
     public HCatFieldSchema(String fieldName, Type type, Type mapKeyType, HCatSchema mapValueSchema, String comment) throws HCatException{
-        assertTypeInCategory(type,Category.MAP);
-        assertTypeInCategory(mapKeyType,Category.PRIMITIVE);
+        assertTypeInCategory(type,Category.MAP, fieldName);
+        assertTypeInCategory(mapKeyType,Category.PRIMITIVE, fieldName);
         this.fieldName = fieldName;
         this.type = Type.MAP;
         this.category = Category.MAP;
@@ -174,29 +174,29 @@ public class HCatFieldSchema implements Serializable {
     }
 
     public HCatSchema getStructSubSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.STRUCT);
+        assertTypeInCategory(this.type,Category.STRUCT, this.fieldName);
         return subSchema;
     }
 
     public HCatSchema getArrayElementSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.ARRAY);
+        assertTypeInCategory(this.type,Category.ARRAY, this.fieldName);
         return subSchema;
     }
 
     public Type getMapKeyType() throws HCatException {
-        assertTypeInCategory(this.type,Category.MAP);
+        assertTypeInCategory(this.type,Category.MAP, this.fieldName);
         return mapKeyType;
     }
 
     public HCatSchema getMapValueSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.MAP);
+        assertTypeInCategory(this.type,Category.MAP, this.fieldName);
         return subSchema;
     }
 
-    private static void assertTypeInCategory(Type type, Category category) throws HCatException {
+    private static void assertTypeInCategory(Type type, Category category, String fieldName) throws HCatException {
         Category typeCategory = Category.fromType(type);
         if (typeCategory != category){
-            throw new HCatException("Type category mismatch. Expected "+category+" but type "+type+" in category "+typeCategory);
+            throw new HCatException("Type category mismatch. Expected "+category+" but type "+type+" in category "+typeCategory+ " (field "+fieldName+")");
         }
     }
 

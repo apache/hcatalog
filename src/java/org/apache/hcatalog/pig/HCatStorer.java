@@ -83,12 +83,14 @@ public class HCatStorer extends HCatBaseStorer {
                                                              partitions,
                                                              PigHCatUtil.getHCatServerUri(job),
                                                              PigHCatUtil.getHCatServerPrincipal(job));
-    } else {
+    } else if(userStr.length == 1) {
       outputJobInfo = OutputJobInfo.create(null,
                                                              userStr[0],
                                                              partitions,
                                                              PigHCatUtil.getHCatServerUri(job),
                                                              PigHCatUtil.getHCatServerPrincipal(job));
+    } else {
+      throw new FrontendException("location "+location+" is invalid. It must be of the form [db.]table", PigHCatUtil.PIG_EXCEPTION_CODE);
     }
 
 
@@ -119,24 +121,24 @@ public class HCatStorer extends HCatBaseStorer {
       computedSchema = convertPigSchemaToHCatSchema(pigSchema,hcatTblSchema);
       HCatOutputFormat.setSchema(job, computedSchema);
       p.setProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO, config.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-      
+
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_HIVE_CONF);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
-      
+
       p.setProperty(COMPUTED_OUTPUT_SCHEMA,ObjectSerializer.serialize(computedSchema));
 
     }else{
       config.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, p.getProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-      
+
       PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_HIVE_CONF);
       PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
       PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
       PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
       PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
-      
+
     }
   }
 
