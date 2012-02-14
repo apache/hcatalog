@@ -47,6 +47,7 @@
 <li><strong>-p</strong>: Usage is -p rwxr-xr-x .... This indicates to HCatalog that table that needs to be created must have permissions as "rwxr-xr-x" </li>
 <li><strong>-f</strong>: Usage is -f myscript.hcatalog .... This indicates to hcatalog that myscript.hcatalog is a file which contains DDL commands it needs to execute. </li>
 <li><strong>-e</strong>: Usage is -e 'create table mytable(a int);' .... This indicates to HCatalog to treat the following string as DDL command and execute it. </li>
+<li><strong>-D</strong>: Usage is -Dname=value .... This sets the hadoop value for given property</li>
 </ul>
 <p></p>	
 <p>Note the following:</p>
@@ -59,7 +60,7 @@
 </li>
 <li>If no option is provided, then a usage message is printed: 
 <source>
-Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" ] [-p "&lt;perms&gt;"]
+Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" ] [-p "&lt;perms&gt;"] [-D "&lt;name&gt;=&lt;value&gt;"]
 </source>
 </li>
 </ul>

@@ -26,6 +26,7 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -105,6 +106,14 @@ public class HCatCli {
         .withDescription("permissions for the db/table specified in CREATE statement")
         .create('p'));
 
+    // -D
+    options.addOption(OptionBuilder
+        .hasArgs(2)
+        .withArgName("property=value")
+        .withValueSeparator()
+        .withDescription("use hadoop value for given property")
+        .create('D'));
+
     // [-h|--help]
     options.addOption(new Option("h", "help", false, "Print help information"));
 
@@ -146,6 +155,9 @@ public class HCatCli {
       conf.set(HCatConstants.HCAT_GROUP, grp);
     }
 
+    // -D
+    setConfProperties(conf, cmdLine.getOptionProperties("D"));
+
     if (execString != null) {
       System.exit(processLine(execString));
     }
@@ -165,6 +177,11 @@ public class HCatCli {
     // -h
     printUsage(options, ss.err);
     System.exit(1);
+  }
+
+  private static void setConfProperties(HiveConf conf, Properties props) {
+    for(java.util.Map.Entry<Object, Object> e : props.entrySet())
+        conf.set((String) e.getKey(), (String) e.getValue());
   }
 
   private static int processLine(String line) {
@@ -268,7 +285,7 @@ public class HCatCli {
   private static void printUsage(Options options, OutputStream os) {
     PrintWriter pw = new PrintWriter(os);
     new HelpFormatter().printHelp(pw, 2 * HelpFormatter.DEFAULT_WIDTH,
-        "hcat { -e \"<query>\" | -f \"<filepath>\" } [ -g \"<group>\" ] [ -p \"<perms>\" ]",
+      "hcat { -e \"<query>\" | -f \"<filepath>\" } [ -g \"<group>\" ] [ -p \"<perms>\" ] [ -D\"<name>=<value>\" ]",
         null,options, HelpFormatter.DEFAULT_LEFT_PAD,HelpFormatter.DEFAULT_DESC_PAD,
         null, false);
     pw.flush();
