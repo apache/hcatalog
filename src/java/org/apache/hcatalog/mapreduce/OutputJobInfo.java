@@ -52,15 +52,6 @@ public class OutputJobInfo implements Serializable {
   /** The partition values to publish to, if used for output*/
   private Map<String, String> partitionValues;
 
-  /** The Metadata server uri */
-  private final String serverUri;
-
-  /** If the hcat server is configured to work with hadoop security, this
-   * variable will hold the principal name of the server - this will be used
-   * in the authentication to the hcat server using kerberos
-   */
-  private final String serverKerberosPrincipal;
-
   private List<Integer> posOfPartCols;
   private List<Integer> posOfDynPartCols;
 
@@ -79,8 +70,6 @@ public class OutputJobInfo implements Serializable {
    * @param databaseName the db name
    * @param tableName the table name
    * @param partitionValues The partition values to publish to, can be null or empty Map to
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
    * work with hadoop security, the kerberos principal name of the server - else null
    * The principal name should be of the form:
    * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
@@ -90,25 +79,17 @@ public class OutputJobInfo implements Serializable {
    */
   public static OutputJobInfo create(String databaseName,
                                      String tableName,
-                                     Map<String, String> partitionValues,
-                                     String serverUri,
-                                     String serverKerberosPrincipal) {
+                                     Map<String, String> partitionValues) {
     return new OutputJobInfo(databaseName,
         tableName,
-        partitionValues,
-        serverUri,
-        serverKerberosPrincipal);
+        partitionValues);
   }
 
   private OutputJobInfo(String databaseName,
                         String tableName,
-                        Map<String, String> partitionValues,
-                        String serverUri,
-                        String serverKerberosPrincipal) {
+                        Map<String, String> partitionValues) {
     this.databaseName =  (databaseName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
     this.tableName = tableName;
-    this.serverUri = serverUri;
-    this.serverKerberosPrincipal = serverKerberosPrincipal;
     this.partitionValues = partitionValues;
     this.properties = new Properties();
   }
@@ -180,7 +161,7 @@ public class OutputJobInfo implements Serializable {
   /**
    * @param location location to write to
    */
-  void setLocation(String location) {
+  public void setLocation(String location) {
     this.location = location;
   }
   /**
@@ -197,20 +178,6 @@ public class OutputJobInfo implements Serializable {
    */
   public Map<String, String> getPartitionValues() {
     return partitionValues;
-  }
-
-  /**
-   * @return metastore thrift server URI
-   */
-  public String getServerUri() {
-    return serverUri;
-  }
-
-  /**
-   * @return the serverKerberosPrincipal
-   */
-  public String getServerKerberosPrincipal() {
-    return serverKerberosPrincipal;
   }
 
   /**

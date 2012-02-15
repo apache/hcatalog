@@ -118,7 +118,7 @@ public class GroupByAge extends Configured implements Tool {
         job.setOutputKeyClass(WritableComparable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null, serverUri, principalID));
+                outputTableName, null));
         HCatSchema s = HCatOutputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
                 + s);

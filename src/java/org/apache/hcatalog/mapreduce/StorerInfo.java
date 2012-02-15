@@ -25,15 +25,39 @@ public class StorerInfo implements Serializable {
     /** The serialization version */
     private static final long serialVersionUID = 1L;
 
+    //TODO remove this
     /** The name of the input storage driver class */
     private String inputSDClass;
 
+    //TODO remove this
     /** The name of the output storage driver class */
     private String outputSDClass;
 
     /** The properties for the storage driver */
     private Properties properties;
 
+    private String ofClass;
+
+    private String ifClass;
+
+    private String serdeClass;
+
+    private String storageHandlerClass;
+
+
+    //TODO remove this
+    /**
+     * Initialize the storage driver
+     * @param inputSDClass
+     * @param outputSDClass
+     * @param properties
+     */
+    public StorerInfo(String inputSDClass, String outputSDClass, Properties properties) {
+      super();
+      this.inputSDClass = inputSDClass;
+      this.outputSDClass = outputSDClass;
+      this.properties = properties;
+    }
 
     /**
      * Initialize the storage driver
@@ -41,10 +65,14 @@ public class StorerInfo implements Serializable {
      * @param outputSDClass
      * @param properties
      */
-    StorerInfo(String inputSDClass, String outputSDClass, Properties properties) {
+    public StorerInfo(String inputSDClass, String outputSDClass, String ifClass, String ofClass, String serdeClass, String storageHandlerClass, Properties properties) {
       super();
       this.inputSDClass = inputSDClass;
       this.outputSDClass = outputSDClass;
+      this.ifClass =ifClass;
+      this.ofClass = ofClass;
+      this.serdeClass = serdeClass;
+      this.storageHandlerClass = storageHandlerClass;
       this.properties = properties;
     }
 
@@ -56,24 +84,30 @@ public class StorerInfo implements Serializable {
     }
 
     /**
-     * @param inputSDClass the inputSDClass to set
-     */
-    public void setInputSDClass(String inputSDClass) {
-      this.inputSDClass = inputSDClass;
-    }
-
-    /**
      * @return the outputSDClass
      */
     public String getOutputSDClass() {
       return outputSDClass;
     }
 
-    /**
-     * @param outputSDClass the outputSDClass to set
-     */
-    public void setOutputSDClass(String outputSDClass) {
-      this.outputSDClass = outputSDClass;
+public String getIfClass() {
+        return ifClass;
+    }
+
+    public void setIfClass(String ifClass) {
+        this.ifClass = ifClass;
+    }
+
+    public String getOfClass() {
+        return ofClass;
+    }
+
+    public String getSerdeClass() {
+        return serdeClass;
+    }
+
+    public String getStorageHandlerClass() {
+        return storageHandlerClass;
     }
 
     /**

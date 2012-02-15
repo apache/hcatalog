@@ -45,7 +45,7 @@ public class TestRCFileOutputStorageDriver extends TestCase {
   public void testConversion() throws IOException {
     Configuration conf = new Configuration();
     JobContext jc = HCatHadoopShims.Instance.get().createJobContext(conf, new JobID());
-    String jobString = HCatUtil.serialize(OutputJobInfo.create(null,null,null,null,null));
+    String jobString = HCatUtil.serialize(OutputJobInfo.create(null,null,null));
     jc.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO,jobString);
 
     HCatSchema schema = buildHiveSchema();

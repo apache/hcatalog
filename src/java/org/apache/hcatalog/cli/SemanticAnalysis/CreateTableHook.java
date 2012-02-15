@@ -17,6 +17,7 @@
  */
 package org.apache.hcatalog.cli.SemanticAnalysis;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -47,11 +48,9 @@ import org.apache.hcatalog.common.AuthUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
-import org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver;
-import org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
-import org.apache.hcatalog.storagehandler.HCatStorageHandler;
 
 final class CreateTableHook extends AbstractSemanticAnalyzerHook {
 
@@ -220,7 +219,6 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
         }
         CreateTableDesc desc = ((DDLTask) rootTasks.get(rootTasks.size() - 1))
                 .getWork().getCreateTblDesc();
-
         Map<String, String> tblProps = desc.getTblProps();
         if (tblProps == null) {
             // tblProps will be null if user didnt use tblprops in his CREATE
@@ -243,19 +241,19 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
             // to authorize.
             try {
                 HCatStorageHandler storageHandlerInst = HCatUtil
-                        .getStorageHandler(context.getConf(), storageHandler);
+                        .getStorageHandler(context.getConf(),
+                                                     desc.getStorageHandler(),
+                                                     desc.getSerName(),
+                                                     desc.getInputFormat(),
+                                                     desc.getOutputFormat());
                 HiveAuthorizationProvider auth = storageHandlerInst
                         .getAuthorizationProvider();
 
                 // TBD: To pass in the exact read and write privileges.
                 String databaseName = context.getHive().newTable(desc.getTableName()).getDbName();
                 auth.authorize(context.getHive().getDatabase(databaseName), null, null);
-
-                tblProps.put(HCatConstants.HCAT_ISD_CLASS, storageHandlerInst
-                        .getInputStorageDriver().getName());
-                tblProps.put(HCatConstants.HCAT_OSD_CLASS, storageHandlerInst
-                        .getOutputStorageDriver().getName());
-
+            } catch (IOException e) {
+                throw new SemanticException(e);
             } catch (HiveException e) {
                 throw new SemanticException(e);
             }

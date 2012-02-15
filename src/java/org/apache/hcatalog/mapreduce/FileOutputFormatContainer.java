@@ -29,13 +29,15 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.thrift.TException;
 
@@ -49,7 +51,6 @@ import java.util.Map;
  * This implementation supports the following HCatalog features: partitioning, dynamic partitioning, Hadoop Archiving, etc.
  */
 class FileOutputFormatContainer extends OutputFormatContainer {
-    private OutputFormat<? super WritableComparable<?>, ? super Writable> of;
 
     private static final PathFilter hiddenFileFilter = new PathFilter(){
       public boolean accept(Path p){
@@ -61,19 +62,29 @@ class FileOutputFormatContainer extends OutputFormatContainer {
     /**
      * @param of base OutputFormat to contain
      */
-    public FileOutputFormatContainer(OutputFormat<? super WritableComparable<?>, ? super Writable> of) {
+    public FileOutputFormatContainer(org.apache.hadoop.mapred.OutputFormat<? super WritableComparable<?>, ? super Writable> of) {
         super(of);
-        this.of = of;
     }
 
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+        //this needs to be manually set, under normal circumstances MR Task does this
+        setWorkOutputPath(context);
+
         // When Dynamic partitioning is used, the RecordWriter instance initialized here isn't used. Can use null.
         // (That's because records can't be written until the values of the dynamic partitions are deduced.
         // By that time, a new local instance of RecordWriter, with the correct output-path, will be constructed.)
-        return new FileRecordWriterContainer(HCatOutputFormat.getJobInfo(context)
-                                                   .isDynamicPartitioningUsed()? null : of.getRecordWriter(context),
-                                             context);
+        RecordWriter<WritableComparable<?>, HCatRecord> rw =
+            new FileRecordWriterContainer(
+                HCatBaseOutputFormat.getJobInfo(context).isDynamicPartitioningUsed()?
+                    null:
+                    getBaseOutputFormat()
+                            .getRecordWriter(null,
+                                                     new JobConf(context.getConfiguration()),
+                                                                         context.getTaskAttemptID().toString(),
+                                                                         InternalUtil.createReporter(context)),
+                context);
+        return rw;
     }
 
     @Override
@@ -82,7 +93,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         try {
             handleDuplicatePublish(context,
                     jobInfo,
-                    HCatOutputFormat.createHiveClient(jobInfo.getServerUri(),context.getConfiguration()),
+                    HCatOutputFormat.createHiveClient(null,context.getConfiguration()),
                     jobInfo.getTableInfo().getTable());
         } catch (MetaException e) {
             throw new IOException(e);
@@ -91,12 +102,23 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         } catch (NoSuchObjectException e) {
             throw new IOException(e);        	
         }
-        of.checkOutputSpecs(context);
+
+        if(!jobInfo.isDynamicPartitioningUsed()) {
+            JobConf jobConf = new JobConf(context.getConfiguration());
+            getBaseOutputFormat().checkOutputSpecs(null, jobConf);
+            //checkoutputspecs might've set some properties we need to have context reflect that
+            HCatUtil.copyConf(jobConf,context.getConfiguration());
+        }
     }
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return new FileOutputCommitterContainer(context,of.getOutputCommitter(context));
+        //this needs to be manually set, under normal circumstances MR Task does this
+        setWorkOutputPath(context);
+        return new FileOutputCommitterContainer(context,
+               HCatBaseOutputFormat.getJobInfo(context).isDynamicPartitioningUsed()?
+                       null:
+                       new JobConf(context.getConfiguration()).getOutputCommitter());
     }
 
     /**
@@ -185,5 +207,14 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         }
 
         return values;
+    }
+
+    static void setWorkOutputPath(TaskAttemptContext context) throws IOException {
+        String outputPath = context.getConfiguration().get("mapred.output.dir");
+        //we need to do this to get the task path and set it for mapred implementation
+        //since it can't be done automatically because of mapreduce->mapred abstraction
+        if(outputPath != null)
+            context.getConfiguration().set("mapred.work.output.dir",
+                    new FileOutputCommitter(new Path(outputPath), context).getWorkPath().toString());
     }
 }

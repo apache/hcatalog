@@ -103,7 +103,7 @@ public class WriteJson extends Configured implements Tool {
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setNumReduceTasks(0);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null, serverUri, principalID));
+                outputTableName, null));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
                 + s);

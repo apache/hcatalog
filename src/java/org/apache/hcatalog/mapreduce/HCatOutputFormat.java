@@ -73,7 +73,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       try {
 
         Configuration conf = job.getConfiguration();
-        client = createHiveClient(outputJobInfo.getServerUri(), conf);
+        client = createHiveClient(null, conf);
         Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
 
         if (table.getPartitionKeysSize() == 0 ){
@@ -95,10 +95,8 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             }
           }
 
-          if (
-              (outputJobInfo.getPartitionValues() == null)
-              || (outputJobInfo.getPartitionValues().size() < table.getPartitionKeysSize())
-          ){
+          if ((outputJobInfo.getPartitionValues() == null)
+              || (outputJobInfo.getPartitionValues().size() < table.getPartitionKeysSize())){
             // dynamic partition usecase - partition values were null, or not all were specified
             // need to figure out which keys are not specified.
             List<String> dynamicPartitioningKeys = new ArrayList<String>();
@@ -131,31 +129,24 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
         StorageDescriptor tblSD = table.getSd();
         HCatSchema tableSchema = HCatUtil.extractSchemaFromStorageDescriptor(tblSD);
-        StorerInfo storerInfo = InitializeInput.extractStorerInfo(tblSD,table.getParameters());
+        StorerInfo storerInfo = InternalUtil.extractStorerInfo(tblSD,table.getParameters());
 
         List<String> partitionCols = new ArrayList<String>();
         for(FieldSchema schema : table.getPartitionKeys()) {
           partitionCols.add(schema.getName());
         }
 
-        Class<? extends HCatOutputStorageDriver> driverClass =
-          (Class<? extends HCatOutputStorageDriver>) Class.forName(storerInfo.getOutputSDClass());
-        HCatOutputStorageDriver driver = driverClass.newInstance();
-
-        String tblLocation = tblSD.getLocation();
-        String location = driver.getOutputLocation(job,
-            tblLocation, partitionCols,
-            outputJobInfo.getPartitionValues(),conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID));
+       HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(job.getConfiguration(), storerInfo);
 
         //Serialize the output info into the configuration
         outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
         outputJobInfo.setOutputSchema(tableSchema);
-        outputJobInfo.setLocation(location);
         outputJobInfo.setHarRequested(harRequested);
         outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
-        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
 
-        Path tblPath = new Path(tblLocation);
+        HCatUtil.configureOutputStorageHandler(storageHandler,job,outputJobInfo);
+
+        Path tblPath = new Path(table.getSd().getLocation());
 
         /*  Set the umask in conf such that files/dirs get created with table-dir
          * permissions. Following three assumptions are made:
@@ -231,6 +222,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         return getOutputFormat(context).getOutputCommitter(context);
     }
 
+    //TODO remove url component, everything should be encapsulated in HiveConf
     static HiveMetaStoreClient createHiveClient(String url, Configuration conf) throws IOException, MetaException {
       HiveConf hiveConf = getHiveConf(url, conf);
 //      HCatUtil.logHiveConf(LOG, hiveConf);

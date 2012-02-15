@@ -159,7 +159,7 @@ public class HBaseReadWrite extends Configured implements Tool {
         job.setOutputKeyClass(WritableComparable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                tableName, null, serverUri, principalID));
+                tableName, null));
         
         boolean succ = job.waitForCompletion(true);
         

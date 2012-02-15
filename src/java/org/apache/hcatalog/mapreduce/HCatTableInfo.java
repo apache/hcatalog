@@ -117,6 +117,10 @@ public class HCatTableInfo implements Serializable {
     return storerInfo;
   }
 
+  public String getTableLocation() {
+      return table.getSd().getLocation();
+  }
+
   /**
    * minimize dependency on hive classes so this is package private
    * this should eventually no longer be used
@@ -134,7 +138,7 @@ public class HCatTableInfo implements Serializable {
    */
   static HCatTableInfo valueOf(Table table) throws IOException {
     HCatSchema dataColumns = HCatUtil.extractSchemaFromStorageDescriptor(table.getSd());
-    StorerInfo storerInfo = InitializeInput.extractStorerInfo(table.getSd(), table.getParameters());
+    StorerInfo storerInfo = InternalUtil.extractStorerInfo(table.getSd(), table.getParameters());
     HCatSchema partitionColumns = HCatUtil.getPartitionColumns(table);
     return new HCatTableInfo(table.getDbName(),
                                            table.getTableName(),

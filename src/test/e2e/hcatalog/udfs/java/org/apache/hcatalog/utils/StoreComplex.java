@@ -106,7 +106,7 @@ public class StoreComplex {
     		dbName, tableName, null, serverUri, principalID));
     // initialize HCatOutputFormat
     HCatOutputFormat.setOutput(job, OutputJobInfo.create(
-            dbName, outputTableName, outputPartitionKvps, serverUri, principalID));
+            dbName, outputTableName, outputPartitionKvps));
     
     
     HCatSchema s = HCatInputFormat.getTableSchema(job);

@@ -174,8 +174,10 @@ public abstract class HCatOutputStorageDriver {
      * @param outputFormat format the returned container will contain
      * @return
      */
+
+    //TODO broken this entire class will disappear anyway
     OutputFormatContainer getOutputFormatContainer(OutputFormat outputFormat) {
-        return new DefaultOutputFormatContainer(outputFormat);
+        return new DefaultOutputFormatContainer(null);
     }
 
 }

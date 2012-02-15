@@ -21,11 +21,12 @@ package org.apache.hcatalog.mapreduce;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.io.IOException;
  */
 class DefaultOutputFormatContainer extends OutputFormatContainer {
 
-    public DefaultOutputFormatContainer(OutputFormat<WritableComparable<?>, Writable> of) {
+    public DefaultOutputFormatContainer(org.apache.hadoop.mapred.OutputFormat<WritableComparable<?>, Writable> of) {
         super(of);
     }
 
@@ -52,7 +53,8 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord>
     getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return new DefaultRecordWriterContainer(context, getBaseOutputFormat().getRecordWriter(context));
+        return new DefaultRecordWriterContainer(context,
+                getBaseOutputFormat().getRecordWriter(null, new JobConf(context.getConfiguration()),null, InternalUtil.createReporter(context)));
     }
 
 
@@ -67,8 +69,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context)
             throws IOException, InterruptedException {
-        OutputFormat outputFormat = getBaseOutputFormat();
-        return new DefaultOutputCommitterContainer(context, getBaseOutputFormat().getOutputCommitter(context));
+        return new DefaultOutputCommitterContainer(context, new JobConf(context.getConfiguration()).getOutputCommitter());
     }
 
     /**
@@ -78,8 +79,10 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
      */
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-        OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getBaseOutputFormat();
-        outputFormat.checkOutputSpecs(context);
+        org.apache.hadoop.mapred.OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getBaseOutputFormat();
+        JobConf jobConf = new JobConf(context.getConfiguration());
+        outputFormat.checkOutputSpecs(null,jobConf);
+        HCatUtil.copyConf(jobConf, context.getConfiguration());
     }
 
 }

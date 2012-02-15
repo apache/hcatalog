@@ -36,6 +36,8 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
+import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -103,6 +105,8 @@ public class TestHCatOutputFormat extends TestCase {
     tbl.setSd(sd);
 
     //sd.setLocation("hdfs://tmp");
+    sd.setInputFormat(RCFileInputFormat.class.getName());
+    sd.setOutputFormat(RCFileOutputFormat.class.getName());
     sd.setParameters(new HashMap<String, String>());
     sd.getParameters().put("test_param_1", "Use this for comments etc");
     sd.setBucketCols(new ArrayList<String>(2));
@@ -136,7 +140,7 @@ public class TestHCatOutputFormat extends TestCase {
     Map<String, String> partitionValues = new HashMap<String, String>();
     partitionValues.put("colname", "p1");
     //null server url means local mode
-    OutputJobInfo info = OutputJobInfo.create(dbName, tblName, partitionValues, null, null);
+    OutputJobInfo info = OutputJobInfo.create(dbName, tblName, partitionValues);
 
     HCatOutputFormat.setOutput(job, info);
     OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(job);
@@ -147,8 +151,6 @@ public class TestHCatOutputFormat extends TestCase {
     assertEquals(1, jobInfo.getTableInfo().getDataColumns().getFields().size());
     assertEquals("colname", jobInfo.getTableInfo().getDataColumns().getFields().get(0).getName());
 
-    StorerInfo storer = jobInfo.getTableInfo().getStorerInfo();
-    assertEquals(RCFileOutputDriver.class.getName(), storer.getOutputSDClass());
     publishTest(job);
   }
 

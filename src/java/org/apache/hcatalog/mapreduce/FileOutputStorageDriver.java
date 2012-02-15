@@ -120,7 +120,8 @@ public abstract class FileOutputStorageDriver extends HCatOutputStorageDriver {
 
     @Override
     OutputFormatContainer getOutputFormatContainer(OutputFormat outputFormat) {
-        return new FileOutputFormatContainer(outputFormat);
+        //broken
+        return new FileOutputFormatContainer(null);
     }
 }
 

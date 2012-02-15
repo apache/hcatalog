@@ -95,7 +95,7 @@ public class ReadWrite extends Configured implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null, serverUri, principalID));
+                outputTableName, null));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
                 + s);

@@ -17,13 +17,17 @@
  */
 package org.apache.hcatalog.cli;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.hive.ql.metadata.AuthorizationException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
@@ -33,9 +37,18 @@ import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvide
 import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
-import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
-import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
-import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.OutputFormat;
+import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.util.Progressable;
+import org.apache.hcatalog.data.HCatRecord;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 
 class DummyStorageHandler extends HCatStorageHandler {
 
@@ -49,13 +62,13 @@ class DummyStorageHandler extends HCatStorageHandler {
     }
 
     @Override
-    public void configureTableJobProperties(TableDesc arg0,
-            Map<String, String> arg1) {
+    public Class<? extends InputFormat> getInputFormatClass() {
+        return DummyInputFormat.class;
     }
 
     @Override
-    public HiveMetaHook getMetaHook() {
-        return this;
+    public Class<? extends OutputFormat> getOutputFormatClass() {
+        return DummyOutputFormat.class;
     }
 
     @Override
@@ -64,39 +77,16 @@ class DummyStorageHandler extends HCatStorageHandler {
     }
 
     @Override
-    public void preCreateTable(Table table) throws MetaException {
+    public HiveMetaHook getMetaHook() {
+        return null;
     }
 
     @Override
-    public void rollbackCreateTable(Table table) throws MetaException {
+    public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
     }
 
     @Override
-    public void commitCreateTable(Table table) throws MetaException {
-    }
-
-    @Override
-    public void preDropTable(Table table) throws MetaException {
-    }
-
-    @Override
-    public void rollbackDropTable(Table table) throws MetaException {
-
-    }
-
-    @Override
-    public void commitDropTable(Table table, boolean deleteData)
-            throws MetaException {
-    }
-
-    @Override
-    public Class<? extends HCatInputStorageDriver> getInputStorageDriver() {
-        return HCatInputStorageDriver.class;
-    }
-
-    @Override
-    public Class<? extends HCatOutputStorageDriver> getOutputStorageDriver() {
-        return HCatOutputStorageDriver.class;
+    public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
     }
 
     @Override
@@ -206,6 +196,89 @@ class DummyStorageHandler extends HCatStorageHandler {
         public void authorize(org.apache.hadoop.hive.ql.metadata.Table table, Partition part, List<String> columns,
                 Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
                 throws HiveException, AuthorizationException {
+        }
+
+    }
+
+    /**
+     * The Class DummyInputFormat is a dummy implementation of the old hadoop
+     * mapred.InputFormat required by HiveStorageHandler.
+     */
+    class DummyInputFormat implements
+            InputFormat<WritableComparable, HCatRecord> {
+
+        /*
+         * @see
+         * org.apache.hadoop.mapred.InputFormat#getRecordReader(org.apache.hadoop
+         * .mapred.InputSplit, org.apache.hadoop.mapred.JobConf,
+         * org.apache.hadoop.mapred.Reporter)
+         */
+        @Override
+        public RecordReader<WritableComparable, HCatRecord> getRecordReader(
+                InputSplit split, JobConf jobconf, Reporter reporter)
+                throws IOException {
+            throw new IOException("This operation is not supported.");
+        }
+
+        /*
+         * @see
+         * org.apache.hadoop.mapred.InputFormat#getSplits(org.apache.hadoop.
+         * mapred .JobConf, int)
+         */
+        @Override
+        public InputSplit[] getSplits(JobConf jobconf, int number)
+                throws IOException {
+            throw new IOException("This operation is not supported.");
+        }
+    }
+
+    /**
+     * The Class DummyOutputFormat is a dummy implementation of the old hadoop
+     * mapred.OutputFormat and HiveOutputFormat required by HiveStorageHandler.
+     */
+    class DummyOutputFormat implements
+            OutputFormat<WritableComparable<?>, HCatRecord>,
+            HiveOutputFormat<WritableComparable<?>, HCatRecord> {
+
+        /*
+         * @see
+         * org.apache.hadoop.mapred.OutputFormat#checkOutputSpecs(org.apache
+         * .hadoop .fs.FileSystem, org.apache.hadoop.mapred.JobConf)
+         */
+        @Override
+        public void checkOutputSpecs(FileSystem fs, JobConf jobconf)
+                throws IOException {
+            throw new IOException("This operation is not supported.");
+
+        }
+
+        /*
+         * @see
+         * org.apache.hadoop.mapred.OutputFormat#getRecordWriter(org.apache.
+         * hadoop .fs.FileSystem, org.apache.hadoop.mapred.JobConf,
+         * java.lang.String, org.apache.hadoop.util.Progressable)
+         */
+        @Override
+        public RecordWriter<WritableComparable<?>, HCatRecord> getRecordWriter(
+                FileSystem fs, JobConf jobconf, String str,
+                Progressable progress) throws IOException {
+            throw new IOException("This operation is not supported.");
+        }
+
+        /*
+         * @see
+         * org.apache.hadoop.hive.ql.io.HiveOutputFormat#getHiveRecordWriter(org
+         * .apache.hadoop.mapred.JobConf, org.apache.hadoop.fs.Path,
+         * java.lang.Class, boolean, java.util.Properties,
+         * org.apache.hadoop.util.Progressable)
+         */
+        @Override
+        public org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter getHiveRecordWriter(
+                JobConf jc, Path finalOutPath,
+                Class<? extends Writable> valueClass, boolean isCompressed,
+                Properties tableProperties, Progressable progress)
+                throws IOException {
+            throw new IOException("This operation is not supported.");
         }
 
     }

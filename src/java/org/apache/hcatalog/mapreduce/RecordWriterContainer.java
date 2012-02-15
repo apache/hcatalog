@@ -31,21 +31,21 @@ import org.apache.hcatalog.data.HCatRecord;
  */
 abstract class RecordWriterContainer extends  RecordWriter<WritableComparable<?>, HCatRecord> {
 
-    private final RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter;
+    private final org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter;
 
     /**
      * @param context current JobContext
      * @param baseRecordWriter RecordWriter that this instance will contain
      */
     public RecordWriterContainer(TaskAttemptContext context,
-                                 RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter) {
+                                 org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter) {
         this.baseRecordWriter = baseRecordWriter;
     }
 
     /**
      * @return underlying RecordWriter
      */
-    public RecordWriter getBaseRecordWriter() {
+    public org.apache.hadoop.mapred.RecordWriter getBaseRecordWriter() {
         return baseRecordWriter;
     }
 

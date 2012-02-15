@@ -259,7 +259,7 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     job.setOutputFormatClass(HCatOutputFormat.class);
 
-    OutputJobInfo outputJobInfo = OutputJobInfo.create(dbName, tableName, partitionValues, thriftUri, null);
+    OutputJobInfo outputJobInfo = OutputJobInfo.create(dbName, tableName, partitionValues);
     HCatOutputFormat.setOutput(job, outputJobInfo);
 
     job.setMapOutputKeyClass(BytesWritable.class);

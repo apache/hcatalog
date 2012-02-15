@@ -18,14 +18,24 @@
 
 package org.apache.hcatalog.mapreduce;
 
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.HCatMapRedUtil;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 
 import java.io.IOException;
@@ -40,15 +50,19 @@ import java.util.Map;
  */
 class FileRecordWriterContainer extends RecordWriterContainer {
 
-    private final HCatOutputStorageDriver storageDriver;
+    private final HCatStorageHandler storageHandler;
+    private final SerDe serDe;
+    private final ObjectInspector objectInspector;
 
     private boolean dynamicPartitioningUsed = false;
 
 //    static final private Log LOG = LogFactory.getLog(FileRecordWriterContainer.class);
 
-    private final Map<Integer,RecordWriter<? super WritableComparable<?>, ? super Writable>> baseDynamicWriters;
-    private final Map<Integer,HCatOutputStorageDriver> baseDynamicStorageDrivers;
-    private final Map<Integer,OutputCommitter> baseDynamicCommitters;
+    private final Map<String, org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable>> baseDynamicWriters;
+    private final Map<String, SerDe> baseDynamicSerDe;
+    private final Map<String, org.apache.hadoop.mapred.OutputCommitter> baseDynamicCommitters;
+    private final Map<String, org.apache.hadoop.mapred.TaskAttemptContext> dynamicContexts;
+    private final Map<String, ObjectInspector> dynamicObjectInspectors;
 
 
     private final List<Integer> partColsToDel;
@@ -64,11 +78,20 @@ class FileRecordWriterContainer extends RecordWriterContainer {
      * @throws IOException
      * @throws InterruptedException
      */
-    public FileRecordWriterContainer(RecordWriter<? super WritableComparable<?>, ? super Writable> baseWriter,
+    public FileRecordWriterContainer(org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> baseWriter,
                                      TaskAttemptContext context) throws IOException, InterruptedException {
         super(context,baseWriter);
         this.context = context;
         jobInfo = HCatOutputFormat.getJobInfo(context);
+
+        storageHandler = HCatUtil.getStorageHandler(context.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
+        serDe = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),context.getConfiguration());
+        objectInspector = InternalUtil.createStructObjectInspector(jobInfo.getOutputSchema());
+        try {
+            InternalUtil.initializeOutputSerDe(serDe, context.getConfiguration(), jobInfo);
+        } catch (SerDeException e) {
+            throw new IOException("Failed to inialize SerDe",e);
+        }
 
         // If partition columns occur in data, we want to remove them.
         partColsToDel = jobInfo.getPosOfPartCols();
@@ -83,53 +106,59 @@ class FileRecordWriterContainer extends RecordWriterContainer {
 
 
         if (!dynamicPartitioningUsed) {
-            storageDriver = HCatOutputFormat.getOutputDriverInstance(context,jobInfo);
-            this.baseDynamicStorageDrivers = null;
+            this.baseDynamicSerDe = null;
             this.baseDynamicWriters = null;
             this.baseDynamicCommitters = null;
-            prepareForStorageDriverOutput(context);
+            this.dynamicContexts = null;
+            this.dynamicObjectInspectors = null;
         }
         else {
-            storageDriver = null;
-            this.baseDynamicStorageDrivers = new HashMap<Integer,HCatOutputStorageDriver>();
-            this.baseDynamicWriters = new HashMap<Integer,RecordWriter<? super WritableComparable<?>, ? super Writable>>();
-            this.baseDynamicCommitters = new HashMap<Integer,OutputCommitter>();
+            this.baseDynamicSerDe = new HashMap<String,SerDe>();
+            this.baseDynamicWriters = new HashMap<String,org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable>>();
+            this.baseDynamicCommitters = new HashMap<String, org.apache.hadoop.mapred.OutputCommitter>();
+            this.dynamicContexts = new HashMap<String, org.apache.hadoop.mapred.TaskAttemptContext>();
+            this.dynamicObjectInspectors = new HashMap<String, ObjectInspector>();
         }
     }
 
     /**
      * @return the storageDriver
      */
-    public HCatOutputStorageDriver getStorageDriver() {
-        return storageDriver;
+    public HCatStorageHandler getStorageHandler() {
+        return storageHandler;
     }
 
     @Override
     public void close(TaskAttemptContext context) throws IOException,
             InterruptedException {
+        Reporter reporter = InternalUtil.createReporter(context);
         if (dynamicPartitioningUsed){
-            for (RecordWriter<? super WritableComparable<?>, ? super Writable> bwriter : baseDynamicWriters.values()){
-                bwriter.close(context);
+            for (org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> bwriter : baseDynamicWriters.values()){
+                //We are in RecordWriter.close() make sense that the context would be TaskInputOutput
+                bwriter.close(reporter);
             }
-            for(Map.Entry<Integer,OutputCommitter>entry : baseDynamicCommitters.entrySet()) {
-//            for (HCatOutputStorageDriver osd : baseDynamicStorageDrivers.values()){
+            for(Map.Entry<String,org.apache.hadoop.mapred.OutputCommitter>entry : baseDynamicCommitters.entrySet()) {
+                org.apache.hadoop.mapred.TaskAttemptContext currContext = dynamicContexts.get(entry.getKey());
                 OutputCommitter baseOutputCommitter = entry.getValue();
-                if (baseOutputCommitter.needsTaskCommit(context)){
-                    baseOutputCommitter.commitTask(context);
+                if (baseOutputCommitter.needsTaskCommit(currContext)){
+                    baseOutputCommitter.commitTask(currContext);
                 }
             }
         } else {
-            getBaseRecordWriter().close(context);
+            getBaseRecordWriter().close(reporter);
         }
     }
 
     @Override
     public void write(WritableComparable<?> key, HCatRecord value) throws IOException,
             InterruptedException {
-        RecordWriter localWriter;
-        HCatOutputStorageDriver localDriver;
 
-//      HCatUtil.logList(LOG, "HCatRecord to write", value.getAll());
+        org.apache.hadoop.mapred.RecordWriter localWriter;
+        org.apache.hadoop.mapred.TaskAttemptContext localContext;
+        ObjectInspector localObjectInspector;
+        SerDe localSerDe;
+        OutputJobInfo localJobInfo = null;
+
 
         if (dynamicPartitioningUsed){
             // calculate which writer to use from the remaining values - this needs to be done before we delete cols
@@ -138,11 +167,9 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 dynamicPartValues.add(value.get(colToAppend).toString());
             }
 
-            int dynHashCode = dynamicPartValues.hashCode();
-            if (!baseDynamicWriters.containsKey(dynHashCode)){
-//          LOG.info("Creating new storage driver["+baseDynamicStorageDrivers.size()
-//              +"/"+maxDynamicPartitions+ "] for "+dynamicPartValues.toString());
-                if ((maxDynamicPartitions != -1) && (baseDynamicStorageDrivers.size() > maxDynamicPartitions)){
+            String dynKey = dynamicPartValues.toString();
+            if (!baseDynamicWriters.containsKey(dynKey)){
+                if ((maxDynamicPartitions != -1) && (baseDynamicWriters.size() > maxDynamicPartitions)){
                     throw new HCatException(ErrorType.ERROR_TOO_MANY_DYNAMIC_PTNS,
                             "Number of dynamic partitions being created "
                                     + "exceeds configured max allowable partitions["
@@ -151,54 +178,82 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                                     + HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS.varname
                                     + "] if needed.");
                 }
-//          HCatUtil.logList(LOG, "dynamicpartvals", dynamicPartValues);
-//          HCatUtil.logList(LOG, "dynamicpartCols", dynamicPartCols);
 
-                HCatOutputStorageDriver localOsd = createDynamicStorageDriver(dynamicPartValues);
+                org.apache.hadoop.mapred.TaskAttemptContext currTaskContext = HCatMapRedUtil.createTaskAttemptContext(context);
+                configureDynamicStorageHandler(currTaskContext, dynamicPartValues);
+                localJobInfo= HCatBaseOutputFormat.getJobInfo(currTaskContext);
 
-                RecordWriter baseRecordWriter = localOsd.getOutputFormat().getRecordWriter(context);
-                OutputCommitter baseOutputCommitter = localOsd.getOutputFormat().getOutputCommitter(context);
-                baseOutputCommitter.setupJob(context);
-                baseOutputCommitter.setupTask(context);
-                prepareForStorageDriverOutput(localOsd,context);
-                baseDynamicWriters.put(dynHashCode, baseRecordWriter);
-                baseDynamicStorageDrivers.put(dynHashCode,localOsd);
-                baseDynamicCommitters.put(dynHashCode,baseOutputCommitter);
+                //setup serDe
+                SerDe currSerDe = ReflectionUtils.newInstance(storageHandler.getSerDeClass(), currTaskContext.getJobConf());
+                try {
+                    InternalUtil.initializeOutputSerDe(currSerDe, currTaskContext.getConfiguration(), localJobInfo);
+                } catch (SerDeException e) {
+                    throw new IOException("Failed to initialize SerDe",e);
+                }
+
+                //create base OutputFormat
+                org.apache.hadoop.mapred.OutputFormat baseOF =
+                        ReflectionUtils.newInstance(storageHandler.getOutputFormatClass(), currTaskContext.getJobConf());
+                //check outputSpecs
+                baseOF.checkOutputSpecs(null,currTaskContext.getJobConf());
+                //get Output Committer
+                org.apache.hadoop.mapred.OutputCommitter baseOutputCommitter =  currTaskContext.getJobConf().getOutputCommitter();
+                //create currJobContext the latest so it gets all the config changes
+                org.apache.hadoop.mapred.JobContext currJobContext = HCatMapRedUtil.createJobContext(currTaskContext);
+                //setupJob()
+                baseOutputCommitter.setupJob(currJobContext);
+                //recreate to refresh jobConf of currTask context
+                currTaskContext =
+                        HCatMapRedUtil.createTaskAttemptContext(currJobContext.getJobConf(),
+                                                                                        currTaskContext.getTaskAttemptID(),
+                                                                                        currTaskContext.getProgressible());
+                //set temp location
+                currTaskContext.getConfiguration().set("mapred.work.output.dir",
+                                new FileOutputCommitter(new Path(localJobInfo.getLocation()),currTaskContext).getWorkPath().toString());
+                //setupTask()
+                baseOutputCommitter.setupTask(currTaskContext);
+
+                org.apache.hadoop.mapred.RecordWriter baseRecordWriter =
+                        baseOF.getRecordWriter(null,
+                                                            currTaskContext.getJobConf(),
+                                                            FileOutputFormat.getUniqueFile(currTaskContext, "part", ""),
+                                                            InternalUtil.createReporter(currTaskContext));
+
+                baseDynamicWriters.put(dynKey, baseRecordWriter);
+                baseDynamicSerDe.put(dynKey,currSerDe);
+                baseDynamicCommitters.put(dynKey,baseOutputCommitter);
+                dynamicContexts.put(dynKey,currTaskContext);
+                dynamicObjectInspectors.put(dynKey,InternalUtil.createStructObjectInspector(jobInfo.getOutputSchema()));
             }
-
-            localWriter = baseDynamicWriters.get(dynHashCode);
-            localDriver = baseDynamicStorageDrivers.get(dynHashCode);
-        }else{
+            localJobInfo = HCatOutputFormat.getJobInfo(dynamicContexts.get(dynKey));
+            localWriter = baseDynamicWriters.get(dynKey);
+            localSerDe = baseDynamicSerDe.get(dynKey);
+            localContext = dynamicContexts.get(dynKey);
+            localObjectInspector = dynamicObjectInspectors.get(dynKey);
+        }
+        else{
+            localJobInfo = HCatBaseOutputFormat.getJobInfo(context);
             localWriter = getBaseRecordWriter();
-            localDriver = storageDriver;
+            localSerDe = serDe;
+            localContext = HCatMapRedUtil.createTaskAttemptContext(context);
+            localObjectInspector = objectInspector;
         }
 
         for(Integer colToDel : partColsToDel){
             value.remove(colToDel);
         }
 
+
         //The key given by user is ignored
-        WritableComparable<?> generatedKey = localDriver.generateKey(value);
-        Writable convertedValue = localDriver.convertValue(value);
-        localWriter.write(generatedKey, convertedValue);
-    }
-
-    protected HCatOutputStorageDriver createDynamicStorageDriver(List<String> dynamicPartVals) throws IOException {
-        HCatOutputStorageDriver localOsd = HCatOutputFormat.getOutputDriverInstance(context,jobInfo,dynamicPartVals);
-        return localOsd;
-    }
-
-    public void prepareForStorageDriverOutput(TaskAttemptContext context) throws IOException {
-        // Set permissions and group on freshly created files.
-        if (!dynamicPartitioningUsed){
-            HCatOutputStorageDriver localOsd = this.getStorageDriver();
-            prepareForStorageDriverOutput(localOsd,context);
+        try {
+            localWriter.write(null, localSerDe.serialize(value.getAll(), localObjectInspector));
+        } catch (SerDeException e) {
+            throw new IOException("Failed to serialize object",e);
         }
     }
 
-    private void prepareForStorageDriverOutput(HCatOutputStorageDriver localOsd,
-                                               TaskAttemptContext context) throws IOException {
-        FileOutputStorageDriver.prepareOutputLocation(localOsd, context);
+    protected void configureDynamicStorageHandler(JobContext context, List<String> dynamicPartVals) throws IOException {
+        HCatOutputFormat.configureOutputStorageHandler(context, dynamicPartVals);
     }
 
 }

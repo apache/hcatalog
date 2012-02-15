@@ -28,6 +28,8 @@ Trunk (unreleased changes)
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
+
   HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
   
   OPTIMIZATIONS

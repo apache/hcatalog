@@ -181,7 +181,7 @@ public class StoreNumbers {
     		dbName, tableName, null, serverUri, principalID));
     // initialize HCatOutputFormat
     HCatOutputFormat.setOutput(job, OutputJobInfo.create(
-            dbName, outputTableName, outputPartitionKvps, serverUri, principalID));
+            dbName, outputTableName, outputPartitionKvps));
     // test with and without specifying schema randomly
     HCatSchema s = HCatInputFormat.getTableSchema(job);
     if(writeToNonPartPigTable) {

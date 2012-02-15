@@ -33,11 +33,11 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.mapred.HCatMapRedUtil;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
-import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
@@ -47,7 +47,6 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.har.HarOutputCommitterPostProcessor;
-import org.apache.hcatalog.shims.HCatHadoopShims;
 import org.apache.thrift.TException;
 
 import java.io.IOException;
@@ -69,7 +68,8 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     private boolean partitionsDiscovered;
 
     private Map<String, Map<String, String>> partitionsDiscoveredByPath;
-    private Map<String, HCatOutputStorageDriver> storageDriversDiscoveredByPath;
+    private Map<String, JobContext> contextDiscoveredByPath;
+    private final HCatStorageHandler cachedStorageHandler;
 
     HarOutputCommitterPostProcessor harProcessor = new HarOutputCommitterPostProcessor();
 
@@ -83,34 +83,39 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      * @throws IOException
      */
     public FileOutputCommitterContainer(JobContext context,
-                                        OutputCommitter baseCommitter) throws IOException {
+                                                          org.apache.hadoop.mapred.OutputCommitter baseCommitter) throws IOException {
         super(context, baseCommitter);
         jobInfo = HCatOutputFormat.getJobInfo(context);
         dynamicPartitioningUsed = jobInfo.isDynamicPartitioningUsed();
 
         this.partitionsDiscovered = !dynamicPartitioningUsed;
+        cachedStorageHandler = HCatUtil.getStorageHandler(context.getConfiguration(),jobInfo.getTableInfo().getStorerInfo());
     }
 
     @Override
     public void abortTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
-            getBaseOutputCommitter().abortTask(context);
+            getBaseOutputCommitter().abortTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
 
     @Override
     public void commitTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
-            getBaseOutputCommitter().commitTask(context);
-        }else{
-            // called explicitly through FileRecordWriterContainer.close() if dynamic
+            OutputJobInfo outputJobInfo = HCatOutputFormat.getJobInfo(context);
+            //TODO fix this hack, something wrong with pig
+            //running multiple storers in a single job, the real output dir got overwritten or something
+            //the location in OutputJobInfo is still correct so we'll use that
+            //TestHCatStorer.testMultiPartColsInData() used to fail without this
+            context.getConfiguration().set("mapred.output.dir",outputJobInfo.getLocation());
+            getBaseOutputCommitter().commitTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
 
     @Override
     public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
-            return getBaseOutputCommitter().needsTaskCommit(context);
+            return getBaseOutputCommitter().needsTaskCommit(HCatMapRedUtil.createTaskAttemptContext(context));
         }else{
             // called explicitly through FileRecordWriterContainer.close() if dynamic - return false by default
             return false;
@@ -120,7 +125,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void setupJob(JobContext context) throws IOException {
         if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-            getBaseOutputCommitter().setupJob(context);
+            getBaseOutputCommitter().setupJob(HCatMapRedUtil.createJobContext(context));
         }
         // in dynamic usecase, called through FileRecordWriterContainer
     }
@@ -128,28 +133,25 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void setupTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
-            getBaseOutputCommitter().setupTask(context);
-        }else{
-            // called explicitly through FileRecordWriterContainer.write() if dynamic
+            getBaseOutputCommitter().setupTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
 
     @Override
     public void abortJob(JobContext jobContext, State state) throws IOException {
+        org.apache.hadoop.mapred.JobContext
+                marpedJobContext = HCatMapRedUtil.createJobContext(jobContext);
         if (dynamicPartitioningUsed){
             discoverPartitions(jobContext);
         }
 
         if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-            getBaseOutputCommitter().abortJob(jobContext, state);
+            getBaseOutputCommitter().abortJob(marpedJobContext, state);
         }
         else if (dynamicPartitioningUsed){
-            for(HCatOutputStorageDriver baseOsd : storageDriversDiscoveredByPath.values()){
+            for(JobContext currContext : contextDiscoveredByPath.values()){
                 try {
-                    baseOsd.abortOutputCommitterJob(
-                            HCatHadoopShims.Instance.get().createTaskAttemptContext(
-                                    jobContext.getConfiguration(), TaskAttemptID.forName(ptnRootLocation)
-                            ),state);
+                    new JobConf(currContext.getConfiguration()).getOutputCommitter().abortJob(currContext, state);
                 } catch (Exception e) {
                     throw new IOException(e);
                 }
@@ -159,8 +161,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
 
         try {
-            HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(
-                    jobInfo.getServerUri(), jobContext.getConfiguration());
+            HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(null, jobContext.getConfiguration());
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
             // HCatOutputFormat and not if they were supplied by Oozie. In the latter
@@ -215,7 +216,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             discoverPartitions(jobContext);
         }
         if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-            getBaseOutputCommitter().commitJob(jobContext);
+            getBaseOutputCommitter().commitJob(HCatMapRedUtil.createJobContext(jobContext));
         }
         // create _SUCCESS FILE if so requested.
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
@@ -237,6 +238,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     @Override
     public void cleanupJob(JobContext context) throws IOException {
+
         if (dynamicPartitioningUsed){
             discoverPartitions(context);
         }
@@ -251,15 +253,13 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         if( table.getPartitionKeys().size() == 0 ) {
             //non partitioned table
             if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-                getBaseOutputCommitter().cleanupJob(context);
+                getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
             }
             else if (dynamicPartitioningUsed){
-                for(HCatOutputStorageDriver baseOsd : storageDriversDiscoveredByPath.values()){
+                for(JobContext currContext : contextDiscoveredByPath.values()){
                     try {
-                        baseOsd.cleanupOutputCommitterJob(
-                                HCatHadoopShims.Instance.get().createTaskAttemptContext(
-                                        context.getConfiguration(), TaskAttemptID.forName(ptnRootLocation)
-                                ));
+                        JobConf jobConf = new JobConf(currContext.getConfiguration());
+                        jobConf.getOutputCommitter().cleanupJob(currContext);
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
@@ -280,7 +280,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         List<Partition> partitionsAdded = new ArrayList<Partition>();
 
         try {
-            client = HCatOutputFormat.createHiveClient(jobInfo.getServerUri(), conf);
+            client = HCatOutputFormat.createHiveClient(null, conf);
 
             StorerInfo storer = InitializeInput.extractStorerInfo(table.getSd(),table.getParameters());
 
@@ -361,7 +361,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             }
 
             if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-                getBaseOutputCommitter().cleanupJob(context);
+                getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
             }
 
             //Cancel HCat and JobTracker tokens
@@ -627,7 +627,6 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     private void discoverPartitions(JobContext context) throws IOException {
         if (!partitionsDiscovered){
             //      LOG.info("discover ptns called");
-
             OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
 
             harProcessor.setEnabled(jobInfo.getHarRequested());
@@ -639,17 +638,15 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             FileSystem fs = loadPath.getFileSystem(context.getConfiguration());
 
             // construct a path pattern (e.g., /*/*) to find all dynamically generated paths
-
             String dynPathSpec = loadPath.toUri().getPath();
             dynPathSpec = dynPathSpec.replaceAll("__HIVE_DEFAULT_PARTITION__", "*");
-            // TODO : replace this with a param pull from HiveConf
 
             //      LOG.info("Searching for "+dynPathSpec);
-            Path pathPattern = new Path(loadPath, dynPathSpec);
+            Path pathPattern = new Path(dynPathSpec);
             FileStatus[] status = fs.globStatus(pathPattern);
 
             partitionsDiscoveredByPath = new LinkedHashMap<String,Map<String, String>>();
-            storageDriversDiscoveredByPath = new LinkedHashMap<String,HCatOutputStorageDriver>();
+            contextDiscoveredByPath = new LinkedHashMap<String,JobContext>();
 
 
             if (status.length == 0) {
@@ -672,8 +669,9 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                     LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>();
                     Warehouse.makeSpecFromName(fullPartSpec, st.getPath());
                     partitionsDiscoveredByPath.put(st.getPath().toString(),fullPartSpec);
-                    storageDriversDiscoveredByPath.put(st.getPath().toString(),
-                            HCatOutputFormat.getOutputDriverInstance(context, jobInfo, fullPartSpec));
+                    JobContext currContext = new JobContext(context.getConfiguration(),context.getJobID());
+                    HCatOutputFormat.configureOutputStorageHandler(context, jobInfo, fullPartSpec);
+                    contextDiscoveredByPath.put(st.getPath().toString(),currContext);
                 }
             }
 

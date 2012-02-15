@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -44,8 +45,8 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
+import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
+import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
@@ -61,8 +62,11 @@ import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.apache.hcatalog.mapreduce.FosterStorageHandler;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
+import org.apache.hcatalog.mapreduce.OutputJobInfo;
+import org.apache.hcatalog.mapreduce.StorerInfo;
 import org.apache.thrift.TException;
 
 public class HCatUtil {
@@ -449,20 +453,58 @@ public class HCatUtil {
         logger.info("\tservice : " + t.getService());
     }
 
-    public static HCatStorageHandler getStorageHandler(Configuration conf,
-            String className) throws HiveException {
+    /**
+     * Create an instance of a storage handler defined in storerInfo. If one cannot be found
+     * then FosterStorageHandler is used to encapsulate the InputFormat, OutputFormat and SerDe.
+     * This StorageHandler assumes the other supplied storage artifacts are for a file-based storage system.
+     * @param conf job's configuration will be used to configure the Configurable StorageHandler
+     * @param storerInfo StorerInfo to definining the StorageHandler and InputFormat, OutputFormat and SerDe
+     * @return storageHandler instance
+     * @throws IOException
+     */
+    public static HCatStorageHandler getStorageHandler(Configuration conf, StorerInfo storerInfo) throws IOException {
+        return getStorageHandler(conf,
+                                              storerInfo.getStorageHandlerClass(),
+                                              storerInfo.getSerdeClass(),
+                                              storerInfo.getIfClass(),
+                                              storerInfo.getOfClass());
+    }
 
-        if (className == null) {
-            return null;
+    /**
+     * Create an instance of a storage handler. If storageHandler == null,
+     * then surrrogate StorageHandler is used to encapsulate the InputFormat, OutputFormat and SerDe.
+     * This StorageHandler assumes the other supplied storage artifacts are for a file-based storage system.
+     * @param conf job's configuration will be used to configure the Configurable StorageHandler
+     * @param storageHandler fully qualified class name of the desired StorageHandle instance
+     * @param serDe fully qualified class name of the desired SerDe instance
+     * @param inputFormat fully qualified class name of the desired InputFormat instance
+     * @param outputFormat fully qualified class name of the desired outputFormat instance
+     * @return storageHandler instance
+     * @throws IOException
+     */
+    public static HCatStorageHandler getStorageHandler(Configuration conf,
+                                                                                  String storageHandler,
+                                                                                  String serDe,
+                                                                                  String inputFormat,
+                                                                                  String outputFormat) throws IOException {
+
+
+        if (storageHandler == null) {
+            try {
+                return new FosterStorageHandler(inputFormat,
+                                                                  outputFormat,
+                                                                  serDe);
+            } catch (ClassNotFoundException e) {
+                throw new IOException("Failed to load foster storage handler",e);
+            }
         }
+
         try {
             Class<? extends HCatStorageHandler> handlerClass = (Class<? extends HCatStorageHandler>) Class
-                    .forName(className, true, JavaUtils.getClassLoader());
-            HCatStorageHandler storageHandler = (HCatStorageHandler) ReflectionUtils
-                    .newInstance(handlerClass, conf);
-            return storageHandler;
+                    .forName(storageHandler, true, JavaUtils.getClassLoader());
+            return (HCatStorageHandler)ReflectionUtils.newInstance(handlerClass, conf);
         } catch (ClassNotFoundException e) {
-            throw new HiveException("Error in loading storage handler."
+            throw new IOException("Error in loading storage handler."
                     + e.getMessage(), e);
         }
     }
@@ -477,5 +519,45 @@ public class HCatUtil {
         throw new IOException("tableName expected in the form "
             +"<databasename>.<table name> or <table name>. Got " + tableName);
       }
+    }
+
+    public static void configureOutputStorageHandler(HCatStorageHandler storageHandler,
+                                                                              JobContext context,
+                                                                              OutputJobInfo outputJobInfo) {
+        //TODO replace IgnoreKeyTextOutputFormat with a HiveOutputFormatWrapper in StorageHandler
+        TableDesc tableDesc = new TableDesc(storageHandler.getSerDeClass(),
+                                                                   storageHandler.getInputFormatClass(),
+                                                                   IgnoreKeyTextOutputFormat.class,
+                                                                   outputJobInfo.getTableInfo().getStorerInfo().getProperties());
+        if(tableDesc.getJobProperties() == null)
+            tableDesc.setJobProperties(new HashMap<String, String>());
+        for (Map.Entry<String,String> el: context.getConfiguration()) {
+           tableDesc.getJobProperties().put(el.getKey(),el.getValue());
+        }
+
+        Map<String,String> jobProperties = new HashMap<String,String>();
+        try {
+            tableDesc.getJobProperties().put(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
+
+            storageHandler.configureOutputJobProperties(tableDesc,jobProperties);
+
+            for(Map.Entry<String,String> el: jobProperties.entrySet()) {
+                context.getConfiguration().set(el.getKey(),el.getValue());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to configure StorageHandler",e);
+        }
+    }
+
+    /**
+     * Replace the contents of dest with the contents of src
+     * @param src
+     * @param dest
+     */
+    public static void copyConf(Configuration src, Configuration dest) {
+        dest.clear();
+        for(Map.Entry<String,String> el : src) {
+            dest.set(el.getKey(),el.getValue());
+        }
     }
 }

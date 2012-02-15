@@ -80,15 +80,11 @@ public class HCatStorer extends HCatBaseStorer {
     if(userStr.length == 2) {
       outputJobInfo = OutputJobInfo.create(userStr[0],
                                                              userStr[1],
-                                                             partitions,
-                                                             PigHCatUtil.getHCatServerUri(job),
-                                                             PigHCatUtil.getHCatServerPrincipal(job));
+                                                             partitions);
     } else if(userStr.length == 1) {
       outputJobInfo = OutputJobInfo.create(null,
                                                              userStr[0],
-                                                             partitions,
-                                                             PigHCatUtil.getHCatServerUri(job),
-                                                             PigHCatUtil.getHCatServerPrincipal(job));
+                                                             partitions);
     } else {
       throw new FrontendException("location "+location+" is invalid. It must be of the form [db.]table", PigHCatUtil.PIG_EXCEPTION_CODE);
     }

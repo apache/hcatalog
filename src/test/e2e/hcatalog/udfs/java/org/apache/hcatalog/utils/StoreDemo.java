@@ -117,7 +117,7 @@ public class StoreDemo {
     		dbName, tableName, null, serverUri, principalID));
     // initialize HCatOutputFormat
     HCatOutputFormat.setOutput(job, OutputJobInfo.create(
-            dbName, outputTableName, outputPartitionKvps, serverUri, principalID));
+            dbName, outputTableName, outputPartitionKvps));
     // test with and without specifying schema randomly
     HCatSchema s = HCatInputFormat.getTableSchema(job);
     System.err.println("INFO: output schema explicitly set for writing:" + s);

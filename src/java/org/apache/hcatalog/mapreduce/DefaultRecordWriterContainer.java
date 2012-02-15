@@ -20,10 +20,14 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
+import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 
 /**
@@ -32,9 +36,10 @@ import org.apache.hcatalog.data.HCatRecord;
  */
 class DefaultRecordWriterContainer extends RecordWriterContainer {
 
-    private final HCatOutputStorageDriver storageDriver;
-    private final RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter;
+    private final HCatStorageHandler storageHandler;
+    private final SerDe serDe;
     private final OutputJobInfo jobInfo;
+    private final ObjectInspector hcatRecordOI;
 
     /**
      * @param context current JobContext
@@ -43,29 +48,34 @@ class DefaultRecordWriterContainer extends RecordWriterContainer {
      * @throws InterruptedException
      */
     public DefaultRecordWriterContainer(TaskAttemptContext context,
-                                        RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter) throws IOException, InterruptedException {
+                                        org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter) throws IOException, InterruptedException {
         super(context,baseRecordWriter);
         jobInfo = HCatOutputFormat.getJobInfo(context);
-        this.storageDriver = HCatOutputFormat.getOutputDriverInstance(context, jobInfo);
-        this.baseRecordWriter = baseRecordWriter;
+        storageHandler = HCatUtil.getStorageHandler(context.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
+        HCatOutputFormat.configureOutputStorageHandler(context);
+        serDe = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),context.getConfiguration());
+        hcatRecordOI = InternalUtil.createStructObjectInspector(jobInfo.getOutputSchema());
+        try {
+            InternalUtil.initializeOutputSerDe(serDe, context.getConfiguration(), jobInfo);
+        } catch (SerDeException e) {
+            throw new IOException("Failed to initialize SerDe",e);
+        }
     }
 
     @Override
     public void close(TaskAttemptContext context) throws IOException,
             InterruptedException {
-        baseRecordWriter.close(context);
+        getBaseRecordWriter().close(InternalUtil.createReporter(context));
     }
 
     @Override
     public void write(WritableComparable<?> key, HCatRecord value) throws IOException,
             InterruptedException {
-        WritableComparable<?> generatedKey = storageDriver.generateKey(value);
-        Writable convertedValue = storageDriver.convertValue(value);
-        baseRecordWriter.write(generatedKey, convertedValue);
+        try {
+            getBaseRecordWriter().write(null, serDe.serialize(value, hcatRecordOI));
+        } catch (SerDeException e) {
+            throw new IOException("Failed to serialize object",e);
+        }
     }
 
-    @Override
-    public RecordWriter<? super WritableComparable<?>, ? super Writable> getBaseRecordWriter() {
-        return baseRecordWriter;
-    }
 }

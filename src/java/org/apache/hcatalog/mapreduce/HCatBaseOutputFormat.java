@@ -23,14 +23,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -62,7 +62,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   @Override
   public void checkOutputSpecs(JobContext context
                                         ) throws IOException, InterruptedException {
-      getOutputFormat(context).checkOutputSpecs(context);
+    getOutputFormat(context).checkOutputSpecs(context);
   }
 
   /**
@@ -73,8 +73,10 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
    */
   protected OutputFormat<WritableComparable<?>, HCatRecord> getOutputFormat(JobContext context) throws IOException {
       OutputJobInfo jobInfo = getJobInfo(context);
-      HCatOutputStorageDriver  driver = getOutputDriverInstance(context, jobInfo);
-      return driver.getOutputFormatContainer(driver.getOutputFormat());
+      HCatStorageHandler  storageHandler = HCatUtil.getStorageHandler(context.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
+      //why do we need this?
+      configureOutputStorageHandler(context);
+      return storageHandler.getOutputFormatContainer(ReflectionUtils.newInstance(storageHandler.getOutputFormatClass(),context.getConfiguration()));
   }
 
   /**
@@ -97,31 +99,27 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   /**
    * Gets the output storage driver instance.
    * @param jobContext the job context
-   * @param jobInfo the output job info
    * @return the output driver instance
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
-  static HCatOutputStorageDriver getOutputDriverInstance(
-          JobContext jobContext, OutputJobInfo jobInfo) throws IOException {
-    return getOutputDriverInstance(jobContext,jobInfo,(List<String>)null);
+  static void configureOutputStorageHandler(
+          JobContext jobContext) throws IOException {
+    configureOutputStorageHandler(jobContext,(List<String>)null);
   }
 
   /**
    * Gets the output storage driver instance, with allowing specification of missing dynamic partvals
    * @param jobContext the job context
-   * @param jobInfo the output job info
    * @return the output driver instance
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
-  static HCatOutputStorageDriver getOutputDriverInstance(
-          JobContext jobContext, OutputJobInfo jobInfo, List<String> dynamicPartVals) throws IOException {
+  static void configureOutputStorageHandler(
+          JobContext jobContext, List<String> dynamicPartVals) throws IOException {
       try {
-          Class<? extends HCatOutputStorageDriver> driverClass =
-              (Class<? extends HCatOutputStorageDriver>)
-              Class.forName(jobInfo.getTableInfo().getStorerInfo().getOutputSDClass());
-          HCatOutputStorageDriver driver = driverClass.newInstance();
+          OutputJobInfo jobInfo = (OutputJobInfo)HCatUtil.deserialize(jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+          HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(jobContext.getConfiguration(),jobInfo.getTableInfo().getStorerInfo());
 
           Map<String, String> partitionValues = jobInfo.getPartitionValues();
           String location = jobInfo.getLocation();
@@ -139,28 +137,17 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
               partitionValues.put(dynamicPartKeys.get(i), dynamicPartVals.get(i));
             }
 
-            // re-home location, now that we know the rest of the partvals
-            Table table = jobInfo.getTableInfo().getTable();
-            
-            List<String> partitionCols = new ArrayList<String>();
-            for(FieldSchema schema : table.getPartitionKeys()) {
-              partitionCols.add(schema.getName());
-            }
-
-            location = driver.getOutputLocation(jobContext,
-                table.getSd().getLocation() , partitionCols,
-                partitionValues,jobContext.getConfiguration().get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID));
+//            // re-home location, now that we know the rest of the partvals
+//            Table table = jobInfo.getTableInfo().getTable();
+//
+//            List<String> partitionCols = new ArrayList<String>();
+//            for(FieldSchema schema : table.getPartitionKeys()) {
+//              partitionCols.add(schema.getName());
+//            }
+            jobInfo.setPartitionValues(partitionValues);
           }
 
-          //Initialize the storage driver
-          driver.setSchema(jobContext, jobInfo.getOutputSchema());
-          driver.setPartitionValues(jobContext, partitionValues);
-          driver.setOutputPath(jobContext, location);
-          
-          driver.initialize(jobContext, jobInfo.getTableInfo().getStorerInfo().getProperties());
-          
-//          HCatUtil.logMap(LOG,"Setting outputPath ["+location+"] for ",partitionValues);
-          return driver;
+          HCatUtil.configureOutputStorageHandler(storageHandler,jobContext,jobInfo);
       } catch(Exception e) {
         if (e instanceof HCatException){
           throw (HCatException)e;
@@ -179,18 +166,18 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
    * @throws IOException
    */
 
-  protected static HCatOutputStorageDriver getOutputDriverInstance(
+  protected static void configureOutputStorageHandler(
       JobContext context, OutputJobInfo jobInfo,
       Map<String, String> fullPartSpec) throws IOException {
     List<String> dynamicPartKeys = jobInfo.getDynamicPartitioningKeys();
     if ((dynamicPartKeys == null)||(dynamicPartKeys.isEmpty())){
-      return getOutputDriverInstance(context,jobInfo,(List<String>)null);
+      configureOutputStorageHandler(context, (List<String>) null);
     }else{
       List<String> dynKeyVals = new ArrayList<String>();
       for (String dynamicPartKey : dynamicPartKeys){
         dynKeyVals.add(fullPartSpec.get(dynamicPartKey));
       }
-      return getOutputDriverInstance(context,jobInfo,dynKeyVals);
+      configureOutputStorageHandler(context, dynKeyVals);
     }
   }
 
@@ -239,7 +226,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   static void cancelDelegationTokens(JobContext context, OutputJobInfo outputJobInfo) throws Exception {
-    HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(outputJobInfo.getServerUri(), context.getConfiguration());
+    HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(null, context.getConfiguration());
     // cancel the deleg. tokens that were acquired for this job now that
     // we are done - we should cancel if the tokens were acquired by
     // HCatOutputFormat and not if they were supplied by Oozie. In the latter

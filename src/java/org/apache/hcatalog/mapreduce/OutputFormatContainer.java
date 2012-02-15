@@ -33,19 +33,19 @@ import org.apache.hcatalog.data.HCatRecord;
  *  such as partitioning isn't supported.
  */
 abstract class OutputFormatContainer extends OutputFormat<WritableComparable<?>, HCatRecord> {
-    private OutputFormat<? super WritableComparable<?>, ? super Writable> of;
+    private org.apache.hadoop.mapred.OutputFormat<? super WritableComparable<?>, ? super Writable> of;
 
     /**
      * @param of OutputFormat this instance will contain
      */
-    public OutputFormatContainer(OutputFormat<? super WritableComparable<?>,? super Writable> of) {
+    public OutputFormatContainer(org.apache.hadoop.mapred.OutputFormat<? super WritableComparable<?>,? super Writable> of) {
         this.of = of;
     }
 
     /**
      * @return underlying OutputFormat
      */
-    public OutputFormat getBaseOutputFormat() {
+    public org.apache.hadoop.mapred.OutputFormat getBaseOutputFormat() {
         return of;
     }
 

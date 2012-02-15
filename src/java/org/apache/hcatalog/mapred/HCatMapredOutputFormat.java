@@ -139,7 +139,7 @@ public class HCatMapredOutputFormat implements OutputFormat, HiveOutputFormat {
 
     OutputJobInfo outputJobInfo = OutputJobInfo.create(
         dbAndTableName.first, dbAndTableName.second, 
-        ptnValues, null, null);
+        ptnValues);
     
     Job job = new Job(new Configuration()); 
       // TODO : verify with thw if this needs to be shim-ed. There exists no current Shim
