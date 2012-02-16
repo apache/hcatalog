@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 
@@ -63,7 +64,7 @@ public class TestDefaultHCatRecord extends TestCase{
     for(int i =0; i < recs.length; i++){
       HCatRecord rec = new DefaultHCatRecord();
       rec.readFields(inpStream);
-      Assert.assertEquals(recs[i],rec);
+      Assert.assertTrue(HCatUtil.recordsEqual(recs[i],rec));
     }
 
     Assert.assertEquals(fInStream.available(), 0);
@@ -73,13 +74,13 @@ public class TestDefaultHCatRecord extends TestCase{
 
   public void testCompareTo() {
     HCatRecord[] recs = getHCatRecords();
-    Assert.assertEquals(recs[0].compareTo(recs[1]),0);
+    Assert.assertTrue(HCatUtil.compareRecords(recs[0],recs[1]) == 0);
   }
 
   public void testEqualsObject() {
 
     HCatRecord[] recs = getHCatRecords();
-    Assert.assertTrue(recs[0].equals(recs[1]));
+    Assert.assertTrue(HCatUtil.recordsEqual(recs[0],recs[1]));
   }
 
   private HCatRecord[] getHCatRecords(){

@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.data.schema.HCatSchema;
 
 /**
  * SerDe class for serializing to and from HCatRecord
@@ -108,6 +109,18 @@ public class HCatRecordSerDe implements SerDe {
     cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
     
   }
+  
+  public void initialize(HCatSchema hsch) throws SerDeException {
+
+    if (LOG.isDebugEnabled()){
+      LOG.debug("Initializing HCatRecordSerDe through HCatSchema" + hsch.toString());
+    }
+    
+    rowTypeInfo = (StructTypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(hsch.toString());
+    cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
+    
+  }
+  
 
   /**
    * The purpose of a deserialize method is to turn a data blob 
@@ -156,7 +169,7 @@ public class HCatRecordSerDe implements SerDe {
    * @param soi : StructObjectInspector 
    * @return HCatRecord
    */
-  private List<?> serializeStruct(Object obj, StructObjectInspector soi)
+  private static List<?> serializeStruct(Object obj, StructObjectInspector soi)
       throws SerDeException {
 
     List<? extends StructField> fields = soi.getAllStructFieldRefs();
@@ -181,7 +194,7 @@ public class HCatRecordSerDe implements SerDe {
    * Return underlying Java Object from an object-representation 
    * that is readable by a provided ObjectInspector.
    */
-  private Object serializeField(Object field,
+  public static Object serializeField(Object field,
       ObjectInspector fieldObjectInspector) throws SerDeException {
     Object res = null;
     if (fieldObjectInspector.getCategory() == Category.PRIMITIVE){
@@ -193,7 +206,7 @@ public class HCatRecordSerDe implements SerDe {
     } else if (fieldObjectInspector.getCategory() == Category.MAP){
       res = serializeMap(field,(MapObjectInspector)fieldObjectInspector);
     } else {
-      throw new SerDeException(getClass().toString() 
+      throw new SerDeException(HCatRecordSerDe.class.toString() 
           + " does not know what to do with fields of unknown category: "
           + fieldObjectInspector.getCategory() + " , type: " + fieldObjectInspector.getTypeName());
     }
@@ -205,7 +218,7 @@ public class HCatRecordSerDe implements SerDe {
    * an object-representation that is readable by a provided
    * MapObjectInspector
    */
-  private Map<?,?> serializeMap(Object f, MapObjectInspector moi) throws SerDeException {
+  private static Map<?,?> serializeMap(Object f, MapObjectInspector moi) throws SerDeException {
     ObjectInspector koi = moi.getMapKeyObjectInspector();
     ObjectInspector voi = moi.getMapValueObjectInspector();
     Map<Object,Object> m = new TreeMap<Object, Object>();
@@ -221,7 +234,7 @@ public class HCatRecordSerDe implements SerDe {
     return m;
   }
 
-  private List<?> serializeList(Object f, ListObjectInspector loi) throws SerDeException {
+  private static List<?> serializeList(Object f, ListObjectInspector loi) throws SerDeException {
     List l = loi.getList(f);
     ObjectInspector eloi = loi.getListElementObjectInspector();
     if (eloi.getCategory() == Category.PRIMITIVE){
@@ -244,7 +257,7 @@ public class HCatRecordSerDe implements SerDe {
       }
       throw new SerDeException("HCatSerDe map type unimplemented");
     } else {
-      throw new SerDeException(getClass().toString() 
+      throw new SerDeException(HCatRecordSerDe.class.toString() 
           + " does not know what to do with fields of unknown category: "
           + eloi.getCategory() + " , type: " + eloi.getTypeName());
     }
@@ -274,4 +287,5 @@ public class HCatRecordSerDe implements SerDe {
     return null;
   }
 
+  
 }

@@ -21,6 +21,9 @@ Apache HCatalog Change Log
 Trunk (unreleased changes)
 
   INCOMPATIBLE CHANGES
+  HCAT-241. Changes to HCatRecord to support switch from StorageDriver to SerDe (khorgath)
+
+  HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   NEW FEATURES
   HCAT-255 Define hadoop properties on the hcat command line (ctdean via gates)
@@ -28,7 +31,6 @@ Trunk (unreleased changes)
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
-  HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
   

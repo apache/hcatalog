@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
 public class DefaultHCatRecord extends HCatRecord {
@@ -89,34 +90,6 @@ public class DefaultHCatRecord extends HCatRecord {
             ReaderWriter.writeDatum(out, contents.get(i));
         }
 
-    }
-
-    @Override
-    public int compareTo(Object that) {
-
-        if(that instanceof HCatRecord) {
-            HCatRecord other = (HCatRecord)that;
-            int mySz = this.size();
-            int urSz = other.size();
-            if(mySz != urSz) {
-                return mySz - urSz;
-            } else{
-                for (int i = 0; i < mySz;i++) {
-                    int c = DataType.compare(get(i), other.get(i));
-                    if (c != 0) {
-                        return c;
-                    }
-                }
-            }
-            return 0;
-        } else {
-            return DataType.compare(this, that);
-        }
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return (compareTo(other) == 0);
     }
 
     @Override

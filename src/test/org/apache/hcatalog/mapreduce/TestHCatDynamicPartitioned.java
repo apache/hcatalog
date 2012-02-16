@@ -133,27 +133,28 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
   }
 
 //TODO 1.0 miniCluster is slow this test times out, make it work
-//  public void testHCatDynamicPartitionMaxPartitions() throws Exception {
-//    HiveConf hc = new HiveConf(this.getClass());
-//
-//    int maxParts = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
-//    System.out.println("Max partitions allowed = " + maxParts);
-//
-//    IOException exc = null;
-//    try {
-//      generateWriteRecords(maxParts+5,maxParts+2,10);
-//      runMRCreate(null,dataColumns,writeRecords,maxParts+5,false);
-//    } catch(IOException e) {
-//      exc = e;
-//    }
-//
-//    if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
-//      assertTrue(exc != null);
-//      assertTrue(exc instanceof HCatException);
-//      assertEquals(ErrorType.ERROR_TOO_MANY_DYNAMIC_PTNS, ((HCatException) exc).getErrorType());
-//    }else{
-//      assertTrue(exc == null);
-//      runMRRead(maxParts+5);
-//    }
-//  }
+// renaming test to make test framework skip it
+  public void _testHCatDynamicPartitionMaxPartitions() throws Exception {
+    HiveConf hc = new HiveConf(this.getClass());
+
+    int maxParts = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
+    System.out.println("Max partitions allowed = " + maxParts);
+
+    IOException exc = null;
+    try {
+      generateWriteRecords(maxParts+5,maxParts+2,10);
+      runMRCreate(null,dataColumns,writeRecords,maxParts+5,false);
+    } catch(IOException e) {
+      exc = e;
+    }
+
+    if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
+      assertTrue(exc != null);
+      assertTrue(exc instanceof HCatException);
+      assertEquals(ErrorType.ERROR_TOO_MANY_DYNAMIC_PTNS, ((HCatException) exc).getErrorType());
+    }else{
+      assertTrue(exc == null);
+      runMRRead(maxParts+5);
+    }
+  }
 }

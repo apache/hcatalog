@@ -19,11 +19,18 @@ package org.apache.hcatalog.data;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.common.HCatUtil;
 
 public class HCatRecordObjectInspector extends StandardStructObjectInspector {
+
+  public static final Log LOG = LogFactory
+      .getLog(HCatRecordObjectInspector.class.getName());
 
   protected HCatRecordObjectInspector(List<String> structFieldNames,
       List<ObjectInspector> structFieldObjectInspectors) {
@@ -37,7 +44,9 @@ public class HCatRecordObjectInspector extends StandardStructObjectInspector {
     }
     
     int fieldID = ((MyField) fieldRef).getFieldID();
-    assert (fieldID >= 0 && fieldID < fields.size());
+    if (!(fieldID >= 0 && fieldID < fields.size())){
+      throw new RuntimeException("Invalid field index ["+fieldID+"]");
+    }
     
     return ((HCatRecord) data).get(fieldID);
   }

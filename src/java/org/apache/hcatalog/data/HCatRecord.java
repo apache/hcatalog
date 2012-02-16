@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
 /**
@@ -133,5 +134,15 @@ public abstract class HCatRecord implements HCatRecordable {
     public void setMap(String fieldName, HCatSchema recordSchema, Map<?,?> value) throws HCatException {
         set(fieldName,recordSchema,value);
     }
+
+//    @Override
+//    public int compareTo(Object that) {
+//      return HCatUtil.compareRecords(this,(HCatRecord)that);
+//    }
+//
+//    @Override
+//    public boolean equals(Object other) {
+//        return (compareTo(other) == 0);
+//    }
 
 }

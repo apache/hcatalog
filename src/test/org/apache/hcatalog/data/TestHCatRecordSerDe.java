@@ -26,8 +26,10 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde2.DelimitedJSONSerDe;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.io.Writable;
+import org.apache.hcatalog.common.HCatUtil;
 
 import junit.framework.Assert;
 import junit.framework.TestCase;
@@ -90,6 +92,8 @@ public class TestHCatRecordSerDe extends TestCase{
     
     props.put(Constants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1");
     props.put(Constants.LIST_COLUMN_TYPES, typeString);
+//    props.put(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
+//    props.put(Constants.SERIALIZATION_FORMAT, "1");
 
     data.put(props, new DefaultHCatRecord(rlist));
     return data;
@@ -112,7 +116,7 @@ public class TestHCatRecordSerDe extends TestCase{
       System.out.println("ONE:"+s.toString());
 
       HCatRecord r2 = (HCatRecord) hrsd.deserialize(s);
-      Assert.assertTrue(r.equals(r2));
+      Assert.assertTrue(HCatUtil.recordsEqual(r,r2));
 
       // If it went through correctly, then s is also a HCatRecord, 
       // and also equal to the above, and a deepcopy, and this holds 
@@ -120,13 +124,13 @@ public class TestHCatRecordSerDe extends TestCase{
 
       Writable s2 = hrsd.serialize(s, hrsd.getObjectInspector());
       System.out.println("TWO:"+s2.toString());
-      Assert.assertTrue(r.equals((HCatRecord)s));
-      Assert.assertTrue(r.equals((HCatRecord)s2));
+      Assert.assertTrue(HCatUtil.recordsEqual(r,(HCatRecord)s));
+      Assert.assertTrue(HCatUtil.recordsEqual(r,(HCatRecord)s2));
       
       // serialize using another serde, and read out that object repr.
       LazySimpleSerDe testSD = new LazySimpleSerDe();
       testSD.initialize(conf, tblProps);
-      
+
       Writable s3 = testSD.serialize(s, hrsd.getObjectInspector());
       System.out.println("THREE:"+s3.toString());
       Object o3 = testSD.deserialize(s3);
@@ -135,8 +139,19 @@ public class TestHCatRecordSerDe extends TestCase{
       // then serialize again using hrsd, and compare results
       HCatRecord s4 = (HCatRecord) hrsd.serialize(o3, testSD.getObjectInspector());
       System.out.println("FOUR:"+s4.toString());
-      Assert.assertFalse(r.equals(s4));
+
+      // Test LazyHCatRecord init and read
+      LazyHCatRecord s5 = new LazyHCatRecord(o3,testSD.getObjectInspector());
+      System.out.println("FIVE:"+s5.toString());
+
+      LazyHCatRecord s6 = new LazyHCatRecord(s4,hrsd.getObjectInspector());
+      System.out.println("SIX:"+s6.toString());
       
+      DelimitedJSONSerDe jsde = new DelimitedJSONSerDe();
+      jsde.initialize(conf,tblProps);
+      
+      Writable s7 = jsde.serialize(s6, hrsd.getObjectInspector());
+      System.out.println("SEVEN:"+s7);
     }
 
   }

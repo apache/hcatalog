@@ -19,17 +19,19 @@ package org.apache.hcatalog.data;
 
 import java.util.List;
 
-import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.Writable;
+import org.apache.hcatalog.common.HCatException;
 
 /**
  * Interface that determines whether we can implement a HCatRecord on top of it
  */
-public interface HCatRecordable extends WritableComparable<Object> {
+public interface HCatRecordable extends Writable {
 
   /**
    * Gets the field at the specified index.
    * @param fieldNum the field number
    * @return the object at the specified index
+   * @throws HCatException 
    */
   Object get(int fieldNum);
 

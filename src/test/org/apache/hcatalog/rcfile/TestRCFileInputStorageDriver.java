@@ -119,7 +119,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(bytesArr[j], w);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(8, t.size());
-      Assert.assertEquals(t,tuples[j]);
+      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
     }
   }
 
@@ -147,7 +147,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(w.size(), 8);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(5, t.size());
-      Assert.assertEquals(t,tuples[j]);
+      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
     }
     assertFalse(rr.nextKeyValue());
   }
@@ -179,7 +179,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(w.size(), 8);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(7, t.size());
-      Assert.assertEquals(t,tuples[j]);
+      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
     }
     assertFalse(rr.nextKeyValue());
   }

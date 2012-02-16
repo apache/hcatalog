@@ -47,6 +47,8 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
+import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
@@ -58,6 +60,9 @@ import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hcatalog.data.DataType;
+import org.apache.hcatalog.data.HCatRecord;
+import org.apache.hcatalog.data.HCatRecordSerDe;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
@@ -71,7 +76,7 @@ import org.apache.thrift.TException;
 
 public class HCatUtil {
 
-    // static final private Log LOG = LogFactory.getLog(HCatUtil.class);
+//     static final private Log LOG = LogFactory.getLog(HCatUtil.class);
 
     public static boolean checkJobContextIfRunningFromBackend(JobContext j) {
         if (j.getConfiguration().get("mapred.task.id", "").equals("")) {
@@ -395,7 +400,7 @@ public class HCatUtil {
     public static void logStackTrace(Log logger) {
         StackTraceElement[] stackTrace = new Exception().getStackTrace();
         for (int i = 1; i < stackTrace.length; i++) {
-            logger.info("\t" + stackTrace[i].toString());
+            logger.debug("\t" + stackTrace[i].toString());
         }
     }
 
@@ -412,9 +417,9 @@ public class HCatUtil {
 
     public static void logList(Log logger, String itemName,
             List<? extends Object> list) {
-        logger.info(itemName + ":");
+        logger.debug(itemName + ":");
         for (Object item : list) {
-            logger.info("\t[" + item + "]");
+            logger.debug("\t[" + item + "]");
         }
     }
 
@@ -520,6 +525,43 @@ public class HCatUtil {
             +"<databasename>.<table name> or <table name>. Got " + tableName);
       }
     }
+    
+    public static boolean recordsEqual(HCatRecord first, HCatRecord second) {
+      return (compareRecords(first,second) == 0);
+    }
+
+    public static int compareRecords(HCatRecord first, HCatRecord second) {
+        return compareRecordContents(first.getAll(), second.getAll());
+    }
+
+    public static int compareRecordContents(List<Object> first, List<Object> second) {
+      int mySz = first.size();
+      int urSz = second.size();
+      if(mySz != urSz) {
+        return mySz - urSz;
+      } else {
+        for (int i = 0; i < first.size(); i++) {
+          int c = DataType.compare(first.get(i), second.get(i));
+          if (c != 0) {
+            return c;
+          }
+        }
+        return 0;
+      }
+    }
+
+    public static ObjectInspector getObjectInspector(String serdeClassName, 
+        Configuration conf, Properties tbl) throws Exception {
+      SerDe s = (SerDe) Class.forName(serdeClassName).newInstance();
+      s.initialize(conf, tbl);
+      return s.getObjectInspector();
+    }
+
+    public static ObjectInspector getHCatRecordObjectInspector(HCatSchema hsch) throws Exception{
+      HCatRecordSerDe hrsd = new HCatRecordSerDe();
+      hrsd.initialize(hsch);
+      return hrsd.getObjectInspector();
+    }
 
     public static void configureOutputStorageHandler(HCatStorageHandler storageHandler,
                                                                               JobContext context,
@@ -560,4 +602,5 @@ public class HCatUtil {
             dest.set(el.getKey(),el.getValue());
         }
     }
+
 }
