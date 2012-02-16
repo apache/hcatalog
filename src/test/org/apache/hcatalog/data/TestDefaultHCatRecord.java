@@ -64,7 +64,7 @@ public class TestDefaultHCatRecord extends TestCase{
     for(int i =0; i < recs.length; i++){
       HCatRecord rec = new DefaultHCatRecord();
       rec.readFields(inpStream);
-      Assert.assertTrue(HCatUtil.recordsEqual(recs[i],rec));
+      Assert.assertTrue(HCatDataCheckUtil.recordsEqual(recs[i],rec));
     }
 
     Assert.assertEquals(fInStream.available(), 0);
@@ -74,13 +74,13 @@ public class TestDefaultHCatRecord extends TestCase{
 
   public void testCompareTo() {
     HCatRecord[] recs = getHCatRecords();
-    Assert.assertTrue(HCatUtil.compareRecords(recs[0],recs[1]) == 0);
+    Assert.assertTrue(HCatDataCheckUtil.compareRecords(recs[0],recs[1]) == 0);
   }
 
   public void testEqualsObject() {
 
     HCatRecord[] recs = getHCatRecords();
-    Assert.assertTrue(HCatUtil.recordsEqual(recs[0],recs[1]));
+    Assert.assertTrue(HCatDataCheckUtil.recordsEqual(recs[0],recs[1]));
   }
 
   private HCatRecord[] getHCatRecords(){

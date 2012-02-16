@@ -45,6 +45,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
+import org.apache.hcatalog.data.HCatDataCheckUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
@@ -119,7 +120,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(bytesArr[j], w);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(8, t.size());
-      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
+      Assert.assertTrue(HCatDataCheckUtil.recordsEqual(t,tuples[j]));
     }
   }
 
@@ -147,7 +148,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(w.size(), 8);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(5, t.size());
-      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
+      Assert.assertTrue(HCatDataCheckUtil.recordsEqual(t,tuples[j]));
     }
     assertFalse(rr.nextKeyValue());
   }
@@ -179,7 +180,7 @@ public class TestRCFileInputStorageDriver extends TestCase{
       Assert.assertEquals(w.size(), 8);
       HCatRecord t = sd.convertToHCatRecord(null,w);
       Assert.assertEquals(7, t.size());
-      Assert.assertTrue(HCatUtil.recordsEqual(t,tuples[j]));
+      Assert.assertTrue(HCatDataCheckUtil.recordsEqual(t,tuples[j]));
     }
     assertFalse(rr.nextKeyValue());
   }

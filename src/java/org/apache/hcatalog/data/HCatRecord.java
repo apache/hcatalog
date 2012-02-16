@@ -135,14 +135,4 @@ public abstract class HCatRecord implements HCatRecordable {
         set(fieldName,recordSchema,value);
     }
 
-//    @Override
-//    public int compareTo(Object that) {
-//      return HCatUtil.compareRecords(this,(HCatRecord)that);
-//    }
-//
-//    @Override
-//    public boolean equals(Object other) {
-//        return (compareTo(other) == 0);
-//    }
-
 }

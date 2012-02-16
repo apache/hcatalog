@@ -19,6 +19,7 @@ package org.apache.hcatalog.data;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.commons.logging.Log;
@@ -86,5 +87,31 @@ public class HCatDataCheckUtil {
     }
     return src_values;
   }
+
+  
+  public static boolean recordsEqual(HCatRecord first, HCatRecord second) {
+    return (compareRecords(first,second) == 0);
+  }
+
+  public static int compareRecords(HCatRecord first, HCatRecord second) {
+    return compareRecordContents(first.getAll(), second.getAll());
+  }
+
+  public static int compareRecordContents(List<Object> first, List<Object> second) {
+    int mySz = first.size();
+    int urSz = second.size();
+    if(mySz != urSz) {
+      return mySz - urSz;
+    } else {
+      for (int i = 0; i < first.size(); i++) {
+        int c = DataType.compare(first.get(i), second.get(i));
+        if (c != 0) {
+          return c;
+        }
+      }
+      return 0;
+    }
+  }
+
 
 }

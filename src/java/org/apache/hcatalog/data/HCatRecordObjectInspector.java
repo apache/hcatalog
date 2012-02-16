@@ -40,12 +40,12 @@ public class HCatRecordObjectInspector extends StandardStructObjectInspector {
   @Override
   public Object getStructFieldData(Object data, StructField fieldRef) {
     if (data == null){
-      return null;
+      return new IllegalArgumentException("Data passed in to get field from was null!");
     }
     
     int fieldID = ((MyField) fieldRef).getFieldID();
     if (!(fieldID >= 0 && fieldID < fields.size())){
-      throw new RuntimeException("Invalid field index ["+fieldID+"]");
+      throw new IllegalArgumentException("Invalid field index ["+fieldID+"]");
     }
     
     return ((HCatRecord) data).get(fieldID);

@@ -30,29 +30,28 @@ public class LazyHCatRecord extends HCatRecord {
   public Object get(int fieldNum) {
     try {
       StructField fref = soi.getAllStructFieldRefs().get(fieldNum);
-      return deserialize(soi.getStructFieldData(o, fref),fref.getFieldObjectInspector());
-    } catch (Exception e) {
-      throw new RuntimeException("SerDe Exception deserializing",e);
+      return HCatRecordSerDe.serializeField(
+          soi.getStructFieldData(o, fref),
+          fref.getFieldObjectInspector());
+    } catch (SerDeException e) {
+      throw new IllegalStateException("SerDe Exception deserializing",e);
     }
   }
   
-  private Object deserialize(Object o, ObjectInspector objectInspector) throws Exception {
-    return HCatRecordSerDe.serializeField(o, objectInspector);
-  }
 
   @Override
   public List<Object> getAll() {
     
     List<Object> r = new ArrayList<Object>(this.size);
     for (int i = 0; i < this.size; i++){
-      r.set(i, get(i));
+      r.add(i, get(i));
     }
     return r;
   }
 
   @Override
   public void set(int fieldNum, Object value) {
-    throw new RuntimeException("not allowed to run set() on LazyHCatRecord");
+    throw new UnsupportedOperationException("not allowed to run set() on LazyHCatRecord");
   }
 
   @Override
@@ -62,14 +61,14 @@ public class LazyHCatRecord extends HCatRecord {
 
   @Override
   public void readFields(DataInput in) throws IOException {
-    throw new RuntimeException("LazyHCatRecord is intended to wrap"
+    throw new UnsupportedOperationException("LazyHCatRecord is intended to wrap"
         + " an object/object inspector as a HCatRecord "
         + "- it does not need to be read from DataInput.");
   }
 
   @Override
   public void write(DataOutput out) throws IOException {
-    throw new RuntimeException("LazyHCatRecord is intended to wrap"
+    throw new UnsupportedOperationException("LazyHCatRecord is intended to wrap"
         + " an object/object inspector as a HCatRecord "
         + "- it does not need to be written to a DataOutput.");
   }
@@ -84,17 +83,17 @@ public class LazyHCatRecord extends HCatRecord {
   @Override
   public void set(String fieldName, HCatSchema recordSchema, Object value)
       throws HCatException {
-    throw new RuntimeException("not allowed to run set() on LazyHCatRecord");
+    throw new UnsupportedOperationException("not allowed to run set() on LazyHCatRecord");
   }
 
   @Override
   public void remove(int idx) throws HCatException {
-    throw new RuntimeException("not allowed to run remove() on LazyHCatRecord");
+    throw new UnsupportedOperationException("not allowed to run remove() on LazyHCatRecord");
   }
 
   @Override
   public void copy(HCatRecord r) throws HCatException {
-    throw new RuntimeException("not allowed to run copy() on LazyHCatRecord");
+    throw new UnsupportedOperationException("not allowed to run copy() on LazyHCatRecord");
   }
   
   public LazyHCatRecord(Object o, ObjectInspector oi) throws Exception{
