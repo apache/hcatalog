@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -34,8 +35,10 @@ import org.apache.hadoop.hive.ql.exec.DDLTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.ql.metadata.AuthorizationException;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.AbstractSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
@@ -44,7 +47,7 @@ import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
-import org.apache.hcatalog.common.AuthUtils;
+import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
@@ -52,7 +55,7 @@ import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 import org.apache.hcatalog.rcfile.RCFileInputDriver;
 import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
-final class CreateTableHook extends AbstractSemanticAnalyzerHook {
+final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
     private String inStorageDriver, outStorageDriver, tableName, loader, storer;
 
@@ -219,6 +222,12 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
         }
         CreateTableDesc desc = ((DDLTask) rootTasks.get(rootTasks.size() - 1))
                 .getWork().getCreateTblDesc();
+        if (desc == null) {
+          // Desc will be null if its CREATE TABLE LIKE. Desc will be
+          // contained in CreateTableLikeDesc. Currently, HCat disallows CTLT in
+          // pre-hook. So, desc can never be null.
+          return;
+        }
         Map<String, String> tblProps = desc.getTblProps();
         if (tblProps == null) {
             // tblProps will be null if user didnt use tblprops in his CREATE
@@ -230,15 +239,10 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
         // first check if we will allow the user to create table.
         String storageHandler = desc.getStorageHandler();
         if (StringUtils.isEmpty(storageHandler)) {
-
-            authorize(context, desc.getLocation());
             tblProps.put(HCatConstants.HCAT_ISD_CLASS, inStorageDriver);
             tblProps.put(HCatConstants.HCAT_OSD_CLASS, outStorageDriver);
 
         } else {
-            // Create instance of HCatStorageHandler and obtain the
-            // HiveAuthorizationprovider for the handler and use it
-            // to authorize.
             try {
                 HCatStorageHandler storageHandlerInst = HCatUtil
                         .getStorageHandler(context.getConf(),
@@ -246,18 +250,11 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
                                                      desc.getSerName(),
                                                      desc.getInputFormat(),
                                                      desc.getOutputFormat());
-                HiveAuthorizationProvider auth = storageHandlerInst
-                        .getAuthorizationProvider();
-
-                // TBD: To pass in the exact read and write privileges.
-                String databaseName = context.getHive().newTable(desc.getTableName()).getDbName();
-                auth.authorize(context.getHive().getDatabase(databaseName), null, null);
+                //Authorization checks are performed by the storageHandler.getAuthorizationProvider(), if  
+                //StorageDelegationAuthorizationProvider is used.
             } catch (IOException e) {
                 throw new SemanticException(e);
-            } catch (HiveException e) {
-                throw new SemanticException(e);
             }
-
         }
         if (loader!=null) {
             tblProps.put(HCatConstants.HCAT_PIG_LOADER, loader);
@@ -266,44 +263,37 @@ final class CreateTableHook extends AbstractSemanticAnalyzerHook {
             tblProps.put(HCatConstants.HCAT_PIG_STORER, storer);
         }
 
-        if (desc == null) {
-            // Desc will be null if its CREATE TABLE LIKE. Desc will be
-            // contained
-            // in CreateTableLikeDesc. Currently, HCat disallows CTLT in
-            // pre-hook.
-            // So, desc can never be null.
-            return;
+        if (desc != null) {
+          try {
+            Table table = context.getHive().newTable(desc.getTableName());
+            if (desc.getLocation() != null) {
+              table.setDataLocation(new Path(desc.getLocation()).toUri());
+            }
+            if (desc.getStorageHandler() != null) {
+              table.setProperty(
+                org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE,
+                desc.getStorageHandler());
+            }
+            for (Map.Entry<String, String> prop : tblProps.entrySet()) {
+              table.setProperty(prop.getKey(), prop.getValue());
+            }
+            for (Map.Entry<String, String> prop : desc.getSerdeProps().entrySet()) {
+              table.setSerdeParam(prop.getKey(), prop.getValue());
+            }
+            //TODO: set other Table properties as needed
+  
+            //authorize against the table operation so that location permissions can be checked if any
+            
+            if (HiveConf.getBoolVar(context.getConf(),
+                HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED)) {
+              authorize(table, Privilege.CREATE);
+            }
+          } catch (HiveException ex) {
+            throw new SemanticException(ex);
+          }
         }
 
         desc.setTblProps(tblProps);
         context.getConf().set(HCatConstants.HCAT_CREATE_TBL_NAME, tableName);
-    }
-
-    private void authorize(HiveSemanticAnalyzerHookContext context, String loc)
-            throws SemanticException {
-
-        Path tblDir;
-        Configuration conf = context.getConf();
-        try {
-            Warehouse wh = new Warehouse(conf);
-            if (loc == null || loc.isEmpty()) {
-                Hive hive = context.getHive();
-                tblDir = wh.getTablePath(
-                        hive.getDatabase(hive.getCurrentDatabase()), tableName)
-                        .getParent();
-            } else {
-                tblDir = wh.getDnsPath(new Path(loc));
-            }
-
-            try {
-                AuthUtils.authorize(tblDir, FsAction.WRITE, conf);
-            } catch (HCatException e) {
-                throw new SemanticException(e);
-            }
-        } catch (MetaException e) {
-            throw new SemanticException(e);
-        } catch (HiveException e) {
-            throw new SemanticException(e);
-        }
     }
 }

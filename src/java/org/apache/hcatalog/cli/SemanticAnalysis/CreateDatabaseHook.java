@@ -20,18 +20,21 @@ package org.apache.hcatalog.cli.SemanticAnalysis;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
-import org.apache.hadoop.hive.ql.parse.AbstractSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.HiveParser;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.plan.CreateDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hcatalog.common.HCatConstants;
 
-final class CreateDatabaseHook  extends AbstractSemanticAnalyzerHook{
+final class CreateDatabaseHook  extends HCatSemanticAnalyzerBase {
 
   String databaseName;
 
@@ -79,5 +82,17 @@ final class CreateDatabaseHook  extends AbstractSemanticAnalyzerHook{
   public void postAnalyze(HiveSemanticAnalyzerHookContext context,
       List<Task<? extends Serializable>> rootTasks) throws SemanticException {
     context.getConf().set(HCatConstants.HCAT_CREATE_DB_NAME, databaseName);
+    super.postAnalyze(context, rootTasks);
+  }
+  
+  @Override
+  protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext context,
+      Hive hive, DDLWork work) throws HiveException {
+    CreateDatabaseDesc createDb = work.getCreateDatabaseDesc();
+    if (createDb != null) {
+      Database db = new Database(createDb.getName(), createDb.getComment(), 
+          createDb.getLocationUri(), createDb.getDatabaseProperties());
+      authorize(db, Privilege.CREATE);
+    }
   }
 }

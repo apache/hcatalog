@@ -17,16 +17,25 @@
  */
 package org.apache.hcatalog.cli.SemanticAnalysis;
 
+import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Order;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
-import org.apache.hadoop.hive.ql.parse.AbstractSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
+import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hcatalog.common.HCatConstants;
 
-public class AddPartitionHook extends AbstractSemanticAnalyzerHook{
+public class AddPartitionHook extends HCatSemanticAnalyzerBase {
 
   private String tblName, inDriver, outDriver;
 
@@ -54,7 +63,7 @@ public class AddPartitionHook extends AbstractSemanticAnalyzerHook{
 //  @Override
 //  public void postAnalyze(HiveSemanticAnalyzerHookContext context,
 //      List<Task<? extends Serializable>> rootTasks) throws SemanticException {
-//
+//    authorizeDDL(context, rootTasks);
 //    try {
 //      Hive db = context.getHive();
 //      Table tbl = db.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
@@ -77,7 +86,76 @@ public class AddPartitionHook extends AbstractSemanticAnalyzerHook{
 //      throw new SemanticException(e);
 //    }
 //  }
+  
+  @Override
+  protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext context,
+      Hive hive, DDLWork work) throws HiveException {
+    AddPartitionDesc addPartitionDesc = work.getAddPartitionDesc();
+    if (addPartitionDesc != null) {
+      String dbName = getDbName(hive, addPartitionDesc.getDbName());
+      Table table = hive.getTable(dbName, addPartitionDesc.getTableName());
+      Path partPath = null;
+      if (addPartitionDesc.getLocation() != null) {
+        partPath = new Path(table.getPath(), addPartitionDesc.getLocation());
+      }
+      
+      Partition part = newPartition(
+          table, addPartitionDesc.getPartSpec(), partPath,
+          addPartitionDesc.getPartParams(),
+          addPartitionDesc.getInputFormat(),
+          addPartitionDesc.getOutputFormat(),
+          addPartitionDesc.getNumBuckets(),
+          addPartitionDesc.getCols(),
+          addPartitionDesc.getSerializationLib(),
+          addPartitionDesc.getSerdeParams(),
+          addPartitionDesc.getBucketCols(),
+          addPartitionDesc.getSortCols());
+      
+      authorize(part, Privilege.CREATE);
+    }
+  }
+  
+  protected Partition newPartition(Table tbl, Map<String, String> partSpec,
+      Path location, Map<String, String> partParams, String inputFormat, String outputFormat,
+      int numBuckets, List<FieldSchema> cols,
+      String serializationLib, Map<String, String> serdeParams,
+      List<String> bucketCols, List<Order> sortCols) throws HiveException {
+
+    try {
+      Partition tmpPart = new Partition(tbl, partSpec, location);
+      org.apache.hadoop.hive.metastore.api.Partition inPart
+        = tmpPart.getTPartition();
+      if (partParams != null) {
+        inPart.setParameters(partParams);
+      }
+      if (inputFormat != null) {
+        inPart.getSd().setInputFormat(inputFormat);
+      }
+      if (outputFormat != null) {
+        inPart.getSd().setOutputFormat(outputFormat);
+      }
+      if (numBuckets != -1) {
+        inPart.getSd().setNumBuckets(numBuckets);
+      }
+      if (cols != null) {
+        inPart.getSd().setCols(cols);
+      }
+      if (serializationLib != null) {
+          inPart.getSd().getSerdeInfo().setSerializationLib(serializationLib);
+      }
+      if (serdeParams != null) {
+        inPart.getSd().getSerdeInfo().setParameters(serdeParams);
+      }
+      if (bucketCols != null) {
+        inPart.getSd().setBucketCols(bucketCols);
+      }
+      if (sortCols != null) {
+        inPart.getSd().setSortCols(sortCols);
+      }
+      
+      return new Partition(tbl, inPart);
+    } catch (Exception e) {
+      throw new HiveException(e);
+    }
+  }
 }
-
-
-

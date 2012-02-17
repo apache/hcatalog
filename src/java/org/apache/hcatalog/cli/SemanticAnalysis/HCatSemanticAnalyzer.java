@@ -19,29 +19,38 @@ package org.apache.hcatalog.cli.SemanticAnalysis;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.AbstractSemanticAnalyzerHook;
-import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.HiveParser;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
-import org.apache.hcatalog.common.AuthUtils;
+import org.apache.hadoop.hive.ql.plan.AlterTableDesc;
+import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.plan.DescDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.DescTableDesc;
+import org.apache.hadoop.hive.ql.plan.DropDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.DropTableDesc;
+import org.apache.hadoop.hive.ql.plan.HiveOperation;
+import org.apache.hadoop.hive.ql.plan.ShowDatabasesDesc;
+import org.apache.hadoop.hive.ql.plan.ShowPartitionsDesc;
+import org.apache.hadoop.hive.ql.plan.ShowTableStatusDesc;
+import org.apache.hadoop.hive.ql.plan.ShowTablesDesc;
+import org.apache.hadoop.hive.ql.plan.SwitchDatabaseDesc;
+import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 
-public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
+public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
 
   private AbstractSemanticAnalyzerHook hook;
   private ASTNode ast;
@@ -116,13 +125,7 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       switch (ast.getToken().getType()) {
 
       case HiveParser.TOK_DESCTABLE:
-        authorize(getFullyQualifiedName((ASTNode) ast.getChild(0).getChild(0)), context, FsAction.READ, false);
-        break;
-
       case HiveParser.TOK_SHOWPARTITIONS:
-        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.READ, false);
-        break;
-
       case HiveParser.TOK_ALTERTABLE_ADDPARTS:
       case HiveParser.TOK_DROPTABLE:
       case HiveParser.TOK_ALTERTABLE_ADDCOLS:
@@ -131,105 +134,141 @@ public class HCatSemanticAnalyzer extends AbstractSemanticAnalyzerHook {
       case HiveParser.TOK_ALTERTABLE_PROPERTIES:
       case HiveParser.TOK_ALTERTABLE_SERIALIZER:
       case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
-        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.WRITE, false);
-        break;
-
       case HiveParser.TOK_ALTERTABLE_PARTITION:
-        authorize(BaseSemanticAnalyzer.unescapeIdentifier(((ASTNode)ast.getChild(0)).getChild(0).getText()), context, FsAction.WRITE, false);
-        break;
-
       case HiveParser.TOK_DESCDATABASE:
-      case HiveParser.TOK_SWITCHDATABASE:
-        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.READ, true);
-        break;
-
+      case HiveParser.TOK_SWITCHDATABASE: 
       case HiveParser.TOK_DROPDATABASE:
-        authorize(BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0)), context, FsAction.WRITE, true);
-        break;
-
       case HiveParser.TOK_CREATEDATABASE:
       case HiveParser.TOK_SHOWDATABASES:
       case HiveParser.TOK_SHOW_TABLESTATUS:
       case HiveParser.TOK_SHOWTABLES:
-        // We do no checks for show tables/db , create db. Its always allowed.
-
-      case HiveParser.TOK_CREATETABLE:
-        // No checks for Create Table, since its not possible to compute location
-        // here easily. So, it is especially handled in CreateTable post hook.
+      case HiveParser.TOK_CREATETABLE: 
         break;
 
       case HiveParser.TOK_EXPORT:
-        String tableName = BaseSemanticAnalyzer.getUnescapedName(((ASTNode) ast.getChild(0).getChild(0)));
-        LOG.debug("Export for table " + tableName);
-        authorize(tableName, context, FsAction.READ, false);
-        break;
-
       case HiveParser.TOK_IMPORT:
-        LOG.debug("Import into location " + context.getConf().get("import.destination.dir"));
-        AuthUtils.authorize(new Path(context.getConf().get("import.destination.dir")),
-                    FsAction.WRITE, context.getConf());
         break;
-
 
       default:
         throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, "Unexpected token: "+ast.getToken());
       }
+      
+      authorizeDDL(context, rootTasks);
+      
     } catch(HCatException e){
-      throw new SemanticException(e);
-    } catch (MetaException e) {
       throw new SemanticException(e);
     } catch (HiveException e) {
       throw new SemanticException(e);
-  }
+    }
 
     if(hook != null){
       hook.postAnalyze(context, rootTasks);
     }
   }
 
-  private void authorize(String name, HiveSemanticAnalyzerHookContext cntxt, FsAction action, boolean isDBOp)
-                                                      throws MetaException, HiveException, HCatException{
+  @Override
+  protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext cntxt, Hive hive, DDLWork work)
+      throws HiveException {
+    // DB opereations, none of them are enforced by Hive right now.
 
-
-    Warehouse wh = new Warehouse(cntxt.getConf());
-    if(!isDBOp){
-      // Do validations for table path.
-      Table tbl;
-      try{
-        tbl = cntxt.getHive().getTable(name);
-      }
-      catch(InvalidTableException ite){
-        // Table itself doesn't exist in metastore, nothing to validate.
-        return;
-      }
-      Path path = tbl.getPath();
-      if(path != null){
-        AuthUtils.authorize(wh.getDnsPath(path), action, cntxt.getConf());
-      } else{
-        // This will happen, if table exists in metastore for a given
-        // tablename, but has no path associated with it, so there is nothing to check.
-        // In such cases, do no checks and allow whatever hive behavior is for it.
-        return;
-      }
-    } else{
-      // Else, its a DB operation.
-    	Database db = cntxt.getHive().getDatabase(name); 
-    	if(null == db){
-    		// Database doesn't exist, nothing to authorize
-    		return;
-    	}
-      AuthUtils.authorize(wh.getDatabasePath(db), action, cntxt.getConf());
-    }
-  }
-
-
-  private String getFullyQualifiedName(ASTNode ast) {
-    // Copied verbatim from DDLSemanticAnalyzer, since its private there.
-    if (ast.getChildCount() == 0) {
-      return ast.getText();
+    ShowDatabasesDesc showDatabases = work.getShowDatabasesDesc();
+    if (showDatabases != null) {
+      authorize(HiveOperation.SHOWDATABASES.getInputRequiredPrivileges(),
+          HiveOperation.SHOWDATABASES.getOutputRequiredPrivileges());
     }
 
-    return getFullyQualifiedName((ASTNode) ast.getChild(0)) + "."
-        + getFullyQualifiedName((ASTNode) ast.getChild(1));
+    DropDatabaseDesc dropDb = work.getDropDatabaseDesc();
+    if (dropDb != null) {
+      Database db = cntxt.getHive().getDatabase(dropDb.getDatabaseName());
+      authorize(db, Privilege.DROP);
+    }
+
+    DescDatabaseDesc descDb = work.getDescDatabaseDesc();
+    if (descDb != null) {
+      Database db = cntxt.getHive().getDatabase(descDb.getDatabaseName());
+      authorize(db, Privilege.SELECT);
+    }
+
+    SwitchDatabaseDesc switchDb = work.getSwitchDatabaseDesc();
+    if (switchDb != null) {
+      Database db = cntxt.getHive().getDatabase(switchDb.getDatabaseName());
+      authorize(db, Privilege.SELECT);
+    }
+
+    ShowTablesDesc showTables = work.getShowTblsDesc();
+    if (showTables != null) {
+      String dbName = showTables.getDbName() == null ? cntxt.getHive().getCurrentDatabase()
+          : showTables.getDbName();
+      authorize(cntxt.getHive().getDatabase(dbName), Privilege.SELECT);
+    }
+
+    ShowTableStatusDesc showTableStatus = work.getShowTblStatusDesc();
+    if (showTableStatus != null) {
+      String dbName = showTableStatus.getDbName() == null ? cntxt.getHive().getCurrentDatabase()
+          : showTableStatus.getDbName();
+      authorize(cntxt.getHive().getDatabase(dbName), Privilege.SELECT);
+    }
+
+    // TODO: add alter database support in HCat
+
+    // Table operations.
+
+    DropTableDesc dropTable = work.getDropTblDesc();
+    if (dropTable != null) {
+      if (dropTable.getPartSpecs() == null) {
+        // drop table is already enforced by Hive. We only check for table level location even if the 
+        // table is partitioned.
+      } else {
+        //this is actually a ALTER TABLE DROP PARITITION statement
+        for (Map<String, String> partSpec : dropTable.getPartSpecs()) {
+          // partitions are not added as write entries in drop partitions in Hive
+          Table table = hive.getTable(hive.getCurrentDatabase(), dropTable.getTableName());
+          List<Partition> partitions = hive.getPartitions(table, partSpec);
+          for (Partition part : partitions) {
+            authorize(part, Privilege.DROP);
+          }
+        }
+      }
+    }
+
+    AlterTableDesc alterTable = work.getAlterTblDesc();
+    if (alterTable != null) {
+      Table table = hive.getTable(hive.getCurrentDatabase(), alterTable.getOldName(), false);
+
+      Partition part = null;
+      if (alterTable.getPartSpec() != null) {
+        part = hive.getPartition(table, alterTable.getPartSpec(), false);
+      }
+
+      String newLocation = alterTable.getNewLocation();
+      
+      /* Hcat requires ALTER_DATA privileges for ALTER TABLE LOCATION statements 
+       * for the old table/partition location and the new location.  
+       */
+      if (alterTable.getOp() == AlterTableDesc.AlterTableTypes.ALTERLOCATION) {
+        if (part != null) {
+          authorize(part, Privilege.ALTER_DATA); // authorize for the old
+                                                 // location, and new location
+          part.setLocation(newLocation);
+          authorize(part, Privilege.ALTER_DATA);
+        } else {
+          authorize(table, Privilege.ALTER_DATA); // authorize for the old
+                                                  // location, and new location
+          table.getTTable().getSd().setLocation(newLocation);
+          authorize(table, Privilege.ALTER_DATA);
+        }
+      }
+      //other alter operations are already supported by Hive
+    }
+
+    DescTableDesc descTable = work.getDescTblDesc();
+    if (descTable != null) {
+      authorizeTable(cntxt.getHive(), descTable.getTableName(), Privilege.SELECT);
+    }
+
+    ShowPartitionsDesc showParts = work.getShowPartsDesc();
+    if (showParts != null) {
+      authorizeTable(cntxt.getHive(), showParts.getTabName(), Privilege.SELECT);
+    }
   }
 }
