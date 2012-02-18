@@ -17,6 +17,10 @@ import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
+/**
+ * An implementation of HCatRecord that wraps an Object returned by a SerDe
+ * and an ObjectInspector.  This delays deserialization of unused columns.
+ */
 public class LazyHCatRecord extends HCatRecord {
 
   public static final Log LOG = LogFactory
@@ -24,7 +28,6 @@ public class LazyHCatRecord extends HCatRecord {
 
   private Object o;
   private StructObjectInspector soi;
-  private int size;
   
   @Override
   public Object get(int fieldNum) {
@@ -42,8 +45,8 @@ public class LazyHCatRecord extends HCatRecord {
   @Override
   public List<Object> getAll() {
     
-    List<Object> r = new ArrayList<Object>(this.size);
-    for (int i = 0; i < this.size; i++){
+    List<Object> r = new ArrayList<Object>(this.size());
+    for (int i = 0; i < this.size(); i++){
       r.add(i, get(i));
     }
     return r;
@@ -56,7 +59,7 @@ public class LazyHCatRecord extends HCatRecord {
 
   @Override
   public int size() {
-    return this.size;
+    return soi.getAllStructFieldRefs().size();
   }
 
   @Override
@@ -106,17 +109,28 @@ public class LazyHCatRecord extends HCatRecord {
 
     this.soi = (StructObjectInspector)oi;
     this.o = o;
-    this.size = soi.getAllStructFieldRefs().size();
 
   }
 
   @Override
   public String toString(){
     StringBuilder sb = new StringBuilder();
-    for(int i = 0; i< size ; i++) {
+    for(int i = 0; i< size() ; i++) {
       sb.append(get(i)+"\t");
     }
     return sb.toString();
+  }
+
+  /**
+   * Convert this LazyHCatRecord to a DefaultHCatRecord.  This is required
+   * before you can write out a record via write.
+   * @return an HCatRecord that can be serialized
+   * @throws HCatException
+   */
+  public HCatRecord getWritable() throws HCatException {
+    DefaultHCatRecord d = new DefaultHCatRecord();
+    d.copy(this);
+    return d;
   }
 
 }

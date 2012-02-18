@@ -33,6 +33,7 @@ Trunk (unreleased changes)
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-259 Make readFields() and write() in LazyHCatRecord work (gates via khorgath)
 
   HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  
   
