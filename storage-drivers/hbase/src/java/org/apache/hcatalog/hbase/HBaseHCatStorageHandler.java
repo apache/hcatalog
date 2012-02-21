@@ -40,7 +40,6 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.metastore.api.Constants;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -49,6 +48,9 @@ import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvide
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.OutputFormat;
+import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
@@ -57,13 +59,11 @@ import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
-import org.apache.hcatalog.mapreduce.HCatInputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.HCatOutputStorageDriver;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
-import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 import org.apache.thrift.TBase;
 import org.apache.zookeeper.ZooKeeper;
 
@@ -74,7 +74,7 @@ import com.facebook.fb303.FacebookBase;
  * tables through HCatalog. The implementation is very similar to the
  * HiveHBaseStorageHandler, with more details to suit HCatalog.
  */
-public class HBaseHCatStorageHandler extends HCatStorageHandler {
+public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveMetaHook {
 
     final static public String DEFAULT_PREFIX = "default.";
 
@@ -82,36 +82,24 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
 
     private HBaseAdmin         admin;
 
-    /*
-     * @return subclass of HCatInputStorageDriver
-     *
-     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler
-     * #getInputStorageDriver()
-     */
     @Override
-    public Class<? extends HCatInputStorageDriver> getInputStorageDriver() {
-        return HBaseInputStorageDriver.class;
+    public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        //TODO complete rework and fill this in
+    }
+
+    @Override
+    public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+        //TODO complete rework and fill this in
     }
 
     /*
-     * @return subclass of HCatOutputStorageDriver
-     *
-     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler
-     * #getOutputStorageDriver()
-     */
-    @Override
-    public Class<? extends HCatOutputStorageDriver> getOutputStorageDriver() {
-        return HBaseOutputStorageDriver.class;
-    }
-
-    /*
-     * @return instance of HiveAuthorizationProvider
-     *
-     * @throws HiveException
-     *
-     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler#
-     * getAuthorizationProvider()
-     */
+    * @return instance of HiveAuthorizationProvider
+    *
+    * @throws HiveException
+    *
+    * @see org.apache.hcatalog.storagehandler.HCatStorageHandler#
+    * getAuthorizationProvider()
+    */
     @Override
     public HiveAuthorizationProvider getAuthorizationProvider()
             throws HiveException {
@@ -191,14 +179,13 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
                     hbaseColumnQualifiers, hbaseColumnQualifiersBytes);
 
             HTableDescriptor tableDesc;
-
+            Set<String> uniqueColumnFamilies = new HashSet<String>();
             if (!getHBaseAdmin().tableExists(tableName)) {
                 // if it is not an external table then create one
                 if (!isExternal) {
                     // Create the column descriptors
                     tableDesc = new HTableDescriptor(tableName);
-                    Set<String> uniqueColumnFamilies = new HashSet<String>(
-                            hbaseColumnFamilies);
+                    uniqueColumnFamilies.addAll(hbaseColumnFamilies);
                     uniqueColumnFamilies.remove(hbaseColumnFamilies.get(iKey));
 
                     for (String columnFamily : uniqueColumnFamilies) {
@@ -242,6 +229,15 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
 
             // ensure the table is online
             new HTable(hbaseConf, tableDesc.getName());
+
+            //Set up znodes in revision manager.
+            RevisionManager rm = getOpenedRevisionManager(hbaseConf);
+            if (rm instanceof ZKBasedRevisionManager) {
+                ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
+                zkRM.setUpZNodes(tableName, new ArrayList<String>(
+                        uniqueColumnFamilies));
+            }
+
         } catch (MasterNotRunningException mnre) {
             throw new MetaException(StringUtils.stringifyException(mnre));
         } catch (IOException ie) {
@@ -299,34 +295,35 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
         return this;
     }
 
-    /*
-     * @param tableDesc
-     *
-     * @param jobProperties
-     *
-     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler
-     * #configureTableJobProperties(org.apache.hadoop.hive.ql.plan.TableDesc,
-     * java.util.Map)
-     */
-    @Override
-    public void configureTableJobProperties(TableDesc tableDesc,
-            Map<String, String> jobProperties) {
-        Properties tableProperties = tableDesc.getProperties();
-
-        jobProperties.put(HBaseSerDe.HBASE_COLUMNS_MAPPING,
-                tableProperties.getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING));
-
-        String tableName = tableProperties
-                .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
-        if (tableName == null) {
-            tableName = tableProperties.getProperty(Constants.META_TABLE_NAME);
-            if (tableName.startsWith(DEFAULT_PREFIX)) {
-                tableName = tableName.substring(DEFAULT_PREFIX.length());
-            }
-        }
-        jobProperties.put(HBaseSerDe.HBASE_TABLE_NAME, tableName);
-
-    }
+//TODO finish rework remove this
+//    /*
+//     * @param tableDesc
+//     *
+//     * @param jobProperties
+//     *
+//     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler
+//     * #configureTableJobProperties(org.apache.hadoop.hive.ql.plan.TableDesc,
+//     * java.util.Map)
+//     */
+//    @Override
+//    public void configureTableJobProperties(TableDesc tableDesc,
+//            Map<String, String> jobProperties) {
+//        Properties tableProperties = tableDesc.getProperties();
+//
+//        jobProperties.put(HBaseSerDe.HBASE_COLUMNS_MAPPING,
+//                tableProperties.getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING));
+//
+//        String tableName = tableProperties
+//                .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
+//        if (tableName == null) {
+//            tableName = tableProperties.getProperty(Constants.META_TABLE_NAME);
+//            if (tableName.startsWith(DEFAULT_PREFIX)) {
+//                tableName = tableName.substring(DEFAULT_PREFIX.length());
+//            }
+//        }
+//        jobProperties.put(HBaseSerDe.HBASE_TABLE_NAME, tableName);
+//
+//    }
 
     private HBaseAdmin getHBaseAdmin() throws MetaException {
         try {
@@ -357,14 +354,26 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
         return tableName;
     }
 
+    @Override
+    public Class<? extends InputFormat> getInputFormatClass() {
+        //TODO replace this with rework
+        return InputFormat.class;
+    }
+
+    @Override
+    public Class<? extends OutputFormat> getOutputFormatClass() {
+        //TODO replace this with rework
+        return SequenceFileOutputFormat.class;
+    }
+
     /*
-     * @return subclass of SerDe
-     *
-     * @throws UnsupportedOperationException
-     *
-     * @see
-     * org.apache.hcatalog.storagehandler.HCatStorageHandler#getSerDeClass()
-     */
+    * @return subclass of SerDe
+    *
+    * @throws UnsupportedOperationException
+    *
+    * @see
+    * org.apache.hcatalog.storagehandler.HCatStorageHandler#getSerDeClass()
+    */
     @Override
     public Class<? extends SerDe> getSerDeClass()
             throws UnsupportedOperationException {
@@ -395,6 +404,13 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler {
                     getHBaseAdmin().disableTable(tableName);
                 }
                 getHBaseAdmin().deleteTable(tableName);
+
+              //Set up znodes in revision manager.
+                RevisionManager rm = getOpenedRevisionManager(hbaseConf);
+                if (rm instanceof ZKBasedRevisionManager) {
+                    ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
+                    zkRM.deleteZNodes(tableName);
+                }
             }
         } catch (IOException ie) {
             throw new MetaException(StringUtils.stringifyException(ie));

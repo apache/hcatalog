@@ -33,6 +33,8 @@ Trunk (unreleased changes)
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-253 HBase revision manager should configure/drop znodes in the create/drop table meta hooks in the storage handler. (avandana via toffer)
+
   HCAT-259 Make readFields() and write() in LazyHCatRecord work (gates via khorgath)
 
   HCAT-194. Better error messages for HCatalog access control errors (julienledem via hashutosh)  

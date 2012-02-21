@@ -429,6 +429,36 @@ class ZKUtil {
     }
 
     /**
+     * Delete table znodes.
+     *
+     * @param tableName the hbase table name
+     * @throws IOException Signals that an I/O exception has occurred.
+     */
+    void deleteZNodes(String tableName) throws IOException {
+        String transactionDataTablePath = PathUtil.getTxnDataPath(baseDir,
+                tableName);
+        deleteRecursively(transactionDataTablePath);
+    }
+
+    void deleteRecursively(String path) throws IOException {
+        try {
+            List<String> children = getSession().getChildren(path, false);
+            if (children.size() != 0) {
+                for (String child : children) {
+                    deleteRecursively(path + "/" + child);
+                }
+            }
+            getSession().delete(path, -1);
+        } catch (KeeperException e) {
+            throw new IOException(
+                    "Exception while deleting path " + path + ".", e);
+        } catch (InterruptedException e) {
+            throw new IOException(
+                    "Exception while deleting path " + path + ".", e);
+        }
+    }
+
+    /**
      * This method serializes a given instance of TBase object.
      *
      * @param obj An instance of TBase

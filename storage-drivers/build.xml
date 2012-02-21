@@ -24,10 +24,8 @@
             <isset property="dist.drivers.dir"/>
         </condition>
         <!-- add storage drivers here -->
-<!--  TODO migrate hbase storageHandler
         <echo>Executing storage-driver &quot;${target}&quot; for hbase</echo>
         <ant target="${target}" dir="hbase" inheritAll="false" useNativeBasedir="true"/>
--->
     </target>
 
 
