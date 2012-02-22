@@ -235,7 +235,7 @@ public class ManyMiniCluster {
             zookeeperDir = new File(workDir,"zk").getAbsolutePath();
             zookeeperPort = findFreePort();
             zookeeperCluster = new MiniZooKeeperCluster();
-            zookeeperCluster.setClientPort(zookeeperPort);
+            zookeeperCluster.setDefaultClientPort(zookeeperPort);
             zookeeperCluster.startup(new File(zookeeperDir));
         } catch(Exception e) {
             throw new IllegalStateException("Failed to Setup Zookeeper Cluster",e);
@@ -262,7 +262,7 @@ public class ManyMiniCluster {
             hbaseConf.setInt("hbase.regionserver.info.port", -1);
 
             hbaseCluster = new MiniHBaseCluster(hbaseConf, numRegionServers);
-            hbaseConf.set("hbase.master", hbaseCluster.getHMasterAddress().toString());
+            hbaseConf.set("hbase.master", hbaseCluster.getMaster().getServerName().getHostAndPort());
             //opening the META table ensures that cluster is running
             new HTable(hbaseConf, HConstants.META_TABLE_NAME);
         } catch (Exception e) {

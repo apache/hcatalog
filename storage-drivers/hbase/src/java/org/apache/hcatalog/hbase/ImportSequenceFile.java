@@ -125,11 +125,15 @@ class ImportSequenceFile {
                     try {
                         baseOutputCommitter.commitJob(jobContext);
                         Configuration conf = jobContext.getConfiguration();
+                        try {
                         //import hfiles
                         new LoadIncrementalHFiles(conf)
                                 .doBulkLoad(HFileOutputFormat.getOutputPath(jobContext),
                                                    new HTable(conf,
                                                                       conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY)));
+                        } catch (Exception e) {
+                        	throw new IOException("BulkLoad failed.", e);
+                        }
                     } finally {
                         cleanupScratch(jobContext);
                     }

@@ -111,21 +111,21 @@
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
         <pathelement location="${hive.conf.dir}"/>
-        <!-- jars Thrift depends on -->
-        <fileset dir="${ivy.lib.dir}" includes="libthrift*.jar"/>
+        <!-- jars Hadoop depends on -->
+        <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/" >
+            <include name="**/lib/*.jar" />
+            <include name="hadoop-test-*.jar" />
+        </fileset>
+        <path refid="classpath"/>
+        <pathelement location="${driver.jar}"/>
         <!-- jars Hive depends on -->
         <fileset dir="${hive.root}/build/ivy/lib/default/">
             <include name="**/*.jar" />
             <exclude name="*hbase*.jar" />
+            <exclude name="zookeeper*.jar" />
+            <exclude name="guava*.jar" />
+            <exclude name="slf4j*.jar" />
         </fileset>
-        <!-- jars Hadoop depends on -->
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/lib/" >
-            <include name="**/*.jar" />
-        </fileset>
-        <pathelement location="${driver.jar}"/>
-        <path refid="classpath"/>
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-1.0.0/"
-                 includes="hadoop-test-1.0.0.jar"/>
     </path>
 
     <path id="test.zookeeper.classpath">
