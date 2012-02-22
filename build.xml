@@ -471,6 +471,8 @@
         <include name="commons-logging-*.jar"/>
         <include name="commons-logging-api-*.jar"/>
         <include name="commons-pool-*.jar"/>
+        <include name="jackson-mapper-asl-*.jar"/>
+        <include name="jackson-core-asl-*.jar"/>
         <include name="datanucleus-connectionpool-*.jar"/>
         <include name="datanucleus-core-*.jar"/>
         <include name="datanucleus-enhancer-*.jar"/>

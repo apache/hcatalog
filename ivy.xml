@@ -51,5 +51,7 @@
         <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}" conf="common->master" /> 
         <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="releaseaudit->default"/>
         <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="package->master"/>
+        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="${jackson.version}" conf="common->master"/>
+        <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="${jackson.version}" conf="common->master"/>
     </dependencies>
 </ivy-module>

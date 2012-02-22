@@ -28,6 +28,8 @@ Trunk (unreleased changes)
   HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   NEW FEATURES
+  HCAT-249 Rework JSON StorageDriver into a JSON SerDe (khorgath via gates)
+
   HCAT-255 Define hadoop properties on the hcat command line (ctdean via gates)
 
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
