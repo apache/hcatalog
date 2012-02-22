@@ -46,6 +46,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-248 Set execute.setugi conf variable to true by default (hashutosh via gates)
+
   HCAT-254. Fix storage-drives build.xml (hashutosh via khorgath)
 
 Release 0.3.0 - Unreleased
