@@ -44,12 +44,16 @@ fi
 
 # filter debug command line parameter
 debug=false
+dump_classpath=false
 
 for f in $@; do
      if [[ $f = "-secretDebugCmd" ]]; then
         debug=true
      else
         remaining="${remaining} $f"
+     fi
+     if [[ $f = "-classpath" ]]; then
+        dump_classpath=true
      fi
 done
 
@@ -77,6 +81,8 @@ if [ "$debug" == "true" ]; then
 	echo "exec $HADOOP_PREFIX/bin/hadoop jar $HCAT_JAR org.apache.hcatalog.cli.HCatCli $remaining"
 	echo "with HADOOP_CLASSPATH set to ($HADOOP_CLASSPATH)"
 	echo "and HADOOP_OPTS set to ($HADOOP_OPTS)"
+elif [ "$dump_classpath" == "true" ]; then
+    echo $HADOOP_CLASSPATH
 else
 	exec $HADOOP_PREFIX/bin/hadoop jar  $HCAT_JAR org.apache.hcatalog.cli.HCatCli "$@"
 fi
