@@ -83,14 +83,26 @@ public class TestHCatRecordSerDe extends TestCase{
       c1_1.add(i2);
       c1.add(c1_1);
     rlist.add(c1);
+    List<Object> am = new ArrayList<Object>();
+      Map<String,String> am_1 = new HashMap<String,String>();
+        am_1.put("noo","haha");
+      am.add(am_1);
+    rlist.add(am);
+    List<Object> aa = new ArrayList<Object>();
+      List<String> aa_1 = new ArrayList<String>();
+        aa_1.add("bloo");
+        aa_1.add("bwahaha");
+      aa.add(aa_1);
+    rlist.add(aa);
 
     String typeString = 
         "tinyint,smallint,int,bigint,double,float,string,string,"
         + "struct<a:string,b:string>,array<int>,map<smallint,string>,boolean,"
-        + "array<struct<i1:int,i2:struct<ii1:array<int>,ii2:map<string,struct<iii1:int>>>>>";
+        + "array<struct<i1:int,i2:struct<ii1:array<int>,ii2:map<string,struct<iii1:int>>>>>,"
+        + "array<map<string,string>>,array<array<string>>";
     Properties props = new Properties();
     
-    props.put(Constants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1");
+    props.put(Constants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1,am,aa");
     props.put(Constants.LIST_COLUMN_TYPES, typeString);
 //    props.put(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
 //    props.put(Constants.SERIALIZATION_FORMAT, "1");
@@ -146,7 +158,7 @@ public class TestHCatRecordSerDe extends TestCase{
 
       LazyHCatRecord s6 = new LazyHCatRecord(s4,hrsd.getObjectInspector());
       System.out.println("SIX:"+s6.toString());
-      
+
     }
 
   }

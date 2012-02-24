@@ -48,6 +48,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-270 HCatRecord SerDe does not handle List<Map> or List<List> or List<lazy primitive> correctly (khorgath via gates)
+
   HCAT-248 Set execute.setugi conf variable to true by default (hashutosh via gates)
 
   HCAT-254. Fix storage-drives build.xml (hashutosh via khorgath)

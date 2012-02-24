@@ -238,7 +238,11 @@ public class HCatRecordSerDe implements SerDe {
     List l = loi.getList(f);
     ObjectInspector eloi = loi.getListElementObjectInspector();
     if (eloi.getCategory() == Category.PRIMITIVE){
-      return l;
+      List<Object> list = new ArrayList<Object>(l.size());
+      for(int i = 0; i < l.size(); i++){
+        list.add(((PrimitiveObjectInspector)eloi).getPrimitiveJavaObject(l.get(i)));
+      }
+      return list;
     } else if (eloi.getCategory() == Category.STRUCT){
       List<List<?>> list = new ArrayList<List<?>>(l.size());
       for (int i = 0 ; i < l.size() ; i++ ){
@@ -250,19 +254,20 @@ public class HCatRecordSerDe implements SerDe {
       for (int i = 0 ; i < l.size() ; i++ ){
         list.add(serializeList(l.get(i), (ListObjectInspector) eloi));
       }
+      return list;
     } else if (eloi.getCategory() == Category.MAP){
       List<Map<?,?>> list = new ArrayList<Map<?,?>>(l.size());
       for (int i = 0 ; i < l.size() ; i++ ){
         list.add(serializeMap(l.get(i), (MapObjectInspector) eloi));
       }
-      throw new SerDeException("HCatSerDe map type unimplemented");
+      return list;
     } else {
       throw new SerDeException(HCatRecordSerDe.class.toString() 
           + " does not know what to do with fields of unknown category: "
           + eloi.getCategory() + " , type: " + eloi.getTypeName());
     }
-    return l;
   }
+
 
   /**
    * Return an object inspector that can read through the object 
