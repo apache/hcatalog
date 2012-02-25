@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -226,7 +227,9 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   static void cancelDelegationTokens(JobContext context, OutputJobInfo outputJobInfo) throws Exception {
-    HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(null, context.getConfiguration());
+    HiveConf hiveConf = HCatUtil.getHiveConf(null, 
+                                             context.getConfiguration());
+    HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
     // cancel the deleg. tokens that were acquired for this job now that
     // we are done - we should cancel if the tokens were acquired by
     // HCatOutputFormat and not if they were supplied by Oozie. In the latter

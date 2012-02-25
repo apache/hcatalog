@@ -20,6 +20,7 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.mapred.HCatMapRedUtil;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -27,6 +28,7 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 
 /**
  * Part of the DefaultOutput*Container classes
@@ -88,7 +90,9 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
 
         //Cancel HCat and JobTracker tokens
         try {
-            HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(null, context.getConfiguration());
+            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
+                                                  context.getConfiguration());
+            HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
               client.cancelDelegationToken(tokenStrForm);

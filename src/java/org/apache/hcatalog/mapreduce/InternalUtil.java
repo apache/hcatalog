@@ -34,25 +34,19 @@ import java.util.Properties;
 class InternalUtil {
 
     static StorerInfo extractStorerInfo(StorageDescriptor sd, Map<String, String> properties) throws IOException {
-        String inputSDClass, outputSDClass;
-
-        if (properties.containsKey(HCatConstants.HCAT_ISD_CLASS)){
-          inputSDClass = properties.get(HCatConstants.HCAT_ISD_CLASS);
-        }else{
-          // attempt to default to RCFile if the storage descriptor says it's an RCFile
-          if ((sd.getInputFormat() != null) && (sd.getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS))){
-            inputSDClass = HCatConstants.HCAT_RCFILE_ISD_CLASS;
-          }else{
-            throw new IOException("No input storage driver classname found for table, cannot write partition");
-          }
-        }
-
         Properties hcatProperties = new Properties();
         for (String key : properties.keySet()){
             hcatProperties.put(key, properties.get(key));
         }
+        
+        // also populate with StorageDescriptor->SerDe.Parameters
+        for (Map.Entry<String, String>param :
+            sd.getSerdeInfo().getParameters().entrySet()) {
+          hcatProperties.put(param.getKey(), param.getValue());
+        }
 
-        return new StorerInfo(inputSDClass, null,
+
+        return new StorerInfo(null, null,
                 sd.getInputFormat(), sd.getOutputFormat(), sd.getSerdeInfo().getSerializationLib(),
                 properties.get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE),
                 hcatProperties);
@@ -120,9 +114,24 @@ class InternalUtil {
 
   //TODO this has to find a better home, it's also hardcoded as default in hive would be nice
   // if the default was decided by the serde
-  static void initializeOutputSerDe(SerDe serDe, Configuration conf, OutputJobInfo jobInfo) throws SerDeException {
+  static void initializeOutputSerDe(SerDe serDe, Configuration conf, 
+                                    OutputJobInfo jobInfo) 
+  throws SerDeException {
+    initializeSerDe(serDe, conf, jobInfo.getTableInfo(), 
+                    jobInfo.getOutputSchema()); 
+  }
+
+  static void initializeInputSerDe(SerDe serDe, Configuration conf, 
+                                   HCatTableInfo info)
+  throws SerDeException {
+    initializeSerDe(serDe, conf, info, info.getDataColumns()); 
+  }
+
+  static void initializeSerDe(SerDe serDe, Configuration conf, 
+                              HCatTableInfo info, HCatSchema s)
+  throws SerDeException {
      Properties props = new Properties();
-    List<FieldSchema> fields = HCatUtil.getFieldSchemaList(jobInfo.getOutputSchema().getFields());
+    List<FieldSchema> fields = HCatUtil.getFieldSchemaList(s.getFields());
     props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMNS,
           MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
     props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMN_TYPES,
@@ -133,14 +142,12 @@ class InternalUtil {
     props.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
 
     //add props from params set in table schema
-    props.putAll(jobInfo.getTableInfo().getStorerInfo().getProperties());
-    //add props from job properties
-    props.putAll(jobInfo.getProperties());
+    props.putAll(info.getStorerInfo().getProperties());
 
     serDe.initialize(conf,props);
   }
 
-  static Reporter createReporter(TaskAttemptContext context) {
+static Reporter createReporter(TaskAttemptContext context) {
       return new ProgressReporter(context);
   }
 

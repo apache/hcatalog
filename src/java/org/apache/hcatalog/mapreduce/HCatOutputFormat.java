@@ -69,11 +69,13 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     @SuppressWarnings("unchecked")
     public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
       HiveMetaStoreClient client = null;
+      HiveConf hiveConf = null;
 
       try {
 
         Configuration conf = job.getConfiguration();
-        client = createHiveClient(null, conf);
+        hiveConf = HCatUtil.getHiveConf(null, conf);
+        client = HCatUtil.createHiveClient(hiveConf);
         Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
 
         if (table.getPartitionKeysSize() == 0 ){
@@ -141,7 +143,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         //Serialize the output info into the configuration
         outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
         outputJobInfo.setOutputSchema(tableSchema);
+        harRequested = getHarRequested(hiveConf);
         outputJobInfo.setHarRequested(harRequested);
+        maxDynamicPartitions = getMaxDynamicPartitions(hiveConf);
         outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
 
         HCatUtil.configureOutputStorageHandler(storageHandler,job,outputJobInfo);
@@ -222,76 +226,21 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         return getOutputFormat(context).getOutputCommitter(context);
     }
 
-    //TODO remove url component, everything should be encapsulated in HiveConf
-    static HiveMetaStoreClient createHiveClient(String url, Configuration conf) throws IOException, MetaException {
-      HiveConf hiveConf = getHiveConf(url, conf);
-//      HCatUtil.logHiveConf(LOG, hiveConf);
-      try {
-        return new HiveMetaStoreClient(hiveConf);
-      } catch (MetaException e) {
-        LOG.error("Error connecting to the metastore (conf follows): "+e.getMessage(), e);
-        HCatUtil.logHiveConf(LOG, hiveConf);
-        throw e;
-      }
-    }
+    private static int getMaxDynamicPartitions(HiveConf hConf) {
+      // by default the bounds checking for maximum number of 
+      // dynamic partitions is disabled (-1)
+      int maxDynamicPartitions = -1;
 
-
-    static HiveConf getHiveConf(String url, Configuration conf) throws IOException {
-      HiveConf hiveConf = new HiveConf(HCatOutputFormat.class);
-
-      if( url != null ) {
-        //User specified a thrift url
-
-        hiveConf.set("hive.metastore.local", "false");
-        hiveConf.set(ConfVars.METASTOREURIS.varname, url);
-
-        String kerberosPrincipal = conf.get(HCatConstants.HCAT_METASTORE_PRINCIPAL);
-        if (kerberosPrincipal == null){
-            kerberosPrincipal = conf.get(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname);
-        }
-        if (kerberosPrincipal != null){
-            hiveConf.setBoolean(ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-            hiveConf.set(ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, kerberosPrincipal);
-        }
-      } else {
-        //Thrift url is null, copy the hive conf into the job conf and restore it
-        //in the backend context
-
-        if( conf.get(HCatConstants.HCAT_KEY_HIVE_CONF) == null ) {
-          conf.set(HCatConstants.HCAT_KEY_HIVE_CONF, HCatUtil.serialize(hiveConf.getAllProperties()));
-        } else {
-          //Copy configuration properties into the hive conf
-          Properties properties = (Properties) HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_HIVE_CONF));
-
-          for(Map.Entry<Object, Object> prop : properties.entrySet() ) {
-            if( prop.getValue() instanceof String ) {
-              hiveConf.set((String) prop.getKey(), (String) prop.getValue());
-            } else if( prop.getValue() instanceof Integer ) {
-              hiveConf.setInt((String) prop.getKey(), (Integer) prop.getValue());
-            } else if( prop.getValue() instanceof Boolean ) {
-              hiveConf.setBoolean((String) prop.getKey(), (Boolean) prop.getValue());
-            } else if( prop.getValue() instanceof Long ) {
-              hiveConf.setLong((String) prop.getKey(), (Long) prop.getValue());
-            } else if( prop.getValue() instanceof Float ) {
-              hiveConf.setFloat((String) prop.getKey(), (Float) prop.getValue());
-            }
-          }
-        }
-
-      }
-
-      if(conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-        hiveConf.set("hive.metastore.token.signature", conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
-      }
-
-      // figure out what the maximum number of partitions allowed is, so we can pass it on to our outputinfo
       if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
-        maxDynamicPartitions = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
-      }else{
-        maxDynamicPartitions = -1; // disables bounds checking for maximum number of dynamic partitions
+        maxDynamicPartitions = hConf.getIntVar(
+                                HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
       }
-      harRequested = hiveConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
-      return hiveConf;
+
+      return maxDynamicPartitions;
     }
 
+    private static boolean getHarRequested(HiveConf hConf) {
+      return hConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
+    }
+   
 }

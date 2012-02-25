@@ -26,6 +26,7 @@ public enum ErrorType {
     ERROR_DB_INIT                       (1000, "Error initializing database session"),
     ERROR_EXCEED_MAXPART                (1001, "Query result exceeded maximum number of partitions allowed"),
 
+    ERROR_SET_INPUT                    (1002, "Error setting input information"),
 
     /* HCat Output Format related errors 2000 - 2999 */
     ERROR_INVALID_TABLE                 (2000, "Table specified does not exist"),

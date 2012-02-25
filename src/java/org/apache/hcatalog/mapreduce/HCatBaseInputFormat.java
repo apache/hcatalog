@@ -21,22 +21,49 @@ package org.apache.hcatalog.mapreduce;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.SerDe;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobConfigurable;
+import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hadoop.util.StringUtils;
+
+import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
-public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable, HCatRecord> {
+public abstract class HCatBaseInputFormat 
+  extends InputFormat<WritableComparable, HCatRecord> {
   
   /**
    * get the schema for the HCatRecord data returned by HCatInputFormat.
@@ -44,8 +71,13 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * @param context the jobContext
    * @throws IllegalArgumentException
    */
-  public static HCatSchema getOutputSchema(JobContext context) throws Exception {
-    String os = context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
+  private Class<? extends InputFormat> inputFileFormatClass;
+
+  // TODO needs to go in InitializeInput? as part of InputJobInfo
+  public static HCatSchema getOutputSchema(JobContext context) 
+    throws IOException {
+    String os = context.getConfiguration().get(
+                                HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
     if (os == null) {
       return getTableSchema(context);
     } else {
@@ -58,10 +90,19 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * @param job the job object
    * @param hcatSchema the schema to use as the consolidated schema
    */
-  public static void setOutputSchema(Job job,HCatSchema hcatSchema) throws Exception {
-    job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA, HCatUtil.serialize(hcatSchema));
+  public static void setOutputSchema(Job job,HCatSchema hcatSchema) 
+    throws IOException {
+    job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA, 
+                               HCatUtil.serialize(hcatSchema));
   }
 
+  private static 
+    org.apache.hadoop.mapred.InputFormat<WritableComparable, Writable>
+    getMapRedInputFormat (JobConf job, Class inputFormatClass) throws IOException {
+      return (
+          org.apache.hadoop.mapred.InputFormat<WritableComparable, Writable>) 
+        ReflectionUtils.newInstance(inputFormatClass, job);
+  }
 
   /**
    * Logically split the set of input files for the job. Returns the
@@ -91,34 +132,39 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
       return splits;
     }
 
+    HCatStorageHandler storageHandler;
+    JobConf jobConf;
+    Configuration conf = jobContext.getConfiguration();
     //For each matching partition, call getSplits on the underlying InputFormat
     for(PartInfo partitionInfo : partitionInfoList) {
-      Job localJob = new Job(jobContext.getConfiguration());
-      HCatInputStorageDriver storageDriver;
-      try {
-        storageDriver = getInputDriverInstance(partitionInfo.getInputStorageDriverClass());
-      } catch (Exception e) {
-        throw new IOException(e);
-      }
+      jobConf = HCatUtil.getJobConfFromContext(jobContext);
+      setInputPath(jobConf, partitionInfo.getLocation());
+      Map<String,String> jobProperties = partitionInfo.getJobProperties();
 
       HCatSchema allCols = new HCatSchema(new LinkedList<HCatFieldSchema>());
-      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getDataColumns().getFields())
+      for(HCatFieldSchema field: 
+          inputJobInfo.getTableInfo().getDataColumns().getFields())
           allCols.append(field);
-      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getPartitionColumns().getFields())
+      for(HCatFieldSchema field: 
+          inputJobInfo.getTableInfo().getPartitionColumns().getFields())
           allCols.append(field);
 
-      //Pass all required information to the storage driver
-      initStorageDriver(storageDriver, localJob, partitionInfo, allCols);
+      HCatUtil.copyJobPropertiesToJobConf(jobProperties, jobConf);
 
-      //Get the input format for the storage driver
-      InputFormat inputFormat =
-        storageDriver.getInputFormat(partitionInfo.getInputStorageDriverProperties());
+      storageHandler = partitionInfo.getStorageHandler();
 
-      //Call getSplit on the storage drivers InputFormat, create an
+      //Get the input format
+      Class inputFormatClass = storageHandler.getInputFormatClass();
+      org.apache.hadoop.mapred.InputFormat inputFormat = 
+                            getMapRedInputFormat(jobConf, inputFormatClass);
+
+      //Call getSplit on the InputFormat, create an
       //HCatSplit for each underlying split
-      List<InputSplit> baseSplits = inputFormat.getSplits(localJob);
+      //NumSplits is 0 for our purposes
+      org.apache.hadoop.mapred.InputSplit[] baseSplits = 
+        inputFormat.getSplits(jobConf, 0);
 
-      for(InputSplit split : baseSplits) {
+      for(org.apache.hadoop.mapred.InputSplit split : baseSplits) {
         splits.add(new HCatSplit(
             partitionInfo,
             split,
@@ -141,36 +187,66 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * @throws IOException or InterruptedException
    */
   @Override
-  public RecordReader<WritableComparable, HCatRecord> createRecordReader(InputSplit split,
+  public RecordReader<WritableComparable, HCatRecord> 
+  createRecordReader(InputSplit split,
       TaskAttemptContext taskContext) throws IOException, InterruptedException {
 
     HCatSplit hcatSplit = (HCatSplit) split;
     PartInfo partitionInfo = hcatSplit.getPartitionInfo();
+    JobContext jobContext = taskContext;
 
-    //If running through a Pig job, the InputJobInfo will not be available in the
-    //backend process context (since HCatLoader works on a copy of the JobContext and does
-    //not call HCatInputFormat.setInput in the backend process).
-    //So this function should NOT attempt to read the InputJobInfo.
+    HCatStorageHandler storageHandler = partitionInfo.getStorageHandler();
+    JobConf jobConf = HCatUtil.getJobConfFromContext(jobContext);
 
-    HCatInputStorageDriver storageDriver;
+    Class inputFormatClass = storageHandler.getInputFormatClass();
+    org.apache.hadoop.mapred.InputFormat inputFormat = 
+                              getMapRedInputFormat(jobConf, inputFormatClass);
+
+    Map<String, String> jobProperties = partitionInfo.getJobProperties();
+    HCatUtil.copyJobPropertiesToJobConf(jobProperties, jobConf);
+    Reporter reporter = InternalUtil.createReporter(taskContext);
+    org.apache.hadoop.mapred.RecordReader recordReader =
+      inputFormat.getRecordReader(hcatSplit.getBaseSplit(), jobConf, reporter);
+
+    SerDe serde;
     try {
-      storageDriver = getInputDriverInstance(partitionInfo.getInputStorageDriverClass());
+      serde = ReflectionUtils.newInstance(storageHandler.getSerDeClass(), 
+                                          jobContext.getConfiguration());
+
+//    HCatUtil.logEntrySet(LOG, "props to serde", properties.entrySet());
+
+      Configuration conf = storageHandler.getConf();
+      InternalUtil.initializeInputSerDe(serde, conf, 
+                                  partitionInfo.getTableInfo());
+                                  
     } catch (Exception e) {
-      throw new IOException(e);
+      throw new IOException("Unable to create objectInspector "
+          + "for serde class " + storageHandler.getSerDeClass().getName()
+          + e);
     }
 
-    //Pass all required information to the storage driver
-    initStorageDriver(storageDriver, taskContext, partitionInfo, hcatSplit.getTableSchema());
+    Map<Integer,Object> partCols = getPartColsByPosition(partitionInfo, 
+                                                        hcatSplit);
 
-    //Get the input format for the storage driver
-    InputFormat inputFormat =
-      storageDriver.getInputFormat(partitionInfo.getInputStorageDriverProperties());
+    HCatRecordReader hcatRecordReader = new HCatRecordReader(storageHandler, 
+                                                             recordReader, 
+                                                             serde, 
+                                                             partCols);
+    return hcatRecordReader;
+  }
 
-    //Create the underlying input formats record record and an HCat wrapper
-    RecordReader recordReader =
-      inputFormat.createRecordReader(hcatSplit.getBaseSplit(), taskContext);
+  /** gets the partition columns that are not part of the Hive storage */
+  private static Map<Integer, Object> getPartColsByPosition(PartInfo partInfo, 
+                                                            HCatSplit split)
+  {
+    Map<Integer, Object> partCols = new HashMap<Integer, Object>();
 
-    return new HCatRecordReader(storageDriver,recordReader);
+    for (String partitionKey : partInfo.getPartitionValues().keySet()) {
+      partCols.put(split.getSchema().getPosition(partitionKey), 
+                   partInfo.getPartitionValues().get(partitionKey));
+    }
+
+    return partCols;
   }
 
   /**
@@ -179,14 +255,18 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * has been called for a JobContext.
    * @param context the context
    * @return the table schema
-   * @throws Exception if HCatInputFromat.setInput has not been called for the current context
+   * @throws IOException if HCatInputFormat.setInput has not been called 
+   *                     for the current context
    */
-  public static HCatSchema getTableSchema(JobContext context) throws Exception {
+  public static HCatSchema getTableSchema(JobContext context) 
+  throws IOException {
     InputJobInfo inputJobInfo = getJobInfo(context);
       HCatSchema allCols = new HCatSchema(new LinkedList<HCatFieldSchema>());
-      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getDataColumns().getFields())
+      for(HCatFieldSchema field: 
+          inputJobInfo.getTableInfo().getDataColumns().getFields())
           allCols.append(field);
-      for(HCatFieldSchema field: inputJobInfo.getTableInfo().getPartitionColumns().getFields())
+      for(HCatFieldSchema field: 
+          inputJobInfo.getTableInfo().getPartitionColumns().getFields())
           allCols.append(field);
     return allCols;
   }
@@ -197,73 +277,74 @@ public abstract class HCatBaseInputFormat extends InputFormat<WritableComparable
    * exception since that means HCatInputFormat.setInput has not been called.
    * @param jobContext the job context
    * @return the InputJobInfo object
-   * @throws Exception the exception
+   * @throws IOException the exception
    */
-  private static InputJobInfo getJobInfo(JobContext jobContext) throws Exception {
-    String jobString = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
+  private static InputJobInfo getJobInfo(JobContext jobContext) 
+    throws IOException {
+    String jobString = jobContext.getConfiguration().get(
+                                  HCatConstants.HCAT_KEY_JOB_INFO);
     if( jobString == null ) {
-      throw new Exception("job information not found in JobContext. HCatInputFormat.setInput() not called?");
+      throw new IOException("job information not found in JobContext."
+         + " HCatInputFormat.setInput() not called?");
     }
 
     return (InputJobInfo) HCatUtil.deserialize(jobString);
   }
 
+  private void setInputPath(JobConf jobConf, String location) 
+  throws IOException{
 
-  /**
-   * Initializes the storage driver instance. Passes on the required
-   * schema information, path info and arguments for the supported
-   * features to the storage driver.
-   * @param storageDriver the storage driver
-   * @param context the job context
-   * @param partitionInfo the partition info
-   * @param tableSchema the table level schema
-   * @throws IOException Signals that an I/O exception has occurred.
-   */
-  private void initStorageDriver(HCatInputStorageDriver storageDriver,
-      JobContext context, PartInfo partitionInfo,
-      HCatSchema tableSchema) throws IOException {
+    // ideally we should just call FileInputFormat.setInputPaths() here - but
+    // that won't work since FileInputFormat.setInputPaths() needs
+    // a Job object instead of a JobContext which we are handed here
 
-    storageDriver.setInputPath(context, partitionInfo.getLocation());
+    int length = location.length();
+    int curlyOpen = 0;
+    int pathStart = 0;
+    boolean globPattern = false;
+    List<String> pathStrings = new ArrayList<String>();
 
-    if( partitionInfo.getPartitionSchema() != null ) {
-      storageDriver.setOriginalSchema(context, partitionInfo.getPartitionSchema());
+    for (int i=0; i<length; i++) {
+      char ch = location.charAt(i);
+      switch(ch) {
+      case '{' : {
+        curlyOpen++;
+        if (!globPattern) {
+          globPattern = true;
+        }
+        break;
+      }
+      case '}' : {
+        curlyOpen--;
+        if (curlyOpen == 0 && globPattern) {
+          globPattern = false;
+        }
+        break;
+      }
+      case ',' : {
+        if (!globPattern) {
+          pathStrings.add(location.substring(pathStart, i));
+          pathStart = i + 1 ;
+        }
+        break;
+      }
+      }
+    }
+    pathStrings.add(location.substring(pathStart, length));
+
+    Path[] paths = StringUtils.stringToPath(pathStrings.toArray(new String[0]));
+
+    FileSystem fs = FileSystem.get(jobConf);
+    Path path = paths[0].makeQualified(fs);
+    StringBuilder str = new StringBuilder(StringUtils.escapeString(
+                                                          path.toString()));
+    for(int i = 1; i < paths.length;i++) {
+      str.append(StringUtils.COMMA_STR);
+      path = paths[i].makeQualified(fs);
+      str.append(StringUtils.escapeString(path.toString()));
     }
 
-    storageDriver.setPartitionValues(context, partitionInfo.getPartitionValues());
-
-    //Set the output schema. Use the schema given by user if set, otherwise use the
-    //table level schema
-    HCatSchema outputSchema = null;
-    String outputSchemaString = context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
-    if( outputSchemaString != null ) {
-      outputSchema = (HCatSchema) HCatUtil.deserialize(outputSchemaString);
-    } else {
-      outputSchema = tableSchema;
-    }
-
-    storageDriver.setOutputSchema(context, outputSchema);
-
-    storageDriver.initialize(context, partitionInfo.getInputStorageDriverProperties());
-  }
-
-  /**
-   * Gets the input driver instance.
-   * @param inputStorageDriverClass the input storage driver classname
-   * @return the input driver instance
-   * @throws Exception
-   */
-  @SuppressWarnings("unchecked")
-  private HCatInputStorageDriver getInputDriverInstance(
-      String inputStorageDriverClass) throws Exception {
-    try {
-      Class<? extends HCatInputStorageDriver> driverClass =
-        (Class<? extends HCatInputStorageDriver>)
-        Class.forName(inputStorageDriverClass);
-      return driverClass.newInstance();
-    } catch(Exception e) {
-      throw new Exception("error creating storage driver " +
-          inputStorageDriverClass, e);
-    }
+    jobConf.set("mapred.input.dir", str.toString());
   }
 
 }

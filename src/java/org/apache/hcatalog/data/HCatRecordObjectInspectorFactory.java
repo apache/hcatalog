@@ -68,6 +68,7 @@ public class HCatRecordObjectInspectorFactory {
           fieldObjectInspectors.add(getStandardObjectInspectorFromTypeInfo(fieldTypeInfos.get(i)));
         }
         oi = new HCatRecordObjectInspector(fieldNames,fieldObjectInspectors);
+
         break;
       default: 
         // Hmm.. not good, 

@@ -27,14 +27,30 @@ import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
+import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
+import org.apache.hadoop.hive.ql.metadata.HiveUtils;
+import org.apache.hadoop.hive.ql.plan.TableDesc;
+import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde2.Deserializer;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -91,16 +107,17 @@ public class InitializeInput {
         client = new HiveMetaStoreClient(hiveConf, null);
       }
       Table table = client.getTable(inputJobInfo.getDatabaseName(),
-                                                inputJobInfo.getTableName());
+                                    inputJobInfo.getTableName());
 
       List<PartInfo> partInfoList = new ArrayList<PartInfo>();
 
+      inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
       if( table.getPartitionKeys().size() != 0 ) {
         //Partitioned table
         List<Partition> parts = client.listPartitionsByFilter(inputJobInfo.getDatabaseName(),
-                                                                                 inputJobInfo.getTableName(),
-                                                                                 inputJobInfo.getFilter(),
-                                                                                 (short) -1);
+                                                              inputJobInfo.getTableName(),
+                                                              inputJobInfo.getFilter(),
+                                                              (short) -1);
 
         // Default to 100,000 partitions if hive.metastore.maxpartition is not defined
         int maxPart = hiveConf.getInt("hcat.metastore.maxpartitions", 100000);
@@ -110,19 +127,22 @@ public class InitializeInput {
 
         // populate partition info
         for (Partition ptn : parts){
-          PartInfo partInfo = extractPartInfo(ptn.getSd(),ptn.getParameters());
-          partInfo.setPartitionValues(createPtnKeyValueMap(table,ptn));
+          PartInfo partInfo = extractPartInfo(ptn.getSd(),ptn.getParameters(), 
+                                              job.getConfiguration(), 
+                                              inputJobInfo);
+          partInfo.setPartitionValues(createPtnKeyValueMap(table, ptn));
           partInfoList.add(partInfo);
         }
 
       }else{
         //Non partitioned table
-        PartInfo partInfo = extractPartInfo(table.getSd(),table.getParameters());
+        PartInfo partInfo = extractPartInfo(table.getSd(),table.getParameters(),
+                                            job.getConfiguration(), 
+                                            inputJobInfo);
         partInfo.setPartitionValues(new HashMap<String,String>());
         partInfoList.add(partInfo);
       }
       inputJobInfo.setPartitions(partInfoList);
-      inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
 
       return HCatUtil.serialize(inputJobInfo);
     } finally {
@@ -154,63 +174,31 @@ public class InitializeInput {
     return ptnKeyValues;
   }
 
-  static PartInfo extractPartInfo(StorageDescriptor sd, Map<String,String> parameters) throws IOException{
+  static PartInfo extractPartInfo(StorageDescriptor sd, 
+      Map<String,String> parameters, Configuration conf, 
+      InputJobInfo inputJobInfo) throws IOException{
     HCatSchema schema = HCatUtil.extractSchemaFromStorageDescriptor(sd);
-    String inputStorageDriverClass = null;
+    StorerInfo storerInfo = InternalUtil.extractStorerInfo(sd,parameters);
+
     Properties hcatProperties = new Properties();
-    if (parameters.containsKey(HCatConstants.HCAT_ISD_CLASS)){
-      inputStorageDriverClass = parameters.get(HCatConstants.HCAT_ISD_CLASS);
-    }else{
-      // attempt to default to RCFile if the storage descriptor says it's an RCFile
-      if ((sd.getInputFormat() != null) && (sd.getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS))){
-        inputStorageDriverClass = HCatConstants.HCAT_RCFILE_ISD_CLASS;
-      }else{
-        throw new IOException("No input storage driver classname found, cannot read partition");
-      }
-    }
+    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf, 
+                                                                   storerInfo);
+
+    // copy the properties from storageHandler to jobProperties
+    Map<String, String>jobProperties = HCatUtil.getInputJobProperties(
+                                                            storageHandler, 
+                                                            inputJobInfo);
+
     for (String key : parameters.keySet()){
       if (key.startsWith(HCAT_KEY_PREFIX)){
         hcatProperties.put(key, parameters.get(key));
       }
     }
-    return new PartInfo(schema,inputStorageDriverClass,  sd.getLocation(), hcatProperties);
-  }
-
-
-
-  static StorerInfo extractStorerInfo(StorageDescriptor sd, Map<String, String> properties) throws IOException {
-    String inputSDClass, outputSDClass;
-
-    if (properties.containsKey(HCatConstants.HCAT_ISD_CLASS)){
-      inputSDClass = properties.get(HCatConstants.HCAT_ISD_CLASS);
-    }else{
-      // attempt to default to RCFile if the storage descriptor says it's an RCFile
-      if ((sd.getInputFormat() != null) && (sd.getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS))){
-        inputSDClass = HCatConstants.HCAT_RCFILE_ISD_CLASS;
-      }else{
-        throw new IOException("No input storage driver classname found for table, cannot write partition");
-      }
-    }
-
-    if (properties.containsKey(HCatConstants.HCAT_OSD_CLASS)){
-      outputSDClass = properties.get(HCatConstants.HCAT_OSD_CLASS);
-    }else{
-      // attempt to default to RCFile if the storage descriptor says it's an RCFile
-      if ((sd.getOutputFormat() != null) && (sd.getOutputFormat().equals(HCatConstants.HIVE_RCFILE_OF_CLASS))){
-        outputSDClass = HCatConstants.HCAT_RCFILE_OSD_CLASS;
-      }else{
-        throw new IOException("No output storage driver classname found for table, cannot write partition");
-      }
-    }
-
-    Properties hcatProperties = new Properties();
-    for (String key : properties.keySet()){
-      if (key.startsWith(HCAT_KEY_PREFIX)){
-        hcatProperties.put(key, properties.get(key));
-      }
-    }
-
-    return new StorerInfo(inputSDClass, outputSDClass, hcatProperties);
+    // FIXME 
+    // Bloating partinfo with inputJobInfo is not good
+    return new PartInfo(schema, storageHandler,
+                        sd.getLocation(), hcatProperties,
+                        jobProperties, inputJobInfo.getTableInfo());
   }
 
     static HiveConf getHiveConf(InputJobInfo iInfo, Configuration conf)

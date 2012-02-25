@@ -22,16 +22,21 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.InputSplit;
+
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
 /** The HCatSplit wrapper around the InputSplit returned by the underlying InputFormat */
-public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.mapred.InputSplit {
+public class HCatSplit extends InputSplit 
+  implements Writable,org.apache.hadoop.mapred.InputSplit {
 
     Log LOG = LogFactory.getLog(HCatSplit.class);
     
@@ -39,10 +44,13 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
     private PartInfo partitionInfo;
 
     /** The split returned by the underlying InputFormat split. */
-    private InputSplit baseSplit;
+    private org.apache.hadoop.mapred.InputSplit baseMapRedSplit;
 
     /** The schema for the HCatTable */
     private HCatSchema tableSchema;
+
+    private HiveConf hiveConf;
+
     /**
      * Instantiates a new hcat split.
      */
@@ -53,13 +61,16 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
      * Instantiates a new hcat split.
      *
      * @param partitionInfo the partition info
-     * @param baseSplit the base split
+     * @param baseMapRedSplit the base mapred split
      * @param tableSchema the table level schema
      */
-    public HCatSplit(PartInfo partitionInfo, InputSplit baseSplit, HCatSchema tableSchema) {
-        this.partitionInfo = partitionInfo;
-        this.baseSplit = baseSplit;
-        this.tableSchema = tableSchema;
+    public HCatSplit(PartInfo partitionInfo, 
+        org.apache.hadoop.mapred.InputSplit baseMapRedSplit, 
+        HCatSchema tableSchema) {
+
+      this.partitionInfo = partitionInfo;
+      this.baseMapRedSplit = baseMapRedSplit;
+      this.tableSchema = tableSchema;
     }
 
     /**
@@ -72,10 +83,10 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
 
     /**
      * Gets the underlying InputSplit.
-     * @return the baseSplit
+     * @return the baseMapRedSplit
      */
-    public InputSplit getBaseSplit() {
-        return baseSplit;
+    public org.apache.hadoop.mapred.InputSplit getBaseSplit() {
+        return baseMapRedSplit;
     }
 
     /**
@@ -100,11 +111,8 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
     @Override
     public long getLength() {
         try {
-          return baseSplit.getLength();
+          return baseMapRedSplit.getLength();
         } catch (IOException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
-        } catch (InterruptedException e) {
           LOG.warn(e.getMessage());
           LOG.warn(e.getStackTrace());
         }
@@ -117,11 +125,8 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
     @Override
     public String[] getLocations() {
         try {
-          return baseSplit.getLocations();
+          return baseMapRedSplit.getLocations();
         } catch (IOException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
-        } catch (InterruptedException e) {
           LOG.warn(e.getMessage());
           LOG.warn(e.getStackTrace());
         }
@@ -138,21 +143,22 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
         partitionInfo = (PartInfo) HCatUtil.deserialize(partitionInfoString);
 
         String baseSplitClassName = WritableUtils.readString(input);
-        InputSplit split;
+        org.apache.hadoop.mapred.InputSplit split;
         try{
-            Class<? extends InputSplit> splitClass =
-                (Class<? extends InputSplit>) Class.forName(baseSplitClassName);
+            Class<? extends org.apache.hadoop.mapred.InputSplit> splitClass =
+                (Class<? extends org.apache.hadoop.mapred.InputSplit>) Class.forName(baseSplitClassName);
 
             //Class.forName().newInstance() does not work if the underlying
             //InputSplit has package visibility
-            Constructor<? extends InputSplit> constructor =
+            Constructor<? extends org.apache.hadoop.mapred.InputSplit> 
+              constructor =
                 splitClass.getDeclaredConstructor(new Class[]{});
             constructor.setAccessible(true);
 
             split = constructor.newInstance();
             // read baseSplit from input
             ((Writable)split).readFields(input);
-            this.baseSplit = split;
+            this.baseMapRedSplit = split;
         }catch(Exception e){
             throw new IOException ("Exception from " + baseSplitClassName, e);
         }
@@ -171,13 +177,17 @@ public class HCatSplit extends InputSplit implements Writable,org.apache.hadoop.
         // write partitionInfo into output
         WritableUtils.writeString(output, partitionInfoString);
 
-        WritableUtils.writeString(output, baseSplit.getClass().getName());
-        Writable baseSplitWritable = (Writable)baseSplit;
+        WritableUtils.writeString(output, baseMapRedSplit.getClass().getName());
+        Writable baseSplitWritable = (Writable)baseMapRedSplit;
         //write  baseSplit into output
         baseSplitWritable.write(output);
 
         //write the table schema into output
         String tableSchemaString = HCatUtil.serialize(tableSchema);
         WritableUtils.writeString(output, tableSchemaString);
+    }
+
+    public HCatSchema getSchema() {
+      return tableSchema;
     }
 }

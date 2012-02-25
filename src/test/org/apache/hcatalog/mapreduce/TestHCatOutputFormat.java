@@ -161,8 +161,7 @@ public class TestHCatOutputFormat extends TestCase {
     Partition part = client.getPartition(dbName, tblName, Arrays.asList("p1"));
     assertNotNull(part);
 
-    StorerInfo storer = InitializeInput.extractStorerInfo(part.getSd(),part.getParameters());
-    assertEquals(storer.getInputSDClass(), "testInputClass");
+    StorerInfo storer = InternalUtil.extractStorerInfo(part.getSd(),part.getParameters());
     assertEquals(storer.getProperties().get("hcat.testarg"), "testArgValue");
     assertTrue(part.getSd().getLocation().indexOf("p1") != -1);
   }

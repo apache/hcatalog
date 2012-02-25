@@ -153,10 +153,12 @@ public class TestHCatRecordSerDe extends TestCase{
       System.out.println("FOUR:"+s4.toString());
 
       // Test LazyHCatRecord init and read
-      LazyHCatRecord s5 = new LazyHCatRecord(o3,testSD.getObjectInspector());
+      LazyHCatRecord s5 = new LazyHCatRecord(o3,testSD.getObjectInspector(),
+              new HashMap<Integer, Object>());
       System.out.println("FIVE:"+s5.toString());
 
-      LazyHCatRecord s6 = new LazyHCatRecord(s4,hrsd.getObjectInspector());
+      LazyHCatRecord s6 = new LazyHCatRecord(s4,hrsd.getObjectInspector(),
+              new HashMap<Integer, Object>());
       System.out.println("SIX:"+s6.toString());
 
     }

@@ -161,11 +161,14 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
 
         try {
-            HiveMetaStoreClient client = HCatOutputFormat.createHiveClient(null, jobContext.getConfiguration());
+            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
+                                                jobContext.getConfiguration());
+            HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
-            // HCatOutputFormat and not if they were supplied by Oozie. In the latter
-            // case the HCAT_KEY_TOKEN_SIGNATURE property in the conf will not be set
+            // HCatOutputFormat and not if they were supplied by Oozie.
+            // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in 
+            // the conf will not be set
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && jobContext.getConfiguration().get
                     (HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
@@ -280,9 +283,10 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         List<Partition> partitionsAdded = new ArrayList<Partition>();
 
         try {
-            client = HCatOutputFormat.createHiveClient(null, conf);
+            HiveConf hiveConf = HCatUtil.getHiveConf(null, conf);
+            client = HCatUtil.createHiveClient(hiveConf);
 
-            StorerInfo storer = InitializeInput.extractStorerInfo(table.getSd(),table.getParameters());
+            StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());
 
             updateTableSchema(client, table, jobInfo.getOutputSchema());
 

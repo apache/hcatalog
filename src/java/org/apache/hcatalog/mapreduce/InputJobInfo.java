@@ -56,6 +56,9 @@ public class InputJobInfo implements Serializable{
   /** implementation specific job properties */
   private Properties properties;
 
+  /** job properties */
+  private Map<String,String> jobProperties;
+
   /**
    * Initializes a new InputJobInfo
    * for reading data from a table.
@@ -70,19 +73,21 @@ public class InputJobInfo implements Serializable{
    * The special string _HOST will be replaced automatically with the correct host name
    */
   public static InputJobInfo create(String databaseName,
-                                                  String tableName,
-                                                  String filter,
-                                                  String serverUri,
-                                                  String serverKerberosPrincipal) {
-    return new InputJobInfo(databaseName,tableName,filter,serverUri,serverKerberosPrincipal);
+                                    String tableName,
+                                    String filter,
+                                    String serverUri,
+                                    String serverKerberosPrincipal) {
+    return new InputJobInfo(databaseName, tableName, filter, 
+                            serverUri, serverKerberosPrincipal);
   }
 
   private InputJobInfo(String databaseName,
-                                String tableName,
-                                String filter,
-                                String serverUri,
-                                String serverKerberosPrincipal) {
-    this.databaseName = (databaseName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
+                       String tableName,
+                       String filter,
+                       String serverUri,
+                       String serverKerberosPrincipal) {
+    this.databaseName = (databaseName == null) ? 
+                        MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
     this.tableName = tableName;
     this.serverUri = serverUri;
     this.serverKerberosPrincipal = serverKerberosPrincipal;
@@ -169,5 +174,4 @@ public class InputJobInfo implements Serializable{
   public Properties getProperties() {
     return properties;
   }
-
 }

@@ -21,7 +21,11 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.plan.TableDesc;
+
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 
 /** The Class used to serialize the partition information read from the metadata server that maps to a partition */
 public class PartInfo implements Serializable {
@@ -32,8 +36,8 @@ public class PartInfo implements Serializable {
   /** The partition schema. */
   private final HCatSchema partitionSchema;
 
-  /** The information about which input storage driver to use */
-  private final String inputStorageDriverClass;
+  /** The information about which input storage handler to use */
+  private final HCatStorageHandler storageHandler;
 
   /** HCat-specific properties set at the partition */
   private final Properties hcatProperties;
@@ -44,18 +48,28 @@ public class PartInfo implements Serializable {
   /** The map of partition key names and their values. */
   private Map<String,String> partitionValues;
 
+  /** Job properties associated with this parition */
+  Map<String,String> jobProperties;
+
+  /** the table info associated with this partition */
+  HCatTableInfo tableInfo;
+
   /**
    * Instantiates a new hcat partition info.
    * @param partitionSchema the partition schema
-   * @param inputStorageDriverClass the input storage driver class name
+   * @param storageHandler the storage handler
    * @param location the location
    * @param hcatProperties hcat-specific properties at the partition
    */
-  public PartInfo(HCatSchema partitionSchema, String inputStorageDriverClass, String location, Properties hcatProperties){
+  public PartInfo(HCatSchema partitionSchema, HCatStorageHandler storageHandler,
+                  String location, Properties hcatProperties, 
+                  Map<String,String> jobProperties, HCatTableInfo tableInfo){
     this.partitionSchema = partitionSchema;
-    this.inputStorageDriverClass = inputStorageDriverClass;
+    this.storageHandler = storageHandler;
     this.location = location;
     this.hcatProperties = hcatProperties;
+    this.jobProperties = jobProperties;
+    this.tableInfo = tableInfo;
   }
 
   /**
@@ -71,8 +85,8 @@ public class PartInfo implements Serializable {
    * Gets the value of input storage driver class name.
    * @return the input storage driver class name
    */
-  public String getInputStorageDriverClass() {
-    return inputStorageDriverClass;
+  public HCatStorageHandler getStorageHandler() {
+    return storageHandler;
   }
 
 
@@ -80,7 +94,7 @@ public class PartInfo implements Serializable {
    * Gets the value of hcatProperties.
    * @return the hcatProperties
    */
-  public Properties getInputStorageDriverProperties() {
+  public Properties getInputStorageHandlerProperties() {
     return hcatProperties;
   }
 
@@ -106,5 +120,13 @@ public class PartInfo implements Serializable {
    */
   public Map<String,String> getPartitionValues() {
     return partitionValues;
+  }
+
+  public Map<String,String> getJobProperties() {
+    return jobProperties;
+  }
+
+  public HCatTableInfo getTableInfo() {
+    return tableInfo;
   }
 }

@@ -137,15 +137,17 @@ public class HCatTableInfo implements Serializable {
    * @throws IOException
    */
   static HCatTableInfo valueOf(Table table) throws IOException {
-    HCatSchema dataColumns = HCatUtil.extractSchemaFromStorageDescriptor(table.getSd());
-    StorerInfo storerInfo = InternalUtil.extractStorerInfo(table.getSd(), table.getParameters());
+    HCatSchema dataColumns = 
+        HCatUtil.extractSchemaFromStorageDescriptor(table.getSd());
+    StorerInfo storerInfo = 
+        InternalUtil.extractStorerInfo(table.getSd(), table.getParameters());
     HCatSchema partitionColumns = HCatUtil.getPartitionColumns(table);
     return new HCatTableInfo(table.getDbName(),
-                                           table.getTableName(),
-                                           dataColumns,
-                                           partitionColumns,
-                                           storerInfo,
-                                           table);
+                             table.getTableName(),
+                             dataColumns,
+                             partitionColumns,
+                             storerInfo,
+                             table);
   }
 
   @Override

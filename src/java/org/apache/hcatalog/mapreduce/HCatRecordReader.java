@@ -18,71 +18,118 @@
 package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.SerDe;
+
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
+import org.apache.hcatalog.data.LazyHCatRecord;
 
-/** The HCat wrapper for the underlying RecordReader, this ensures that the initialize on
- * the underlying record reader is done with the underlying split, not with HCatSplit.
+/** The HCat wrapper for the underlying RecordReader, 
+ * this ensures that the initialize on
+ * the underlying record reader is done with the underlying split, 
+ * not with HCatSplit.
  */
-class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> 
-  implements org.apache.hadoop.mapred.RecordReader {
+class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
   
     Log LOG = LogFactory.getLog(HCatRecordReader.class);
-    int lineCount = 0;
+    WritableComparable currentKey;
+    Writable currentValue;
 
     /** The underlying record reader to delegate to. */
-    private final RecordReader<? extends WritableComparable, ? extends Writable> baseRecordReader;
+    //org.apache.hadoop.mapred.
+    private final org.apache.hadoop.mapred.RecordReader
+      <WritableComparable, Writable> baseRecordReader;
 
-    /** The storage driver used */
-    private final HCatInputStorageDriver storageDriver;
+    /** The storage handler used */
+    private final HCatStorageHandler storageHandler;
+
+    private SerDe serde;
+
+    private Map<Integer,Object> partCols;
 
     /**
      * Instantiates a new hcat record reader.
      * @param baseRecordReader the base record reader
      */
-    public HCatRecordReader(HCatInputStorageDriver storageDriver, RecordReader<? extends WritableComparable, ? extends Writable> baseRecordReader) {
-        this.baseRecordReader = baseRecordReader;
-        this.storageDriver = storageDriver;
+    public HCatRecordReader(HCatStorageHandler storageHandler, 
+        org.apache.hadoop.mapred.RecordReader<WritableComparable, 
+                     Writable> baseRecordReader, 
+                     SerDe serde, 
+                     Map<Integer,Object> partCols) {
+      this.baseRecordReader = baseRecordReader;
+      this.storageHandler = storageHandler;
+      this.serde = serde;
+      this.partCols = partCols;
     }
-
+    
     /* (non-Javadoc)
-     * @see org.apache.hadoop.mapreduce.RecordReader#initialize(org.apache.hadoop.mapreduce.InputSplit, org.apache.hadoop.mapreduce.TaskAttemptContext)
+     * @see org.apache.hadoop.mapreduce.RecordReader#initialize(
+     * org.apache.hadoop.mapreduce.InputSplit, 
+     * org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
     @Override
-    public void initialize(InputSplit split, TaskAttemptContext taskContext)
+    public void initialize(org.apache.hadoop.mapreduce.InputSplit split, 
+                           TaskAttemptContext taskContext)
     throws IOException, InterruptedException {
-        InputSplit baseSplit = split;
+        org.apache.hadoop.mapred.InputSplit baseSplit;
 
         if( split instanceof HCatSplit ) {
             baseSplit = ((HCatSplit) split).getBaseSplit();
+        } else {
+          throw new IOException("Not a HCatSplit");
         }
 
-        baseRecordReader.initialize(baseSplit, taskContext);
+        Properties properties = new Properties();
+        for (Map.Entry<String, String>param : 
+            ((HCatSplit)split).getPartitionInfo()
+                              .getJobProperties().entrySet()) {
+          properties.setProperty(param.getKey(), param.getValue());
+        }
     }
 
     /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentKey()
      */
     @Override
-    public WritableComparable getCurrentKey() throws IOException, InterruptedException {
-        return baseRecordReader.getCurrentKey();
+    public WritableComparable getCurrentKey() 
+    throws IOException, InterruptedException {
+      return currentKey;
     }
 
     /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentValue()
      */
     @Override
-    public HCatRecord getCurrentValue() throws IOException, InterruptedException {
-        HCatRecord r = storageDriver.convertToHCatRecord(baseRecordReader.getCurrentKey(),baseRecordReader.getCurrentValue());
-        return r; 
+    public HCatRecord getCurrentValue() 
+    throws IOException, InterruptedException {
+      HCatRecord r;
+
+      try {
+        r = new DefaultHCatRecord((new LazyHCatRecord(
+                                            serde.deserialize(currentValue), 
+                               serde.getObjectInspector(), 
+                               partCols)).getAll());
+      } catch (Exception e) { 
+        throw new IOException("Failed to create HCatRecord " + e);
+      }
+      return r; 
     }
 
     /* (non-Javadoc)
@@ -95,9 +142,6 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord>
         } catch (IOException e) {
           LOG.warn(e.getMessage());
           LOG.warn(e.getStackTrace());
-        } catch (InterruptedException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
         }
         return 0.0f; // errored
     }
@@ -107,8 +151,13 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord>
      */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
-        lineCount++;
-        return baseRecordReader.nextKeyValue();
+      if (currentKey == null) {
+        currentKey = baseRecordReader.createKey();
+        currentValue = baseRecordReader.createValue();
+      }
+
+        return baseRecordReader.next(currentKey, 
+                                     currentValue);
     }
 
     /* (non-Javadoc)
@@ -119,45 +168,4 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord>
         baseRecordReader.close();
     }
 
-    @Override
-    public Object createKey() {
-      WritableComparable o = null;
-      try {
-        o = getCurrentKey();
-      } catch (IOException e) {
-        LOG.warn(e.getMessage());
-        LOG.warn(e.getStackTrace());
-      } catch (InterruptedException e) {
-        LOG.warn(e.getMessage());
-        LOG.warn(e.getStackTrace());
-      }
-      return o;
-    }
-
-    @Override
-    public Object createValue() {
-      return new DefaultHCatRecord();
-    }
-
-    @Override
-    public long getPos() throws IOException {
-      return lineCount;
-    }
-
-    @Override
-    public boolean next(Object key, Object value) throws IOException {
-      try {
-        if (!nextKeyValue()){
-          return false;
-        }
-        
-        ((HCatRecord)value).copy(getCurrentValue());
-        
-        return true;
-      } catch (InterruptedException e) {
-        LOG.warn(e.getMessage());
-        LOG.warn(e.getStackTrace());
-      }
-      return false;
-    }
 }

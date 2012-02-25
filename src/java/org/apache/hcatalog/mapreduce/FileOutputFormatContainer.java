@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -91,9 +92,11 @@ class FileOutputFormatContainer extends OutputFormatContainer {
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
         try {
+            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
+                                              context.getConfiguration());
             handleDuplicatePublish(context,
                     jobInfo,
-                    HCatOutputFormat.createHiveClient(null,context.getConfiguration()),
+                    HCatUtil.createHiveClient(hiveConf),
                     jobInfo.getTableInfo().getTable());
         } catch (MetaException e) {
             throw new IOException(e);

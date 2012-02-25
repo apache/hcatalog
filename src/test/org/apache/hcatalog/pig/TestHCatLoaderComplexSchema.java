@@ -178,7 +178,6 @@ public class TestHCatLoaderComplexSchema {
   private void verifyWriteRead(String tablename, String pigSchema, String tableSchema, List<Tuple> data, boolean provideSchemaToStorer)
       throws IOException, CommandNeedRetryException, ExecException, FrontendException {
     MockLoader.setData(tablename+"Input", data);
-
     try {
       createTable(tablename, tableSchema);
       PigServer server = new PigServer(ExecType.LOCAL, props);
@@ -188,13 +187,14 @@ public class TestHCatLoaderComplexSchema {
       server.registerQuery("STORE A into '"+tablename+"' using org.apache.hcatalog.pig.HCatStorer("
           + (provideSchemaToStorer ? "'', '"+pigSchema+"'" : "")
           + ");");
+      
       ExecJob execJob = server.executeBatch().get(0);
       if (!execJob.getStatistics().isSuccessful()) {
         throw new RuntimeException("Import failed", execJob.getException());
       }
-
       // test that schema was loaded correctly
       server.registerQuery("X = load '"+tablename+"' using org.apache.hcatalog.pig.HCatLoader();");
+      server.dumpSchema("X");
       Iterator<Tuple> it = server.openIterator("X");
       int i = 0;
       while (it.hasNext()) {
@@ -281,8 +281,8 @@ public class TestHCatLoaderComplexSchema {
 
       data.add(t);
     }
-    verifyWriteRead("testMapWithComplexData", pigSchema, tableSchema, data, true);
-    verifyWriteRead("testMapWithComplexData2", pigSchema, tableSchema, data, false);
+  verifyWriteRead("testMapWithComplexData", pigSchema, tableSchema, data, true);
+  verifyWriteRead("testMapWithComplexData2", pigSchema, tableSchema, data, false);
 
   }
  }

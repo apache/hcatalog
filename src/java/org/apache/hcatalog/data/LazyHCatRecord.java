@@ -5,6 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,9 +29,12 @@ public class LazyHCatRecord extends HCatRecord {
 
   private Object o;
   private StructObjectInspector soi;
+  private Map<Integer, Object> partCols;
   
   @Override
   public Object get(int fieldNum) {
+    Object pc = partCols.get(fieldNum);
+    if (pc != null) return pc;
     try {
       StructField fref = soi.getAllStructFieldRefs().get(fieldNum);
       return HCatRecordSerDe.serializeField(
@@ -59,7 +63,7 @@ public class LazyHCatRecord extends HCatRecord {
 
   @Override
   public int size() {
-    return soi.getAllStructFieldRefs().size();
+    return soi.getAllStructFieldRefs().size() + partCols.size();
   }
 
   @Override
@@ -99,17 +103,20 @@ public class LazyHCatRecord extends HCatRecord {
     throw new UnsupportedOperationException("not allowed to run copy() on LazyHCatRecord");
   }
   
-  public LazyHCatRecord(Object o, ObjectInspector oi) throws Exception{
+  public LazyHCatRecord(Object o, ObjectInspector oi, 
+                        Map<Integer, Object> partCols) 
+  throws Exception {
 
     if (oi.getCategory() != Category.STRUCT) {
       throw new SerDeException(getClass().toString()
-          + " can only make a lazy hcat record from objects of struct types, but we got: "
+          + " can only make a lazy hcat record from objects of " + 
+          "struct types, but we got: "
           + oi.getTypeName());
     }
 
     this.soi = (StructObjectInspector)oi;
     this.o = o;
-
+    this.partCols = partCols;
   }
 
   @Override
