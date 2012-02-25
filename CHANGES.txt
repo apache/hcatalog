@@ -119,6 +119,8 @@ Release 0.3.0 (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-270  HCatRecord SerDe does not handle List<Map> or List<List> or List<lazy primitive> correctly (khorgath via gates)
+
   HCAT-232. Dynamic Partitioning broken: keys set to HIVE_DEFAULT_PARTITION (mithun via gates)
 
   HCAT-229. bin/hcat should put hcatalog.jar into classpath (daiky via gates)
