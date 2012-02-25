@@ -19,7 +19,7 @@
 
   <property name="hcat.dir" value="${basedir}/../../../../"/>
   <property name="hive.dir" value="${basedir}/../../../../hive/external/"/>
-  <property name="hcat.jar" value="${hcat.dir}/build/hcatalog/hcatalog-0.3.0-dev.jar"/>
+  <property name="hcat.jar" value="${hcat.dir}/build/hcatalog/hcatalog-${hcatalog.version}.jar"/>
   
   <path id="hcat.deps">
     <fileset dir="${hive.dir}/lib/">

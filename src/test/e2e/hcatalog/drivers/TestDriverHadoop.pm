@@ -336,10 +336,15 @@ sub runHadoop
 
     # Set HADOOP_CLASSPATH environment variable if provided
     if (defined($testCmd->{'hadoop_classpath'})) {
-        my $hadoop_classpath = $self->replaceParameters( $testCmd->{'hadoop_classpath'}, $outfile, $testCmd, $log );
-        my $cp = $testCmd->{'hcatalog.jar'};
+        #my $hadoop_classpath = $self->replaceParameters( $testCmd->{'hadoop_classpath'}, $outfile, $testCmd, $log );
+        # TODO This is a total mess.  Half the jars we need are specified in hcatalog.jar, which is set in the default.conf file, and half are set in hadoop_classpath, which
+        # has to be passed on the command line.  And most of the jars are Hive jars, thus they don't fit in the list of either hcatalog.jar or hadoop_classpath.  We need to
+        # make sense of this.
+        my $cp = $testCmd->{'hcatalog.jar'} . ":" . $testCmd->{'hadoop_classpath'};
         $cp =~ s/,/:/g;
         $cp .= ":" . Util::findPigWithoutHadoopJar($testCmd, $log);
+        # Add in the hcat config file
+        $cp .= ":" . $testCmd->{'hcathome'} . "/etc/hcatalog";
         $ENV{'HADOOP_CLASSPATH'} = $cp;
     }
 

@@ -71,6 +71,7 @@
   <property name="test.output" value="no"/>
   <property name="hive.conf.dir" value="${hive.root}/conf"/>
   <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
+  <property name="test.excludes" value="${test.src.dir}/e2e/**"/>
 
   <!-- e2e test properties -->
   <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
@@ -299,7 +300,7 @@
   -->
   <!-- Build HCatalog test files -->
   <target name="compile-test" depends="jar">
-    <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${excludes}"
+    <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${test.excludes}"
         includes="**/*.java" destdir="${test.build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
         source="${javac.version}" deprecation="${javac.deprecation}"
@@ -666,6 +667,7 @@
                 <exclude name="ivy/*.jar"/>
                 <include name="lib/**"/>
                 <include name="license/**"/>
+                <include name="shims/**"/>
                 <include name="src/**"/>
                 <include name="storage-drivers/**"/>
                 <include name="*.txt"/>

@@ -55,8 +55,8 @@ public class ReadText extends Configured implements Tool {
   public static class Map
        extends Mapper<WritableComparable, HCatRecord, IntWritable, HCatRecord>{
       
-      int t;
-      int si;
+      byte t;
+      short si;
       int i;
       long b;
       float f;
@@ -68,8 +68,8 @@ public class ReadText extends Configured implements Tool {
           org.apache.hadoop.mapreduce.Mapper<WritableComparable,HCatRecord,
           IntWritable,HCatRecord>.Context context) 
     throws IOException ,InterruptedException {
-        t = (Integer)value.get(0);
-        si = (Integer)value.get(1);
+        t = (Byte)value.get(0);
+        si = (Short)value.get(1);
         i = (Integer)value.get(2);
         b = (Long)value.get(3);
         f = (Float)value.get(4);

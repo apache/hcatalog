@@ -23,7 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
@@ -54,7 +54,7 @@ public class SimpleRead extends Configured implements Tool {
     private static final String TAB = "\t";
     
   public static class Map
-       extends Mapper<WritableComparable, HCatRecord, Text, DoubleWritable>{
+       extends Mapper<WritableComparable, HCatRecord, Text, IntWritable>{
       
       String name;
       int age;
@@ -63,12 +63,13 @@ public class SimpleRead extends Configured implements Tool {
     @Override
   protected void map(WritableComparable key, HCatRecord value, 
           org.apache.hadoop.mapreduce.Mapper<WritableComparable,HCatRecord,
-          Text,DoubleWritable>.Context context) 
+          Text,IntWritable>.Context context) 
     throws IOException ,InterruptedException {
         name = (String) value.get(0);
+System.out.println(name);
         age = (Integer) value.get(1);
         gpa = (Double) value.get(2);
-        context.write(new Text(name), new DoubleWritable(gpa));
+        context.write(new Text(name), new IntWritable(age));
 
     }
   }
@@ -95,7 +96,7 @@ public class SimpleRead extends Configured implements Tool {
     job.setJarByClass(SimpleRead.class);
     job.setMapperClass(Map.class);
     job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(DoubleWritable.class);
+    job.setOutputValueClass(IntWritable.class);
     FileOutputFormat.setOutputPath(job, new Path(outputDir));
     return (job.waitForCompletion(true) ? 0 : 1);
   }

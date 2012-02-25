@@ -19,6 +19,9 @@
 package org.apache.hcatalog.utils;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,33 +36,28 @@ import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 
 /**
- * This is a map reduce test for testing hcat which goes against the "numbers"
+ * This is a map reduce test for testing hcat writing to partitioned tables.
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce
  * program to test that hcat hands the right data to the map reduce program
  * 
- * Usage: hadoop jar sumnumbers <serveruri> <output dir> <-libjars hive-hcat
- * jar> The <tab|ctrla> argument controls the output delimiter The hcat jar
- * location should be specified as file://<full path to jar>
+ * Usage: hadoop jar org.apache.hcatalog.utils.HBaseReadWrite -libjars
+ * &lt;hcat_jar&gt; * &lt;serveruri&gt; &lt;input_tablename&gt; &lt;output_tablename&gt; [filter]
+ * If filter is given it will be provided as the partition to write to.
  */
-public class WriteText extends Configured implements Tool {
+public class WriteTextPartitioned extends Configured implements Tool {
+
+    static String filter = null;
 
     public static class Map extends
             Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord> {
-
-        byte t;
-        short si;
-        int i;
-        long b;
-        float f;
-        double d;
-        String s;
 
         @Override
         protected void map(
@@ -67,22 +65,14 @@ public class WriteText extends Configured implements Tool {
                 HCatRecord value,
                 org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord>.Context context)
                 throws IOException, InterruptedException {
-            t = (Byte)value.get(0);
-            si = (Short)value.get(1);
-            i = (Integer)value.get(2);
-            b = (Long)value.get(3);
-            f = (Float)value.get(4);
-            d = (Double)value.get(5);
-            s = (String)value.get(6);
+            String name = (String)value.get(0);
+            int age = (Integer)value.get(1);
+            String ds = (String)value.get(3);
             
-            HCatRecord record = new DefaultHCatRecord(7);
-            record.set(0, t);
-            record.set(1, si);
-            record.set(2, i);
-            record.set(3, b);
-            record.set(4, f);
-            record.set(5, d);
-            record.set(6, s);
+            HCatRecord record = (filter == null ? new DefaultHCatRecord(3) : new DefaultHCatRecord(2));
+            record.set(0, name);
+            record.set(1, age);
+            if (filter == null) record.set(2, ds);
             
             context.write(null, record);
 
@@ -96,35 +86,48 @@ public class WriteText extends Configured implements Tool {
         String serverUri = args[0];
         String inputTableName = args[1];
         String outputTableName = args[2];
+        if (args.length > 3) filter = args[3];
         String dbName = null;
 
         String principalID = System
                 .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
         if (principalID != null)
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
-        Job job = new Job(conf, "WriteText");
+        Job job = new Job(conf, "WriteTextPartitioned");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, null, serverUri, principalID));
+                inputTableName, filter, serverUri, principalID));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);
-        job.setJarByClass(WriteText.class);
+        job.setJarByClass(WriteTextPartitioned.class);
         job.setMapperClass(Map.class);
         job.setOutputKeyClass(WritableComparable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setNumReduceTasks(0);
+
+        java.util.Map<String, String> partitionVals = null;
+        if (filter != null) {
+            String[] s = filter.split("=");
+            String val = s[1].replace('"', ' ').trim();
+            partitionVals = new HashMap<String, String>(1);
+            partitionVals.put(s[0], val);
+        }
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null));
+                outputTableName, partitionVals));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
-        System.err.println("INFO: output schema explicitly set for writing:"
-                + s);
-        HCatOutputFormat.setSchema(job, s);
+        // Build the schema for this table, which is slightly different than the
+        // schema for the input table
+        List<HCatFieldSchema> fss = new ArrayList<HCatFieldSchema>(3);
+        fss.add(s.get(0));
+        fss.add(s.get(1));
+        fss.add(s.get(3));
+        HCatOutputFormat.setSchema(job, new HCatSchema(fss));
         job.setOutputFormatClass(HCatOutputFormat.class);
         return (job.waitForCompletion(true) ? 0 : 1);
     }
 
     public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new WriteText(), args);
+        int exitCode = ToolRunner.run(new WriteTextPartitioned(), args);
         System.exit(exitCode);
     }
 }
