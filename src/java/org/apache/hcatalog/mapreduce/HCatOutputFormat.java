@@ -206,8 +206,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      */
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord>
-      getRecordWriter(TaskAttemptContext context
-                      ) throws IOException, InterruptedException {
+        getRecordWriter(TaskAttemptContext context)
+        throws IOException, InterruptedException {
+      getOutputFormat(context).getOutputCommitter(context).setupJob(context);
       return getOutputFormat(context).getRecordWriter(context);
     }
 
