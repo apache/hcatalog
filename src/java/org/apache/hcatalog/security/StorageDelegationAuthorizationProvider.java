@@ -34,7 +34,7 @@ import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvide
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProviderBase;
 import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.hcatalog.storagehandler.HCatStorageHandler;
+import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 
 /**
  * A HiveAuthorizationProvider which delegates the authorization requests to 

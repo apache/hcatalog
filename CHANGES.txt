@@ -21,6 +21,8 @@ Apache HCatalog Change Log
 Trunk (unreleased changes)
 
   INCOMPATIBLE CHANGES
+  HCAT-265 remove deprecated HCatStorageHandler (toffer)
+
   HCAT-239. Changes to HCatInputFormat to make it use SerDes instead of StorageDrivers (vikram.dixit via gates)
 
   HCAT-245. StorageHandler authorization providers (enis via hashutosh) 
