@@ -314,18 +314,12 @@ location '$location';\n";
     } elsif ($format eq "rc") {
         print $hivefp "
 stored as rcfile
-location '$location'
-TBLPROPERTIES (
-    'hcat.isd'='org.apache.hcatalog.rcfile.RCFileInputDriver',
-    'hcat.osd'='org.apache.hcatalog.rcfile.RCFileOutputDriver'
-);\n";
+location '$location';\n";
     } elsif ($format eq "json") {
-        print $hivefp " STORED AS
-INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat' 
-INPUTDRIVER 'org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver' OUTPUTDRIVER 'org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver';
+        print $hivefp "
+row format serde 'org.apache.hcatalog.data.JsonSerDe'
+stored as textfile
 location '$location'
-TBLPROPERTIES ('hcat.pig.loader'='org.apache.pig.builtin.JsonLoader', 'hcat.pig.storer'='org.apache.pig.builtin.JsonStorage', 'hcat.pig.loader.args'=
-'s:chararray, i:int, d:double, m:map[chararray], bb:{t:(a:int, b:chararray)}, 'hcat.pig.args.delimiter'='\t')
 ;\n";
     } else {
         die "Unknown format $format\n";
@@ -528,9 +522,7 @@ sub findHiveJars()
         row format delimited
         fields terminated by ':'
         stored as textfile
-        location '$hdfsTargetDir/$tableName';\n
-        alter table $tableName set TBLPROPERTIES 
-         ('hcat.pig.loader.args'=':', 'hcat.pig.storer.args'=':');\n";
+        location '$hdfsTargetDir/$tableName';\n";
         for (my $i = 0; $i < $numRows; $i++) {
             printf HDFS "%d:%d:%d:%ld:%.2f:%.2f:%s\n",
                 (int(rand(2**8) - 2**7)),
@@ -669,11 +661,9 @@ for (my $i = 0; $i < $numRows; $i++) {
             d double,
             m map<string, string>,
             bb array<struct<a: int, b: string>>)
-            STORED AS INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
-            INPUTDRIVER 'org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver' OUTPUTDRIVER 'org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver'
-            location '$hdfsTargetDir/$tableName'
-            TBLPROPERTIES ('hcat.pig.loader'='org.apache.pig.builtin.JsonLoader', 'hcat.pig.storer'='org.apache.pig.builtin.JsonStorage', 'hcat.pig.loader.args'=
-'s:chararray, i:int, d:double, m:map[chararray], bb:{t:(a:int, b:chararray)}', 'hcat.pig.args.delimiter'='\t');\n";
+            row format serde 'org.apache.hcatalog.data.JsonSerDe'
+            STORED AS TEXTFILE 
+            location '$hdfsTargetDir/$tableName';\n";
         open(PLAIN, ">$tableName.plain") or
             die("Cannot open file $tableName.hive.sql, $!\n");
         for (my $i = 0; $i < $numRows; $i++) {

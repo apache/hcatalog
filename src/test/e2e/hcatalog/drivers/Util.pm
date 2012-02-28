@@ -151,25 +151,27 @@ sub runHiveCmdFromFile($$;$$$$)
     my @cmd = ("$cfg->{'hivehome'}/bin/hive");
 
     # Add all of the modified properties we want to set
-    push(@cmd, "--hiveconf", "hive.metastore.uris=$cfg->{'thriftserver'}");
-    push(@cmd, "--hiveconf", "hive.metastore.local=false");
+#   push(@cmd, "--hiveconf", "hive.metastore.uris=$cfg->{'thriftserver'}");
+#   push(@cmd, "--hiveconf", "hive.metastore.local=false");
 
-    if( defined($cfg->{'metastore.principal'}) && ($cfg->{'metastore.principal'} =~ m/\S+/)
-        &&  ($cfg->{'metastore.principal'} ne '${metastore.principal}')){
-        push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=true",  "--hiveconf", "hive.metastore.kerberos.principal=$cfg->{'metastore.principal'}");
-    } else {
-        push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=false");
+#   if( defined($cfg->{'metastore.principal'}) && ($cfg->{'metastore.principal'} =~ m/\S+/)
+#       &&  ($cfg->{'metastore.principal'} ne '${metastore.principal}')){
+#       push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=true",  "--hiveconf", "hive.metastore.kerberos.principal=$cfg->{'metastore.principal'}");
+#   } else {
+#       push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=false");
+#   }
+
+    $ENV{'HIVE_CONF_DIR'} = "$cfg->{'hcathome'}/etc/hcatalog/";
+
+    if (defined($cfg->{'hive.additionaljars'})) {
+        $ENV{'HIVE_AUX_JARS_PATH'} = $cfg->{'hive.additionaljars'};
     }
 
-    if (defined($cfg->{'additionaljarspath'})) {
-        $ENV{'HIVE_AUX_JARS_PATH'} = $cfg->{'additionaljarspath'};
-    }
-
-    if (defined($cfg->{'hiveconf'})) {
-        foreach my $hc (@{$cfg->{'hiveconf'}}) {
-            push(@cmd, "--hiveconf", $hc);
-        }
-    }
+#   if (defined($cfg->{'hiveconf'})) {
+#       foreach my $hc (@{$cfg->{'hiveconf'}}) {
+#           push(@cmd, "--hiveconf", $hc);
+#       }
+#   }
 
     if (defined($cfg->{'hivecmdargs'})) {
         push(@cmd, @{$cfg->{'hivecmdargs'}});

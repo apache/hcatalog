@@ -56,6 +56,7 @@
 
   <property name="test.location" value="${basedir}/testdist"/>
   <property name="benchmark.location" value="${test.location}/benchmarks"/>
+  <property name="hadoop.core.path" value="${harness.hadoop.home}"/>
 
   <!-- Build the UDFs -->
   <target name="udfs" >
