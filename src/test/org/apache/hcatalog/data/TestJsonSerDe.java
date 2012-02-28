@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 import junit.framework.Assert;
@@ -33,10 +34,10 @@ import junit.framework.TestCase;
 
 public class TestJsonSerDe extends TestCase{
 
-  public Map<Properties,HCatRecord> getData(){
-    Map<Properties,HCatRecord> data = new HashMap<Properties,HCatRecord>();
+  public List<Pair<Properties,HCatRecord>> getData(){
+    List<Pair<Properties,HCatRecord>> data = new ArrayList<Pair<Properties,HCatRecord>>();
 
-    List<Object> rlist = new ArrayList<Object>(11);
+    List<Object> rlist = new ArrayList<Object>(13);
     rlist.add(new Byte("123"));
     rlist.add(new Short("456"));
     rlist.add(new Integer(789));
@@ -80,6 +81,21 @@ public class TestJsonSerDe extends TestCase{
       c1_1.add(i2);
       c1.add(c1_1);
     rlist.add(c1);
+    
+    List<Object> nlist = new ArrayList<Object>(13);
+    nlist.add(null); // tinyint
+    nlist.add(null); // smallint
+    nlist.add(null); // int
+    nlist.add(null); // bigint
+    nlist.add(null); // double
+    nlist.add(null); // float
+    nlist.add(null); // string
+    nlist.add(null); // string
+    nlist.add(null); // struct
+    nlist.add(null); // array
+    nlist.add(null); // map
+    nlist.add(null); // bool
+    nlist.add(null); // complex
 
     String typeString = 
         "tinyint,smallint,int,bigint,double,float,string,string,"
@@ -92,7 +108,8 @@ public class TestJsonSerDe extends TestCase{
 //    props.put(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
 //    props.put(Constants.SERIALIZATION_FORMAT, "1");
 
-    data.put(props, new DefaultHCatRecord(rlist));
+    data.add(new Pair(props, new DefaultHCatRecord(rlist)));
+    data.add(new Pair(props, new DefaultHCatRecord(nlist)));
     return data;
   }
 
@@ -100,9 +117,9 @@ public class TestJsonSerDe extends TestCase{
 
     Configuration conf = new Configuration();
 
-    for (Entry<Properties,HCatRecord> e : getData().entrySet()){
-      Properties tblProps = e.getKey();
-      HCatRecord r = e.getValue();
+    for (Pair<Properties,HCatRecord> e : getData()){
+      Properties tblProps = e.first;
+      HCatRecord r = e.second;
       
       HCatRecordSerDe hrsd = new HCatRecordSerDe();
       hrsd.initialize(conf, tblProps);

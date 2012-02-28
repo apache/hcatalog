@@ -174,6 +174,10 @@ public class HCatRecordSerDe implements SerDe {
 
     List<? extends StructField> fields = soi.getAllStructFieldRefs();
     List<Object> list = soi.getStructFieldsDataAsList(obj);
+    
+    if (list == null){
+      return null;
+    }
 
     List<Object> l = new ArrayList<Object>(fields.size());
 
@@ -182,7 +186,7 @@ public class HCatRecordSerDe implements SerDe {
 
         // Get the field objectInspector and the field object.
         ObjectInspector foi = fields.get(i).getFieldObjectInspector();
-        Object f = (list == null ? null : list.get(i));
+        Object f = list.get(i);
         Object res = serializeField(f, foi);
         l.add(i, res);
       }
@@ -236,6 +240,10 @@ public class HCatRecordSerDe implements SerDe {
 
   private static List<?> serializeList(Object f, ListObjectInspector loi) throws SerDeException {
     List l = loi.getList(f);
+    if (l == null){
+      return null;
+    }
+
     ObjectInspector eloi = loi.getListElementObjectInspector();
     if (eloi.getCategory() == Category.PRIMITIVE){
       List<Object> list = new ArrayList<Object>(l.size());

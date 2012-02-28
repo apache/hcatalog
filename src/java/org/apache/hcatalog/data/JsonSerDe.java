@@ -228,7 +228,11 @@ public class JsonSerDe implements SerDe {
       break;
     case BOOLEAN:
       String bval = (valueToken == JsonToken.VALUE_NULL)?null:p.getText();
-      val = (bval.equalsIgnoreCase("true"));
+      if (bval != null){
+        val = Boolean.valueOf(bval);
+      } else {
+        val = null;
+      }
       break;
     case FLOAT:
       val = (valueToken == JsonToken.VALUE_NULL)?null:p.getFloatValue();
@@ -242,6 +246,10 @@ public class JsonSerDe implements SerDe {
     case BINARY:
       throw new IOException("JsonSerDe does not support BINARY type");
     case ARRAY:
+      if (valueToken == JsonToken.VALUE_NULL){
+        val = null; 
+        break;
+      }
       if (valueToken != JsonToken.START_ARRAY){
         throw new IOException("Start of Array expected");
       }
@@ -252,6 +260,10 @@ public class JsonSerDe implements SerDe {
       val = arr;
       break;
     case MAP:
+      if (valueToken == JsonToken.VALUE_NULL){
+        val = null; 
+        break;
+      }
       if (valueToken != JsonToken.START_OBJECT){
         throw new IOException("Start of Object expected");
       }
@@ -272,6 +284,10 @@ public class JsonSerDe implements SerDe {
       val = map;
       break;
     case STRUCT:
+      if (valueToken == JsonToken.VALUE_NULL){
+        val = null; 
+        break;
+      }
       if (valueToken != JsonToken.START_OBJECT){
         throw new IOException("Start of Object expected");
       }
@@ -321,7 +337,28 @@ public class JsonSerDe implements SerDe {
       throws SerDeException {
     StringBuilder sb = new StringBuilder();
     try {
-      buildJSONString(sb, obj, objInspector);
+
+      StructObjectInspector soi = (StructObjectInspector) objInspector;
+      List<? extends StructField> structFields = soi.getAllStructFieldRefs();
+      assert (columnNames.size() == structFields.size());
+      if (obj == null) {
+        sb.append("null");
+      } else {
+        sb.append(SerDeUtils.LBRACE);
+        for (int i = 0; i < structFields.size(); i++) {
+          if (i > 0) {
+            sb.append(SerDeUtils.COMMA);
+          }
+          sb.append(SerDeUtils.QUOTE);
+          sb.append(columnNames.get(i));
+          sb.append(SerDeUtils.QUOTE);
+          sb.append(SerDeUtils.COLON);
+          buildJSONString(sb, soi.getStructFieldData(obj, structFields.get(i)),
+              structFields.get(i).getFieldObjectInspector());
+        }
+        sb.append(SerDeUtils.RBRACE);
+      }
+
     } catch (IOException e) {
       LOG.warn("Error ["+ e.getMessage()+"] generating json text from object");
       throw new SerDeException(e);
