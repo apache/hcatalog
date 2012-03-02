@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -82,7 +83,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
                     getBaseOutputFormat()
                             .getRecordWriter(null,
                                                      new JobConf(context.getConfiguration()),
-                                                                         context.getTaskAttemptID().toString(),
+                                                                         FileOutputFormat.getUniqueName(new JobConf(context.getConfiguration()), "part"),
                                                                          InternalUtil.createReporter(context)),
                 context);
         return rw;
