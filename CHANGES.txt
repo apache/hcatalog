@@ -56,6 +56,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT 280 part file name prefix with attempxxxx (daijy via gates)
+
   HCAT-275 JSON SerDe issues (khorgath via gates)
 
   HCAT-278 When outputSchema doesn't match table schema wrong columns are returned to the user (gates)
