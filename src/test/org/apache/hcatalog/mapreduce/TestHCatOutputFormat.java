@@ -109,8 +109,8 @@ public class TestHCatOutputFormat extends TestCase {
     sd.setOutputFormat(RCFileOutputFormat.class.getName());
     sd.setParameters(new HashMap<String, String>());
     sd.getParameters().put("test_param_1", "Use this for comments etc");
-    sd.setBucketCols(new ArrayList<String>(2));
-    sd.getBucketCols().add("name");
+    //sd.setBucketCols(new ArrayList<String>(2));
+    //sd.getBucketCols().add("name");
     sd.setSerdeInfo(new SerDeInfo());
     sd.getSerdeInfo().setName(tbl.getTableName());
     sd.getSerdeInfo().setParameters(new HashMap<String, String>());

@@ -192,7 +192,7 @@ sub runTest
        # run a another Pig script to dump the results of the table.
        my $result;
        if (defined($testCmd->{'result_table'})) {
-           $result = $self->runPig( $testCmd, $log, 0);
+           $result = $self->runPig( $testCmd, $log, 0, 1);
            my @results = ();
            my @outputs = ();
            if (ref($testCmd->{'result_table'}) ne 'ARRAY') {
@@ -214,7 +214,7 @@ sub runTest
                    $tableName = $results[$i];
 	           $modifiedTestCmd{'num'} = $testCmd->{'num'} . "_" . $i . "_benchmark";
                    $modifiedTestCmd{'pig'} = "a = load '$tableName' using org.apache.hcatalog.pig.HCatLoader(); store a into ':OUTPATH:';";
-                   my $r = $self->runPig(\%modifiedTestCmd, $log, 1);
+                   my $r = $self->runPig(\%modifiedTestCmd, $log, 1, 1);
 	           $outputs[$i] = $r->{'output'};
                } else {
                    $localdir = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out/$id";
@@ -233,7 +233,7 @@ sub runTest
            }
        }
        else {
-           $result = $self->runPig( $testCmd, $log, 1);
+           $result = $self->runPig( $testCmd, $log, 1, 1);
        }
        return $result;
     } elsif(  $testCmd->{'script'} ){
@@ -447,7 +447,7 @@ sub dumpPigTable
 
 sub runPig
 {
-    my ($self, $testCmd, $log, $copyResults) = @_;
+    my ($self, $testCmd, $log, $copyResults, $noFailOnFail) = @_;
     my $subName  = (caller(0))[3];
 
     my %result;
@@ -488,8 +488,13 @@ sub runPig
     print $log "Setting PIG_CLASSPATH to $ENV{'PIG_CLASSPATH'}\n";
     print $log "$0::$className::$subName INFO: Going to run pig command: @cmd\n";
 
-    IPC::Run::run(\@cmd, \undef, $log, $log) or
+    my $runrc = IPC::Run::run(\@cmd, \undef, $log, $log);
+
+    if (defined($noFailOnFail) && $noFailOnFail) {
+    } else {
         die "Failed running $pigfile\n";
+    }
+
     $result{'rc'} = $? >> 8;
 
 
