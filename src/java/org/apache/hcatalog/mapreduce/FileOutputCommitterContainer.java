@@ -511,8 +511,6 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     private Map<String, String> getStorerParameterMap(StorerInfo storer) {
         Map<String, String> params = new HashMap<String, String>();
-        params.put(HCatConstants.HCAT_ISD_CLASS, storer.getInputSDClass());
-        params.put(HCatConstants.HCAT_OSD_CLASS, storer.getOutputSDClass());
 
         //Copy table level hcat.* keys to the partition
         for(Entry<Object, Object> entry : storer.getProperties().entrySet()) {

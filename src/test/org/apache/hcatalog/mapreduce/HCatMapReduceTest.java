@@ -171,8 +171,6 @@ public abstract class HCatMapReduceTest extends TestCase {
     sd.setOutputFormat(outputFormat);
 
     Map<String, String> tableParams = new HashMap<String, String>();
-    tableParams.put(HCatConstants.HCAT_ISD_CLASS, inputSD);
-    tableParams.put(HCatConstants.HCAT_OSD_CLASS, outputSD);
     tbl.setParameters(tableParams);
 
     client.createTable(tbl);
