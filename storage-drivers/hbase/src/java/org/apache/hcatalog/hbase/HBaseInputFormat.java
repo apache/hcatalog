@@ -21,33 +21,31 @@ package org.apache.hcatalog.hbase;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapred.TableSplit;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.mapreduce.TableSplit;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapred.HCatMapRedUtil;
+import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 
 /**
  * This class HBaseInputFormat is a wrapper class of TableInputFormat in HBase.
  */
-class HBaseInputFormat extends InputFormat<ImmutableBytesWritable, Result> implements Configurable{
+class HBaseInputFormat implements InputFormat<ImmutableBytesWritable, Result> {
 
     private final TableInputFormat inputFormat;
-    private final InputJobInfo jobInfo;
-    private Configuration conf;
 
-    public HBaseInputFormat(InputJobInfo jobInfo) {
+    public HBaseInputFormat() {
         inputFormat = new TableInputFormat();
-        this.jobInfo = jobInfo;
     }
 
     /*
@@ -67,20 +65,27 @@ class HBaseInputFormat extends InputFormat<ImmutableBytesWritable, Result> imple
      * org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
     @Override
-    public RecordReader<ImmutableBytesWritable, Result> createRecordReader(
-            InputSplit split, TaskAttemptContext tac) throws IOException,
-            InterruptedException {
+    public RecordReader<ImmutableBytesWritable, Result> getRecordReader(
+            InputSplit split, JobConf job, Reporter reporter)
+            throws IOException {
+        String jobString = job.get(HCatConstants.HCAT_KEY_JOB_INFO);
+        InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(jobString);
 
-          String tableName = inputFormat.getConf().get(TableInputFormat.INPUT_TABLE);
-          TableSplit tSplit = (TableSplit) split;
-          HbaseSnapshotRecordReader recordReader = new HbaseSnapshotRecordReader(jobInfo);
-          Scan sc = new Scan(inputFormat.getScan());
-          sc.setStartRow(tSplit.getStartRow());
-          sc.setStopRow(tSplit.getEndRow());
-          recordReader.setScan(sc);
-          recordReader.setHTable(new HTable(this.conf, tableName));
-          recordReader.init();
-          return recordReader;
+        String tableName = job.get(TableInputFormat.INPUT_TABLE);
+        TableSplit tSplit = (TableSplit) split;
+        HbaseSnapshotRecordReader recordReader = new HbaseSnapshotRecordReader(inputJobInfo, job);
+        inputFormat.setConf(job);
+        Scan inputScan = inputFormat.getScan();
+        // TODO: Make the caching configurable by the user
+        inputScan.setCaching(200);
+        inputScan.setCacheBlocks(false);
+        Scan sc = new Scan(inputScan);
+        sc.setStartRow(tSplit.getStartRow());
+        sc.setStopRow(tSplit.getEndRow());
+        recordReader.setScan(sc);
+        recordReader.setHTable(new HTable(job, tableName));
+        recordReader.init();
+        return recordReader;
     }
 
     /*
@@ -97,35 +102,24 @@ class HBaseInputFormat extends InputFormat<ImmutableBytesWritable, Result> imple
      * .JobContext)
      */
     @Override
-    public List<InputSplit> getSplits(JobContext jobContext)
-            throws IOException, InterruptedException {
+    public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
+            throws IOException {
+        inputFormat.setConf(job);
+        return convertSplits(inputFormat.getSplits(HCatMapRedUtil.createJobContext(job, null,
+                Reporter.NULL)));
+    }
 
-        String tableName = this.conf.get(TableInputFormat.INPUT_TABLE);
-        if (tableName == null) {
-           throw new IOException("The input table is not set. The input splits cannot be created.");
+    private InputSplit[] convertSplits(List<org.apache.hadoop.mapreduce.InputSplit> splits) {
+        InputSplit[] converted = new InputSplit[splits.size()];
+        for (int i = 0; i < splits.size(); i++) {
+            org.apache.hadoop.hbase.mapreduce.TableSplit tableSplit =
+                    (org.apache.hadoop.hbase.mapreduce.TableSplit) splits.get(i);
+            TableSplit newTableSplit = new TableSplit(tableSplit.getTableName(),
+                    tableSplit.getStartRow(),
+                    tableSplit.getEndRow(), tableSplit.getRegionLocation());
+            converted[i] = newTableSplit;
         }
-        return inputFormat.getSplits(jobContext);
-    }
-
-    public void setConf(Configuration conf) {
-        this.conf = conf;
-        inputFormat.setConf(conf);
-    }
-
-    public Scan getScan() {
-        return inputFormat.getScan();
-    }
-
-    public void setScan(Scan scan) {
-        inputFormat.setScan(scan);
-    }
-
-    /* @return
-     * @see org.apache.hadoop.conf.Configurable#getConf()
-     */
-    @Override
-    public Configuration getConf() {
-       return this.conf;
+        return converted;
     }
 
 }

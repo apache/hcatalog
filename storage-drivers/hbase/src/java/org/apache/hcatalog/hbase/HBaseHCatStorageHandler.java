@@ -19,22 +19,24 @@
 package org.apache.hcatalog.hbase;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
@@ -50,13 +52,11 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.OutputFormat;
-import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
-import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
-import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
@@ -74,22 +74,93 @@ import com.facebook.fb303.FacebookBase;
  * tables through HCatalog. The implementation is very similar to the
  * HiveHBaseStorageHandler, with more details to suit HCatalog.
  */
-public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveMetaHook {
+//TODO remove serializable when HCATALOG-282 is fixed
+public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveMetaHook, Serializable {
 
-    final static public String DEFAULT_PREFIX = "default.";
+    public final static String DEFAULT_PREFIX = "default.";
+    private final static String PROPERTY_INT_OUTPUT_LOCATION = "hcat.hbase.mapreduce.intermediateOutputLocation";
 
-    private Configuration      hbaseConf;
-
-    private HBaseAdmin         admin;
+    private transient Configuration      hbaseConf;
+    private transient HBaseAdmin         admin;
 
     @Override
     public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-        //TODO complete rework and fill this in
+        // Populate jobProperties with input table name, table columns, RM snapshot,
+        // hbase-default.xml and hbase-site.xml
+        Map<String, String> tableJobProperties = tableDesc.getJobProperties();
+        String jobString = tableJobProperties.get(HCatConstants.HCAT_KEY_JOB_INFO);
+        try {
+            InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(jobString);
+            HCatTableInfo tableInfo = inputJobInfo.getTableInfo();
+            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
+            jobProperties.put(TableInputFormat.INPUT_TABLE, qualifiedTableName);
+
+            Configuration jobConf = getConf();
+            String outputSchema = jobConf.get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
+            jobProperties.put(TableInputFormat.SCAN_COLUMNS, getScanColumns(tableInfo, outputSchema));
+
+            String serSnapshot = (String) inputJobInfo.getProperties().get(
+                    HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
+            if (serSnapshot == null) {
+                Configuration conf = addHbaseResources(jobConf);
+                HCatTableSnapshot snapshot = HBaseRevisionManagerUtil.createSnapshot(conf,
+                        qualifiedTableName, tableInfo);
+                jobProperties.put(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY,
+                        HCatUtil.serialize(snapshot));
+            }
+
+            addHbaseResources(jobConf, jobProperties);
+
+        } catch (IOException e) {
+            throw new IllegalStateException("Error while configuring job properties", e);
+        }
     }
 
     @Override
     public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-        //TODO complete rework and fill this in
+        // Populate jobProperties with output table name, hbase-default.xml, hbase-site.xml, OutputJobInfo
+        // Populate RM transaction in OutputJobInfo
+        // In case of bulk mode, populate intermediate output location
+        Map<String, String> tableJobProperties = tableDesc.getJobProperties();
+        String jobString = tableJobProperties.get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
+        try {
+            OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(jobString);
+            HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
+            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
+            jobProperties.put(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, qualifiedTableName);
+
+            Configuration jobConf = getConf();
+            String txnString = outputJobInfo.getProperties().getProperty(
+                    HBaseConstants.PROPERTY_WRITE_TXN_KEY);
+            if (txnString == null) {
+                Configuration conf = addHbaseResources(jobConf);
+                Transaction txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo, conf);
+                outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
+                        HCatUtil.serialize(txn));
+
+                if (isBulkMode(outputJobInfo) && !(outputJobInfo.getProperties()
+                                .containsKey(PROPERTY_INT_OUTPUT_LOCATION))) {
+                    String tableLocation = tableInfo.getTableLocation();
+                    String location = new Path(tableLocation, "REVISION_" + txn.getRevisionNumber())
+                            .toString();
+                    outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION,
+                            location);
+                    // We are writing out an intermediate sequenceFile hence
+                    // location is not passed in OutputJobInfo.getLocation()
+                    // TODO replace this with a mapreduce constant when available
+                    jobProperties.put("mapred.output.dir", location);
+                }
+            }
+
+            jobProperties
+                    .put(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
+            addHbaseResources(jobConf, jobProperties);
+            addOutputDependencyJars(jobConf);
+            jobProperties.put("tmpjars", jobConf.get("tmpjars"));
+
+        } catch (IOException e) {
+            throw new IllegalStateException("Error while configuring job properties", e);
+        }
     }
 
     /*
@@ -231,7 +302,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             new HTable(hbaseConf, tableDesc.getName());
 
             //Set up znodes in revision manager.
-            RevisionManager rm = getOpenedRevisionManager(hbaseConf);
+            RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hbaseConf);
             if (rm instanceof ZKBasedRevisionManager) {
                 ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
                 zkRM.setUpZNodes(tableName, new ArrayList<String>(
@@ -295,36 +366,6 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         return this;
     }
 
-//TODO finish rework remove this
-//    /*
-//     * @param tableDesc
-//     *
-//     * @param jobProperties
-//     *
-//     * @see org.apache.hcatalog.storagehandler.HCatStorageHandler
-//     * #configureTableJobProperties(org.apache.hadoop.hive.ql.plan.TableDesc,
-//     * java.util.Map)
-//     */
-//    @Override
-//    public void configureTableJobProperties(TableDesc tableDesc,
-//            Map<String, String> jobProperties) {
-//        Properties tableProperties = tableDesc.getProperties();
-//
-//        jobProperties.put(HBaseSerDe.HBASE_COLUMNS_MAPPING,
-//                tableProperties.getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING));
-//
-//        String tableName = tableProperties
-//                .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
-//        if (tableName == null) {
-//            tableName = tableProperties.getProperty(Constants.META_TABLE_NAME);
-//            if (tableName.startsWith(DEFAULT_PREFIX)) {
-//                tableName = tableName.substring(DEFAULT_PREFIX.length());
-//            }
-//        }
-//        jobProperties.put(HBaseSerDe.HBASE_TABLE_NAME, tableName);
-//
-//    }
-
     private HBaseAdmin getHBaseAdmin() throws MetaException {
         try {
             if (admin == null) {
@@ -356,14 +397,12 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
     @Override
     public Class<? extends InputFormat> getInputFormatClass() {
-        //TODO replace this with rework
-        return InputFormat.class;
+        return HBaseInputFormat.class;
     }
 
     @Override
     public Class<? extends OutputFormat> getOutputFormatClass() {
-        //TODO replace this with rework
-        return SequenceFileOutputFormat.class;
+        return HBaseBaseOutputFormat.class;
     }
 
     /*
@@ -397,6 +436,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     private void checkDeleteTable(Table table) throws MetaException {
         boolean isExternal = MetaStoreUtils.isExternalTable(table);
         String tableName = getHBaseTableName(table);
+        RevisionManager rm = null;
         try {
             if (!isExternal && getHBaseAdmin().tableExists(tableName)) {
                 // we have created an HBase table, so we delete it to roll back;
@@ -406,7 +446,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 getHBaseAdmin().deleteTable(tableName);
 
               //Set up znodes in revision manager.
-                RevisionManager rm = getOpenedRevisionManager(hbaseConf);
+                rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hbaseConf);
                 if (rm instanceof ZKBasedRevisionManager) {
                     ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
                     zkRM.deleteZNodes(tableName);
@@ -414,6 +454,8 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             }
         } catch (IOException ie) {
             throw new MetaException(StringUtils.stringifyException(ie));
+        } finally {
+            HBaseRevisionManagerUtil.closeRevisionManagerQuietly(rm);
         }
     }
 
@@ -436,9 +478,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
      * @param conf
      * @throws IOException
      */
-    public static void addDependencyJars(Configuration conf) throws IOException {
-        //TODO provide a facility/interface for loading/specifying dependencies
-        //Ideally this method shouldn't be exposed to the user
+    private void addOutputDependencyJars(Configuration conf) throws IOException {
         TableMapReduceUtil.addDependencyJars(conf,
                 //hadoop-core
                 Writable.class,
@@ -452,8 +492,6 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 HCatOutputFormat.class,
                 //hive hbase storage handler jar
                 HBaseSerDe.class,
-                //hcat hbase storage driver jar
-                HBaseOutputStorageDriver.class,
                 //hive jar
                 Table.class,
                 //libthrift jar
@@ -464,152 +502,86 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 FacebookBase.class);
     }
 
-
     /**
-     * Creates the latest snapshot of the table.
-     *
-     * @param jobConf The job configuration.
-     * @param hbaseTableName The fully qualified name of the HBase table.
-     * @return An instance of HCatTableSnapshot
-     * @throws IOException Signals that an I/O exception has occurred.
+     * Utility method to get a new Configuration with hbase-default.xml and hbase-site.xml added
+     * @param jobConf existing configuration
+     * @return a new Configuration with hbase-default.xml and hbase-site.xml added
      */
-    public static HCatTableSnapshot createSnapshot(Configuration jobConf,
-            String hbaseTableName ) throws IOException {
-
-        RevisionManager rm = null;
-        TableSnapshot snpt;
-        try {
-            rm = getOpenedRevisionManager(jobConf);
-            snpt = rm.createSnapshot(hbaseTableName);
-        } finally {
-            if (rm != null)
-                rm.close();
-        }
-
-        String inputJobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-        if(inputJobString == null){
-            throw new IOException(
-                    "InputJobInfo information not found in JobContext. "
-                            + "HCatInputFormat.setInput() not called?");
-        }
-        InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(inputJobString);
-        HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver
-                .convertSnapshot(snpt, inputInfo.getTableInfo());
-
-        return hcatSnapshot;
+    private Configuration addHbaseResources(Configuration jobConf) {
+        Configuration conf = new Configuration(jobConf);
+        HBaseConfiguration.addHbaseResources(conf);
+        return conf;
     }
 
     /**
-     * Creates the snapshot using the revision specified by the user.
-     *
-     * @param jobConf The job configuration.
-     * @param tableName The fully qualified name of the table whose snapshot is being taken.
-     * @param revision The revision number to use for the snapshot.
-     * @return An instance of HCatTableSnapshot.
-     * @throws IOException Signals that an I/O exception has occurred.
+     * Utility method to add hbase-default.xml and hbase-site.xml properties to a new map
+     * if they are not already present in the jobConf.
+     * @param jobConf Job configuration
+     * @param newJobProperties  Map to which new properties should be added
      */
-    public static HCatTableSnapshot createSnapshot(Configuration jobConf,
-            String tableName, long revision)
-            throws IOException {
-
-        TableSnapshot snpt;
-        RevisionManager rm = null;
-        try {
-            rm = getOpenedRevisionManager(jobConf);
-            snpt = rm.createSnapshot(tableName, revision);
-        } finally {
-            if (rm != null)
-                rm.close();
+    private void addHbaseResources(Configuration jobConf,
+            Map<String, String> newJobProperties) {
+        Configuration conf = new Configuration(false);
+        HBaseConfiguration.addHbaseResources(conf);
+        for (Entry<String, String> entry : conf) {
+            if (jobConf.get(entry.getKey()) == null)
+                newJobProperties.put(entry.getKey(), entry.getValue());
         }
-
-        String inputJobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-        if(inputJobString == null){
-            throw new IOException(
-                    "InputJobInfo information not found in JobContext. "
-                            + "HCatInputFormat.setInput() not called?");
-        }
-        InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(inputJobString);
-        HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver
-                .convertSnapshot(snpt, inputInfo.getTableInfo());
-
-        return hcatSnapshot;
     }
 
-    /**
-     * Gets an instance of revision manager which is opened.
-     *
-     * @param jobConf The job configuration.
-     * @return RevisionManager An instance of revision manager.
-     * @throws IOException
-     */
-    static RevisionManager getOpenedRevisionManager(Configuration jobConf) throws IOException {
+    public static boolean isBulkMode(OutputJobInfo outputJobInfo) {
+        //Default is false
+        String bulkMode = outputJobInfo.getTableInfo().getStorerInfo().getProperties()
+                .getProperty(HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY,
+                        "false");
+        return "true".equals(bulkMode);
+    }
 
-        Properties properties = new Properties();
-        String zkHostList = jobConf.get(HConstants.ZOOKEEPER_QUORUM);
-        int port = jobConf.getInt("hbase.zookeeper.property.clientPort",
-                HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
-
-        if (zkHostList != null) {
-            String[] splits = zkHostList.split(",");
-            StringBuffer sb = new StringBuffer();
-            for (String split : splits) {
-                sb.append(split);
-                sb.append(':');
-                sb.append(port);
-                sb.append(',');
+    private String getScanColumns(HCatTableInfo tableInfo, String outputColSchema) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        String hbaseColumnMapping = tableInfo.getStorerInfo().getProperties()
+                .getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
+        if (outputColSchema == null) {
+            String[] splits = hbaseColumnMapping.split("[,]");
+            for (int i = 0; i < splits.length; i++) {
+                if (!splits[i].equals(HBaseSerDe.HBASE_KEY_COL))
+                    builder.append(splits[i]).append(" ");
             }
-
-            sb.deleteCharAt(sb.length() - 1);
-            properties.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
+        } else {
+            HCatSchema outputSchema = (HCatSchema) HCatUtil.deserialize(outputColSchema);
+            HCatSchema tableSchema = tableInfo.getDataColumns();
+            List<String> outputFieldNames = outputSchema.getFieldNames();
+            List<Integer> outputColumnMapping = new ArrayList<Integer>();
+            for(String fieldName: outputFieldNames){
+                int position = tableSchema.getPosition(fieldName);
+                outputColumnMapping.add(position);
+            }
+            try {
+                List<String> columnFamilies = new ArrayList<String>();
+                List<String> columnQualifiers = new ArrayList<String>();
+                HBaseSerDe.parseColumnMapping(hbaseColumnMapping, columnFamilies, null,
+                        columnQualifiers, null);
+                for (int i = 0; i < outputColumnMapping.size(); i++) {
+                    int cfIndex = outputColumnMapping.get(i);
+                    String cf = columnFamilies.get(cfIndex);
+                    // We skip the key column.
+                    if (cf.equals(HBaseSerDe.HBASE_KEY_COL) == false) {
+                        String qualifier = columnQualifiers.get(i);
+                        builder.append(cf);
+                        builder.append(":");
+                        if (qualifier != null) {
+                            builder.append(qualifier);
+                        }
+                        builder.append(" ");
+                    }
+                }
+            } catch (SerDeException e) {
+                throw new IOException(e);
+            }
         }
-        String dataDir = jobConf.get(ZKBasedRevisionManager.DATADIR);
-        if (dataDir != null) {
-            properties.put(ZKBasedRevisionManager.DATADIR, dataDir);
-        }
-        String rmClassName = jobConf.get(
-                RevisionManager.REVISION_MGR_IMPL_CLASS,
-                ZKBasedRevisionManager.class.getName());
-        properties.put(RevisionManager.REVISION_MGR_IMPL_CLASS, rmClassName);
-        RevisionManager revisionManger = RevisionManagerFactory
-                .getRevisionManager(properties);
-        revisionManger.open();
-        return revisionManger;
-    }
-
-    /**
-     * Set snapshot as a property.
-     *
-     * @param snapshot The HCatTableSnapshot to be passed to the job.
-     * @param inpJobInfo The InputJobInfo for the job.
-     * @throws IOException
-     */
-    public void setSnapshot(HCatTableSnapshot snapshot, InputJobInfo inpJobInfo)
-            throws IOException {
-        String serializedSnp = HCatUtil.serialize(snapshot);
-        inpJobInfo.getProperties().setProperty(
-                HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY, serializedSnp);
-    }
-
-    static Transaction getWriteTransaction(Configuration conf) throws IOException {
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-        return (Transaction) HCatUtil.deserialize(outputJobInfo.getProperties()
-                                                               .getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
-    }
-
-    static void setWriteTransaction(Configuration conf, Transaction txn) throws IOException {
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-        outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY, HCatUtil.serialize(txn));
-        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
-    }
-
-    /**
-     * Get the Revision number that will be assigned to this job's output data
-     * @param conf configuration of the job
-     * @return the revision number used
-     * @throws IOException
-     */
-    public static long getOutputRevision(Configuration conf) throws IOException {
-        return getWriteTransaction(conf).getRevisionNumber();
+        //Remove the extra space delimiter
+        builder.deleteCharAt(builder.length() - 1);
+        return builder.toString();
     }
 
 }

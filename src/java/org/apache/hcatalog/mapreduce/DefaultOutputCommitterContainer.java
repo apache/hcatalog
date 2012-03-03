@@ -20,11 +20,12 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.mapred.HCatMapRedUtil;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hcatalog.common.HCatConstants;
@@ -35,6 +36,8 @@ import org.apache.hcatalog.common.HCatUtil;
  * See {@link DefaultOutputFormatContainer} for more information
  */
 class DefaultOutputCommitterContainer extends OutputCommitterContainer {
+
+    private static final Log LOG = LogFactory.getLog(DefaultOutputCommitterContainer.class);
 
     /**
      * @param context current JobContext
@@ -86,11 +89,9 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
     public void cleanupJob(JobContext context) throws IOException {
         getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
 
-        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
-
         //Cancel HCat and JobTracker tokens
         try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
+            HiveConf hiveConf = HCatUtil.getHiveConf(null,
                                                   context.getConfiguration());
             HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
@@ -98,7 +99,7 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
               client.cancelDelegationToken(tokenStrForm);
             }
         } catch (Exception e) {
-            throw new IOException("Failed to cancel delegation token",e);
+            LOG.warn("Failed to cancel delegation token", e);
         }
     }
 }

@@ -18,104 +18,135 @@
 
 package org.apache.hcatalog.hbase;
 
-import org.apache.hadoop.conf.Configurable;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.JobStatus;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hcatalog.hbase.snapshot.RevisionManager;
-
-
 import java.io.IOException;
+import java.util.List;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.mapred.TableOutputFormat;
+import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.JobContext;
+import org.apache.hadoop.mapred.OutputCommitter;
+import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TaskAttemptContext;
+import org.apache.hadoop.util.Progressable;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.Transaction;
 
 /**
- * "Direct" implementation of OutputFormat for HBase. Uses HTable client's put API to write each row to HBase one a
- * time. Presently it is just using TableOutputFormat as the underlying implementation in the future we can
- * tune this to make the writes faster such as permanently disabling WAL, caching, etc.
+ * "Direct" implementation of OutputFormat for HBase. Uses HTable client's put
+ * API to write each row to HBase one a time. Presently it is just using
+ * TableOutputFormat as the underlying implementation in the future we can tune
+ * this to make the writes faster such as permanently disabling WAL, caching,
+ * etc.
  */
-class HBaseDirectOutputFormat extends OutputFormat<WritableComparable<?>,Writable> implements Configurable {
+class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
 
-    private TableOutputFormat<WritableComparable<?>> outputFormat;
+    private TableOutputFormat outputFormat;
 
     public HBaseDirectOutputFormat() {
-        this.outputFormat = new TableOutputFormat<WritableComparable<?>>();
+        this.outputFormat = new TableOutputFormat();
     }
 
     @Override
-    public RecordWriter<WritableComparable<?>, Writable> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return outputFormat.getRecordWriter(context);
+    public RecordWriter<WritableComparable<?>, Put> getRecordWriter(FileSystem ignored,
+            JobConf job, String name, Progressable progress)
+            throws IOException {
+        long version = HBaseRevisionManagerUtil.getOutputRevision(job);
+        return new HBaseDirectRecordWriter(outputFormat.getRecordWriter(ignored, job, name,
+                progress), version);
     }
 
     @Override
-    public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-        outputFormat.checkOutputSpecs(context);
+    public void checkOutputSpecs(FileSystem ignored, JobConf job)
+            throws IOException {
+        job.setOutputCommitter(HBaseDirectOutputCommitter.class);
+        job.setIfUnset(TableOutputFormat.OUTPUT_TABLE,
+                job.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY));
+        outputFormat.checkOutputSpecs(ignored, job);
     }
 
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return new HBaseDirectOutputCommitter(outputFormat.getOutputCommitter(context));
+    private static class HBaseDirectRecordWriter implements
+            RecordWriter<WritableComparable<?>, Put> {
+
+        private RecordWriter<WritableComparable<?>, Put> baseWriter;
+        private final Long outputVersion;
+
+        public HBaseDirectRecordWriter(
+                RecordWriter<WritableComparable<?>, Put> baseWriter,
+                Long outputVersion) {
+            this.baseWriter = baseWriter;
+            this.outputVersion = outputVersion;
+        }
+
+        @Override
+        public void write(WritableComparable<?> key, Put value)
+                throws IOException {
+            Put put = value;
+            if (outputVersion != null) {
+                put = new Put(value.getRow(), outputVersion.longValue());
+                for (List<KeyValue> row : value.getFamilyMap().values()) {
+                    for (KeyValue el : row) {
+                        put.add(el.getFamily(), el.getQualifier(), el.getValue());
+                    }
+                }
+            }
+            baseWriter.write(key, put);
+        }
+
+        @Override
+        public void close(Reporter reporter) throws IOException {
+            baseWriter.close(reporter);
+        }
+
     }
 
-    @Override
-    public void setConf(Configuration conf) {
-        String tableName = conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY);
-        conf = new Configuration(conf);
-        conf.set(TableOutputFormat.OUTPUT_TABLE,tableName);
-        outputFormat.setConf(conf);
-    }
+    public static class HBaseDirectOutputCommitter extends OutputCommitter {
 
-    @Override
-    public Configuration getConf() {
-        return outputFormat.getConf();
-    }
-
-    private static class HBaseDirectOutputCommitter extends OutputCommitter {
-        private OutputCommitter baseOutputCommitter;
-
-        public HBaseDirectOutputCommitter(OutputCommitter baseOutputCommitter) throws IOException {
-            this.baseOutputCommitter = baseOutputCommitter;
+        public HBaseDirectOutputCommitter() throws IOException {
         }
 
         @Override
-        public void abortTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.abortTask(context);
+        public void abortTask(TaskAttemptContext taskContext)
+                throws IOException {
         }
 
         @Override
-        public void commitTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.commitTask(context);
+        public void commitTask(TaskAttemptContext taskContext)
+                throws IOException {
         }
 
         @Override
-        public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
-            return baseOutputCommitter.needsTaskCommit(context);
+        public boolean needsTaskCommit(TaskAttemptContext taskContext)
+                throws IOException {
+            return false;
         }
 
         @Override
-        public void setupJob(JobContext context) throws IOException {
-            baseOutputCommitter.setupJob(context);
+        public void setupJob(JobContext jobContext) throws IOException {
         }
 
         @Override
-        public void setupTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.setupTask(context);
+        public void setupTask(TaskAttemptContext taskContext)
+                throws IOException {
         }
 
         @Override
-        public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
+        public void abortJob(JobContext jobContext, int status)
+                throws IOException {
+            super.abortJob(jobContext, status);
             RevisionManager rm = null;
             try {
-                baseOutputCommitter.abortJob(jobContext, state);
-                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
-                rm.abortWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+                rm = HBaseRevisionManagerUtil
+                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                Transaction writeTransaction = HBaseRevisionManagerUtil
+                        .getWriteTransaction(jobContext.getConfiguration());
+                rm.abortWriteTransaction(writeTransaction);
             } finally {
-                if(rm != null)
+                if (rm != null)
                     rm.close();
             }
         }
@@ -124,11 +155,12 @@ class HBaseDirectOutputFormat extends OutputFormat<WritableComparable<?>,Writabl
         public void commitJob(JobContext jobContext) throws IOException {
             RevisionManager rm = null;
             try {
-                baseOutputCommitter.commitJob(jobContext);
-                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
-                rm.commitWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+                rm = HBaseRevisionManagerUtil
+                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.commitWriteTransaction(HBaseRevisionManagerUtil.getWriteTransaction(jobContext
+                        .getConfiguration()));
             } finally {
-                if(rm != null)
+                if (rm != null)
                     rm.close();
             }
         }

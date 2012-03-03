@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hcatalog.hbase;
 
 import static org.junit.Assert.assertEquals;
@@ -74,6 +92,7 @@ public class TestSnapshots extends SkeletonHBaseTest {
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
                 HCatUtil.serialize(getHiveConf().getAllProperties()));
         Job job = new Job(conf);
+        inputInfo.getProperties().setProperty(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY, "dummysnapshot");
         InitializeInput.setInput(job, inputInfo);
         String modifiedInputInfo = job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
         inputInfo = (InputJobInfo) HCatUtil.deserialize(modifiedInputInfo);
@@ -82,7 +101,7 @@ public class TestSnapshots extends SkeletonHBaseTest {
         revMap.put("cf1", 3L);
         revMap.put("cf2", 5L);
         TableSnapshot hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap,-1);
-        HCatTableSnapshot hcatSnapshot = HBaseInputStorageDriver.convertSnapshot(hbaseSnapshot, inputInfo.getTableInfo());
+        HCatTableSnapshot hcatSnapshot = HBaseRevisionManagerUtil.convertSnapshot(hbaseSnapshot, inputInfo.getTableInfo());
 
         assertEquals(hcatSnapshot.getRevision("value1"), 3);
         assertEquals(hcatSnapshot.getRevision("value2"), 5);
@@ -103,10 +122,11 @@ public class TestSnapshots extends SkeletonHBaseTest {
         revMap.put("cf1", 3L);
         hbaseSnapshot = new TableSnapshot(fullyQualTableName, revMap, -1);
         inputInfo = InputJobInfo.create(databaseName, tableName, null, null, null);
+        inputInfo.getProperties().setProperty(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY, "dummysnapshot");
         InitializeInput.setInput(job, inputInfo);
         modifiedInputInfo = job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO);
         inputInfo = (InputJobInfo) HCatUtil.deserialize(modifiedInputInfo);
-        hcatSnapshot = HBaseInputStorageDriver.convertSnapshot(hbaseSnapshot, inputInfo.getTableInfo());
+        hcatSnapshot = HBaseRevisionManagerUtil.convertSnapshot(hbaseSnapshot, inputInfo.getTableInfo());
         assertEquals(hcatSnapshot.getRevision("value1"), 3);
         assertEquals(hcatSnapshot.getRevision("value2"), 3);
 

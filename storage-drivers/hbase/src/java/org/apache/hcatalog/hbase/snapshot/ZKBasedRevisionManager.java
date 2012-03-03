@@ -365,14 +365,8 @@ public class ZKBasedRevisionManager implements RevisionManager{
         return zkUtil.getTransactionList(path);
     }
 
-    /**
-     * Get the list of aborted Transactions for a column family
-     * @param table the table name
-     * @param columnFamily the column family name
-     * @return a list of aborted WriteTransactions
-     * @throws java.io.IOException
-     */
-     List<FamilyRevision> getAbortedWriteTransactions(String table,
+    @Override
+     public List<FamilyRevision> getAbortedWriteTransactions(String table,
             String columnFamily) throws IOException {
          String path = PathUtil.getAbortInformationPath(baseDir, table, columnFamily);
          return zkUtil.getTransactionList(path);
