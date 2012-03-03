@@ -61,59 +61,98 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
   public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
       throws SemanticException {
 
-    this.ast = ast;
-    switch (ast.getToken().getType()) {
+      this.ast = ast;
+      switch (ast.getToken().getType()) {
 
-    // HCat wants to intercept following tokens and special-handle them.
-    case HiveParser.TOK_CREATETABLE:
-      hook = new CreateTableHook();
-      return hook.preAnalyze(context, ast);
-
-    case HiveParser.TOK_CREATEDATABASE:
-      hook = new CreateDatabaseHook();
-      return hook.preAnalyze(context, ast);
-
-    // HCat will allow these operations to be performed since they are DDL statements.
-    case HiveParser.TOK_SHOWDATABASES:
-    case HiveParser.TOK_DROPDATABASE:
-    case HiveParser.TOK_SWITCHDATABASE:
-    case HiveParser.TOK_DESCDATABASE:
-
-    case HiveParser.TOK_DROPTABLE:
-    case HiveParser.TOK_DESCTABLE:
-    case HiveParser.TOK_ALTERTABLE_ADDCOLS:
-    case HiveParser.TOK_ALTERTABLE_RENAME:
-    case HiveParser.TOK_ALTERTABLE_DROPPARTS:
-    case HiveParser.TOK_ALTERTABLE_PROPERTIES:
-    case HiveParser.TOK_ALTERTABLE_SERIALIZER:
-    case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
-    case HiveParser.TOK_SHOW_TABLESTATUS:
-    case HiveParser.TOK_SHOWTABLES:
-    case HiveParser.TOK_SHOWPARTITIONS:
-      return ast;
-
-    case HiveParser.TOK_ALTERTABLE_ADDPARTS:
-      hook = new AddPartitionHook();
-      return hook.preAnalyze(context, ast);
-
-    case HiveParser.TOK_ALTERTABLE_PARTITION:
-      if (((ASTNode)ast.getChild(1)).getToken().getType() == HiveParser.TOK_ALTERTABLE_FILEFORMAT) {
-        hook = new AlterTableFileFormatHook();
+      // HCat wants to intercept following tokens and special-handle them.
+      case HiveParser.TOK_CREATETABLE:
+        hook = new CreateTableHook();
         return hook.preAnalyze(context, ast);
-      } else {
+
+      case HiveParser.TOK_CREATEDATABASE:
+        hook = new CreateDatabaseHook();
+        return hook.preAnalyze(context, ast);
+      
+      case HiveParser.TOK_ALTERTABLE_PARTITION:
+          if (((ASTNode)ast.getChild(1)).getToken().getType() == HiveParser.TOK_ALTERTABLE_FILEFORMAT) {
+            return ast;
+          } else if (((ASTNode)ast.getChild(1)).getToken().getType() == HiveParser.TOK_ALTERTABLE_ALTERPARTS_MERGEFILES){
+              // unsupported
+              throw new SemanticException("Operation not supported.");
+          } else {
+              return ast;
+          }
+      
+      // HCat will allow these operations to be performed.
+      // Database DDL
+      case HiveParser.TOK_SHOWDATABASES:
+      case HiveParser.TOK_DROPDATABASE:
+      case HiveParser.TOK_SWITCHDATABASE:
+      case HiveParser.TOK_DESCDATABASE:
+      case HiveParser.TOK_ALTERDATABASE_PROPERTIES:
+
+      // Index DDL
+      case HiveParser.TOK_ALTERINDEX_PROPERTIES:
+      case HiveParser.TOK_CREATEINDEX:
+      case HiveParser.TOK_DROPINDEX:
+      case HiveParser.TOK_SHOWINDEXES:
+      
+      // View DDL
+      // "alter view add partition" does not work because of the nature of implementation
+      // of the DDL in hive. Hive will internally invoke another Driver on the select statement, 
+      // and HCat does not let "select" statement through. I cannot find a way to get around it
+      // without modifying hive code. So just leave it unsupported. 
+      //case HiveParser.TOK_ALTERVIEW_ADDPARTS:
+      case HiveParser.TOK_ALTERVIEW_DROPPARTS:
+      case HiveParser.TOK_ALTERVIEW_PROPERTIES:
+      case HiveParser.TOK_ALTERVIEW_RENAME:
+      case HiveParser.TOK_CREATEVIEW:
+      case HiveParser.TOK_DROPVIEW:
+      
+      // Authorization DDL
+      case HiveParser.TOK_CREATEROLE:
+      case HiveParser.TOK_DROPROLE:
+      case HiveParser.TOK_GRANT_ROLE:
+      case HiveParser.TOK_GRANT_WITH_OPTION:
+      case HiveParser.TOK_GRANT:
+      case HiveParser.TOK_REVOKE_ROLE:
+      case HiveParser.TOK_REVOKE:
+      case HiveParser.TOK_SHOW_GRANT:
+      case HiveParser.TOK_SHOW_ROLE_GRANT:
+      
+      // Misc DDL
+      case HiveParser.TOK_LOCKTABLE:
+      case HiveParser.TOK_UNLOCKTABLE:
+      case HiveParser.TOK_SHOWLOCKS:
+      case HiveParser.TOK_DESCFUNCTION:
+      case HiveParser.TOK_SHOWFUNCTIONS:
+      case HiveParser.TOK_EXPLAIN:
+      
+      // Table DDL
+      case HiveParser.TOK_ALTERTABLE_ADDPARTS:
+      case HiveParser.TOK_ALTERTABLE_ADDCOLS:
+      case HiveParser.TOK_ALTERTABLE_CHANGECOL_AFTER_POSITION:
+      case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
+      case HiveParser.TOK_ALTERTABLE_CLUSTER_SORT:
+      case HiveParser.TOK_ALTERTABLE_DROPPARTS:
+      case HiveParser.TOK_ALTERTABLE_PROPERTIES:
+      case HiveParser.TOK_ALTERTABLE_RENAME:
+      case HiveParser.TOK_ALTERTABLE_RENAMECOL:
+      case HiveParser.TOK_ALTERTABLE_REPLACECOLS:
+      case HiveParser.TOK_ALTERTABLE_SERIALIZER:
+      case HiveParser.TOK_ALTERTABLE_TOUCH:
+      case HiveParser.TOK_DESCTABLE:
+      case HiveParser.TOK_DROPTABLE:
+      case HiveParser.TOK_SHOW_TABLESTATUS:
+      case HiveParser.TOK_SHOWPARTITIONS:
+      case HiveParser.TOK_SHOWTABLES:
         return ast;
+
+      // In all other cases, throw an exception. Its a white-list of allowed operations.
+      default:
+        throw new SemanticException("Operation not supported.");
+
       }
-
-    // allow export/import operations
-    case HiveParser.TOK_EXPORT:
-    case HiveParser.TOK_IMPORT:
-      return ast;
-
-    // In all other cases, throw an exception. Its a white-list of allowed operations.
-    default:
-      throw new SemanticException("Operation not supported.");
-
-    }
   }
 
   @Override
@@ -124,29 +163,69 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
 
       switch (ast.getToken().getType()) {
 
-      case HiveParser.TOK_DESCTABLE:
-      case HiveParser.TOK_SHOWPARTITIONS:
+      case HiveParser.TOK_CREATETABLE:
+      case HiveParser.TOK_CREATEDATABASE:
+      case HiveParser.TOK_ALTERTABLE_PARTITION:
+      
+      // HCat will allow these operations to be performed.
+      // Database DDL
+      case HiveParser.TOK_SHOWDATABASES:
+      case HiveParser.TOK_DROPDATABASE:
+      case HiveParser.TOK_SWITCHDATABASE:
+      case HiveParser.TOK_DESCDATABASE:
+      case HiveParser.TOK_ALTERDATABASE_PROPERTIES:
+
+      // Index DDL
+      case HiveParser.TOK_ALTERINDEX_PROPERTIES:
+      case HiveParser.TOK_CREATEINDEX:
+      case HiveParser.TOK_DROPINDEX:
+      case HiveParser.TOK_SHOWINDEXES:
+      
+      // View DDL
+      //case HiveParser.TOK_ALTERVIEW_ADDPARTS:
+      case HiveParser.TOK_ALTERVIEW_DROPPARTS:
+      case HiveParser.TOK_ALTERVIEW_PROPERTIES:
+      case HiveParser.TOK_ALTERVIEW_RENAME:
+      case HiveParser.TOK_CREATEVIEW:
+      case HiveParser.TOK_DROPVIEW:
+      
+      // Authorization DDL
+      case HiveParser.TOK_CREATEROLE:
+      case HiveParser.TOK_DROPROLE:
+      case HiveParser.TOK_GRANT_ROLE:
+      case HiveParser.TOK_GRANT_WITH_OPTION:
+      case HiveParser.TOK_GRANT:
+      case HiveParser.TOK_REVOKE_ROLE:
+      case HiveParser.TOK_REVOKE:
+      case HiveParser.TOK_SHOW_GRANT:
+      case HiveParser.TOK_SHOW_ROLE_GRANT:
+      
+      // Misc DDL
+      case HiveParser.TOK_LOCKTABLE:
+      case HiveParser.TOK_UNLOCKTABLE:
+      case HiveParser.TOK_SHOWLOCKS:
+      case HiveParser.TOK_DESCFUNCTION:
+      case HiveParser.TOK_SHOWFUNCTIONS:
+      case HiveParser.TOK_EXPLAIN:
+      
+      // Table DDL
       case HiveParser.TOK_ALTERTABLE_ADDPARTS:
-      case HiveParser.TOK_DROPTABLE:
       case HiveParser.TOK_ALTERTABLE_ADDCOLS:
-      case HiveParser.TOK_ALTERTABLE_RENAME:
+      case HiveParser.TOK_ALTERTABLE_CHANGECOL_AFTER_POSITION:
+      case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
+      case HiveParser.TOK_ALTERTABLE_CLUSTER_SORT:
       case HiveParser.TOK_ALTERTABLE_DROPPARTS:
       case HiveParser.TOK_ALTERTABLE_PROPERTIES:
+      case HiveParser.TOK_ALTERTABLE_RENAME:
+      case HiveParser.TOK_ALTERTABLE_RENAMECOL:
+      case HiveParser.TOK_ALTERTABLE_REPLACECOLS:
       case HiveParser.TOK_ALTERTABLE_SERIALIZER:
-      case HiveParser.TOK_ALTERTABLE_SERDEPROPERTIES:
-      case HiveParser.TOK_ALTERTABLE_PARTITION:
-      case HiveParser.TOK_DESCDATABASE:
-      case HiveParser.TOK_SWITCHDATABASE: 
-      case HiveParser.TOK_DROPDATABASE:
-      case HiveParser.TOK_CREATEDATABASE:
-      case HiveParser.TOK_SHOWDATABASES:
+      case HiveParser.TOK_ALTERTABLE_TOUCH:
+      case HiveParser.TOK_DESCTABLE:
+      case HiveParser.TOK_DROPTABLE:
       case HiveParser.TOK_SHOW_TABLESTATUS:
+      case HiveParser.TOK_SHOWPARTITIONS:
       case HiveParser.TOK_SHOWTABLES:
-      case HiveParser.TOK_CREATETABLE: 
-        break;
-
-      case HiveParser.TOK_EXPORT:
-      case HiveParser.TOK_IMPORT:
         break;
 
       default:

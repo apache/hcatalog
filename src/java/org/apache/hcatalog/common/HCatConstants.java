@@ -17,6 +17,9 @@
  */
 package org.apache.hcatalog.common;
 
+import org.apache.hadoop.mapred.SequenceFileInputFormat;
+import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+
 public final class HCatConstants {
 
   /** The key for the input storage driver class name */
@@ -30,6 +33,9 @@ public final class HCatConstants {
   public static final String HCAT_RCFILE_ISD_CLASS = "org.apache.hcatalog.rcfile.RCFileInputDriver";
   public static final String HCAT_RCFILE_OSD_CLASS = "org.apache.hcatalog.rcfile.RCFileOutputDriver";
 
+  public static final String SEQUENCEFILE_INPUT = SequenceFileInputFormat.class.getName();
+  public static final String SEQUENCEFILE_OUTPUT = SequenceFileOutputFormat.class.getName();
+  
   public static final String HCAT_PIG_STORAGE_CLASS = "org.apache.pig.builtin.PigStorage";
   public static final String HCAT_PIG_LOADER = "hcat.pig.loader";
   public static final String HCAT_PIG_LOADER_ARGS = "hcat.pig.loader.args";

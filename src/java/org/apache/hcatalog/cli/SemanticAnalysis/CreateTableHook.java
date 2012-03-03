@@ -57,8 +57,8 @@ import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
-    private String inStorageDriver, outStorageDriver, tableName, loader, storer;
-
+    private String tableName;
+    
     @Override
     public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context,
             ASTNode ast) throws SemanticException {
@@ -78,6 +78,7 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
         String inputFormat = null, outputFormat = null;
         tableName = BaseSemanticAnalyzer.getUnescapedName((ASTNode) ast
                 .getChild(0));
+        boolean likeTable = false;
 
         for (int num = 1; num < numCh; num++) {
             ASTNode child = (ASTNode) ast.getChild(num);
@@ -90,51 +91,21 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
                             "Select is not a valid operation.");
 
                 case HiveParser.TOK_TABLEBUCKETS:
-                    throw new SemanticException(
-                            "Operation not supported. HCatalog doesn't " +
-                            "allow Clustered By in create table.");
+                    break;
 
                 case HiveParser.TOK_TBLSEQUENCEFILE:
-                    throw new SemanticException(
-                            "Operation not supported. HCatalog doesn't support " +
-                            "Sequence File by default yet. "
-                             + "You may specify it through INPUT/OUTPUT storage drivers.");
+                    inputFormat = HCatConstants.SEQUENCEFILE_INPUT;
+                    outputFormat = HCatConstants.SEQUENCEFILE_OUTPUT;
+                    break;
 
                 case HiveParser.TOK_TBLTEXTFILE:
                     inputFormat      = org.apache.hadoop.mapred.TextInputFormat.class.getName();
                     outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
-                    inStorageDriver  = org.apache.hcatalog.pig.drivers.LoadFuncBasedInputDriver.class.getName();
-                    outStorageDriver = org.apache.hcatalog.pig.drivers.StoreFuncBasedOutputDriver.class.getName();
-                    loader = HCatConstants.HCAT_PIG_STORAGE_CLASS;
-                    storer = HCatConstants.HCAT_PIG_STORAGE_CLASS;
 
                     break;
 
                 case HiveParser.TOK_LIKETABLE:
-
-                    String likeTableName;
-                    if (child.getChildCount() > 0
-                            && (likeTableName = BaseSemanticAnalyzer
-                                    .getUnescapedName((ASTNode) ast.getChild(0))) != null) {
-
-                        throw new SemanticException(
-                                "Operation not supported. CREATE TABLE LIKE is not supported.");
-                        // Map<String, String> tblProps;
-                        // try {
-                        // tblProps =
-                        // db.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME,
-                        // likeTableName).getParameters();
-                        // } catch (HiveException he) {
-                        // throw new SemanticException(he);
-                        // }
-                        // if(!(tblProps.containsKey(InitializeInput.HOWL_ISD_CLASS)
-                        // &&
-                        // tblProps.containsKey(InitializeInput.HOWL_OSD_CLASS))){
-                        // throw new
-                        // SemanticException("Operation not supported. Table "+likeTableName+" should have been created through HCat. Seems like its not.");
-                        // }
-                        // return ast;
-                    }
+                    likeTable = true;
                     break;
 
                 case HiveParser.TOK_IFNOTEXISTS:
@@ -175,37 +146,30 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
                     break;
 
                 case HiveParser.TOK_TABLEFILEFORMAT:
-                    if (child.getChildCount() < 4) {
+                    if (child.getChildCount() < 2) {
                         throw new SemanticException(
                                 "Incomplete specification of File Format. " +
-                                "You must provide InputFormat, OutputFormat, " +
-                                "InputDriver, OutputDriver.");
+                                "You must provide InputFormat, OutputFormat.");
                     }
                     inputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
                             .getChild(0).getText());
                     outputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
                             .getChild(1).getText());
-                    inStorageDriver = BaseSemanticAnalyzer
-                            .unescapeSQLString(child.getChild(2).getText());
-                    outStorageDriver = BaseSemanticAnalyzer
-                            .unescapeSQLString(child.getChild(3).getText());
                     break;
 
                 case HiveParser.TOK_TBLRCFILE:
                     inputFormat = RCFileInputFormat.class.getName();
                     outputFormat = RCFileOutputFormat.class.getName();
-                    inStorageDriver = RCFileInputDriver.class.getName();
-                    outStorageDriver = RCFileOutputDriver.class.getName();
                     break;
 
             }
         }
-
-        if (inputFormat == null || outputFormat == null
-                || inStorageDriver == null || outStorageDriver == null) {
+        
+        if (!likeTable && (inputFormat == null || outputFormat == null)) {
             throw new SemanticException(
                     "STORED AS specification is either incomplete or incorrect.");
         }
+
 
         return ast;
     }
@@ -239,9 +203,6 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
         // first check if we will allow the user to create table.
         String storageHandler = desc.getStorageHandler();
         if (StringUtils.isEmpty(storageHandler)) {
-            tblProps.put(HCatConstants.HCAT_ISD_CLASS, inStorageDriver);
-            tblProps.put(HCatConstants.HCAT_OSD_CLASS, outStorageDriver);
-
         } else {
             try {
                 HCatStorageHandler storageHandlerInst = HCatUtil
@@ -255,12 +216,6 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
             } catch (IOException e) {
                 throw new SemanticException(e);
             }
-        }
-        if (loader!=null) {
-            tblProps.put(HCatConstants.HCAT_PIG_LOADER, loader);
-        }
-        if (storer!=null) {
-            tblProps.put(HCatConstants.HCAT_PIG_STORER, storer);
         }
 
         if (desc != null) {

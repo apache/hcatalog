@@ -178,7 +178,7 @@ sub runHCatCmdLine
     print FH $testCmd->{'hcat'} . "\n";
     close(FH);
 
-    Util::runHCatCmdFromFile($testCmd, $log, $hcatfiles[0], $stdoutfile, $stderrfile);
+    Util::runHCatCmdFromFile($testCmd, $log, $hcatfiles[0], $stdoutfile, $stderrfile, 1);
     $result{'rc'} = $? >> 8;
     $result{'stdout'} = `cat $outdir/stdout`;
     $result{'stderr'} = `cat $outdir/stderr`;

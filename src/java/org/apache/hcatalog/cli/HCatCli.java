@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.common.LogUtils.LogInitializationException;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
+import org.apache.hadoop.hive.ql.processors.DfsProcessor;
 import org.apache.hadoop.hive.ql.processors.SetProcessor;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
@@ -240,6 +241,8 @@ public class HCatCli {
 
     if(firstToken.equalsIgnoreCase("set")){
       return new SetProcessor().run(cmd.substring(firstToken.length()).trim()).getResponseCode();
+    } else if (firstToken.equalsIgnoreCase("dfs")){
+      return new DfsProcessor(ss.getConf()).run(cmd.substring(firstToken.length()).trim()).getResponseCode();
     }
 
     HCatDriver driver = new HCatDriver();

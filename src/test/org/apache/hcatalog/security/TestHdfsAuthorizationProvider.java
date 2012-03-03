@@ -496,7 +496,7 @@ public class TestHdfsAuthorizationProvider {
     String relPath = new Random().nextInt() + "/mypart";
     Path partPath = new Path(getTablePath("default", "foo1"), relPath);
     whFs.mkdirs(partPath, perm500);
-    execFail("ALTER TABLE foo1 ADD PARTITION (b='2010-10-10') LOCATION '%s'", partPath);
+    exec("ALTER TABLE foo1 ADD PARTITION (b='2010-10-10') LOCATION '%s'", partPath);
   }
   
   @Test
