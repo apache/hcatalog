@@ -45,6 +45,7 @@ public enum ErrorType {
     ERROR_TOO_MANY_DYNAMIC_PTNS         (2013, "Attempt to create too many dynamic partitions"),
     ERROR_INIT_LOADER                   (2014,  "Error initializing Pig loader"),
     ERROR_INIT_STORER                   (2015,  "Error initializing Pig storer"),
+    ERROR_NOT_SUPPORTED                 (2016,  "Error operation not supported"),
 
     /* Authorization Errors 3000 - 3999 */
     ERROR_ACCESS_CONTROL           (3000, "Permission denied"),

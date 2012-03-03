@@ -21,7 +21,9 @@ Apache HCatalog Change Log
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
-  HCAT-279 Remove remaining code mentioning isd/osd (diajy via gates)
+  HCAT-264 Barrier for HCatOutputFormat for Pig/Mapreduce if the table contains feature only supported in Hive (daijy via gates)
+
+  HCAT-279 Remove remaining code mentioning isd/osd (daijy via gates)
 
   HCAT-261 Enable more DDL statements for HCat (daijy via gates)
 
