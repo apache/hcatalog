@@ -22,12 +22,6 @@ import org.apache.hadoop.mapred.SequenceFileOutputFormat;
 
 public final class HCatConstants {
 
-  /** The key for the input storage driver class name */
-  public static final String HCAT_ISD_CLASS = "hcat.isd";
-
-  /** The key for the output storage driver class name */
-  public static final String HCAT_OSD_CLASS = "hcat.osd";
-
   public static final String HIVE_RCFILE_IF_CLASS = "org.apache.hadoop.hive.ql.io.RCFileInputFormat";
   public static final String HIVE_RCFILE_OF_CLASS = "org.apache.hadoop.hive.ql.io.RCFileOutputFormat";
   public static final String HCAT_RCFILE_ISD_CLASS = "org.apache.hcatalog.rcfile.RCFileInputDriver";

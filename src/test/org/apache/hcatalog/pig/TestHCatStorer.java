@@ -106,9 +106,7 @@ public class TestHCatStorer extends TestCase {
   public void testPartColsInData() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -146,9 +144,7 @@ public class TestHCatStorer extends TestCase {
 
     driver.run("drop table employee");
     String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
-    		" PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE " +
-    		"tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    		" PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
 
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
@@ -192,9 +188,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreInPartiitonedTbl() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE " +
-        "tblproperties('hcat.isd'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='org.apache.hcatalog.rcfile.RCFileOutputDriver') ";
+    String createTable = "create table junit_unparted(a int) partitioned by (b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -230,9 +224,7 @@ public class TestHCatStorer extends TestCase {
 
   public void testNoAlias() throws IOException, CommandNeedRetryException{
     driver.run("drop table junit_parted");
-    String createTable = "create table junit_parted(a int, b string) partitioned by (ds string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_parted(a int, b string) partitioned by (ds string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -277,17 +269,13 @@ public class TestHCatStorer extends TestCase {
   public void testStoreMultiTables() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'hcat.osd'='org.apache.hcatalog.rcfile.RCFileOutputDriver') ";
+    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
     driver.run("drop table junit_unparted2");
-    createTable = "create table junit_unparted2(a int, b string) stored as RCFILE " +
-    "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-    "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    createTable = "create table junit_unparted2(a int, b string) stored as RCFILE";
     retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -338,9 +326,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreWithNoSchema() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -380,9 +366,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreWithNoCtorArgs() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -422,9 +406,7 @@ public class TestHCatStorer extends TestCase {
   public void testEmptyStore() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -461,9 +443,7 @@ public class TestHCatStorer extends TestCase {
   public void testBagNStruct() throws IOException, CommandNeedRetryException{
   driver.run("drop table junit_unparted");
   String createTable = "create table junit_unparted(b string,a struct<a1:int>,  arr_of_struct array<string>, " +
-  		"arr_of_struct2 array<struct<s1:string,s2:string>>,  arr_of_struct3 array<struct<s3:string>>) stored as RCFILE " +
-      "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-      "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+  		"arr_of_struct2 array<struct<s1:string,s2:string>>,  arr_of_struct3 array<struct<s3:string>>) stored as RCFILE";
   int retCode = driver.run(createTable).getResponseCode();
   if(retCode != 0) {
     throw new IOException("Failed to create table.");
@@ -499,9 +479,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreFuncAllSimpleTypes() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string, f binary) stored as RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string, f binary) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -557,9 +535,7 @@ public class TestHCatStorer extends TestCase {
   public void testStoreFuncSimple() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE " +
-    		"tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-    		"'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+    String createTable = "create table junit_unparted(a int, b string) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
@@ -603,9 +579,7 @@ public class TestHCatStorer extends TestCase {
 
     driver.run("drop table if exists employee");
     String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
-        " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+        " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
 
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
@@ -644,9 +618,7 @@ public class TestHCatStorer extends TestCase {
 
     driver.run("drop table if exists employee");
     String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
-        " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE " +
-        "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-        "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+        " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
 
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
@@ -685,9 +657,7 @@ public class TestHCatStorer extends TestCase {
 
       driver.run("drop table if exists employee");
       String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
-          " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE " +
-          "tblproperties('"+HCatConstants.HCAT_ISD_CLASS+"'='"+RCFileInputDriver.class.getName()+"'," +
-          "'"+HCatConstants.HCAT_OSD_CLASS+"'='"+RCFileOutputDriver.class.getName()+"') ";
+          " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
 
       int retCode = driver.run(createTable).getResponseCode();
       if(retCode != 0) {

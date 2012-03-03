@@ -33,6 +33,8 @@ Trunk (unreleased changes)
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-279 Remove remaining code mentioning isd/osd (daijy via gates)
+
   HCAT-261 Enable more DDL statements for HCat (daijy via gates)
 
   HCAT-252 Rework HBase storage driver into HBase storage handler (rohini via toffer) 

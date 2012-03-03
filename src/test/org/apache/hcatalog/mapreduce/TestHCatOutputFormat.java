@@ -121,8 +121,6 @@ public class TestHCatOutputFormat extends TestCase {
     tbl.setPartitionKeys(fields);
 
     Map<String, String> tableParams = new HashMap<String, String>();
-    tableParams.put(HCatConstants.HCAT_OSD_CLASS, RCFileOutputDriver.class.getName());
-    tableParams.put(HCatConstants.HCAT_ISD_CLASS, "testInputClass");
     tableParams.put("hcat.testarg", "testArgValue");
 
     tbl.setParameters(tableParams);
