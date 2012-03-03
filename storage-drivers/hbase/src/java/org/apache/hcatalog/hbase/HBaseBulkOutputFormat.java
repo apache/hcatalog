@@ -1,160 +1,209 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hcatalog.hbase;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.FileOutputCommitter;
+import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.JobStatus;
-import org.apache.hadoop.mapreduce.OutputCommitter;
-import org.apache.hadoop.mapreduce.OutputFormat;
-import org.apache.hadoop.mapreduce.RecordWriter;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hadoop.mapred.JobContext;
+import org.apache.hadoop.mapred.OutputCommitter;
+import org.apache.hadoop.mapred.RecordWriter;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.mapred.TaskAttemptContext;
+import org.apache.hadoop.util.Progressable;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
-import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
-import org.apache.hcatalog.hbase.snapshot.Transaction;
-import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.OutputJobInfo;
-
-import java.io.IOException;
 
 /**
- * Class which imports data into HBase via it's "bulk load" feature. Wherein regions
- * are created by the MR job using HFileOutputFormat and then later "moved" into
- * the appropriate region server.
+ * Class which imports data into HBase via it's "bulk load" feature. Wherein
+ * regions are created by the MR job using HFileOutputFormat and then later
+ * "moved" into the appropriate region server.
  */
-class HBaseBulkOutputFormat extends OutputFormat<WritableComparable<?>,Put> {
-    private final static ImmutableBytesWritable EMPTY_LIST = new ImmutableBytesWritable(new byte[0]);
-    private SequenceFileOutputFormat<WritableComparable<?>,Put> baseOutputFormat;
-    private final static Log LOG = LogFactory.getLog(HBaseBulkOutputFormat.class);
+class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
+
+    private final static ImmutableBytesWritable EMPTY_LIST = new ImmutableBytesWritable(
+            new byte[0]);
+    private SequenceFileOutputFormat<WritableComparable<?>, Put> baseOutputFormat;
 
     public HBaseBulkOutputFormat() {
-        baseOutputFormat = new SequenceFileOutputFormat<WritableComparable<?>,Put>();
+        baseOutputFormat = new SequenceFileOutputFormat<WritableComparable<?>, Put>();
     }
 
     @Override
-    public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-        baseOutputFormat.checkOutputSpecs(context);
-        //Get jobTracker delegation token if security is enabled
-        //we need to launch the ImportSequenceFile job
-        if(context.getConfiguration().getBoolean("hadoop.security.authorization",false)) {
-            JobClient jobClient = new JobClient(new JobConf(context.getConfiguration()));
-            context.getCredentials().addToken(new Text("my mr token"), jobClient.getDelegationToken(null));
+    public void checkOutputSpecs(FileSystem ignored, JobConf job)
+            throws IOException {
+        job.setOutputKeyClass(ImmutableBytesWritable.class);
+        job.setOutputValueClass(Put.class);
+        job.setOutputCommitter(HBaseBulkOutputCommitter.class);
+        baseOutputFormat.checkOutputSpecs(ignored, job);
+        getJTDelegationToken(job);
+    }
+
+    @Override
+    public RecordWriter<WritableComparable<?>, Put> getRecordWriter(
+            FileSystem ignored, JobConf job, String name, Progressable progress)
+            throws IOException {
+        long version = HBaseRevisionManagerUtil.getOutputRevision(job);
+        return new HBaseBulkRecordWriter(baseOutputFormat.getRecordWriter(
+                ignored, job, name, progress), version);
+    }
+
+    private void getJTDelegationToken(JobConf job) throws IOException {
+        // Get jobTracker delegation token if security is enabled
+        // we need to launch the ImportSequenceFile job
+        if (job.getBoolean("hadoop.security.authorization", false)) {
+            JobClient jobClient = new JobClient(new JobConf(job));
+            try {
+                job.getCredentials().addToken(new Text("my mr token"),
+                        jobClient.getDelegationToken(null));
+            } catch (InterruptedException e) {
+                throw new IOException("Error while getting JT delegation token", e);
+            }
         }
     }
 
-    @Override
-    public RecordWriter<WritableComparable<?>, Put> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        //TODO use a constant/static setter when available
-        context.getConfiguration().setClass("mapred.output.key.class",ImmutableBytesWritable.class,Object.class);
-        context.getConfiguration().setClass("mapred.output.value.class",Put.class,Object.class);
-        return new HBaseBulkRecordWriter(baseOutputFormat.getRecordWriter(context));
-    }
+    private static class HBaseBulkRecordWriter implements
+            RecordWriter<WritableComparable<?>, Put> {
 
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException {
-        return new HBaseBulkOutputCommitter(baseOutputFormat.getOutputCommitter(context));
-    }
+        private RecordWriter<WritableComparable<?>, Put> baseWriter;
+        private final Long outputVersion;
 
-    private static class HBaseBulkRecordWriter extends  RecordWriter<WritableComparable<?>,Put> {
-        private RecordWriter<WritableComparable<?>,Put> baseWriter;
-
-        public HBaseBulkRecordWriter(RecordWriter<WritableComparable<?>,Put> baseWriter)  {
+        public HBaseBulkRecordWriter(
+                RecordWriter<WritableComparable<?>, Put> baseWriter,
+                Long outputVersion) {
             this.baseWriter = baseWriter;
+            this.outputVersion = outputVersion;
         }
 
         @Override
-        public void write(WritableComparable<?> key, Put value) throws IOException, InterruptedException {
-            //we ignore the key
-            baseWriter.write(EMPTY_LIST, value);
+        public void write(WritableComparable<?> key, Put value)
+                throws IOException {
+            Put put = value;
+            if (outputVersion != null) {
+                put = new Put(value.getRow(), outputVersion.longValue());
+                for (List<KeyValue> row : value.getFamilyMap().values()) {
+                    for (KeyValue el : row) {
+                        put.add(el.getFamily(), el.getQualifier(), el.getValue());
+                    }
+                }
+            }
+            // we ignore the key
+            baseWriter.write(EMPTY_LIST, put);
         }
 
         @Override
-        public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-            baseWriter.close(context);
+        public void close(Reporter reporter) throws IOException {
+            baseWriter.close(reporter);
         }
     }
 
-    private static class HBaseBulkOutputCommitter extends OutputCommitter {
-        private OutputCommitter baseOutputCommitter;
+    public static class HBaseBulkOutputCommitter extends OutputCommitter {
 
-        public HBaseBulkOutputCommitter(OutputCommitter baseOutputCommitter) throws IOException {
-            this.baseOutputCommitter = baseOutputCommitter;
+        private final OutputCommitter baseOutputCommitter;
+
+        public HBaseBulkOutputCommitter() {
+            baseOutputCommitter = new FileOutputCommitter();
         }
 
         @Override
-        public void abortTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.abortTask(context);
+        public void abortTask(TaskAttemptContext taskContext)
+                throws IOException {
+            baseOutputCommitter.abortTask(taskContext);
         }
 
         @Override
-        public void commitTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.commitTask(context);
+        public void commitTask(TaskAttemptContext taskContext)
+                throws IOException {
+            baseOutputCommitter.commitTask(taskContext);
         }
 
         @Override
-        public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
-            return baseOutputCommitter.needsTaskCommit(context);
+        public boolean needsTaskCommit(TaskAttemptContext taskContext)
+                throws IOException {
+            return baseOutputCommitter.needsTaskCommit(taskContext);
         }
 
         @Override
-        public void setupJob(JobContext context) throws IOException {
-            baseOutputCommitter.setupJob(context);
+        public void setupJob(JobContext jobContext) throws IOException {
+            baseOutputCommitter.setupJob(jobContext);
         }
 
         @Override
-        public void setupTask(TaskAttemptContext context) throws IOException {
-            baseOutputCommitter.setupTask(context);
+        public void setupTask(TaskAttemptContext taskContext)
+                throws IOException {
+            baseOutputCommitter.setupTask(taskContext);
         }
 
         @Override
-        public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
+        public void abortJob(JobContext jobContext, int status)
+                throws IOException {
+            baseOutputCommitter.abortJob(jobContext, status);
             RevisionManager rm = null;
             try {
-                baseOutputCommitter.abortJob(jobContext,state);
-                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
-                rm.abortWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+                rm = HBaseRevisionManagerUtil
+                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                rm.abortWriteTransaction(HBaseRevisionManagerUtil
+                        .getWriteTransaction(jobContext.getConfiguration()));
             } finally {
                 cleanIntermediate(jobContext);
-                if(rm != null)
+                if (rm != null)
                     rm.close();
             }
         }
 
         @Override
         public void commitJob(JobContext jobContext) throws IOException {
+            baseOutputCommitter.commitJob(jobContext);
             RevisionManager rm = null;
             try {
-                baseOutputCommitter.commitJob(jobContext);
                 Configuration conf = jobContext.getConfiguration();
-                Path srcPath = FileOutputFormat.getOutputPath(jobContext);
-                Path destPath = new Path(srcPath.getParent(),srcPath.getName()+"_hfiles");
+                Path srcPath = FileOutputFormat.getOutputPath(jobContext.getJobConf());
+                Path destPath = new Path(srcPath.getParent(), srcPath.getName() + "_hfiles");
                 ImportSequenceFile.runJob(jobContext,
-                                          conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
-                                          srcPath,
-                                          destPath);
-                rm = HBaseHCatStorageHandler.getOpenedRevisionManager(jobContext.getConfiguration());
-                rm.commitWriteTransaction(HBaseHCatStorageHandler.getWriteTransaction(jobContext.getConfiguration()));
+                                conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
+                                srcPath,
+                                destPath);
+                rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
+                rm.commitWriteTransaction(HBaseRevisionManagerUtil.getWriteTransaction(conf));
                 cleanIntermediate(jobContext);
             } finally {
-                if(rm != null)
+                if (rm != null)
                     rm.close();
             }
         }
 
-        public void cleanIntermediate(JobContext jobContext) throws IOException {
+        private void cleanIntermediate(JobContext jobContext)
+                throws IOException {
             FileSystem fs = FileSystem.get(jobContext.getConfiguration());
-            fs.delete(FileOutputFormat.getOutputPath(jobContext),true);
+            fs.delete(FileOutputFormat.getOutputPath(jobContext.getJobConf()), true);
         }
     }
 }

@@ -20,6 +20,7 @@ package org.apache.hcatalog.hbase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,15 +28,20 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableRecordReader;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.io.DataInputBuffer;
+import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hcatalog.common.HCatUtil;
+import org.apache.hcatalog.hbase.snapshot.FamilyRevision;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 
@@ -43,59 +49,93 @@ import org.apache.hcatalog.mapreduce.InputJobInfo;
  * The Class HbaseSnapshotRecordReader implements logic for filtering records
  * based on snapshot.
  */
-class HbaseSnapshotRecordReader extends TableRecordReader {
+class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, Result> {
 
     static final Log LOG = LogFactory.getLog(HbaseSnapshotRecordReader.class);
+    private final InputJobInfo inpJobInfo;
+    private final Configuration conf;
+    private final int maxRevisions = 1;
     private ResultScanner scanner;
     private Scan  scan;
     private HTable  htable;
-    private ImmutableBytesWritable key;
-    private Result value;
-    private InputJobInfo inpJobInfo;
     private TableSnapshot snapshot;
-    private int maxRevisions;
     private Iterator<Result> resultItr;
+    private Set<Long> allAbortedTransactions;
+    private DataOutputBuffer valueOut = new DataOutputBuffer();
+    private DataInputBuffer valueIn = new DataInputBuffer();
 
-
-    HbaseSnapshotRecordReader(InputJobInfo inputJobInfo) throws IOException {
+    HbaseSnapshotRecordReader(InputJobInfo inputJobInfo, Configuration conf) throws IOException {
         this.inpJobInfo = inputJobInfo;
-        String snapshotString = inpJobInfo.getProperties().getProperty(
-                HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
+        this.conf = conf;
+        String snapshotString = conf.get(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
         HCatTableSnapshot hcatSnapshot = (HCatTableSnapshot) HCatUtil
                 .deserialize(snapshotString);
-        this.snapshot = HBaseInputStorageDriver.convertSnapshot(hcatSnapshot,
+        this.snapshot = HBaseRevisionManagerUtil.convertSnapshot(hcatSnapshot,
                 inpJobInfo.getTableInfo());
-        this.maxRevisions = 1;
     }
 
-    /* @param firstRow The first record in the split.
-    /* @throws IOException
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#restart(byte[])
-     */
-    @Override
+    public void init() throws IOException {
+        restart(scan.getStartRow());
+    }
+
     public void restart(byte[] firstRow) throws IOException {
+        allAbortedTransactions = getAbortedTransactions(Bytes.toString(htable.getTableName()), scan);
+        long maxValidRevision = snapshot.getLatestRevision();
+        while (allAbortedTransactions.contains(maxValidRevision)) {
+            maxValidRevision--;
+        }
+        long minValidRevision = getMinimumRevision(scan, snapshot);
+        while (allAbortedTransactions.contains(minValidRevision)) {
+            minValidRevision--;
+        }
         Scan newScan = new Scan(scan);
         newScan.setStartRow(firstRow);
+        //TODO: See if filters in 0.92 can be used to optimize the scan
+        //TODO: Consider create a custom snapshot filter
+        newScan.setTimeRange(minValidRevision, maxValidRevision + 1);
+        newScan.setMaxVersions();
         this.scanner = this.htable.getScanner(newScan);
         resultItr = this.scanner.iterator();
     }
 
-    /* @throws IOException
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#init()
-     */
-    @Override
-    public void init() throws IOException {
-        restart(scan.getStartRow());
+    private Set<Long> getAbortedTransactions(String tableName, Scan scan) throws IOException {
+        Set<Long> abortedTransactions = new HashSet<Long>();
+        RevisionManager rm = null;
+        try {
+            rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
+            byte[][] families = scan.getFamilies();
+            for (byte[] familyKey : families) {
+                String family = Bytes.toString(familyKey);
+                List<FamilyRevision> abortedWriteTransactions = rm.getAbortedWriteTransactions(
+                        tableName, family);
+                if (abortedWriteTransactions != null) {
+                    for (FamilyRevision revision : abortedWriteTransactions) {
+                        abortedTransactions.add(revision.getRevision());
+                    }
+                }
+            }
+            return abortedTransactions;
+        } finally {
+            HBaseRevisionManagerUtil.closeRevisionManagerQuietly(rm);
+        }
+    }
+
+    private long getMinimumRevision(Scan scan, TableSnapshot snapshot) {
+        long minRevision = snapshot.getLatestRevision();
+        byte[][] families = scan.getFamilies();
+        for (byte[] familyKey : families) {
+            String family = Bytes.toString(familyKey);
+            long revision = snapshot.getRevision(family);
+            if (revision < minRevision)
+                minRevision = revision;
+        }
+        return minRevision;
     }
 
     /*
      * @param htable The HTable ( of HBase) to use for the record reader.
      *
-     * @see
-     * org.apache.hadoop.hbase.mapreduce.TableRecordReader#setHTable(org.apache
-     * .hadoop.hbase.client.HTable)
      */
-    @Override
     public void setHTable(HTable htable) {
         this.htable = htable;
     }
@@ -103,64 +143,51 @@ class HbaseSnapshotRecordReader extends TableRecordReader {
     /*
      * @param scan The scan to be used for reading records.
      *
-     * @see
-     * org.apache.hadoop.hbase.mapreduce.TableRecordReader#setScan(org.apache
-     * .hadoop.hbase.client.Scan)
      */
-    @Override
     public void setScan(Scan scan) {
         this.scan = scan;
     }
 
-    /*
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#close()
-     */
     @Override
-    public void close() {
-        this.resultItr = null;
-        this.scanner.close();
+    public ImmutableBytesWritable createKey() {
+        return new ImmutableBytesWritable();
     }
 
-    /* @return The row of hbase record.
-    /* @throws IOException
-    /* @throws InterruptedException
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#getCurrentKey()
-     */
     @Override
-    public ImmutableBytesWritable getCurrentKey() throws IOException,
-            InterruptedException {
-        return key;
+    public Result createValue() {
+        return new Result();
     }
 
-    /* @return Single row result of scan of HBase table.
-    /* @throws IOException
-    /* @throws InterruptedException
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#getCurrentValue()
-     */
     @Override
-    public Result getCurrentValue() throws IOException, InterruptedException {
-        return value;
+    public long getPos() {
+        // This should be the ordinal tuple in the range;
+        // not clear how to calculate...
+        return 0;
     }
 
-    /* @return Returns whether a next key-value is available for reading.
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#nextKeyValue()
-     */
     @Override
-    public boolean nextKeyValue() {
+    public float getProgress() throws IOException {
+        // Depends on the total number of tuples
+        return 0;
+    }
 
+    @Override
+    public boolean next(ImmutableBytesWritable key, Result value) throws IOException {
         if (this.resultItr == null) {
             LOG.warn("The HBase result iterator is found null. It is possible"
                     + " that the record reader has already been closed.");
         } else {
-
-            if (key == null)
-                key = new ImmutableBytesWritable();
             while (resultItr.hasNext()) {
                 Result temp = resultItr.next();
                 Result hbaseRow = prepareResult(temp.list());
                 if (hbaseRow != null) {
+                    // Update key and value. Currently no way to avoid serialization/de-serialization
+                    // as no setters are available.
                     key.set(hbaseRow.getRow());
-                    value = hbaseRow;
+                    valueOut.reset();
+                    hbaseRow.write(valueOut);
+                    valueIn.reset(valueOut.getData(), valueOut.getLength());
+                    value.readFields(valueIn);
                     return true;
                 }
 
@@ -185,6 +212,11 @@ class HbaseSnapshotRecordReader extends TableRecordReader {
             }
 
             String family = Bytes.toString(kv.getFamily());
+            //Ignore aborted transactions
+            if (allAbortedTransactions.contains(kv.getTimestamp())) {
+                continue;
+            }
+
             long desiredTS = snapshot.getRevision(family);
             if (kv.getTimestamp() <= desiredTS) {
                 kvs.add(kv);
@@ -213,13 +245,13 @@ class HbaseSnapshotRecordReader extends TableRecordReader {
         }
     }
 
-    /* @return The progress of the record reader.
-     * @see org.apache.hadoop.hbase.mapreduce.TableRecordReader#getProgress()
+    /*
+     * @see org.apache.hadoop.hbase.mapred.TableRecordReader#close()
      */
     @Override
-    public float getProgress() {
-        // Depends on the total number of tuples
-        return 0;
+    public void close() {
+        this.resultItr = null;
+        this.scanner.close();
     }
 
 }

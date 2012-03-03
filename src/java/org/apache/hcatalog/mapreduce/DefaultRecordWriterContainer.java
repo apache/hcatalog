@@ -72,7 +72,7 @@ class DefaultRecordWriterContainer extends RecordWriterContainer {
     public void write(WritableComparable<?> key, HCatRecord value) throws IOException,
             InterruptedException {
         try {
-            getBaseRecordWriter().write(null, serDe.serialize(value, hcatRecordOI));
+            getBaseRecordWriter().write(null, serDe.serialize(value.getAll(), hcatRecordOI));
         } catch (SerDeException e) {
             throw new IOException("Failed to serialize object",e);
         }

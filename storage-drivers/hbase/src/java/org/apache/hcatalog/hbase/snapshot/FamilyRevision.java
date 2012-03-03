@@ -25,7 +25,7 @@ package org.apache.hcatalog.hbase.snapshot;
  * family and stored in the corresponding znode. When a write transaction is
  * committed, the transaction object is removed from the list.
  */
-class FamilyRevision implements
+public class FamilyRevision implements
         Comparable<FamilyRevision> {
 
     private long revision;
@@ -42,11 +42,11 @@ class FamilyRevision implements
         this.timestamp = ts;
     }
 
-    long getRevision() {
+    public long getRevision() {
         return revision;
     }
 
-    long getExpireTimestamp() {
+    public long getExpireTimestamp() {
         return timestamp;
     }
 

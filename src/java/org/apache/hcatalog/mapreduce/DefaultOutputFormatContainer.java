@@ -30,6 +30,7 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 
 import java.io.IOException;
+import java.text.NumberFormat;
 
 /**
  * Bare bones implementation of OutputFormatContainer. Does only the required
@@ -38,10 +39,20 @@ import java.io.IOException;
  */
 class DefaultOutputFormatContainer extends OutputFormatContainer {
 
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
+
+    static {
+      NUMBER_FORMAT.setMinimumIntegerDigits(5);
+      NUMBER_FORMAT.setGroupingUsed(false);
+    }
+
     public DefaultOutputFormatContainer(org.apache.hadoop.mapred.OutputFormat<WritableComparable<?>, Writable> of) {
         super(of);
     }
 
+    static synchronized String getOutputName(int partition) {
+        return "part-" + NUMBER_FORMAT.format(partition);
+      }
 
     /**
      * Get the record writer for the job. Uses the Table's default OutputStorageDriver
@@ -53,8 +64,9 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord>
     getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+        String name = getOutputName(context.getTaskAttemptID().getTaskID().getId());
         return new DefaultRecordWriterContainer(context,
-                getBaseOutputFormat().getRecordWriter(null, new JobConf(context.getConfiguration()),null, InternalUtil.createReporter(context)));
+                getBaseOutputFormat().getRecordWriter(null, new JobConf(context.getConfiguration()), name, InternalUtil.createReporter(context)));
     }
 
 
