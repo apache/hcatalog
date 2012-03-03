@@ -59,9 +59,6 @@ final class CreateDatabaseHook  extends HCatSemanticAnalyzerBase {
 
       switch (child.getToken().getType()) {
 
-      case HiveParser.TOK_QUERY: // CTAS
-        throw new SemanticException("Operation not supported. Create db as Select is not a valid operation.");
-
       case HiveParser.TOK_IFNOTEXISTS:
         try {
           List<String> dbs = db.getDatabasesByPattern(databaseName);

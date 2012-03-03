@@ -108,9 +108,6 @@ public class TestSemanticAnalysis extends TestCase{
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
     assertEquals(TextInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(HiveIgnoreKeyTextOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
-    Map<String, String> tblParams = tbl.getParameters();
-    assertNull(tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertNull(tblParams.get(HCatConstants.HCAT_OSD_CLASS));
 
     List<String> partVals = new ArrayList<String>(1);
     partVals.add("2010-10-10");
@@ -118,10 +115,6 @@ public class TestSemanticAnalysis extends TestCase{
 
     assertEquals(RCFileInputFormat.class.getName(),part.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),part.getSd().getOutputFormat());
-
-    Map<String,String> partParams = part.getParameters();
-    assertEquals(RCFileInputDriver.class.getName(), partParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals(RCFileOutputDriver.class.getName(), partParams.get(HCatConstants.HCAT_OSD_CLASS));
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
@@ -168,9 +161,6 @@ public class TestSemanticAnalysis extends TestCase{
     assertTrue(cols.get(0).equals(new FieldSchema("a", "int", null)));
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
-    Map<String, String> tblParams = tbl.getParameters();
-    assertEquals(RCFileInputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals(RCFileOutputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_OSD_CLASS));
 
     CommandProcessorResponse resp = hcatDriver.run("create table if not exists junit_sem_analysis (a int) stored as RCFILE");
     assertEquals(0, resp.getResponseCode());
@@ -182,9 +172,6 @@ public class TestSemanticAnalysis extends TestCase{
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
-    tblParams = tbl.getParameters();
-    assertEquals(RCFileInputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals(RCFileOutputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_OSD_CLASS));
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -193,12 +180,10 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis touch");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
 
     hcatDriver.run("alter table junit_sem_analysis touch partition (b='12')");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
@@ -207,16 +192,13 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int, c string) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis change a a1 int");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
 
-    response = hcatDriver.run("alter table junit_sem_analysis change a a string");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    response = hcatDriver.run("alter table junit_sem_analysis change a1 a string");
+    assertEquals(0, response.getResponseCode());
 
     response = hcatDriver.run("alter table junit_sem_analysis change a a int after c");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -225,18 +207,19 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int, c string) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis replace columns (a1 tinyint)");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
 
     response = hcatDriver.run("alter table junit_sem_analysis add columns (d tinyint)");
     assertEquals(0, response.getResponseCode());
     assertNull(response.getErrorMessage());
+    
+    response = hcatDriver.run("describe extended junit_sem_analysis");
+    assertEquals(0, response.getResponseCode());
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
     List<FieldSchema> cols = tbl.getSd().getCols();
-    assertEquals(3, cols.size());
-    assertTrue(cols.get(0).equals(new FieldSchema("a", "int", null)));
-    assertTrue(cols.get(1).equals(new FieldSchema("c", "string", null)));
-    assertTrue(cols.get(2).equals(new FieldSchema("d", "tinyint", null)));
+    assertEquals(2, cols.size());
+    assertTrue(cols.get(0).equals(new FieldSchema("a1", "tinyint", null)));
+    assertTrue(cols.get(1).equals(new FieldSchema("d", "tinyint", null)));
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -245,8 +228,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis clustered by (a) into 7 buckets");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("Operation not supported."));
+    assertEquals(0, response.getResponseCode());
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -259,10 +241,6 @@ public class TestSemanticAnalysis extends TestCase{
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
-    Map<String,String> tblParams = tbl.getParameters();
-    assertEquals(RCFileInputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals(RCFileOutputDriver.class.getName(), tblParams.get(HCatConstants.HCAT_OSD_CLASS));
-
     hcatDriver.run("alter table junit_sem_analysis set fileformat INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
         "'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver'");
     hcatDriver.run("desc extended junit_sem_analysis");
@@ -270,9 +248,6 @@ public class TestSemanticAnalysis extends TestCase{
     tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
-    tblParams = tbl.getParameters();
-    assertEquals("mydriver", tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals("yourdriver", tblParams.get(HCatConstants.HCAT_OSD_CLASS));
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
@@ -281,10 +256,8 @@ public class TestSemanticAnalysis extends TestCase{
 
     hiveDriver.run("drop table junit_sem_analysis");
     hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
-    CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis add partition (b='2') location '/some/path'");
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("FAILED: Error in semantic analysis: Operation not supported. Partitions can be added only in a table created through HCatalog. " +
-    		"It seems table junit_sem_analysis was not created through HCatalog."));
+    CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis add partition (b='2') location 'README.txt'");
+    assertEquals(0, response.getResponseCode());
     hiveDriver.run("drop table junit_sem_analysis");
   }
 
@@ -311,8 +284,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int)";
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("FAILED: Error in semantic analysis: STORED AS specification is either incomplete or incorrect."));
+    assertEquals(0, response.getResponseCode());
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -327,9 +299,6 @@ public class TestSemanticAnalysis extends TestCase{
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
-    Map<String, String> tblParams = tbl.getParameters();
-    assertEquals("mydriver", tblParams.get(HCatConstants.HCAT_ISD_CLASS));
-    assertEquals("yourdriver", tblParams.get(HCatConstants.HCAT_OSD_CLASS));
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
@@ -352,9 +321,7 @@ public class TestSemanticAnalysis extends TestCase{
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as SEQUENCEFILE";
 
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10,response.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. HCatalog doesn't support Sequence File by default yet. You may specify it through INPUT/OUTPUT storage drivers.",
-        response.getErrorMessage());
+    assertEquals(0,response.getResponseCode());
 
   }
 
@@ -374,21 +341,19 @@ public class TestSemanticAnalysis extends TestCase{
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) clustered by (a) into 10 buckets stored as TEXTFILE";
 
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10,response.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. HCatalog doesn't allow Clustered By in create table.",
-        response.getErrorMessage());
+    assertEquals(0,response.getResponseCode());
   }
 
   public void testCTLFail() throws IOException, CommandNeedRetryException{
 
     hiveDriver.run("drop table junit_sem_analysis");
+    hiveDriver.run("drop table like_table");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE";
 
     hiveDriver.run(query);
     query = "create table like_table like junit_sem_analysis";
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10,response.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. CREATE TABLE LIKE is not supported.", response.getErrorMessage());
+    assertEquals(0,response.getResponseCode());
   }
 
   public void testCTLPass() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
@@ -406,8 +371,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table "+likeTbl);
     query = "create table like_table like junit_sem_analysis";
     CommandProcessorResponse resp = hcatDriver.run(query);
-    assertEquals(10, resp.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. CREATE TABLE LIKE is not supported.", resp.getErrorMessage());
+    assertEquals(0, resp.getResponseCode());
 //    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, likeTbl);
 //    assertEquals(likeTbl,tbl.getTableName());
 //    List<FieldSchema> cols = tbl.getSd().getCols();

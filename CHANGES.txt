@@ -21,6 +21,8 @@ Apache HCatalog Change Log
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-261 Enable more DDL statements for HCat (daijy via gates)
+
   HCAT-252 Rework HBase storage driver into HBase storage handler (rohini via toffer) 
 
   HCAT-265 remove deprecated HCatStorageHandler (toffer)
