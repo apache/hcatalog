@@ -143,7 +143,10 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
   @Override
   public void authorize(Database db, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
       throws HiveException, AuthorizationException {
-   
+    if (db == null) {
+      return;
+    }
+
     Path path = getDbLocation(db);
     
     authorize(path, readRequiredPriv, writeRequiredPriv);
@@ -152,6 +155,9 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
   @Override
   public void authorize(Table table, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
       throws HiveException, AuthorizationException {
+    if (table == null) {
+      return;
+    }
     
     //unlike Hive's model, this can be called at CREATE TABLE as well, since we should authorize 
     //against the table's declared location
@@ -170,15 +176,24 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
     authorize(path, readRequiredPriv, writeRequiredPriv);
   }
 
-  @Override
-  public void authorize(Partition part, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
+  //TODO: HiveAuthorizationProvider should expose this interface instead of #authorize(Partition, Privilege[], Privilege[])
+  public void authorize(Table table, Partition part, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
       throws HiveException, AuthorizationException {
     
-    if (part.getLocation() == null) { 
-      authorize(part.getTable(), readRequiredPriv, writeRequiredPriv);
+    if (part == null || part.getLocation() == null) {
+      authorize(table, readRequiredPriv, writeRequiredPriv);
     } else {
       authorize(part.getPartitionPath(), readRequiredPriv, writeRequiredPriv);
     }
+  }
+
+  @Override
+  public void authorize(Partition part, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
+      throws HiveException, AuthorizationException {
+    if (part == null) {
+      return;
+    }
+    authorize(part.getTable(), part, readRequiredPriv, writeRequiredPriv);
   }
 
   @Override
@@ -186,7 +201,7 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
       Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv) throws HiveException,
       AuthorizationException {
     //columns cannot live in different files, just check for partition level permissions
-    authorize(table, part, columns, readRequiredPriv, writeRequiredPriv);
+    authorize(table, part, readRequiredPriv, writeRequiredPriv);
   }
   
   /** 
