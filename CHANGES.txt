@@ -64,6 +64,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT 286 NPE in HdfsAuthorizationProvider (enis via gates)
+
   HCAT 290 Changes in HBase maven objects breaks hcat build (gates)
 
   HCAT 280 part file name prefix with attempxxxx (daijy via gates)

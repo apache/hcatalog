@@ -129,6 +129,6 @@ public class StorageDelegationAuthorizationProvider extends HiveAuthorizationPro
   public void authorize(Table table, Partition part, List<String> columns,
       Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv) throws HiveException,
       AuthorizationException {
-    getDelegate(table).authorize(part, readRequiredPriv, writeRequiredPriv);
+    getDelegate(table).authorize(table, part, columns, readRequiredPriv, writeRequiredPriv);
   }
 }
