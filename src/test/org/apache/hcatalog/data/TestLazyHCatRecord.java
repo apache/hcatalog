@@ -53,12 +53,10 @@ public class TestLazyHCatRecord extends TestCase{
   private final long LONG_CONST = 5000000000L;
   private final double DOUBLE_CONST = 3.141592654;
   private final String STRING_CONST = "hello world";
-  private final String PART_CONST = "20120221";
 
 
   public void testGet() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
     assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
     assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
@@ -67,8 +65,7 @@ public class TestLazyHCatRecord extends TestCase{
 
   public void testGetWithName() throws Exception {
     TypeInfo ti = getTypeInfo();
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(ti),
-    new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(ti));
     HCatSchema schema = HCatSchemaUtils.getHCatSchema(ti)
                                           .get(0).getStructSubSchema();
     assertEquals(INT_CONST, ((Integer)r.get("an_int", schema)).intValue());
@@ -78,8 +75,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testGetAll() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     List<Object> list = r.getAll();
     assertEquals(INT_CONST, ((Integer)list.get(0)).intValue());
     assertEquals(LONG_CONST, ((Long)list.get(1)).longValue());
@@ -88,8 +84,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testSet() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.set(3, "Mary had a little lamb");
@@ -100,14 +95,12 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testSize() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     assertEquals(4, r.size());
   }
 
   public void testReadFields() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.readFields(null);
@@ -118,8 +111,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testWrite() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.write(null);
@@ -130,8 +122,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testSetWithName() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.set("fred", null, "bob");
@@ -142,8 +133,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testRemove() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.remove(0);
@@ -154,8 +144,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testCopy() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>());
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
     try {
       r.copy(null);
@@ -166,8 +155,7 @@ public class TestLazyHCatRecord extends TestCase{
   }
 
   public void testGetWritable() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        new HashMap<Integer, Object>()).getWritable();
+    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector()).getWritable();
     assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
     assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
     assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
@@ -175,55 +163,6 @@ public class TestLazyHCatRecord extends TestCase{
     assertEquals("org.apache.hcatalog.data.DefaultHCatRecord", r.getClass().getName());
   }
 
-  public void testGetPartitioned() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        getPartCols());
-    assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get(3));
-    assertEquals(PART_CONST, (String)r.get(4));
-  }
-
-  public void testGetWithNamePartitioned() throws Exception {
-    TypeInfo ti = getTypeInfo();
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(ti),
-        getPartCols());
-    HCatSchema schema = HCatSchemaUtils.getHCatSchema(ti)
-                                          .get(0).getStructSubSchema();
-    assertEquals(INT_CONST, ((Integer)r.get("an_int", schema)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get("a_long", schema)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get("a_double", schema)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get("a_string", schema));
-  }
-
-  public void testGetAllPartitioned() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        getPartCols());
-    List<Object> list = r.getAll();
-    assertEquals(INT_CONST, ((Integer)list.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)list.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)list.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)list.get(3));
-    assertEquals(PART_CONST, (String)r.get(4));
-  }
-
-  public void testSizePartitioned() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        getPartCols());
-    assertEquals(5, r.size());
-  }
-
-  public void testGetWritablePartitioned() throws Exception {
-    HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(),
-        getPartCols()).getWritable();
-    assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get(3));
-    assertEquals(PART_CONST, (String)r.get(4));
-    assertEquals("org.apache.hcatalog.data.DefaultHCatRecord", r.getClass().getName());
-  }
 
   private HCatRecord getHCatRecord() throws Exception {
 
@@ -261,11 +200,5 @@ public class TestLazyHCatRecord extends TestCase{
   private ObjectInspector getObjectInspector() throws Exception {
     return HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(
           (StructTypeInfo)getTypeInfo());
-  }
-
-  private Map<Integer, Object> getPartCols() {
-    Map<Integer, Object> pc = new HashMap<Integer, Object>(1);
-    pc.put(4, PART_CONST);
-    return pc;
   }
 }

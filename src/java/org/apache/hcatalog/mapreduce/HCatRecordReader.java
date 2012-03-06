@@ -65,10 +65,10 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
 
     private SerDe serde;
 
-    private Map<Integer,Object> partCols;
+    private Map<String,String> valuesNotInDataCols;
 
     private HCatSchema outputSchema = null;
-    private HCatSchema tableSchema = null;
+    private HCatSchema dataSchema = null;
 
     /**
      * Instantiates a new hcat record reader.
@@ -78,11 +78,11 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
         org.apache.hadoop.mapred.RecordReader<WritableComparable, 
                      Writable> baseRecordReader, 
                      SerDe serde, 
-                     Map<Integer,Object> partCols) {
+                     Map<String,String> valuesNotInDataCols) {
       this.baseRecordReader = baseRecordReader;
       this.storageHandler = storageHandler;
       this.serde = serde;
-      this.partCols = partCols;
+      this.valuesNotInDataCols = valuesNotInDataCols;
     }
     
     /* (non-Javadoc)
@@ -106,10 +106,14 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
           throw new IOException("Not a HCatSplit");
         }
 
-        // Pull the table schema out of the Split info
-        // TODO This should be passed in teh TaskAttemptContext instead
-        tableSchema = ((HCatSplit)split).getTableSchema();
+        if (outputSchema == null){
+          outputSchema = ((HCatSplit) split).getTableSchema();
+        }
 
+        // Pull the table schema out of the Split info
+        // TODO This should be passed in the TaskAttemptContext instead
+        dataSchema = ((HCatSplit)split).getDataSchema();
+        
         Properties properties = new Properties();
         for (Map.Entry<String, String>param : 
             ((HCatSplit)split).getPartitionInfo()
@@ -136,31 +140,24 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
       HCatRecord r;
 
       try {
-        /*
-        return new DefaultHCatRecord((new LazyHCatRecord(
-                                            serde.deserialize(currentValue), 
-                               serde.getObjectInspector(), 
-                               partCols)).getAll());
-                               */
-        r = new LazyHCatRecord(serde.deserialize(currentValue), 
-          serde.getObjectInspector(), partCols);
-        if (outputSchema == null) {
-          // there's no projection being done
-          return new DefaultHCatRecord(r.getAll());
-        } else {
-          // For each field in the outputSchema, do the mapping
-          DefaultHCatRecord dr = new DefaultHCatRecord(outputSchema.size());
-          for (int i = 0; i < outputSchema.size(); i++) {
-            // Figure out the field to read
-            HCatFieldSchema ofs = outputSchema.get(i);
-            dr.set(i, r.get(ofs.getName(), tableSchema));
+
+        r = new LazyHCatRecord(serde.deserialize(currentValue),serde.getObjectInspector());
+        DefaultHCatRecord dr = new DefaultHCatRecord(outputSchema.size());
+        int i = 0;
+        for (String fieldName : outputSchema.getFieldNames()){
+          Integer dataPosn = null;
+          if ((dataPosn = dataSchema.getPosition(fieldName)) != null){
+            dr.set(i, r.get(fieldName,dataSchema));
+          } else {
+            dr.set(i, valuesNotInDataCols.get(fieldName));
           }
-          return dr;
+          i++;
         }
-            
+        
+        return dr;
           
       } catch (Exception e) { 
-        throw new IOException("Failed to create HCatRecord " + e);
+        throw new IOException("Failed to create HCatRecord ",e);
       }
     }
 

@@ -127,6 +127,7 @@ public class HCatLoader extends HCatBaseLoader {
         try {
           HCatSchema hcatTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
           outputSchema = hcatTableSchema;
+          HCatInputFormat.setOutputSchema(job, outputSchema);
         } catch (Exception e) {
           throw new IOException(e);
         }
