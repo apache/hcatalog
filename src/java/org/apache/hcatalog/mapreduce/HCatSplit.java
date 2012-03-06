@@ -65,10 +65,11 @@ public class HCatSplit extends InputSplit
      * @param tableSchema the table level schema
      */
     public HCatSplit(PartInfo partitionInfo, 
-        org.apache.hadoop.mapred.InputSplit baseMapRedSplit, 
+        org.apache.hadoop.mapred.InputSplit baseMapRedSplit,
         HCatSchema tableSchema) {
 
       this.partitionInfo = partitionInfo;
+      // dataSchema can be obtained from partitionInfo.getPartitionSchema()
       this.baseMapRedSplit = baseMapRedSplit;
       this.tableSchema = tableSchema;
     }
@@ -90,19 +91,19 @@ public class HCatSplit extends InputSplit
     }
 
     /**
-     * Sets the table schema.
-     * @param tableSchema the new table schema
+     * Gets the data schema.
+     * @return the table schema
      */
-    public void setTableSchema(HCatSchema tableSchema) {
-        this.tableSchema = tableSchema;
+    public HCatSchema getDataSchema() {
+        return this.partitionInfo.getPartitionSchema();
     }
-
+    
     /**
      * Gets the table schema.
      * @return the table schema
      */
     public HCatSchema getTableSchema() {
-        return tableSchema;
+      return this.tableSchema;
     }
 
     /* (non-Javadoc)
@@ -187,7 +188,4 @@ public class HCatSplit extends InputSplit
         WritableUtils.writeString(output, tableSchemaString);
     }
 
-    public HCatSchema getSchema() {
-      return tableSchema;
-    }
 }

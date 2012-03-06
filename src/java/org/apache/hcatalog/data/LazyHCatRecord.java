@@ -29,12 +29,9 @@ public class LazyHCatRecord extends HCatRecord {
 
   private Object o;
   private StructObjectInspector soi;
-  private Map<Integer, Object> partCols;
   
   @Override
   public Object get(int fieldNum) {
-    Object pc = partCols.get(fieldNum);
-    if (pc != null) return pc;
     try {
       StructField fref = soi.getAllStructFieldRefs().get(fieldNum);
       return HCatRecordSerDe.serializeField(
@@ -63,7 +60,7 @@ public class LazyHCatRecord extends HCatRecord {
 
   @Override
   public int size() {
-    return soi.getAllStructFieldRefs().size() + partCols.size();
+    return soi.getAllStructFieldRefs().size();
   }
 
   @Override
@@ -103,8 +100,7 @@ public class LazyHCatRecord extends HCatRecord {
     throw new UnsupportedOperationException("not allowed to run copy() on LazyHCatRecord");
   }
   
-  public LazyHCatRecord(Object o, ObjectInspector oi, 
-                        Map<Integer, Object> partCols) 
+  public LazyHCatRecord(Object o, ObjectInspector oi)
   throws Exception {
 
     if (oi.getCategory() != Category.STRUCT) {
@@ -116,7 +112,6 @@ public class LazyHCatRecord extends HCatRecord {
 
     this.soi = (StructObjectInspector)oi;
     this.o = o;
-    this.partCols = partCols;
   }
 
   @Override

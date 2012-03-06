@@ -167,8 +167,7 @@ public abstract class HCatBaseInputFormat
       for(org.apache.hadoop.mapred.InputSplit split : baseSplits) {
         splits.add(new HCatSplit(
             partitionInfo,
-            split,
-            allCols));
+            split,allCols));
       }
     }
 
@@ -217,7 +216,7 @@ public abstract class HCatBaseInputFormat
 
       Configuration conf = storageHandler.getConf();
       InternalUtil.initializeInputSerDe(serde, conf, 
-                                  partitionInfo.getTableInfo());
+                                  partitionInfo.getTableInfo(),partitionInfo.getPartitionSchema());
                                   
     } catch (Exception e) {
       throw new IOException("Unable to create objectInspector "
@@ -225,28 +224,38 @@ public abstract class HCatBaseInputFormat
           + e);
     }
 
-    Map<Integer,Object> partCols = getPartColsByPosition(partitionInfo, 
-                                                        hcatSplit);
+    Map<String,String> valuesNotInDataCols = getColValsNotInDataColumns(
+        getOutputSchema(jobContext),partitionInfo
+        );
 
     HCatRecordReader hcatRecordReader = new HCatRecordReader(storageHandler, 
                                                              recordReader, 
-                                                             serde, 
-                                                             partCols);
+                                                             serde,
+                                                             valuesNotInDataCols);
     return hcatRecordReader;
   }
 
-  /** gets the partition columns that are not part of the Hive storage */
-  private static Map<Integer, Object> getPartColsByPosition(PartInfo partInfo, 
-                                                            HCatSplit split)
-  {
-    Map<Integer, Object> partCols = new HashMap<Integer, Object>();
-
-    for (String partitionKey : partInfo.getPartitionValues().keySet()) {
-      partCols.put(split.getSchema().getPosition(partitionKey), 
-                   partInfo.getPartitionValues().get(partitionKey));
+  
+  /**
+   * gets values for fields requested by output schema which will not be in the data
+   */
+  private static Map<String,String> getColValsNotInDataColumns(HCatSchema outputSchema,
+      PartInfo partInfo){
+    HCatSchema dataSchema = partInfo.getPartitionSchema();
+    Map<String,String> vals = new HashMap<String,String>();
+    for (String fieldName : outputSchema.getFieldNames()){
+      if (dataSchema.getPosition(fieldName) == null){
+        // this entry of output is not present in the output schema
+        // so, we first check the table schema to see if it is a part col
+        
+        if (partInfo.getPartitionValues().containsKey(fieldName)){
+          vals.put(fieldName, partInfo.getPartitionValues().get(fieldName));
+        } else {
+          vals.put(fieldName, null);
+        }
+      }
     }
-
-    return partCols;
+    return vals;
   }
 
   /**

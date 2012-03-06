@@ -122,9 +122,9 @@ class InternalUtil {
   }
 
   static void initializeInputSerDe(SerDe serDe, Configuration conf, 
-                                   HCatTableInfo info)
+                                   HCatTableInfo info, HCatSchema s)
   throws SerDeException {
-    initializeSerDe(serDe, conf, info, info.getDataColumns()); 
+    initializeSerDe(serDe, conf, info, s); 
   }
 
   static void initializeSerDe(SerDe serDe, Configuration conf, 

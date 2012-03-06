@@ -64,6 +64,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-281 HCat use table schema instead of partition schema to read partition data (daijy and khorgath via gates)
+
   HCAT 286 NPE in HdfsAuthorizationProvider (enis via gates)
 
   HCAT 290 Changes in HBase maven objects breaks hcat build (gates)
