@@ -25,6 +25,7 @@ Trunk (unreleased changes)
   NEW FEATURES
 
   IMPROVEMENTS
+  HCAT-233 gitignore file (enis via gates)
 
   OPTIMIZATIONS
 
