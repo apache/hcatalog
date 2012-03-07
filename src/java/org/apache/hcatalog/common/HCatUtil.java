@@ -74,6 +74,7 @@ import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
+import org.apache.hcatalog.mapreduce.PartInfo;
 import org.apache.hcatalog.mapreduce.StorerInfo;
 import org.apache.thrift.TException;
 
@@ -477,6 +478,15 @@ public class HCatUtil {
                                  storerInfo.getIfClass(),
                                  storerInfo.getOfClass());
     }
+    
+    public static HCatStorageHandler getStorageHandler(Configuration conf, PartInfo partitionInfo) throws IOException {
+      return HCatUtil.getStorageHandler(
+          conf, 
+          partitionInfo.getStorageHandlerClassName(), 
+          partitionInfo.getSerdeClassName(), 
+          partitionInfo.getInputFormatClassName(),
+          partitionInfo.getOutputFormatClassName());
+    }
 
     /**
      * Create an instance of a storage handler. If storageHandler == null,
@@ -497,7 +507,7 @@ public class HCatUtil {
                                                        String outputFormat) 
     throws IOException {
 
-        if (storageHandler == null) {
+        if ((storageHandler == null) || (storageHandler.equals(FosterStorageHandler.class.getName()))){
             try {
                 return new FosterStorageHandler(inputFormat,
                                                 outputFormat,
