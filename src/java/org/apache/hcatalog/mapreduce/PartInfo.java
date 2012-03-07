@@ -37,7 +37,10 @@ public class PartInfo implements Serializable {
   private final HCatSchema partitionSchema;
 
   /** The information about which input storage handler to use */
-  private final HCatStorageHandler storageHandler;
+  private final String storageHandlerClassName;
+  private final String inputFormatClassName;
+  private final String outputFormatClassName;
+  private final String serdeClassName;
 
   /** HCat-specific properties set at the partition */
   private final Properties hcatProperties;
@@ -65,12 +68,16 @@ public class PartInfo implements Serializable {
                   String location, Properties hcatProperties, 
                   Map<String,String> jobProperties, HCatTableInfo tableInfo){
     this.partitionSchema = partitionSchema;
-    this.storageHandler = storageHandler;
     this.location = location;
     this.hcatProperties = hcatProperties;
     this.jobProperties = jobProperties;
     this.tableInfo = tableInfo;
-  }
+
+    this.storageHandlerClassName = storageHandler.getClass().getName();
+    this.inputFormatClassName = storageHandler.getInputFormatClass().getName();
+    this.serdeClassName = storageHandler.getSerDeClass().getName();
+    this.outputFormatClassName = storageHandler.getOutputFormatClass().getName();
+}
 
   /**
    * Gets the value of partitionSchema.
@@ -80,15 +87,33 @@ public class PartInfo implements Serializable {
     return partitionSchema;
   }
 
-
   /**
-   * Gets the value of input storage driver class name.
-   * @return the input storage driver class name
+   * @return the storage handler class name
    */
-  public HCatStorageHandler getStorageHandler() {
-    return storageHandler;
+  public String getStorageHandlerClassName() {
+    return storageHandlerClassName;
   }
 
+  /**
+   * @return the inputFormatClassName
+   */
+  public String getInputFormatClassName() {
+    return inputFormatClassName;
+  }
+
+  /**
+   * @return the outputFormatClassName
+   */
+  public String getOutputFormatClassName() {
+    return outputFormatClassName;
+  }
+
+  /**
+   * @return the serdeClassName
+   */
+  public String getSerdeClassName() {
+    return serdeClassName;
+  }
 
   /**
    * Gets the value of hcatProperties.

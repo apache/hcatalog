@@ -30,11 +30,9 @@ import java.util.Map;
  *  artifacts of tables which don't define a SerDe. This StorageHandler assumes
  *  the supplied storage artifacts are for a file-based storage system.
  */
-public class FosterStorageHandler extends HCatStorageHandler 
-  implements Serializable {
+public class FosterStorageHandler extends HCatStorageHandler {
 
-    public Configuration conf
-            ;
+    public Configuration conf;
     /** The directory under which data is initially written for a partitioned table */
     protected static final String DYNTEMP_DIR_NAME = "_DYN";
 

@@ -151,7 +151,8 @@ public abstract class HCatBaseInputFormat
 
       HCatUtil.copyJobPropertiesToJobConf(jobProperties, jobConf);
 
-      storageHandler = partitionInfo.getStorageHandler();
+      storageHandler = HCatUtil.getStorageHandler(
+          jobConf, partitionInfo);
 
       //Get the input format
       Class inputFormatClass = storageHandler.getInputFormatClass();
@@ -194,7 +195,9 @@ public abstract class HCatBaseInputFormat
     PartInfo partitionInfo = hcatSplit.getPartitionInfo();
     JobContext jobContext = taskContext;
 
-    HCatStorageHandler storageHandler = partitionInfo.getStorageHandler();
+    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(
+        jobContext.getConfiguration(), partitionInfo);
+    
     JobConf jobConf = HCatUtil.getJobConfFromContext(jobContext);
 
     Class inputFormatClass = storageHandler.getInputFormatClass();
