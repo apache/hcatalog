@@ -220,6 +220,7 @@ class ImportSequenceFile {
         }
 
         conf.set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
+        conf.setBoolean(JobContext.JOB_CANCEL_DELEGATION_TOKEN, false);
 
         boolean localMode = "local".equals(conf.get("mapred.job.tracker"));
 

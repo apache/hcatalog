@@ -67,6 +67,7 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
         job.setIfUnset(TableOutputFormat.OUTPUT_TABLE,
                 job.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY));
         outputFormat.checkOutputSpecs(ignored, job);
+        HBaseMapredUtil.addHBaseDelegationToken(job);
     }
 
     private static class HBaseDirectRecordWriter implements
