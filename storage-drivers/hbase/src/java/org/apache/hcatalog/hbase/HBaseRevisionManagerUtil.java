@@ -32,7 +32,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
-import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -273,12 +272,8 @@ class HBaseRevisionManagerUtil {
         Map<String, String> hcatHbaseColMap = new HashMap<String, String>();
         List<String> columnFamilies = new ArrayList<String>();
         List<String> columnQualifiers = new ArrayList<String>();
-        try {
-            HBaseSerDe.parseColumnMapping(hbaseColumnMapping, columnFamilies,
-                    null, columnQualifiers, null);
-        } catch (SerDeException e) {
-            throw new IOException("Exception while converting snapshots.", e);
-        }
+        HBaseUtil.parseColumnMapping(hbaseColumnMapping, columnFamilies,
+                null, columnQualifiers, null);
 
         for (HCatFieldSchema column : hcatTableSchema.getFields()) {
             int fieldPos = hcatTableSchema.getPosition(column.getName());
