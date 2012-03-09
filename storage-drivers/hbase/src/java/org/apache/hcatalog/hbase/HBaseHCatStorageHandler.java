@@ -244,10 +244,9 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             List<String> hbaseColumnFamilies = new ArrayList<String>();
             List<String> hbaseColumnQualifiers = new ArrayList<String>();
             List<byte[]> hbaseColumnFamiliesBytes = new ArrayList<byte[]>();
-            List<byte[]> hbaseColumnQualifiersBytes = new ArrayList<byte[]>();
-            int iKey = HBaseSerDe.parseColumnMapping(hbaseColumnsMapping,
+            int iKey = HBaseUtil.parseColumnMapping(hbaseColumnsMapping,
                     hbaseColumnFamilies, hbaseColumnFamiliesBytes,
-                    hbaseColumnQualifiers, hbaseColumnQualifiersBytes);
+                    hbaseColumnQualifiers, null);
 
             HTableDescriptor tableDesc;
             Set<String> uniqueColumnFamilies = new HashSet<String>();
@@ -313,8 +312,8 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             throw new MetaException(StringUtils.stringifyException(mnre));
         } catch (IOException ie) {
             throw new MetaException(StringUtils.stringifyException(ie));
-        } catch (SerDeException se) {
-            throw new MetaException(StringUtils.stringifyException(se));
+        } catch (IllegalArgumentException iae) {
+            throw new MetaException(StringUtils.stringifyException(iae));
         }
 
     }
@@ -556,27 +555,23 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 int position = tableSchema.getPosition(fieldName);
                 outputColumnMapping.add(position);
             }
-            try {
-                List<String> columnFamilies = new ArrayList<String>();
-                List<String> columnQualifiers = new ArrayList<String>();
-                HBaseSerDe.parseColumnMapping(hbaseColumnMapping, columnFamilies, null,
-                        columnQualifiers, null);
-                for (int i = 0; i < outputColumnMapping.size(); i++) {
-                    int cfIndex = outputColumnMapping.get(i);
-                    String cf = columnFamilies.get(cfIndex);
-                    // We skip the key column.
-                    if (cf.equals(HBaseSerDe.HBASE_KEY_COL) == false) {
-                        String qualifier = columnQualifiers.get(i);
-                        builder.append(cf);
-                        builder.append(":");
-                        if (qualifier != null) {
-                            builder.append(qualifier);
-                        }
-                        builder.append(" ");
+            List<String> columnFamilies = new ArrayList<String>();
+            List<String> columnQualifiers = new ArrayList<String>();
+            HBaseUtil.parseColumnMapping(hbaseColumnMapping, columnFamilies, null,
+                    columnQualifiers, null);
+            for (int i = 0; i < outputColumnMapping.size(); i++) {
+                int cfIndex = outputColumnMapping.get(i);
+                String cf = columnFamilies.get(cfIndex);
+                // We skip the key column.
+                if (cf.equals(HBaseSerDe.HBASE_KEY_COL) == false) {
+                    String qualifier = columnQualifiers.get(i);
+                    builder.append(cf);
+                    builder.append(":");
+                    if (qualifier != null) {
+                        builder.append(qualifier);
                     }
+                    builder.append(" ");
                 }
-            } catch (SerDeException e) {
-                throw new IOException(e);
             }
         }
         //Remove the extra space delimiter

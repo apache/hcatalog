@@ -79,6 +79,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-303 Fix build failure due to HBaseSerDe.parseColumnMapping method signature change in hive (rohini via toffer)
+
   HCAT-282 HCatInputFormat shouldn't expect storageHandler to be serializable (khorgath via gates)
 
   HCAT-281 HCat use table schema instead of partition schema to read partition data (daijy and khorgath via gates)

@@ -65,7 +65,7 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
         job.setOutputValueClass(Put.class);
         job.setOutputCommitter(HBaseBulkOutputCommitter.class);
         baseOutputFormat.checkOutputSpecs(ignored, job);
-        HBaseMapredUtil.addHBaseDelegationToken(job);
+        HBaseUtil.addHBaseDelegationToken(job);
         addJTDelegationToken(job);
     }
 
