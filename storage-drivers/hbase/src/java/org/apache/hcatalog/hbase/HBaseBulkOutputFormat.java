@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.FileOutputCommitter;
@@ -64,7 +65,8 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
         job.setOutputValueClass(Put.class);
         job.setOutputCommitter(HBaseBulkOutputCommitter.class);
         baseOutputFormat.checkOutputSpecs(ignored, job);
-        getJTDelegationToken(job);
+        HBaseMapredUtil.addHBaseDelegationToken(job);
+        addJTDelegationToken(job);
     }
 
     @Override
@@ -76,10 +78,10 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
                 ignored, job, name, progress), version);
     }
 
-    private void getJTDelegationToken(JobConf job) throws IOException {
+    private void addJTDelegationToken(JobConf job) throws IOException {
         // Get jobTracker delegation token if security is enabled
         // we need to launch the ImportSequenceFile job
-        if (job.getBoolean("hadoop.security.authorization", false)) {
+        if (User.isSecurityEnabled()) {
             JobClient jobClient = new JobClient(new JobConf(job));
             try {
                 job.getCredentials().addToken(new Text("my mr token"),
