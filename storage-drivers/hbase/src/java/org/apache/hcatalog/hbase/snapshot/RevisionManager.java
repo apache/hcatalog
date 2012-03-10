@@ -52,7 +52,7 @@ public interface RevisionManager {
      *
      * @param table
      * @param families
-     * @return
+     * @return a new Transaction
      * @throws IOException
      */
     public Transaction beginWriteTransaction(String table, List<String> families)
@@ -64,7 +64,7 @@ public interface RevisionManager {
      * @param table
      * @param families
      * @param keepAlive
-     * @return
+     * @return a new Transaction
      * @throws IOException
      */
     public Transaction beginWriteTransaction(String table,
@@ -103,7 +103,7 @@ public interface RevisionManager {
      * Create the latest snapshot of the table.
      *
      * @param tableName
-     * @return
+     * @return a new snapshot
      * @throws IOException
      */
     public TableSnapshot createSnapshot(String tableName) throws IOException;
@@ -113,7 +113,7 @@ public interface RevisionManager {
      *
      * @param tableName
      * @param revision
-     * @return
+     * @return a new snapshot
      * @throws IOException
      */
     public TableSnapshot createSnapshot(String tableName, long revision)

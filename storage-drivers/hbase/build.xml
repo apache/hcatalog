@@ -298,8 +298,9 @@
 
     <target name="javadoc" depends="jar" description="Create documentation">
         <mkdir dir="${build.javadoc}" />
-        <javadoc overview="${src.dir}/../docs/overview.html" packagenames="org.apache.hcatalog.*" destdir="${build.javadoc}" author="true" version="true" use="true" windowtitle="HCatalog ${hcatalog.version} API" doctitle="HCatalog ${hcatalog.version} API">
-            <packageset dir="${src.dir}" />
+        <javadoc packagenames="org.apache.hcatalog.*" destdir="${build.javadoc}" author="true" version="true" use="true"
+        windowtitle="HCatalog ${hcatalog.version} API" doctitle="HCatalog ${hcatalog.version} API" sourcepath="${src.dir}:${basedir}/src/gen-java">
+            <!--<packageset dir="${src.dir}" /> -->
             <classpath>
                 <path refid="classpath" />
             </classpath>
