@@ -202,7 +202,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
 
     /**
      * This method aborts a write transaction.
-     * @param state the state associated with the Transaction
+     * @param transaction
      * @throws java.io.IOException
      */
     public void abortWriteTransaction(Transaction transaction) throws IOException {
