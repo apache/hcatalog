@@ -17,41 +17,41 @@
 -->
 
 
-<project name="storage-driver" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
-    <!-- Used to pass calls to storage drivers. -->
+<project name="storage-handlers" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+    <!-- Used to pass calls to storage handlers. -->
     <target name="template">
-        <condition property="dist.drivers.dir" value="${dist.drivers.dir}">
-            <isset property="dist.drivers.dir"/>
+        <condition property="dist.handlers.dir" value="${dist.handlers.dir}">
+            <isset property="dist.handlers.dir"/>
         </condition>
-        <!-- add storage drivers here -->
-        <echo>Executing storage-driver &quot;${target}&quot; for hbase</echo>
+        <!-- add storage handlers here -->
+        <echo>Executing storage-handler &quot;${target}&quot; for hbase</echo>
         <ant target="${target}" dir="hbase" inheritAll="false" useNativeBasedir="true"/>
     </target>
 
 
     <target name="jar">
-        <echo>Generating all drivers</echo>
+        <echo>Generating all handlers</echo>
         <antcall target="template">
             <param name="target" value="jar"/>
         </antcall>
     </target>
 
     <target name="test">
-        <echo>Testing all drivers</echo>
+        <echo>Testing all handlers</echo>
         <antcall target="template">
             <param name="target" value="test"/>
         </antcall>
     </target>
 
     <target name="clean">
-        <echo>Cleaning all drivers</echo>
+        <echo>Cleaning all handlers</echo>
         <antcall target="template">
             <param name="target" value="clean"/>
         </antcall>
     </target>
 
     <target name="package">
-        <echo>Package all drivers</echo>
+        <echo>Package all handlers</echo>
         <antcall target="template">
             <param name="target" value="package"/>
         </antcall>

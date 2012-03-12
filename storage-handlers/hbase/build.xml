@@ -18,7 +18,7 @@
 -->
 
 
-<project name="hbase-storage-driver" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+<project name="hbase-storage-handler" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
     <!--
     ================================================================================
     Import File
@@ -32,9 +32,9 @@
     ================================================================================
     -->
     <!-- name and version -->
-    <property name="driver.version" value="0.1.0"/>
-    <property name="driver.jar" value="${ant.project.name}-${driver.version}.jar"/>
-    <property name="final.name" value="${ant.project.name}-${driver.version}" />
+    <property name="handler.version" value="0.1.0"/>
+    <property name="handler.jar" value="${ant.project.name}-${handler.version}.jar"/>
+    <property name="final.name" value="${ant.project.name}-${handler.version}" />
     <property name="hcatalog.dir" value="${basedir}/../../" />
 
     <!-- hive properties -->
@@ -117,7 +117,7 @@
             <include name="hadoop-test-*.jar" />
         </fileset>
         <path refid="classpath"/>
-        <pathelement location="${driver.jar}"/>
+        <pathelement location="${handler.jar}"/>
         <!-- jars Hive depends on -->
         <fileset dir="${hive.root}/build/ivy/lib/default/">
             <include name="**/*.jar" />
@@ -217,7 +217,7 @@
 
     <!-- Build the jar -->
     <target name="jar" depends="compile-src">
-        <jar jarfile="${build.dir}/${ant.project.name}/${driver.jar}" basedir="${build.classes}"/>
+        <jar jarfile="${build.dir}/${ant.project.name}/${handler.jar}" basedir="${build.classes}"/>
     </target>
 
     <!--
@@ -355,12 +355,12 @@
         <copy todir="${dist.dir}/ivy">
             <fileset dir="ivy"/>
         </copy>
-        <antcall target="package-to-drivers"/>
+        <antcall target="package-to-handlers"/>
     </target>
 
-    <target name="package-to-drivers" if="dist.drivers.dir">
-        <mkdir dir="${dist.drivers.dir}/hbase"/>
-        <copy todir="${dist.drivers.dir}/hbase" includeEmptyDirs="true">
+    <target name="package-to-handlers" if="dist.handlers.dir">
+        <mkdir dir="${dist.handlers.dir}/hbase"/>
+        <copy todir="${dist.handlers.dir}/hbase" includeEmptyDirs="true">
             <fileset dir="${dist.dir}"/>
         </copy>
     </target>
