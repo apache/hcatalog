@@ -281,16 +281,16 @@
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="clientjar,server-extensions,jar-storage-drivers"/>
+  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers"/>
 
   <!--
   ================================================================================
-  Build storage drivers
+  Build storage handlers
   ================================================================================
   -->
 
-  <target name="jar-storage-drivers">        
-    <ant target="jar" dir="storage-drivers" inheritAll="false" useNativeBasedir="true"/>
+  <target name="jar-storage-handlers">        
+    <ant target="jar" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
   <!--
@@ -311,8 +311,8 @@
   </target>
 
   <!-- Run the unit tests -->
-  <target name="test-storage-drivers">
-    <ant target="test" dir="storage-drivers" inheritAll="false" useNativeBasedir="true"/>
+  <target name="test-storage-handlers">
+    <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
   <target name="test" depends="compile-test">
@@ -355,8 +355,8 @@
       </junit>
       <fail if="tests.failed">Tests failed!</fail>
     </sequential>
-    <!-- test storage drivers -->
-    <antcall target="test-storage-drivers"/>
+    <!-- test storage handlers -->
+    <antcall target="test-storage-handlers"/>
   </target>
 
   <!--
@@ -423,14 +423,14 @@
   Distribution Section
   ===============================================================================
   -->
-  <target name="package-storage-drivers">
-    <property name="drivers.dir" value="${dist.dir}/share/hcatalog/storage-drivers"/>
-    <mkdir dir="${drivers.dir}"/>
-    <ant target="package" dir="storage-drivers" inheritAll="false" useNativeBasedir="true">     
-        <property name="dist.drivers.dir" value="${drivers.dir}"/>
+  <target name="package-storage-handlers">
+    <property name="handlers.dir" value="${dist.dir}/share/hcatalog/storage-handlers"/>
+    <mkdir dir="${handlers.dir}"/>
+    <ant target="package" dir="storage-handlers" inheritAll="false" useNativeBasedir="true">     
+        <property name="dist.handlers.dir" value="${handlers.dir}"/>
     </ant>
     <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
-      <fileset dir="${dist.dir}/share/${ant.project.name}/storage-drivers">
+      <fileset dir="${dist.dir}/share/${ant.project.name}/storage-handlers">
         <include name="*/lib/*"/>
       </fileset>
     </copy>
@@ -627,8 +627,8 @@
       <fileset dir="${dist.dir}/bin" />
       <fileset dir="${dist.dir}/sbin" />
     </chmod>
-       <!--package storage-drivers -->
-      <antcall target="package-storage-drivers"/>
+       <!--package storage-handlers -->
+      <antcall target="package-storage-handlers"/>
     </target>
 
     <target name="releaseaudit" depends="ivy-releaseaudit, package" description="Release Audit activities">
@@ -669,7 +669,7 @@
                 <include name="license/**"/>
                 <include name="shims/**"/>
                 <include name="src/**"/>
-                <include name="storage-drivers/**"/>
+                <include name="storage-handlers/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>
                 <include name="KEYS"/>
