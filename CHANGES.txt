@@ -66,6 +66,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-300 A number of files lack Apache license headers (gates)
+
   HCAT-299 Javadoc build issues (gates)
 
   HCAT-303 Fix build failure due to HBaseSerDe.parseColumnMapping method signature change in hive (rohini via toffer)
