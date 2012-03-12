@@ -99,7 +99,7 @@ Release 0.4.0 - Unreleased
 
   HCAT-278 When outputSchema doesn't match table schema wrong columns are returned to the user (gates)
 
-  HCAT-276 After merging in HCATALOG-237 related changes Pig scripts with more than one store fail (daijy via gates)
+  HCAT-276 After merging in HCATALOG-237 related changes Pig scripts with more than one store fail (daijy and mithun via gates)
 
   HCAT-257 e2e harness not working properly after file location change (gates)
 
