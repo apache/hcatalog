@@ -79,6 +79,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-307 NOTICE and LICENSE file need updated to add new jars and move copyright date to 2012 (gates)
+
   HCAT-300 A number of files lack Apache license headers (gates)
 
   HCAT-299 Javadoc build issues (gates)

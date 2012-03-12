@@ -396,3 +396,8 @@ DataNucleus is licensed under the Apache 2 license, as given above.
 For the Guava library:
 
 Guava is licensed under the Apache 2 license, as given above.
+
+For the JavaEWAH library:
+
+JavaEWAH is licensed under the Apache 2 license, as given above.
+
