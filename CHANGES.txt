@@ -34,7 +34,7 @@ Trunk (unreleased changes)
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
-  HCAT-298 InputJobInfo still uses serverUri and serverKerberosPrincipal (khorgath via gates)
+  HCAT-289 InputJobInfo still uses serverUri and serverKerberosPrincipal (khorgath via gates)
 
   HCAT-295 Rename storage-drivers directory to storage-handlers (gates)
 
