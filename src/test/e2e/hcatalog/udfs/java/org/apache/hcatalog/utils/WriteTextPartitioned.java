@@ -95,7 +95,7 @@ public class WriteTextPartitioned extends Configured implements Tool {
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "WriteTextPartitioned");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, filter, serverUri, principalID));
+                inputTableName, filter));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);

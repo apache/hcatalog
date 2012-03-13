@@ -21,6 +21,8 @@ Apache HCatalog Change Log
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-289 InputJobInfo still uses serverUri and serverKerberosPrincipal (khorgath via gates)
+
   HCAT-295 Rename storage-drivers directory to storage-handlers (gates)
 
   HCAT-264 Barrier for HCatOutputFormat for Pig/Mapreduce if the table contains feature only supported in Hive (daijy via gates)

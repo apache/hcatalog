@@ -166,8 +166,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
 
         try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
-                                                jobContext.getConfiguration());
+            HiveConf hiveConf = HCatUtil.getHiveConf(jobContext.getConfiguration());
             HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
@@ -294,7 +293,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         List<Partition> partitionsAdded = new ArrayList<Partition>();
 
         try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(null, conf);
+            HiveConf hiveConf = HCatUtil.getHiveConf(conf);
             client = HCatUtil.createHiveClient(hiveConf);
 
             StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());

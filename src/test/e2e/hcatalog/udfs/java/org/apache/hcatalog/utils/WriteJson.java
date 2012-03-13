@@ -93,7 +93,7 @@ public class WriteJson extends Configured implements Tool {
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "WriteJson");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, null, serverUri, principalID));
+                inputTableName, null));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);

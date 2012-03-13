@@ -160,7 +160,7 @@ public class SumNumbers {
     conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
     Job job = new Job(conf, "sumnumbers");
     HCatInputFormat.setInput(job, InputJobInfo.create(
-    		dbName, tableName, null, serverUri, principalID));
+    		dbName, tableName, null));
     // initialize HCatOutputFormat
     
     job.setInputFormatClass(HCatInputFormat.class);

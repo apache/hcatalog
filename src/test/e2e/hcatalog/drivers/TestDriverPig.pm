@@ -392,7 +392,7 @@ sub getPigCmd($$$)
         push(@pigCmd, ("-x", "local"));
     }
 
-    my $opts .= "-Dhcat.metastore.uri=$testCmd->{'thriftserver'}";
+    my $opts .= "-Dhive.metastore.uris=$testCmd->{'thriftserver'}";
     if (defined($testCmd->{'java_params'})) {
         $opts = $opts . " " . join(" ", @{$testCmd->{'java_params'}});
     }

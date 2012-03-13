@@ -353,8 +353,8 @@ sub runHadoop
     }
 
     if (defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)) {
-        $ENV{'HADOOP_OPTS'} = "-Dhcat.metastore.principal=" . $testCmd->{'metastore.principal'};
-        $ENV{'HADOOP_CLIENT_OPTS'} = "-Dhcat.metastore.principal=" . $testCmd->{'metastore.principal'};
+        $ENV{'HADOOP_OPTS'} = "-Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
+        $ENV{'HADOOP_CLIENT_OPTS'} = "-Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
     }
 
     # Add su user if provided
@@ -650,7 +650,7 @@ sub getPigCmd($$$)
         push(@pigCmd, ("-x", "local"));
     }
 
-    my $opts .= "-Dhcat.metastore.uri=$testCmd->{'thriftserver'}";
+    my $opts .= "-Dhive.metastore.uris=$testCmd->{'thriftserver'}";
     if (defined($testCmd->{'java_params'})) {
         $opts = $opts . " " . join(" ", @{$testCmd->{'java_params'}});
     }

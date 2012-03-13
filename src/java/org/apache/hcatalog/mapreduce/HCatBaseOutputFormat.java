@@ -226,8 +226,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   static void cancelDelegationTokens(JobContext context, OutputJobInfo outputJobInfo) throws Exception {
-    HiveConf hiveConf = HCatUtil.getHiveConf(null, 
-                                             context.getConfiguration());
+    HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
     HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
     // cancel the deleg. tokens that were acquired for this job now that
     // we are done - we should cancel if the tokens were acquired by

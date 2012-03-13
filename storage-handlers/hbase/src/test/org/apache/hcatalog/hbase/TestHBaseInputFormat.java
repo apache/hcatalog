@@ -212,7 +212,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
 
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(databaseName, tableName,
-                null, null, null);
+                null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
@@ -275,8 +275,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         job.setMapperClass(MapReadProjHTable.class);
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(
-                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
-                null);
+                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null);
         HCatInputFormat.setOutputSchema(job, getProjectionSchema());
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
@@ -336,8 +335,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         job.setInputFormat(HBaseInputFormat.class);
 
         InputJobInfo inputJobInfo = InputJobInfo.create(
-                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
-                null);
+                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null);
         //Configure projection schema
         job.set(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA, HCatUtil.serialize(getProjectionSchema()));
         Job newJob = new Job(job);
@@ -409,8 +407,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         MapReadHTable.resetCounters();
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(
-                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
-                null);
+                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
@@ -472,8 +469,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         job.setMapperClass(MapReadHTableRunningAbort.class);
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(
-                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null, null,
-                null);
+                MetaStoreUtils.DEFAULT_DATABASE_NAME, tableName, null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);

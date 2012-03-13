@@ -178,7 +178,7 @@ public class StoreNumbers {
     
     // initialize HCatInputFormat
     HCatInputFormat.setInput(job, InputJobInfo.create(
-    		dbName, tableName, null, serverUri, principalID));
+    		dbName, tableName, null));
     // initialize HCatOutputFormat
     HCatOutputFormat.setOutput(job, OutputJobInfo.create(
             dbName, outputTableName, outputPartitionKvps));

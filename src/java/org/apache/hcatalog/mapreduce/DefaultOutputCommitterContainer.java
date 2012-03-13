@@ -91,8 +91,7 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
 
         //Cancel HCat and JobTracker tokens
         try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(null,
-                                                  context.getConfiguration());
+            HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
             HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {

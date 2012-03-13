@@ -38,15 +38,6 @@ public class InputJobInfo implements Serializable{
   /** meta information of the table to be read from */
   private HCatTableInfo tableInfo;
 
-  /** The Metadata server uri */
-  private final String serverUri;
-
-  /** If the hcat server is configured to work with hadoop security, this
-   * variable will hold the principal name of the server - this will be used
-   * in the authentication to the hcat server using kerberos
-   */
-  private final String serverKerberosPrincipal;
-
   /** The partition filter */
   private String filter;
 
@@ -65,32 +56,21 @@ public class InputJobInfo implements Serializable{
    * @param databaseName the db name
    * @param tableName the table name
    * @param filter the partition filter
-   * @param serverUri the Metadata server uri
-   * @param serverKerberosPrincipal If the hcat server is configured to
-   * work with hadoop security, the kerberos principal name of the server - else null
-   * The principal name should be of the form:
-   * <servicename>/_HOST@<realm> like "hcat/_HOST@myrealm.com"
-   * The special string _HOST will be replaced automatically with the correct host name
    */
+
   public static InputJobInfo create(String databaseName,
-                                    String tableName,
-                                    String filter,
-                                    String serverUri,
-                                    String serverKerberosPrincipal) {
-    return new InputJobInfo(databaseName, tableName, filter, 
-                            serverUri, serverKerberosPrincipal);
+      String tableName,
+      String filter) {
+    return new InputJobInfo(databaseName, tableName, filter);
   }
 
+  
   private InputJobInfo(String databaseName,
                        String tableName,
-                       String filter,
-                       String serverUri,
-                       String serverKerberosPrincipal) {
+                       String filter) {
     this.databaseName = (databaseName == null) ? 
                         MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
     this.tableName = tableName;
-    this.serverUri = serverUri;
-    this.serverKerberosPrincipal = serverKerberosPrincipal;
     this.filter = filter;
     this.properties = new Properties();
   }
@@ -127,21 +107,6 @@ public class InputJobInfo implements Serializable{
    */
   void setTableInfo(HCatTableInfo tableInfo) {
     this.tableInfo = tableInfo;
-  }
-
-  /**
-   * @return the serverKerberosPrincipal
-   */
-  public String getServerKerberosPrincipal() {
-    return serverKerberosPrincipal;
-  }
-
-  /**
-   * Gets the value of serverUri
-   * @return the serverUri
-   */
-  public String getServerUri() {
-    return serverUri;
   }
 
   /**

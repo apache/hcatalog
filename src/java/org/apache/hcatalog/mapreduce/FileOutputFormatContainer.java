@@ -93,8 +93,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
         try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(null, 
-                                              context.getConfiguration());
+            HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
             handleDuplicatePublish(context,
                     jobInfo,
                     HCatUtil.createHiveClient(hiveConf),
