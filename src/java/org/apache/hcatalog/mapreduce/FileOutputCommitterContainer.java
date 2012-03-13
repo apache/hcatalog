@@ -95,6 +95,9 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void abortTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
+            // TODO: Hack! Pig messes up mapred.output.dir, when 2 Storers are used in the same Pig script.
+            // Workaround: Set mapred.output.dir from OutputJobInfo.
+            resetMapRedOutputDirFromJobInfo(context.getConfiguration());
             getBaseOutputCommitter().abortTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
@@ -114,6 +117,9 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
+            // TODO: Hack! Pig messes up mapred.output.dir, when 2 Storers are used in the same Pig script.
+            // Workaround: Set mapred.output.dir from OutputJobInfo.
+            resetMapRedOutputDirFromJobInfo(context.getConfiguration());
             return getBaseOutputCommitter().needsTaskCommit(HCatMapRedUtil.createTaskAttemptContext(context));
         }else{
             // called explicitly through FileRecordWriterContainer.close() if dynamic - return false by default
@@ -126,7 +132,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
             // TODO: Hack! Pig messes up mapred.output.dir, when 2 Storers are used in the same Pig script.
             // Workaround: Set mapred.output.dir from OutputJobInfo.
-            context.getConfiguration().set("mapred.output.dir", jobInfo.getLocation());
+            resetMapRedOutputDirFromJobInfo(context.getConfiguration());
             getBaseOutputCommitter().setupJob(HCatMapRedUtil.createJobContext(context));
         }
         // in dynamic usecase, called through FileRecordWriterContainer
@@ -135,6 +141,9 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void setupTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed){
+            // TODO: Hack! Pig messes up mapred.output.dir, when 2 Storers are used in the same Pig script.
+            // Workaround: Set mapred.output.dir from OutputJobInfo.
+            resetMapRedOutputDirFromJobInfo(context.getConfiguration());
             getBaseOutputCommitter().setupTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
