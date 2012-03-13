@@ -94,7 +94,7 @@ public class ReadRC extends Configured implements Tool {
     conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
     Job job = new Job(conf, "ReadRC");
     HCatInputFormat.setInput(job, InputJobInfo.create(
-    		dbName, tableName, null, serverUri, principalID));
+    		dbName, tableName, null));
     // initialize HCatOutputFormat
     
     job.setInputFormatClass(HCatInputFormat.class);

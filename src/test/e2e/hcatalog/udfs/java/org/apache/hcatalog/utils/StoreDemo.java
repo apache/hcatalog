@@ -114,7 +114,7 @@ public class StoreDemo {
     Job job = new Job(conf, "storedemo");
     // initialize HCatInputFormat
     HCatInputFormat.setInput(job, InputJobInfo.create(
-    		dbName, tableName, null, serverUri, principalID));
+    		dbName, tableName, null));
     // initialize HCatOutputFormat
     HCatOutputFormat.setOutput(job, OutputJobInfo.create(
             dbName, outputTableName, outputPartitionKvps));

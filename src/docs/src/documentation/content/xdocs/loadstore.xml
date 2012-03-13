@@ -34,14 +34,14 @@ $ pig mypig.script
     
    <p> If you run your Pig script using the "java" command (java -cp pig.jar...), then the hcat jar needs to be included in the classpath of the java command line (using the -cp option). Additionally, the following properties are required in the command line: </p>
     <ul>
-		<li>-Dhcat.metastore.uri=thrift://&lt;hcatalog server hostname&gt;:9080 </li>
-		<li>-Dhcat.metastore.principal=&lt;hcatalog server kerberos principal&gt; </li>
+		<li>-Dhive.metastore.uris=thrift://&lt;hcatalog server hostname&gt;:9080 </li>
+		<li>-Dhive.metastore.kerberos.principal=&lt;hcatalog server kerberos principal&gt; </li>
 	</ul>
 	
 <source>
 $ java -cp pig.jar hcatalog.jar
-     -Dhcat.metastore.uri=thrift://&lt;hcatalog server hostname&gt;:9080 
-     -Dhcat.metastore.principal=&lt;hcatalog server kerberos principal&gt; myscript.pig
+     -Dhive.metastore.uris=thrift://&lt;hcatalog server hostname&gt;:9080 
+     -Dhive.metastore.kerberos.principal=&lt;hcatalog server kerberos principal&gt; myscript.pig
 </source>
 <p></p>
 <p><strong>Authentication</strong></p>

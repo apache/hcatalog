@@ -114,7 +114,7 @@ public class HCatMapredInputFormat implements InputFormat {
   public static void setTableDesc(TableDesc tableDesc, Map<String,String> jobProperties) throws IOException{
     try {
     Pair<String,String> dbAndTableName = HCatUtil.getDbAndTableName(tableDesc.getTableName());
-    InputJobInfo info = InputJobInfo.create(dbAndTableName.first, dbAndTableName.second, "", null, null);
+    InputJobInfo info = InputJobInfo.create(dbAndTableName.first, dbAndTableName.second, "");
     jobProperties.put(HCatConstants.HCAT_KEY_JOB_INFO
         ,InitializeInput.getSerializedHcatKeyJobInfo(
             null, info,tableDesc.getProperties().getProperty("location")));

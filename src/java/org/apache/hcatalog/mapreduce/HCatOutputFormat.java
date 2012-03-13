@@ -75,7 +75,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
       try {
 
         Configuration conf = job.getConfiguration();
-        hiveConf = HCatUtil.getHiveConf(null, conf);
+        hiveConf = HCatUtil.getHiveConf(conf);
         client = HCatUtil.createHiveClient(hiveConf);
         Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
         

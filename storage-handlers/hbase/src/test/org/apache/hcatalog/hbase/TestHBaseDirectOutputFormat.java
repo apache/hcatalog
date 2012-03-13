@@ -354,7 +354,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         job.setMapperClass(MapReadAbortedTransaction.class);
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(databaseName,
-                tableName, null, null, null);
+                tableName, null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);

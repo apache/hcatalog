@@ -293,7 +293,7 @@ public abstract class HCatMapReduceTest extends TestCase {
     job.setInputFormatClass(HCatInputFormat.class);
     job.setOutputFormatClass(TextOutputFormat.class);
 
-    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,filter,thriftUri,null);
+    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,filter);
     HCatInputFormat.setInput(job, inputJobInfo);
 
     job.setMapOutputKeyClass(BytesWritable.class);
@@ -325,7 +325,7 @@ public abstract class HCatMapReduceTest extends TestCase {
     job.setInputFormatClass(HCatInputFormat.class);
     job.setOutputFormatClass(TextOutputFormat.class);
 
-    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,null,thriftUri,null);
+    InputJobInfo inputJobInfo = InputJobInfo.create(dbName,tableName,null);
     HCatInputFormat.setInput(job, inputJobInfo);
 
     return HCatInputFormat.getTableSchema(job);

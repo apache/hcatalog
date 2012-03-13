@@ -167,7 +167,7 @@ public class HBaseReadWrite extends Configured implements Tool {
         
         job = new Job(conf, "HBaseRead");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName, tableName,
-                null, serverUri, principalID));
+                null));
         
         job.setInputFormatClass(HCatInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);

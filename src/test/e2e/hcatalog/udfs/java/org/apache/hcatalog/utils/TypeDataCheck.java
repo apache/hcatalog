@@ -150,7 +150,7 @@ public class TypeDataCheck implements Tool{
 			Job job = new Job(conf, "typedatacheck");
 			// initialize HCatInputFormat
 			HCatInputFormat.setInput(job, InputJobInfo.create(
-					dbName, tableName, null, serverUri, principalID));
+					dbName, tableName, null));
 			HCatSchema s = HCatInputFormat.getTableSchema(job);
 			job.getConfiguration().set(SCHEMA_KEY, schemaStr);
 			job.getConfiguration().set(DELIM, outputdelim);

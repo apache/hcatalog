@@ -90,10 +90,7 @@ public class HCatLoader extends HCatBaseLoader {
       HCatInputFormat.setInput(job,
                                InputJobInfo.create(dbName,
                                                    tableName,
-                                                   getPartitionFilterString(),
-                 hcatServerUri != null ? hcatServerUri : 
-                  (hcatServerUri = PigHCatUtil.getHCatServerUri(job)),
-                                    PigHCatUtil.getHCatServerPrincipal(job)));
+                                                   getPartitionFilterString()));
     }
 
     // Need to also push projections by calling setOutputSchema on
