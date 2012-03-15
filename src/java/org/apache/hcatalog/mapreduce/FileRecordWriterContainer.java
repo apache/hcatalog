@@ -18,11 +18,18 @@
 
 package org.apache.hcatalog.mapreduce;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.HCatMapRedUtil;
@@ -37,12 +44,6 @@ import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Part of the FileOutput*Container classes
@@ -246,7 +247,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
 
         //The key given by user is ignored
         try {
-            localWriter.write(null, localSerDe.serialize(value.getAll(), localObjectInspector));
+            localWriter.write(NullWritable.get(), localSerDe.serialize(value.getAll(), localObjectInspector));
         } catch (SerDeException e) {
             throw new IOException("Failed to serialize object",e);
         }
