@@ -28,6 +28,8 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.FileOutputFormat;
@@ -37,7 +39,9 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hcatalog.common.ErrorType;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
@@ -73,6 +77,23 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         //this needs to be manually set, under normal circumstances MR Task does this
         setWorkOutputPath(context);
 
+        //Configure the output key and value classes.
+        // This is required for writing null as key for file based tables.
+        context.getConfiguration().set("mapred.output.key.class",
+                NullWritable.class.getName());
+        String jobInfoString = context.getConfiguration().get(
+                HCatConstants.HCAT_KEY_OUTPUT_INFO);
+        OutputJobInfo jobInfo = (OutputJobInfo) HCatUtil
+                .deserialize(jobInfoString);
+        StorerInfo storeInfo = jobInfo.getTableInfo().getStorerInfo();
+        HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(
+                context.getConfiguration(), storeInfo);
+        Class<? extends SerDe> serde = storageHandler.getSerDeClass();
+        SerDe sd = (SerDe) ReflectionUtils.newInstance(serde,
+                context.getConfiguration());
+        context.getConfiguration().set("mapred.output.value.class",
+                sd.getSerializedClass().getName());
+
         // When Dynamic partitioning is used, the RecordWriter instance initialized here isn't used. Can use null.
         // (That's because records can't be written until the values of the dynamic partitions are deduced.
         // By that time, a new local instance of RecordWriter, with the correct output-path, will be constructed.)
@@ -103,7 +124,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         } catch (TException e) {
             throw new IOException(e);
         } catch (NoSuchObjectException e) {
-            throw new IOException(e);        	
+            throw new IOException(e);
         }
 
         if(!jobInfo.isDynamicPartitioningUsed()) {
