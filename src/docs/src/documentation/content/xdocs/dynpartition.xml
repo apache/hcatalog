@@ -27,7 +27,7 @@
 <section>
     <title>Overview</title>
     
- <p>In earlier versions of HCatalog, to read data users could specify that they were interested in reading from the table and specify various partition key/value combinations to prune, as if specifying a SQL-like where clause. However, to write data the abstraction was not as seamless. We still required users to write out data to the table, partition-by-partition, but these partitions required fine-grained knowledge of which key/value pairs they needed. We required this knowledge in advance, and we required the user to have already grouped the requisite data accordingly before attempting to store. </p>
+ <p>When writing data in HCatalog it is possible to write all records to a single partition. In this case the partition column(s) need not be in the output data.</p>
     
     <p>The following Pig script illustrates this: </p>
 <source>
@@ -40,17 +40,16 @@ store for_asia into 'processed' using HCatStorer("ds=20110110, region=asia");
 </source>    
 <p></p>   
     
-    <p>This approach had a major issue. MapReduce programs and Pig scripts needed to be aware of all the possible values of a key, and these values needed to be maintained and/or modified when new values were introduced. With more partitions, scripts began to look cumbersome. And if each partition being written launched a separate HCatalog store, we were increasing the load on the HCatalog server and launching more jobs for the store by a factor of the number of partitions.</p>
-    
-    <p>A better approach is to have HCatalog determine all the partitions required from the data being written. This would allow us to simplify the above script into the following: </p>  
+    <p>In cases where you want to write data to multiple partitions simultaneously, this can be done by placing partition columns in the data and not specifying partition values when storing the data.</p>  
     
 <source>
 A = load 'raw' using HCatLoader(); 
 ... 
-store Z into 'processed' using HCatStorer("ds=20110110"); 
+store Z into 'processed' using HCatStorer(); 
 </source> 
 
-<p>The way dynamic partitioning works is that HCatalog locates partition columns in the data passed to it and uses the data in these columns to split the rows across multiple partitions. (The data passed to HCatalog <strong>must</strong> have a schema that matches the schema of the destination table and hence should always contain partition columns.)  It is important to note that partition columns can’t contain null values or the whole process will fail. It is also important note that all partitions created during a single run are part of a transaction and if any part of the process fails none of the partitions will be added to the table.</p>
+<p>The way dynamic partitioning works is that HCatalog locates partition columns in the data passed to it and uses the data in these columns to split the rows across multiple partitions. (The data passed to HCatalog <strong>must</strong> have a schema that matches the schema of the destination table and hence should always contain partition columns.)  It is important to note that partition columns can’t contain null values or the whole process will fail.</p>
+<p>It is also important to note that all partitions created during a single run are part of a transaction and if any part of the process fails none of the partitions will be added to the table.</p>
 </section>
   
 <!-- ==================================================================== -->  
@@ -80,7 +79,7 @@ store A into 'mytable' using HCatStorer("b=1");
 
 <p>On the other hand, if there is data that spans more than one partition, then HCatOutputFormat will automatically figure out how to spray the data appropriately. </p>
 
-<p>For example, let's say a=1 for all values across our dataset and b takes the value 1 and 2. Then the following statement... </p>
+<p>For example, let's say a=1 for all values across our dataset and b takes the values 1 and 2. Then the following statement... </p>
 <source>
 store A into 'mytable' using HCatStorer();
 </source>
@@ -108,28 +107,14 @@ store A2 into 'mytable' using HCatStorer("a=1, b=2");
 Map&lt;String, String&gt; partitionValues = new HashMap&lt;String, String&gt;();
 partitionValues.put("a", "1");
 partitionValues.put("b", "1");
-HCatTableInfo info = HCatTableInfo.getOutputTableInfo(
-    serverUri, serverKerberosPrincipal, dbName, tblName, partitionValues);
+HCatTableInfo info = HCatTableInfo.getOutputTableInfo(dbName, tblName, partitionValues);
 HCatOutputFormat.setOutput(job, info);
 </source> 
 
 <p>And to write to multiple partitions, separate jobs will have to be kicked off with each of the above.</p>   
 
-<p>With dynamic partition, we simply specify only as many keys as we know about, or as required. It will figure out the rest of the keys by itself and spray out necessary partitions, being able to create multiple partitions with a single job.</p>   
+<p>With dynamic partitioning, we simply specify only as many keys as we know about, or as required. It will figure out the rest of the keys by itself and spray out necessary partitions, being able to create multiple partitions with a single job.</p>   
 
-</section>
-
-<!-- ==================================================================== -->  
-<section>
-      <title>Compaction</title> 
-<p>Dynamic partitioning potentially results in a large number of files and more namenode load. To address this issue, we utilize HAR to archive partitions after writing out as part of the HCatOutputCommitter action. Compaction is disabled by default. To enable compaction, use the Hive parameter hive.archive.enabled, specified in the client side hive-site.xml. The current behavior of compaction is to fail the entire job if compaction fails. </p>
-</section>
-
-<!-- ==================================================================== -->  
-<section>
-      <title>References</title>
-   <p>See <a href="https://cwiki.apache.org/HCATALOG/hcatalog02design.html">HCatalog 0.2 Architecture</a>  </p>      
-      
 </section>
   
   </body>

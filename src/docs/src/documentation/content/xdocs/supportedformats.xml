@@ -22,8 +22,10 @@
     <title>Storage Formats</title>
   </header>
   <body>
-  <p>HCatalog can read PigStorage and RCFile formatted files. The input drivers for the formats are PigStorageInputDriver and RCFileInputDriver respectively. HCatalog currently produces only RCFile formatted output. The output driver for the same is RCFileOutputDriver. </p>
+  <p>As of version 0.4, HCatalog uses Hive's SerDe class to serialize and deserialize data. SerDes are provided for RCFile, CSV text, JSON text, and SequenceFile formats.</p>
 
-<p>Hive and HCatalog applications can interoperate (each can read the output of the other) as long as they use a common format. Currently, the only common format is RCFile.</p>
+  <p>Users can write SerDes for custom formats using the instructions at <a href="https://cwiki.apache.org/confluence/display/Hive/SerDe/">https://cwiki.apache.org/confluence/display/Hive/SerDe</a>.</p>
+
+
  </body>
 </document>

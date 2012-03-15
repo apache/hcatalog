@@ -23,13 +23,13 @@
   </header>
   <body>
   
- <p> In HCatalog 2.0 we introduce notifications for certain events happening in the system. This way applications such as Oozie can wait for those events and schedule the work that depends on them. The current version of HCatalog supports two kinds of events: </p>
+ <p>Since HCatalog 0.2 provides notifications for certain events happening in the system. This way applications such as Oozie can wait for those events and schedule the work that depends on them. The current version of HCatalog supports two kinds of events: </p>
 <ul>
 <li>Notification when a new partition is added</li>
 <li>Notification when a set of partitions is added</li>
 </ul>
 
-<p>No additional work is required to send a notification when a new partition is added: the existing addPartition call will send the notification message. This means that your existing code, when running with 0.2, will automatically send the notifications. </p>
+<p>No additional work is required to send a notification when a new partition is added: the existing addPartition call will send the notification message.</p>
 
 <section>
 <title>Notification for a New Partition</title>
@@ -46,7 +46,7 @@ conn.start();
   <p>2. Subscribe to a topic you are interested in. When subscribing on a message bus, you need to subscribe to a particular topic to receive the messages that are being delivered on that topic. </p>
   <ul>
   <li>  
-  <p>The topic name corresponding to a particular table is stored in table properties and can be retrieved using following piece of code: </p>
+  <p>The topic name corresponding to a particular table is stored in table properties and can be retrieved using the following piece of code: </p>
  <source>
 HiveMetaStoreClient msc = new HiveMetaStoreClient(hiveConf);
 String topicName = msc.getTable("mydb", "myTbl").getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME);
@@ -76,13 +76,17 @@ consumer.setMessageListener(this);
    }
  </source>
  
-  <p>You need to have a JMS jar in your classpath to make this work. Additionally, you need to have a JMS provider’s jar in your classpath. HCatalog uses ActiveMQ as a JMS provider. In principle, any JMS provider can be used in client side; however, ActiveMQ is recommended. ActiveMQ can be obtained from: http://activemq.apache.org/activemq-550-release.html </p>
+  <p>You need to have a JMS jar in your classpath to make this work. Additionally, you need to have a JMS provider’s jar in your classpath. HCatalog is tested with ActiveMQ as a JMS provider, although any JMS provider can be used. ActiveMQ can be obtained from: http://activemq.apache.org/activemq-550-release.html .</p>
 </section>
 
 <section>
 <title>Notification for a Set of Partitions</title>
 
+<p>Sometimes a user wants to wait until a collection of partitions is finished. For example, you may want to start processing after all partitions for a day are done. However, HCatalog has no notion of collections or hierarchies of partitions. To support this, HCatalog allows data writers to signal when they are finished writing a collection of partitions. Data readers may wait for this signal before beginning to read.</p>
+
 <p>The example code below illustrates how to send a notification when a set of partitions has been added.</p>
+
+<p>To signal, a data writer does this:</p>
 
 <source>
 HiveMetaStoreClient msc = new HiveMetaStoreClient(conf);
@@ -138,8 +142,8 @@ public void onMessage(Message msg) {
   MapMessage mapMsg = (MapMessage)msg;
   Enumeration&lt;String&gt; keys = mapMsg.getMapNames();
   
-  // Enumerate over all keys. This will print key value pairs specifying the particular partition 
-  // which was marked done. In this case, it will print:
+  // Enumerate over all keys. This will print key-value pairs specifying the  
+  // particular partition 44which was marked done. In this case, it will print:
   // date : 20110711
   // country: *
 

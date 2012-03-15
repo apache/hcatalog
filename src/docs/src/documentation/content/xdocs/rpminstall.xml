@@ -24,21 +24,21 @@
   <body>
 
   <section>
-    <title>Server Installation</title>
+    <title>Server Installation from RPM</title>
 
     <p><strong>Prerequisites</strong></p>
     <ul>
         <li>Machine on which the server can be installed - this should have
-        access to the hadoop cluster and to a mysql db</li>
-        <li>MySQL db</li>
+        access to the Hadoop cluster and to a MySQL database</li>
+        <li>MySQL database</li>
         <li>Hadoop cluster</li>
-        <li>In a secure environment, Unix user that the server will run as, and an associated kerberos
+        <li>In a secure environment, Unix user that the server will run as, and an associated Kerberos
         service principal and keytabs.</li>
         <li> <em>hcatalog</em>. &amp; <em>hcatalog-server</em> .rpm packages.</li>
     </ul>
 
     <p>Throughout these instructions when you see a word in <em>italics</em> it
-    indicates a place where you should replace the word with a 
+    indicates a place where you should replace the word with an 
     appropriate value such as a hostname or password.</p>
 
     <p><strong>Thrift Server Install</strong></p>
@@ -66,7 +66,7 @@
     machine as the Thrift server.  For large
     clusters we recommend that they not be the same machine.  For the 
     purposes of these instructions we will refer to this machine as
-    <em>hcatdb.acme.com</em></p>
+    <em>hcatdb.acme.com</em>.</p>
 
     <p>Install MySQL server on <em>hcatdb.acme.com</em>.  You can obtain
     packages for MySQL from <a href="http://www.mysql.com/downloads/">MySQL's
@@ -85,7 +85,7 @@
     <p><code>mysql> quit;</code></p>
     <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hcatdb.acme.com</em><code> -p &lt; /usr/share/hcatalog/scripts/hive-schema-0.7.0.mysql.sql</code></p>
 
-    <p><strong>Thrift server config</strong></p>
+    <p><strong>Thrift Server Configuration</strong></p>
     <p>Now you need to edit your <code>/etc/hcatalog/hive-site.xml</code> file.
     Open this file in your favorite text editor.  The following table shows the
     values you need to configure.</p>
@@ -115,24 +115,27 @@
         </tr>
         <tr>
             <td>hive.metastore.uris</td>
-            <td>You need to set the hostname to your Thrift
-            server.  Replace <em>SVRHOST</em> with the name of the
+            <td>Set the hostname of your Thrift
+            server by replacing <em>SVRHOST</em> with the name of the
             machine you are installing the Thrift server on. </td>
         </tr>
         <tr>
             <td>hive.metastore.sasl.enabled</td>
-            <td>Set to false by default.  Set to true if its a secure environment.</td>
+            <td>Set to true if you are using kerberos security with your Hadoop
+            cluster, false otherwise.</td>
         </tr>
         <tr>
             <td>hive.metastore.kerberos.keytab.file</td>
-            <td>The path to the Kerberos keytab file containg the metastore
-            thrift server's service principal. Need to set only in secure enviroment.</td>
+            <td>The path to the Kerberos keytab file containing the metastore
+            Thrift server's service principal.  Only required if you set
+            hive.metastore.sasl.enabled above to true.</td>
         </tr>
         <tr>
             <td>hive.metastore.kerberos.principal</td>
-            <td>The service principal for the metastore thrift server.  You can
-            reference your host as _HOST and it will be replaced with
-            actual hostname. Need to set only in secure environment.</td>
+            <td>The service principal for the metastore Thrift server.  You can
+            reference your host as _HOST and it will be replaced with your
+            actual hostname.  Only required if you set
+            hive.metastore.sasl.enabled above to true.</td>
         </tr>
     </table>
 
@@ -142,13 +145,13 @@
   <section>
     <title>Starting the Server</title>
             
-    <p><code>sudo service start hcatalog-server</code></p>
+    <p><code>sudo service hcatalog-server start</code></p>
  </section>
 
   <section>
     <title>Logging</title>
 
-    <p>Server activity logs and gc logs are located in
+    <p>Server activity logs are located in
     <code>/var/log/hcat_server</code>.  Logging configuration is located at
     <code>/etc/hcatalog/log4j.properties</code>.  Server logging uses
     <code>DailyRollingFileAppender</code> by default. It will generate a new
@@ -158,7 +161,7 @@
 
   <section>
     <title>Stopping the Server</title>
-<p><code>sudo service stop hcatalog-server</code></p>
+<p><code>sudo service hcatalog-server stop</code></p>
 
 
   </section>
@@ -190,18 +193,18 @@
         </tr>
         <tr>
             <td>hive.metastore.uris</td>
-            <td>You need to set the hostname wish your Thrift
-            server to use by replacing <em>SVRHOST</em> with the name of the
+            <td>Set the hostname of your Thrift
+            server by replacing <em>SVRHOST</em> with the name of the
             machine you are installing the Thrift server on. </td>
         </tr>
 
         <tr>
             <td>hive.metastore.sasl.enabled</td>
-            <td>Set to false by default.  Set to true if its a secure environment.</td>
+            <td>Set to false by default.  Set to true if it is a secure environment.</td>
         </tr>
         <tr>
             <td>hive.metastore.kerberos.principal</td>
-            <td>The service principal for the metastore thrift server.  You can
+            <td>The service principal for the metastore Thrift server.  You can
             reference your host as _HOST and it will be replaced with
             actual hostname. Need to set only in secure environment.</td>
         </tr>
