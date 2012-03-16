@@ -66,6 +66,8 @@ Release 0.4.0 - Unreleased
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-306 Need more end-to-end tests (gates)
+
   HCAT-130 Documentation improvements (gates and lefty via gates)
 
   HCAT-266 Upgrade HBase dependency to 0.92 (thw via toffer)
