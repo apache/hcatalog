@@ -30,6 +30,8 @@ Release 0.4.1 - Unreleased
   BUG FIXES
   HCAT-319 Cleanup of 0.3 mapred classes (khorgath via gates)
 
+  HCAT-302 unable to write to hbase channel. HBaseHCatStorageHandler class not found (rohini via gates)
+
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES

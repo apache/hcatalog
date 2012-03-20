@@ -105,7 +105,6 @@ class HBaseInputFormat implements InputFormat<ImmutableBytesWritable, Result> {
     public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
             throws IOException {
         inputFormat.setConf(job);
-        HBaseUtil.addHBaseDelegationToken(job);
         return convertSplits(inputFormat.getSplits(HCatMapRedUtil.createJobContext(job, null,
                 Reporter.NULL)));
     }

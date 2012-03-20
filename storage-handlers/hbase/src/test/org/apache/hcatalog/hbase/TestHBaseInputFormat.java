@@ -449,11 +449,12 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         assertTrue(doesTableExist);
 
         populateHBaseTable(tableName, 2);
-        populateHBaseTableQualifier1(tableName, 3, null); //Running transaction
-        populateHBaseTableQualifier1(tableName, 4, Boolean.FALSE);  //Aborted transaction
-        populateHBaseTableQualifier1(tableName, 5, Boolean.TRUE); //Committed transaction
-        populateHBaseTableQualifier1(tableName, 6, null); //Running Transaction
-        populateHBaseTableQualifier1(tableName, 7, Boolean.FALSE); //Aborted Transaction
+        populateHBaseTableQualifier1(tableName, 3, Boolean.TRUE); //Committed transaction
+        populateHBaseTableQualifier1(tableName, 4, null); //Running transaction
+        populateHBaseTableQualifier1(tableName, 5, Boolean.FALSE);  //Aborted transaction
+        populateHBaseTableQualifier1(tableName, 6, Boolean.TRUE); //Committed transaction
+        populateHBaseTableQualifier1(tableName, 7, null); //Running Transaction
+        populateHBaseTableQualifier1(tableName, 8, Boolean.FALSE); //Aborted Transaction
 
         Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
@@ -588,7 +589,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
             System.out.println("HCat record value" + value.toString());
             boolean correctValues = (value.size() == 3)
                     && (value.get(0).toString()).equalsIgnoreCase("testRow")
-                    && (value.get(1).toString()).equalsIgnoreCase("textValue-2")
+                    && (value.get(1).toString()).equalsIgnoreCase("textValue-3")
                     && (value.get(2).toString()).equalsIgnoreCase("textValue-2");
 
             if (correctValues == false) {
