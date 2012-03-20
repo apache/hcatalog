@@ -23,6 +23,7 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-287 Add data api to HCatalog (hashutosh)
 
   IMPROVEMENTS
   HCAT-233 gitignore file (enis via gates)
