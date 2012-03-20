@@ -63,9 +63,6 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
     @Override
     public void checkOutputSpecs(FileSystem ignored, JobConf job)
             throws IOException {
-        job.setOutputCommitter(HBaseDirectOutputCommitter.class);
-        job.setIfUnset(TableOutputFormat.OUTPUT_TABLE,
-                job.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY));
         outputFormat.checkOutputSpecs(ignored, job);
         HBaseUtil.addHBaseDelegationToken(job);
     }

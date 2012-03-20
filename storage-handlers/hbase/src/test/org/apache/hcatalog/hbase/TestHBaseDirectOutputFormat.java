@@ -138,6 +138,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         org.apache.hadoop.mapred.TextInputFormat.setInputPaths(job, inputPath);
 
         job.setOutputFormat(HBaseDirectOutputFormat.class);
+        job.set(TableOutputFormat.OUTPUT_TABLE, tableName);
         job.set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
 
         //manually create transaction
@@ -378,7 +379,17 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         TextInputFormat.setInputPaths(job, inputPath);
         job.setOutputFormatClass(HCatOutputFormat.class);
         HCatOutputFormat.setOutput(job, outputJobInfo);
-
+        String txnString = job.getConfiguration().get(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
+        //Test passing in same jobConf or same OutputJobInfo multiple times and verify 1 transaction is created
+        //Same jobConf
+        HCatOutputFormat.setOutput(job, outputJobInfo);
+        assertEquals(txnString, job.getConfiguration().get(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
+        String jobString = job.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
+        //Same OutputJobInfo
+        outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(jobString);
+        Job job2 = new Job(conf);
+        HCatOutputFormat.setOutput(job2, outputJobInfo);
+        assertEquals(txnString, job2.getConfiguration().get(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
         job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
         job.setOutputKeyClass(BytesWritable.class);

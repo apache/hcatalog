@@ -61,9 +61,6 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
     @Override
     public void checkOutputSpecs(FileSystem ignored, JobConf job)
             throws IOException {
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
-        job.setOutputCommitter(HBaseBulkOutputCommitter.class);
         baseOutputFormat.checkOutputSpecs(ignored, job);
         HBaseUtil.addHBaseDelegationToken(job);
         addJTDelegationToken(job);
@@ -73,6 +70,8 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
     public RecordWriter<WritableComparable<?>, Put> getRecordWriter(
             FileSystem ignored, JobConf job, String name, Progressable progress)
             throws IOException {
+        job.setOutputKeyClass(ImmutableBytesWritable.class);
+        job.setOutputValueClass(Put.class);
         long version = HBaseRevisionManagerUtil.getOutputRevision(job);
         return new HBaseBulkRecordWriter(baseOutputFormat.getRecordWriter(
                 ignored, job, name, progress), version);
@@ -188,11 +187,21 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
             try {
                 Configuration conf = jobContext.getConfiguration();
                 Path srcPath = FileOutputFormat.getOutputPath(jobContext.getJobConf());
+                if (!FileSystem.get(conf).exists(srcPath)) {
+                    throw new IOException("Failed to bulk import hfiles. " +
+                    		"Intermediate data directory is cleaned up or missing. " +
+                    		"Please look at the bulk import job if it exists for failure reason");
+                }
                 Path destPath = new Path(srcPath.getParent(), srcPath.getName() + "_hfiles");
-                ImportSequenceFile.runJob(jobContext,
+                boolean success = ImportSequenceFile.runJob(jobContext,
                                 conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
                                 srcPath,
                                 destPath);
+                if(!success) {
+                    cleanIntermediate(jobContext);
+                    throw new IOException("Failed to bulk import hfiles." +
+                    		" Please look at the bulk import job for failure reason");
+                }
                 rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
                 rm.commitWriteTransaction(HBaseRevisionManagerUtil.getWriteTransaction(conf));
                 cleanIntermediate(jobContext);

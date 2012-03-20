@@ -80,19 +80,16 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
 
     public void restart(byte[] firstRow) throws IOException {
         allAbortedTransactions = getAbortedTransactions(Bytes.toString(htable.getTableName()), scan);
-        long maxValidRevision = snapshot.getLatestRevision();
+        long maxValidRevision = getMaximumRevision(scan, snapshot);
         while (allAbortedTransactions.contains(maxValidRevision)) {
             maxValidRevision--;
-        }
-        long minValidRevision = getMinimumRevision(scan, snapshot);
-        while (allAbortedTransactions.contains(minValidRevision)) {
-            minValidRevision--;
         }
         Scan newScan = new Scan(scan);
         newScan.setStartRow(firstRow);
         //TODO: See if filters in 0.92 can be used to optimize the scan
         //TODO: Consider create a custom snapshot filter
-        newScan.setTimeRange(minValidRevision, maxValidRevision + 1);
+        //TODO: Make min revision a constant in RM
+        newScan.setTimeRange(0, maxValidRevision + 1);
         newScan.setMaxVersions();
         this.scanner = this.htable.getScanner(newScan);
         resultItr = this.scanner.iterator();
@@ -120,16 +117,16 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
         }
     }
 
-    private long getMinimumRevision(Scan scan, TableSnapshot snapshot) {
-        long minRevision = snapshot.getLatestRevision();
+    private long getMaximumRevision(Scan scan, TableSnapshot snapshot) {
+        long maxRevision = 0;
         byte[][] families = scan.getFamilies();
         for (byte[] familyKey : families) {
             String family = Bytes.toString(familyKey);
             long revision = snapshot.getRevision(family);
-            if (revision < minRevision)
-                minRevision = revision;
+            if (revision > maxRevision)
+                maxRevision = revision;
         }
-        return minRevision;
+        return maxRevision;
     }
 
     /*

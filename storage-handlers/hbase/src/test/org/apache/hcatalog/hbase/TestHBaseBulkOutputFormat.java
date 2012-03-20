@@ -54,6 +54,7 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.hbase.HBaseBulkOutputFormat.HBaseBulkOutputCommitter;
 import org.apache.hcatalog.hbase.TestHBaseDirectOutputFormat.MapReadAbortedTransaction;
 import org.apache.hcatalog.hbase.TestHBaseDirectOutputFormat.MapWriteAbortTransaction;
 import org.apache.hcatalog.hbase.snapshot.FamilyRevision;
@@ -203,6 +204,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         job.setOutputFormat(HBaseBulkOutputFormat.class);
         org.apache.hadoop.mapred.SequenceFileOutputFormat.setOutputPath(job, interPath);
+        job.setOutputCommitter(HBaseBulkOutputCommitter.class);
 
         //manually create transaction
         RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);

@@ -70,25 +70,28 @@ public class HCatStorer extends HCatBaseStorer {
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-
     job.getConfiguration().set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + sign);
     Properties p = UDFContext.getUDFContext().getUDFProperties(this.getClass(), new String[]{sign});
 
     String[] userStr = location.split("\\.");
     OutputJobInfo outputJobInfo;
 
-    if(userStr.length == 2) {
-      outputJobInfo = OutputJobInfo.create(userStr[0],
+    String outInfoString = p.getProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO);
+    if (outInfoString != null) {
+      outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(outInfoString);
+    } else {
+      if(userStr.length == 2) {
+        outputJobInfo = OutputJobInfo.create(userStr[0],
                                                              userStr[1],
                                                              partitions);
-    } else if(userStr.length == 1) {
-      outputJobInfo = OutputJobInfo.create(null,
+      } else if(userStr.length == 1) {
+        outputJobInfo = OutputJobInfo.create(null,
                                                              userStr[0],
                                                              partitions);
-    } else {
-      throw new FrontendException("location "+location+" is invalid. It must be of the form [db.]table", PigHCatUtil.PIG_EXCEPTION_CODE);
+      } else {
+        throw new FrontendException("location "+location+" is invalid. It must be of the form [db.]table", PigHCatUtil.PIG_EXCEPTION_CODE);
+      }
     }
-
 
 
     Configuration config = job.getConfiguration();
@@ -123,6 +126,7 @@ public class HCatStorer extends HCatBaseStorer {
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
       PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
+      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_OUTPUT_INFO);
 
       p.setProperty(COMPUTED_OUTPUT_SCHEMA,ObjectSerializer.serialize(computedSchema));
 

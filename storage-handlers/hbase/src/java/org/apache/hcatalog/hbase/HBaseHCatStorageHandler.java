@@ -19,7 +19,6 @@
 package org.apache.hcatalog.hbase;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.mapred.TableOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -48,14 +49,15 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.serde2.SerDe;
-import org.apache.hadoop.hive.serde2.SerDeException;
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.hbase.HBaseBulkOutputFormat.HBaseBulkOutputCommitter;
+import org.apache.hcatalog.hbase.HBaseDirectOutputFormat.HBaseDirectOutputCommitter;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
@@ -68,20 +70,20 @@ import org.apache.thrift.TBase;
 import org.apache.zookeeper.ZooKeeper;
 
 import com.facebook.fb303.FacebookBase;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * This class HBaseHCatStorageHandler provides functionality to create HBase
  * tables through HCatalog. The implementation is very similar to the
  * HiveHBaseStorageHandler, with more details to suit HCatalog.
  */
-//TODO remove serializable when HCATALOG-282 is fixed
-public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveMetaHook, Serializable {
+public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveMetaHook, Configurable {
 
     public final static String DEFAULT_PREFIX = "default.";
     private final static String PROPERTY_INT_OUTPUT_LOCATION = "hcat.hbase.mapreduce.intermediateOutputLocation";
 
-    private transient Configuration      hbaseConf;
-    private transient HBaseAdmin         admin;
+    private Configuration hbaseConf;
+    private HBaseAdmin admin;
 
     @Override
     public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
@@ -96,20 +98,32 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             jobProperties.put(TableInputFormat.INPUT_TABLE, qualifiedTableName);
 
             Configuration jobConf = getConf();
+            addHbaseResources(jobConf, jobProperties);
+            Configuration copyOfConf = new Configuration(jobConf);
+            HBaseConfiguration.addHbaseResources(copyOfConf);
+            //Getting hbase delegation token in getInputSplits does not work with PIG. So need to
+            //do it here
+            if (jobConf instanceof JobConf) {
+                HBaseUtil.addHBaseDelegationToken((JobConf)jobConf);
+            }
+
             String outputSchema = jobConf.get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
             jobProperties.put(TableInputFormat.SCAN_COLUMNS, getScanColumns(tableInfo, outputSchema));
 
             String serSnapshot = (String) inputJobInfo.getProperties().get(
                     HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
             if (serSnapshot == null) {
-                Configuration conf = addHbaseResources(jobConf);
-                HCatTableSnapshot snapshot = HBaseRevisionManagerUtil.createSnapshot(conf,
+                HCatTableSnapshot snapshot = HBaseRevisionManagerUtil.createSnapshot(copyOfConf,
                         qualifiedTableName, tableInfo);
                 jobProperties.put(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY,
                         HCatUtil.serialize(snapshot));
             }
 
-            addHbaseResources(jobConf, jobProperties);
+            //This adds it directly to the jobConf. Setting in jobProperties does not get propagated
+            //to JobConf as of now as the jobProperties is maintained per partition
+            //TODO: Remove when HCAT-308 is fixed
+            addOutputDependencyJars(jobConf);
+            jobProperties.put("tmpjars", jobConf.get("tmpjars"));
 
         } catch (IOException e) {
             throw new IllegalStateException("Error while configuring job properties", e);
@@ -128,33 +142,50 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
             String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
             jobProperties.put(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, qualifiedTableName);
+            jobProperties.put(TableOutputFormat.OUTPUT_TABLE, qualifiedTableName);
 
             Configuration jobConf = getConf();
+            addHbaseResources(jobConf, jobProperties);
+
+            Configuration copyOfConf = new Configuration(jobConf);
+            HBaseConfiguration.addHbaseResources(copyOfConf);
+
             String txnString = outputJobInfo.getProperties().getProperty(
                     HBaseConstants.PROPERTY_WRITE_TXN_KEY);
-            if (txnString == null) {
-                Configuration conf = addHbaseResources(jobConf);
-                Transaction txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo, conf);
+            String jobTxnString = jobConf.get(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
+            //Pig makes 3 calls to HCatOutputFormat.setOutput(HCatStorer) with different JobConf
+            //which leads to creating 2 transactions.
+            //So apart from fixing HCatStorer to pass same OutputJobInfo, making the call idempotent for other
+            //cases which might call multiple times but with same JobConf.
+            Transaction txn = null;
+            if (txnString == null && jobTxnString == null) {
+                txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo, copyOfConf);
+                String serializedTxn = HCatUtil.serialize(txn);
                 outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
-                        HCatUtil.serialize(txn));
-
-                if (isBulkMode(outputJobInfo) && !(outputJobInfo.getProperties()
-                                .containsKey(PROPERTY_INT_OUTPUT_LOCATION))) {
-                    String tableLocation = tableInfo.getTableLocation();
-                    String location = new Path(tableLocation, "REVISION_" + txn.getRevisionNumber())
-                            .toString();
-                    outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION,
-                            location);
-                    // We are writing out an intermediate sequenceFile hence
-                    // location is not passed in OutputJobInfo.getLocation()
-                    // TODO replace this with a mapreduce constant when available
-                    jobProperties.put("mapred.output.dir", location);
-                }
+                        serializedTxn);
+                jobProperties.put(HBaseConstants.PROPERTY_WRITE_TXN_KEY, serializedTxn);
+            } else {
+                txnString = (txnString == null) ? jobTxnString : txnString;
+                txn = (Transaction) HCatUtil.deserialize(txnString);
+                outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
+                        txnString);
+                jobProperties.put(HBaseConstants.PROPERTY_WRITE_TXN_KEY, txnString);
+            }
+            if (isBulkMode(outputJobInfo)) {
+                String tableLocation = tableInfo.getTableLocation();
+                String location = new Path(tableLocation, "REVISION_" + txn.getRevisionNumber())
+                        .toString();
+                outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION, location);
+                // We are writing out an intermediate sequenceFile hence
+                // location is not passed in OutputJobInfo.getLocation()
+                // TODO replace this with a mapreduce constant when available
+                jobProperties.put("mapred.output.dir", location);
+                jobProperties.put("mapred.output.committer.class", HBaseBulkOutputCommitter.class.getName());
+            } else {
+                jobProperties.put("mapred.output.committer.class", HBaseDirectOutputCommitter.class.getName());
             }
 
-            jobProperties
-                    .put(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
-            addHbaseResources(jobConf, jobProperties);
+            jobProperties.put(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
             addOutputDependencyJars(jobConf);
             jobProperties.put("tmpjars", jobConf.get("tmpjars"));
 
@@ -429,7 +460,10 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
     @Override
     public void setConf(Configuration conf) {
-        hbaseConf = HBaseConfiguration.create(conf);
+        //Not cloning as we want to set tmpjars on it. Putting in jobProperties does not
+        //get propagated to JobConf in case of InputFormat as they are maintained per partition.
+        //Also we need to add hbase delegation token to the Credentials.
+        hbaseConf = conf;
     }
 
     private void checkDeleteTable(Table table) throws MetaException {
@@ -479,8 +513,6 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
      */
     private void addOutputDependencyJars(Configuration conf) throws IOException {
         TableMapReduceUtil.addDependencyJars(conf,
-                //hadoop-core
-                Writable.class,
                 //ZK
                 ZooKeeper.class,
                 //HBase
@@ -489,6 +521,8 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 HiveException.class,
                 //HCatalog jar
                 HCatOutputFormat.class,
+                //hcat hbase storage handler jar
+                HBaseHCatStorageHandler.class,
                 //hive hbase storage handler jar
                 HBaseSerDe.class,
                 //hive jar
@@ -498,18 +532,9 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 //hbase jar
                 Bytes.class,
                 //thrift-fb303 .jar
-                FacebookBase.class);
-    }
-
-    /**
-     * Utility method to get a new Configuration with hbase-default.xml and hbase-site.xml added
-     * @param jobConf existing configuration
-     * @return a new Configuration with hbase-default.xml and hbase-site.xml added
-     */
-    private Configuration addHbaseResources(Configuration jobConf) {
-        Configuration conf = new Configuration(jobConf);
-        HBaseConfiguration.addHbaseResources(conf);
-        return conf;
+                FacebookBase.class,
+                //guava jar
+                ThreadFactoryBuilder.class);
     }
 
     /**
