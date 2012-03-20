@@ -18,6 +18,18 @@
 
 Apache HCatalog Change Log
 
+Release 0.4.1 - Unreleased
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+  HCAT-306 Need more end-to-end tests (gates)
+
+  BUG FIXES
+  HCAT-319 Cleanup of 0.3 mapred classes (khorgath via gates)
+
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
@@ -53,8 +65,6 @@ Release 0.4.0 - Unreleased
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
-  HCAT-306 Need more end-to-end tests (gates)
-
   HCAT-130 Documentation improvements (lefty and gates via gates)
 
   HCAT-266 Upgrade HBase dependency to 0.92 (thw via toffer)
@@ -74,8 +84,6 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
-  HCAT-319 Cleanup of 0.3 mapred classes (khorgath via gates)
-
   HCAT-291 Pig and MR fail to write to a sequence file (avandana via gates)
 
   HCAT-305 hcat shell is not properly picking up the hcat jar (gates)
