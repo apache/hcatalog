@@ -105,6 +105,20 @@
   <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
   <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
 
+  <condition property="os-arch" value="x86_64">
+      <and>
+	<os arch="amd64" />
+      </and>
+    </condition>
+    <condition property="os-arch" value="i386">
+      <or>
+	<os arch="i386" />
+	<os arch="i486" />
+	<os arch="i586" />
+	<os arch="i686" />
+      </or>
+    </condition>
+
   <!-- rats properties -->
   <property name="rat.reporting.classname" value="rat.Report"/>
 
@@ -729,7 +743,7 @@
                 </replacetokens>
             </filterchain>
         </copy>
-        <rpm specFile="hcatalog.spec" command="-bb --target ${os.arch}" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true"/>
+        <rpm specFile="hcatalog.spec" command="-bb --target ${os-arch}" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true"/>
         <copy todir="${build.dir}/" flatten="true">
             <fileset dir="${package.buildroot}/RPMS">
                 <include name="**/*.rpm" />
@@ -784,7 +798,7 @@
                 </replacetokens>
             </filterchain>
         </copy>
-        <deb destfile="${package.buildroot}/${ant.project.name}_${_version}-${package.release}_${os.arch}.deb" control="${package.build.dir}/hcatalog.control">
+        <deb destfile="${package.buildroot}/${ant.project.name}_${_version}-${package.release}_${os-arch}.deb" control="${package.build.dir}/hcatalog.control">
             <tarfileset dir="${build.dir}/${final.name}" filemode="644" prefix="${package.prefix}">
                 <exclude name="bin" />
                 <exclude name="etc" />
@@ -809,7 +823,7 @@
                 <include name="**/hcatalog*.deb" />
             </fileset>
         </copy>
-        <deb destfile="${package.buildroot}/${ant.project.name}-server_${_version}-${package.release}_${os.arch}.deb" control="${package.build.dir}/hcatalog-server.control">
+        <deb destfile="${package.buildroot}/${ant.project.name}-server_${_version}-${package.release}_${os-arch}.deb" control="${package.build.dir}/hcatalog-server.control">
             <tarfileset dir="${build.dir}/${final.name}" filemode="644" prefix="${package.prefix}">
                 <include name="share/hcatalog/hcatalog-server*" />
             </tarfileset>
