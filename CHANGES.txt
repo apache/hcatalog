@@ -86,6 +86,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-335 Release notes issues for 0.4 (gates)
+
   HCAT-291 Pig and MR fail to write to a sequence file (avandana via gates)
 
   HCAT-305 hcat shell is not properly picking up the hcat jar (gates)
