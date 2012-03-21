@@ -31,6 +31,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-335 Release notes issues for 0.4 (gates)
+
   HCAT-302 unable to write to hbase channel. HBaseHCatStorageHandler class not found (rohini via gates)
 
 Release 0.4.0 - Unreleased
