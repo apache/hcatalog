@@ -17,6 +17,7 @@
  */
 package org.apache.hcatalog.pig;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,16 +25,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hcatalog.MiniCluster;
+import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.data.Pair;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
@@ -41,21 +42,18 @@ import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
-import org.apache.pig.impl.util.UDFContext;
 
 public class TestHCatLoader extends TestCase {
+  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+      "/build/test/data/" + TestHCatLoader.class.getCanonicalName();
+  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+  private static final String BASIC_FILE_NAME = TEST_DATA_DIR + "/basic.input.data";
+  private static final String COMPLEX_FILE_NAME = TEST_DATA_DIR + "/complex.input.data";
 
   private static final String BASIC_TABLE = "junit_unparted_basic";
   private static final String COMPLEX_TABLE = "junit_unparted_complex";
   private static final String PARTITIONED_TABLE = "junit_parted_basic";
-  private static MiniCluster cluster = MiniCluster.buildCluster();
   private static Driver driver;
-  private static Properties props;
-
-  private static final String basicFile = "/tmp/basic.input.data";
-  private static final String complexFile = "/tmp/complex.input.data";
-  private static String fullFileNameBasic;
-  private static String fullFileNameComplex;
 
   private static int guardTestCount = 5; // ugh, instantiate using introspection in guardedSetupBeforeClass
   private static boolean setupHasRun = false;
@@ -90,16 +88,19 @@ public class TestHCatLoader extends TestCase {
       return;
     }
 
+    File f = new File(TEST_WAREHOUSE_DIR);
+    if (f.exists()) {
+      FileUtil.fullyDelete(f);
+    }
+    new File(TEST_WAREHOUSE_DIR).mkdirs();
+
     HiveConf hiveConf = new HiveConf(this.getClass());
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
     driver = new Driver(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
-    props = new Properties();
-    props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
-    fullFileNameBasic = cluster.getProperties().getProperty("fs.default.name") + basicFile;
-    fullFileNameComplex = cluster.getProperties().getProperty("fs.default.name") + complexFile;
 
     cleanup();
 
@@ -127,19 +128,17 @@ public class TestHCatLoader extends TestCase {
         k++;
       }
     }
-    MiniCluster.createInputFile(cluster, basicFile, input);
-
-    MiniCluster.createInputFile(cluster, complexFile,
+    HcatTestUtils.createTestDataFile(BASIC_FILE_NAME, input);
+    HcatTestUtils.createTestDataFile(COMPLEX_FILE_NAME,
         new String[]{
-        //"Henry Jekyll\t42\t(415-253-6367,hjekyll@contemporary.edu.uk)\t{(PHARMACOLOGY),(PSYCHIATRY)},[PHARMACOLOGY#A-,PSYCHIATRY#B+],{(415-253-6367,cell),(408-253-6367,landline)}",
-        //"Edward Hyde\t1337\t(415-253-6367,anonymous@b44chan.org)\t{(CREATIVE_WRITING),(COPYRIGHT_LAW)},[CREATIVE_WRITING#A+,COPYRIGHT_LAW#D],{(415-253-6367,cell),(408-253-6367,landline)}",
+            //"Henry Jekyll\t42\t(415-253-6367,hjekyll@contemporary.edu.uk)\t{(PHARMACOLOGY),(PSYCHIATRY)},[PHARMACOLOGY#A-,PSYCHIATRY#B+],{(415-253-6367,cell),(408-253-6367,landline)}",
+            //"Edward Hyde\t1337\t(415-253-6367,anonymous@b44chan.org)\t{(CREATIVE_WRITING),(COPYRIGHT_LAW)},[CREATIVE_WRITING#A+,COPYRIGHT_LAW#D],{(415-253-6367,cell),(408-253-6367,landline)}",
         }
     );
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+fullFileNameBasic+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+BASIC_FILE_NAME+"' as (a:int, b:chararray);");
 
     server.registerQuery("store A into '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatStorer();");
     server.registerQuery("B = foreach A generate a,b;");
@@ -150,14 +149,12 @@ public class TestHCatLoader extends TestCase {
     server.registerQuery("C2 = filter C by a >= 2;");
     server.registerQuery("store C2 into '"+PARTITIONED_TABLE+"' using org.apache.hcatalog.pig.HCatStorer('bkt=1');");
 
-    server.registerQuery("D = load '"+fullFileNameComplex+"' as (name:chararray, studentid:int, contact:tuple(phno:chararray,email:chararray), currently_registered_courses:bag{innertup:tuple(course:chararray)}, current_grades:map[ ] , phnos :bag{innertup:tuple(phno:chararray,type:chararray)});");
+    server.registerQuery("D = load '"+COMPLEX_FILE_NAME+"' as (name:chararray, studentid:int, contact:tuple(phno:chararray,email:chararray), currently_registered_courses:bag{innertup:tuple(course:chararray)}, current_grades:map[ ] , phnos :bag{innertup:tuple(phno:chararray,type:chararray)});");
     server.registerQuery("store D into '"+COMPLEX_TABLE+"' using org.apache.hcatalog.pig.HCatStorer();");
     server.executeBatch();
 
   }
   private void cleanup() throws IOException, CommandNeedRetryException {
-    MiniCluster.deleteFile(cluster, basicFile);
-    MiniCluster.deleteFile(cluster, complexFile);
     dropTable(BASIC_TABLE);
     dropTable(COMPLEX_TABLE);
     dropTable(PARTITIONED_TABLE);
@@ -183,7 +180,7 @@ public class TestHCatLoader extends TestCase {
 
   public void testSchemaLoadBasic() throws IOException{
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
+    PigServer server = new PigServer(ExecType.LOCAL);
 
     // test that schema was loaded correctly
     server.registerQuery("X = load '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatLoader();");
@@ -198,7 +195,7 @@ public class TestHCatLoader extends TestCase {
   }
 
   public void testReadDataBasic() throws IOException {
-    PigServer server = new PigServer(ExecType.LOCAL, props);
+    PigServer server = new PigServer(ExecType.LOCAL);
 
     server.registerQuery("X = load '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatLoader();");
     Iterator<Tuple> XIter = server.openIterator("X");
@@ -217,22 +214,22 @@ public class TestHCatLoader extends TestCase {
 
   public void testSchemaLoadComplex() throws IOException{
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
+    PigServer server = new PigServer(ExecType.LOCAL);
 
     // test that schema was loaded correctly
     server.registerQuery("K = load '"+COMPLEX_TABLE+"' using org.apache.hcatalog.pig.HCatLoader();");
     Schema dumpedKSchema = server.dumpSchema("K");
     List<FieldSchema> Kfields = dumpedKSchema.getFields();
-    assertEquals(6,Kfields.size());
+    assertEquals(6, Kfields.size());
 
     assertEquals(DataType.CHARARRAY,Kfields.get(0).type);
     assertEquals("name",Kfields.get(0).alias.toLowerCase());
 
     assertEquals( DataType.INTEGER,Kfields.get(1).type);
-    assertEquals("studentid",Kfields.get(1).alias.toLowerCase());
+    assertEquals("studentid", Kfields.get(1).alias.toLowerCase());
 
-    assertEquals(DataType.TUPLE,Kfields.get(2).type);
-    assertEquals("contact",Kfields.get(2).alias.toLowerCase());
+    assertEquals(DataType.TUPLE, Kfields.get(2).type);
+    assertEquals("contact", Kfields.get(2).alias.toLowerCase());
     {
       assertNotNull(Kfields.get(2).schema);
       assertTrue(Kfields.get(2).schema.getFields().size() == 2);
@@ -241,8 +238,8 @@ public class TestHCatLoader extends TestCase {
       assertTrue(Kfields.get(2).schema.getFields().get(1).type == DataType.CHARARRAY);
       assertTrue(Kfields.get(2).schema.getFields().get(1).alias.equalsIgnoreCase("email"));
     }
-    assertEquals(DataType.BAG,Kfields.get(3).type);
-    assertEquals("currently_registered_courses",Kfields.get(3).alias.toLowerCase());
+    assertEquals(DataType.BAG, Kfields.get(3).type);
+    assertEquals("currently_registered_courses", Kfields.get(3).alias.toLowerCase());
     {
       assertNotNull(Kfields.get(3).schema);
       assertEquals(1,Kfields.get(3).schema.getFields().size());
@@ -257,7 +254,7 @@ public class TestHCatLoader extends TestCase {
     assertEquals(DataType.MAP,Kfields.get(4).type);
     assertEquals("current_grades",Kfields.get(4).alias.toLowerCase());
     assertEquals(DataType.BAG,Kfields.get(5).type);
-    assertEquals("phnos",Kfields.get(5).alias.toLowerCase());
+    assertEquals("phnos", Kfields.get(5).alias.toLowerCase());
     {
       assertNotNull(Kfields.get(5).schema);
       assertEquals(1,Kfields.get(5).schema.getFields().size());
@@ -273,12 +270,12 @@ public class TestHCatLoader extends TestCase {
   }
 
   public void testReadPartitionedBasic() throws IOException, CommandNeedRetryException {
-    PigServer server = new PigServer(ExecType.LOCAL, props);
+    PigServer server = new PigServer(ExecType.LOCAL);
 
     driver.run("select * from "+PARTITIONED_TABLE);
     ArrayList<String> valuesReadFromHiveDriver = new ArrayList<String>();
     driver.getResults(valuesReadFromHiveDriver);
-    assertEquals(basicInputData.size(),valuesReadFromHiveDriver.size());
+    assertEquals(basicInputData.size(), valuesReadFromHiveDriver.size());
 
     server.registerQuery("W = load '"+PARTITIONED_TABLE+"' using org.apache.hcatalog.pig.HCatLoader();");
     Schema dumpedWSchema = server.dumpSchema("W");
@@ -337,7 +334,7 @@ public class TestHCatLoader extends TestCase {
 
   public void testProjectionsBasic() throws IOException {
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
+    PigServer server = new PigServer(ExecType.LOCAL);
 
     // projections are handled by using generate, not "as" on the Load
 

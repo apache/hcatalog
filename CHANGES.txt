@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-287 Add data api to HCatalog (hashutosh)
 
   IMPROVEMENTS
+  HCAT-329 HCatalog build fails with pig 0.9 (traviscrawford via hashutosh)
+
   HCAT-233 gitignore file (enis via gates)
 
   OPTIMIZATIONS

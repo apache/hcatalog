@@ -21,10 +21,10 @@ package org.apache.hcatalog.mapreduce;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cli.CliSessionState;
@@ -38,7 +38,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hcatalog.MiniCluster;
+import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
@@ -48,17 +48,16 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.UDFContext;
 import org.junit.Test;
 
 public class TestSequenceFileReadWrite {
+  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+      "/build/test/data/" + TestSequenceFileReadWrite.class.getCanonicalName();
+  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+  private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
-    private static MiniCluster cluster = MiniCluster.buildCluster();
     private static Driver driver;
-    private static Properties props;
     private static PigServer server;
-    private static final String basicFile = "/tmp/basic.input.data";
-    private static String fullFileNameBasic;
     private static String[] input;
     private static HiveConf hiveConf;
 
@@ -66,16 +65,12 @@ public class TestSequenceFileReadWrite {
         hiveConf = new HiveConf(this.getClass());
         hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-        hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname,
-                "false");
+        hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+        hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
         driver = new Driver(hiveConf);
         SessionState.start(new CliSessionState(hiveConf));
-        props = new Properties();
-        props.setProperty("fs.default.name", cluster.getProperties()
-                .getProperty("fs.default.name"));
-        fullFileNameBasic = cluster.getProperties().getProperty(
-                "fs.default.name")
-                + basicFile;
+
+        new File(TEST_WAREHOUSE_DIR).mkdirs();
 
         int numRows = 3;
         input = new String[numRows];
@@ -84,9 +79,8 @@ public class TestSequenceFileReadWrite {
             String col2 = "b" + i;
             input[i] = i + "," + col1 + "," + col2;
         }
-        MiniCluster.deleteFile(cluster, basicFile);
-        MiniCluster.createInputFile(cluster, basicFile, input);
-        server = new PigServer(ExecType.LOCAL, props);
+        HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+        server = new PigServer(ExecType.LOCAL);
     }
 
     @Test
@@ -97,10 +91,9 @@ public class TestSequenceFileReadWrite {
         int retCode1 = driver.run(createTable).getResponseCode();
         assertTrue(retCode1 == 0);
 
-        UDFContext.getUDFContext().setClientSystemProps();
         server.setBatchOn();
         server.registerQuery("A = load '"
-                + fullFileNameBasic
+                + INPUT_FILE_NAME
                 + "' using PigStorage(',') as (a0:int,a1:chararray,a2:chararray);");
         server.registerQuery("store A into 'demo_table' using org.apache.hcatalog.pig.HCatStorer();");
         server.executeBatch();
@@ -127,10 +120,9 @@ public class TestSequenceFileReadWrite {
         int retCode1 = driver.run(createTable).getResponseCode();
         assertTrue(retCode1 == 0);
 
-        UDFContext.getUDFContext().setClientSystemProps();
         server.setBatchOn();
         server.registerQuery("A = load '"
-                + fullFileNameBasic
+                + INPUT_FILE_NAME
                 + "' using PigStorage(',') as (a0:int,a1:chararray,a2:chararray);");
         server.registerQuery("store A into 'demo_table_1' using org.apache.hcatalog.pig.HCatStorer();");
         server.executeBatch();
@@ -167,7 +159,7 @@ public class TestSequenceFileReadWrite {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setInputFormatClass(TextInputFormat.class);
-        TextInputFormat.setInputPaths(job, this.fullFileNameBasic);
+        TextInputFormat.setInputPaths(job, INPUT_FILE_NAME);
 
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(
                 MetaStoreUtils.DEFAULT_DATABASE_NAME, "demo_table_2", null));
@@ -178,7 +170,6 @@ public class TestSequenceFileReadWrite {
         new FileOutputCommitterContainer(job, null).cleanupJob(job);
         assertTrue(job.isSuccessful());
 
-        UDFContext.getUDFContext().setClientSystemProps();
         server.setBatchOn();
         server.registerQuery("C = load 'default.demo_table_2' using org.apache.hcatalog.pig.HCatLoader();");
         server.executeBatch();
@@ -213,7 +204,7 @@ public class TestSequenceFileReadWrite {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setInputFormatClass(TextInputFormat.class);
-        TextInputFormat.setInputPaths(job, this.fullFileNameBasic);
+        TextInputFormat.setInputPaths(job, INPUT_FILE_NAME);
 
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(
                 MetaStoreUtils.DEFAULT_DATABASE_NAME, "demo_table_3", null));
@@ -223,7 +214,6 @@ public class TestSequenceFileReadWrite {
         new FileOutputCommitterContainer(job, null).cleanupJob(job);
         assertTrue(job.isSuccessful());
 
-        UDFContext.getUDFContext().setClientSystemProps();
         server.setBatchOn();
         server.registerQuery("D = load 'default.demo_table_3' using org.apache.hcatalog.pig.HCatLoader();");
         server.executeBatch();
