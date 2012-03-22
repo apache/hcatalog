@@ -89,8 +89,10 @@
   <property name="ant_task_repo_url"
     value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
   <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
+  <property name="ivy.xml" location="${basedir}/ivy.xml"/>
   <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
   <property name="build.ivy.dir" location="${build.dir}/ivy" />
+  <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
   <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
   <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
   <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
@@ -202,6 +204,7 @@
     -->
     <ivy:configure settingsid="${ant.project.name}.ivy.settings"
       file="${ivysettings.xml}" override='false'/>
+    <ivy:makepom ivyfile="${ivy.xml}" pomfile="${pom.file}"/>
   </target>
 
   <target name="ivy-compile" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for compile configuration">
