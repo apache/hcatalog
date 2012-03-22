@@ -65,6 +65,8 @@ Release 0.4.0 - Unreleased
   HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   NEW FEATURES
+  HCAT-334 HCatalog should generate a POM file so it can be deployed to a maven repo (traviscrawford via gates)
+
   HCAT-296 Hcatalog should be able talk to secure hbase server using hbase delegation token (rohini via toffer)
 
   HCAT-249 Rework JSON StorageDriver into a JSON SerDe (khorgath via gates)
