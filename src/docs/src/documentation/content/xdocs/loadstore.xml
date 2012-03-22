@@ -189,7 +189,7 @@ to apply itself. You can also give a more complex filter to retrieve a set of pa
 
 <source>
 a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
-b = filter a by datestamp &gt;= '20110924' or datestamp &lt;= '20110925';
+b = filter a by datestamp &gt;= '20110924' and datestamp &lt;= '20110925';
 </source>
 
 </section> 

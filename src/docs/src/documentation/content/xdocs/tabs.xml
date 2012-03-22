@@ -30,6 +30,6 @@
    Tabs can be embedded to a depth of two. The second level of tabs will only 
     be displayed when their parent tab is selected.    
   -->
-  <tab label="HCatalog 0.2.0 Documentation" dir="" type="visible" /> 
+  <tab label="HCatalog 0.4.0 Documentation" dir="" type="visible" /> 
 
 </tabs>
