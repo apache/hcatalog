@@ -254,8 +254,8 @@ public class ManyMiniCluster {
 
             hbaseConf.set("hbase.rootdir", hbaseRoot);
             hbaseConf.set("hbase.master", "local");
-            hbaseConf.setInt("hbase.zookeeper.property.clientPort", zookeeperPort);
-            hbaseConf.set("hbase.zookeeper.quorum", "127.0.0.1");
+            hbaseConf.setInt(HConstants.ZOOKEEPER_CLIENT_PORT, zookeeperPort);
+            hbaseConf.set(HConstants.ZOOKEEPER_QUORUM, "127.0.0.1");
             hbaseConf.setInt("hbase.master.port", findFreePort());
             hbaseConf.setInt("hbase.master.info.port", -1);
             hbaseConf.setInt("hbase.regionserver.port", findFreePort());
@@ -306,7 +306,7 @@ public class ManyMiniCluster {
         private File workDir;
         private int numTaskTrackers = 1;
         private JobConf jobConf;
-        private HBaseConfiguration hbaseConf;
+        private Configuration hbaseConf;
         private HiveConf hiveConf;
 
         private boolean miniMRClusterEnabled = true;
@@ -329,7 +329,7 @@ public class ManyMiniCluster {
             return this;
         }
 
-        public Builder hbaseConf(HBaseConfiguration hbaseConf) {
+        public Builder hbaseConf(Configuration hbaseConf) {
             this.hbaseConf = hbaseConf;
             return this;
         }

@@ -18,16 +18,6 @@
 
 package org.apache.hcatalog.hbase;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,6 +25,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 /**
  * Base class for HBase Tests which need a mini cluster instance
@@ -47,6 +48,12 @@ public abstract class SkeletonHBaseTest {
 
     protected static Map<String,Context> contextMap = new HashMap<String,Context>();
     protected static Set<String> tableNames = new HashSet<String>();
+
+    /**
+     * Allow tests to alter the default MiniCluster configuration.
+     * (requires static initializer block as all setup here is static)
+     */
+    protected static Configuration testConf = null;
 
     protected void createTable(String tableName, String[] families) {
         try {
@@ -75,6 +82,7 @@ public abstract class SkeletonHBaseTest {
         tableNames.add(name);
         return name;
     }
+
 
     /**
      * startup an hbase cluster instance before a test suite runs
@@ -173,9 +181,13 @@ public abstract class SkeletonHBaseTest {
 
         public void start() {
             if(usageCount++ == 0) {
-                cluster = ManyMiniCluster.create(new File(testDir)).build();
+            	ManyMiniCluster.Builder b = ManyMiniCluster.create(new File(testDir));
+                if (testConf != null) {
+                   b.hbaseConf(HBaseConfiguration.create(testConf));
+                }
+                cluster = b.build();
                 cluster.start();
-                hbaseConf = cluster.getHBaseConf();
+                this.hbaseConf = cluster.getHBaseConf();
                 jobConf = cluster.getJobConf();
                 fileSystem = cluster.getFileSystem();
                 hiveConf = cluster.getHiveConf();

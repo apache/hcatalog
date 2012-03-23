@@ -17,6 +17,7 @@
  */
 package org.apache.hcatalog.hbase.snapshot;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ import java.util.Map;
 /**
  * The snapshot for a table and a list of column families.
  */
-public class TableSnapshot {
+public class TableSnapshot implements Serializable {
 
     private String name;
 
@@ -35,6 +36,9 @@ public class TableSnapshot {
 
     public TableSnapshot(String name, Map<String, Long> cfRevMap, long latestRevision) {
         this.name = name;
+        if (cfRevMap == null) {
+          throw new IllegalArgumentException("revision map cannot be null");
+        }
         this.cfRevisionMap = cfRevMap;
         this.latestRevision = latestRevision;
     }

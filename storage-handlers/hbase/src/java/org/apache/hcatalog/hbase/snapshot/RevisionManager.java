@@ -25,8 +25,11 @@ import java.util.Properties;
  * This interface provides APIs for implementing revision management.
  */
 public interface RevisionManager {
-
-    public static final String REVISION_MGR_IMPL_CLASS = "revision.manager.impl.class";
+    /**
+     * Version property required by HBase to use this interface
+     * for CoprocessorProtocol / RPC.
+     */
+    public static final long VERSION = 1L; // do not change
 
     /**
      * Initialize the revision manager.
