@@ -24,13 +24,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
@@ -40,7 +38,6 @@ import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.RevisionManagerFactory;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
-import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
@@ -126,37 +123,7 @@ class HBaseRevisionManagerUtil {
      * @throws IOException
      */
     static RevisionManager getOpenedRevisionManager(Configuration jobConf) throws IOException {
-
-        Properties properties = new Properties();
-        String zkHostList = jobConf.get(HConstants.ZOOKEEPER_QUORUM);
-        int port = jobConf.getInt("hbase.zookeeper.property.clientPort",
-                HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
-
-        if (zkHostList != null) {
-            String[] splits = zkHostList.split(",");
-            StringBuffer sb = new StringBuffer();
-            for (String split : splits) {
-                sb.append(split);
-                sb.append(':');
-                sb.append(port);
-                sb.append(',');
-            }
-
-            sb.deleteCharAt(sb.length() - 1);
-            properties.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
-        }
-        String dataDir = jobConf.get(ZKBasedRevisionManager.DATADIR);
-        if (dataDir != null) {
-            properties.put(ZKBasedRevisionManager.DATADIR, dataDir);
-        }
-        String rmClassName = jobConf.get(
-                RevisionManager.REVISION_MGR_IMPL_CLASS,
-                ZKBasedRevisionManager.class.getName());
-        properties.put(RevisionManager.REVISION_MGR_IMPL_CLASS, rmClassName);
-        RevisionManager revisionManger = RevisionManagerFactory
-                .getRevisionManager(properties);
-        revisionManger.open();
-        return revisionManger;
+      return RevisionManagerFactory.getOpenedRevisionManager(jobConf);
     }
 
     static void closeRevisionManagerQuietly(RevisionManager rm) {
