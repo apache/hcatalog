@@ -22,10 +22,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.apache.hcatalog.mapreduce.InputJobInfo;
+import org.apache.hcatalog.mapreduce.PartInfo;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.LoadMetadata;
 import org.apache.pig.LoadPushDown;
@@ -114,4 +119,31 @@ public abstract class HCatBaseLoader extends LoadFunc implements LoadMetadata, L
     props.put(key, value);
   }
 
+  /**
+   * A utility method to get the size of inputs. This is accomplished by summing the
+   * size of all input paths on supported FileSystems. Locations whose size cannot be
+   * determined are ignored. Note non-FileSystem and unpartitioned locations will not
+   * report their input size by default.
+   */
+  protected static long getSizeInBytes(InputJobInfo inputJobInfo) throws IOException {
+    Configuration conf = new Configuration();
+    long sizeInBytes = 0;
+
+    for (PartInfo partInfo : inputJobInfo.getPartitions()) {
+      try {
+        Path p = new Path(partInfo.getLocation());
+        if (p.getFileSystem(conf).isFile(p)) {
+          sizeInBytes += p.getFileSystem(conf).getFileStatus(p).getLen();
+        } else {
+          for (FileStatus child : p.getFileSystem(conf).listStatus(p)) {
+            sizeInBytes += child.getLen();
+          }
+        }
+      } catch (IOException e) {
+        // Report size to the extent possible.
+      }
+    }
+
+    return sizeInBytes;
+  }
 }

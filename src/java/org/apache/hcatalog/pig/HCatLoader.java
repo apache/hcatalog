@@ -37,6 +37,7 @@ import org.apache.pig.Expression.BinaryExpression;
 import org.apache.pig.LoadFunc;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
+import org.apache.pig.ResourceStatistics;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
@@ -175,6 +176,22 @@ public class HCatLoader extends HCatBaseLoader {
     // store this in the udf context so we can get it later
     storeInUDFContext(signature,
         PARTITION_FILTER, partitionFilterString);
+  }
+
+  /**
+   * Get statistics about the data to be loaded. Only input data size is implemented at this time.
+   */
+  @Override
+  public ResourceStatistics getStatistics(String location, Job job) throws IOException {
+    try {
+      ResourceStatistics stats = new ResourceStatistics();
+      InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(
+          job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO));
+      stats.setmBytes(getSizeInBytes(inputJobInfo) / 1024 / 1024);
+      return stats;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   private String getPartitionFilterString() {

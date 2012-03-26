@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
+
   HCAT-287 Add data api to HCatalog (hashutosh)
 
   IMPROVEMENTS

@@ -19,6 +19,7 @@ package org.apache.hcatalog.pig;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,10 +35,12 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.data.Pair;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
+import org.apache.pig.ResourceStatistics;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
@@ -53,9 +56,10 @@ public class TestHCatLoader extends TestCase {
   private static final String BASIC_TABLE = "junit_unparted_basic";
   private static final String COMPLEX_TABLE = "junit_unparted_complex";
   private static final String PARTITIONED_TABLE = "junit_parted_basic";
+  private static final String SPECIFIC_SIZE_TABLE = "junit_specific_size";
   private static Driver driver;
 
-  private static int guardTestCount = 5; // ugh, instantiate using introspection in guardedSetupBeforeClass
+  private static int guardTestCount = 6; // ugh, instantiate using introspection in guardedSetupBeforeClass
   private static boolean setupHasRun = false;
 
   private static Map<Integer,Pair<Integer,String>> basicInputData;
@@ -113,7 +117,7 @@ public class TestHCatLoader extends TestCase {
         + "phnos array<struct<phno:string,type:string>>");
 
     createTable(PARTITIONED_TABLE,"a int, b string","bkt string");
-
+    createTable(SPECIFIC_SIZE_TABLE, "a int, b string");
 
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
@@ -141,6 +145,7 @@ public class TestHCatLoader extends TestCase {
     server.registerQuery("A = load '"+BASIC_FILE_NAME+"' as (a:int, b:chararray);");
 
     server.registerQuery("store A into '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatStorer();");
+    server.registerQuery("store A into '" + SPECIFIC_SIZE_TABLE + "' using org.apache.hcatalog.pig.HCatStorer();");
     server.registerQuery("B = foreach A generate a,b;");
     server.registerQuery("B2 = filter B by a < 2;");
     server.registerQuery("store B2 into '"+PARTITIONED_TABLE+"' using org.apache.hcatalog.pig.HCatStorer('bkt=0');");
@@ -158,6 +163,7 @@ public class TestHCatLoader extends TestCase {
     dropTable(BASIC_TABLE);
     dropTable(COMPLEX_TABLE);
     dropTable(PARTITIONED_TABLE);
+    dropTable(SPECIFIC_SIZE_TABLE);
   }
 
   protected void guardedTearDownAfterClass() throws Exception {
@@ -375,5 +381,19 @@ public class TestHCatLoader extends TestCase {
       numTuplesRead++;
     }
     assertEquals(basicInputData.size(),numTuplesRead);
+  }
+
+  public void testGetInputBytes() throws Exception {
+    File file = new File(TEST_WAREHOUSE_DIR + "/" + SPECIFIC_SIZE_TABLE + "/part-m-00000");
+    file.deleteOnExit();
+    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+    randomAccessFile.setLength(2L * 1024 * 1024 * 1024);
+
+    Job job = new Job();
+    HCatLoader hCatLoader = new HCatLoader();
+    hCatLoader.setUDFContextSignature(this.getName());
+    hCatLoader.setLocation(SPECIFIC_SIZE_TABLE, job);
+    ResourceStatistics statistics = hCatLoader.getStatistics(file.getAbsolutePath(), job);
+    assertEquals(2048, (long) statistics.getmBytes());
   }
 }
