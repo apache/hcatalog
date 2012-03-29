@@ -92,6 +92,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-348 HCatUtil::getHiveConf(Configuration) ignores passed-in conf while creating HiveConf (gates)
+
   HCAT-312 Hcatalog rpms change the ownership of /usr/lib64 to hcat user (gkesavan via gates)
 
   HCAT-301 Reading from a table created with upper case table name throws error. (rohini via toffer)
