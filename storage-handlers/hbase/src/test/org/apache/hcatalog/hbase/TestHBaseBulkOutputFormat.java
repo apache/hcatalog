@@ -352,7 +352,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='true',"+
+                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY+"'='true',"+
                               "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
@@ -446,7 +446,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                               "(key int, english string, spanish string) STORED BY " +
                               "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY+"'='true',"+
+                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY+"'='true',"+
                               "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
@@ -525,7 +525,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
                 "(key int, english string, spanish string) STORED BY " +
                 "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY + "'='true'," +
+                "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY + "'='true'," +
                 "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName
                 + ":spanish')";
 
@@ -578,7 +578,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         ResultScanner scanner = table.getScanner(scan);
         assertFalse(scanner.iterator().hasNext());
 
-        // verify that the input storage driver returns empty results.
+        // verify that the storage handler input format returns empty results.
         Path outputDir = new Path(getTestDir(),
                 "mapred/testHBaseTableBulkIgnoreAbortedTransactions");
         FileSystem fs = getFileSystem();

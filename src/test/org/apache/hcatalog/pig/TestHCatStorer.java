@@ -32,8 +32,6 @@ import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
 import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.rcfile.RCFileInputDriver;
-import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigException;
 import org.apache.pig.PigServer;

@@ -23,17 +23,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.ql.exec.Utilities;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.SerDe;
 
 import org.apache.hadoop.conf.Configuration;
@@ -41,9 +32,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -54,9 +43,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
 
-import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -109,7 +96,7 @@ public abstract class HCatBaseInputFormat
    * underlying InputFormat's splits
    * @param jobContext the job context object
    * @return the splits, an HCatInputSplit wrapper over the storage
-   *         driver InputSplits
+   *         handler InputSplits
    * @throws IOException or InterruptedException
    */
   @Override
@@ -183,7 +170,7 @@ public abstract class HCatBaseInputFormat
    * @param split the split
    * @param taskContext the task attempt context
    * @return the record reader instance, either an HCatRecordReader(later) or
-   *         the underlying storage driver's RecordReader
+   *         the underlying storage handler's RecordReader
    * @throws IOException or InterruptedException
    */
   @Override

@@ -123,7 +123,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
     }
 
     /**
-     * @return the storageDriver
+     * @return the storagehandler
      */
     public HCatStorageHandler getStorageHandler() {
         return storageHandler;

@@ -53,13 +53,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.hcatalog.rcfile.RCFileInputDriver;
-import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 /**
  * Test for HCatOutputFormat. Writes a partition using HCatOutputFormat and reads
@@ -72,8 +69,6 @@ public abstract class HCatMapReduceTest extends TestCase {
 
   protected String inputFormat = RCFileInputFormat.class.getName();
   protected String outputFormat = RCFileOutputFormat.class.getName();
-  protected String inputSD = RCFileInputDriver.class.getName();
-  protected String outputSD = RCFileOutputDriver.class.getName();
   protected String serdeClass = ColumnarSerDe.class.getName();
 
   private static List<HCatRecord> writeRecords = new ArrayList<HCatRecord>();

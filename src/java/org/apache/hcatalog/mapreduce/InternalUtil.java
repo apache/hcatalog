@@ -38,7 +38,6 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
@@ -64,7 +63,7 @@ class InternalUtil {
         }
 
 
-        return new StorerInfo(null, null,
+        return new StorerInfo(
                 sd.getInputFormat(), sd.getOutputFormat(), sd.getSerdeInfo().getSerializationLib(),
                 properties.get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE),
                 hcatProperties);

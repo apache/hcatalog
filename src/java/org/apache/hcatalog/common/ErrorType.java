@@ -34,7 +34,7 @@ public enum ErrorType {
     ERROR_DUPLICATE_PARTITION           (2002, "Partition already present with given partition key values"),
     ERROR_NON_EMPTY_TABLE               (2003, "Non-partitioned table already contains data"),
     ERROR_NOT_INITIALIZED               (2004, "HCatOutputFormat not initialized, setOutput has to be called"),
-    ERROR_INIT_STORAGE_DRIVER           (2005, "Error initializing output storage driver instance"),
+    ERROR_INIT_STORAGE_HANDLER          (2005, "Error initializing storage handler instance"),
     ERROR_PUBLISHING_PARTITION          (2006, "Error adding partition to metastore"),
     ERROR_SCHEMA_COLUMN_MISMATCH        (2007, "Invalid column position in partition schema"),
     ERROR_SCHEMA_PARTITION_KEY          (2008, "Partition key cannot be present in the partition data"),

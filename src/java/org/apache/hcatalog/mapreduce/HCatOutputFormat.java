@@ -62,7 +62,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
     /**
      * Set the info about the output to write for the Job. This queries the metadata server
-     * to find the StorageDriver to use for the table.  Throws error if partition is already published.
+     * to find the StorageHandler to use for the table.  Throws error if partition is already published.
      * @param job the job object
      * @param outputJobInfo the table output info
      * @throws IOException the exception in communicating with the metadata server
@@ -221,7 +221,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
     /**
-     * Get the record writer for the job. Uses the Table's default OutputStorageDriver
+     * Get the record writer for the job. Uses the StorageHandler's default OutputFormat
      * to get the record writer.
      * @param context the information about the current task.
      * @return a RecordWriter to write the output for the job.

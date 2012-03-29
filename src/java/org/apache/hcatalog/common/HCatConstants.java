@@ -25,8 +25,6 @@ public final class HCatConstants {
 
   public static final String HIVE_RCFILE_IF_CLASS = "org.apache.hadoop.hive.ql.io.RCFileInputFormat";
   public static final String HIVE_RCFILE_OF_CLASS = "org.apache.hadoop.hive.ql.io.RCFileOutputFormat";
-  public static final String HCAT_RCFILE_ISD_CLASS = "org.apache.hcatalog.rcfile.RCFileInputDriver";
-  public static final String HCAT_RCFILE_OSD_CLASS = "org.apache.hcatalog.rcfile.RCFileOutputDriver";
 
   public static final String SEQUENCEFILE_INPUT = SequenceFileInputFormat.class.getName();
   public static final String SEQUENCEFILE_OUTPUT = SequenceFileOutputFormat.class.getName();

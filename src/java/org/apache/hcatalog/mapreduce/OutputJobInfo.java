@@ -205,8 +205,8 @@ public class OutputJobInfo implements Serializable {
   }
 
   /**
-   * Set/Get Property information to be passed down to *StorageDriver implementation
-   * put implementation specific storage driver configurations here
+   * Set/Get Property information to be passed down to *StorageHandler implementation
+   * put implementation specific storage handler configurations here
    * @return the implementation specific job properties 
    */
   public Properties getProperties() {
