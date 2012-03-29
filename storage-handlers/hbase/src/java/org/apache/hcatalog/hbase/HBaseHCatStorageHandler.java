@@ -60,7 +60,6 @@ import org.apache.hcatalog.hbase.HBaseBulkOutputFormat.HBaseBulkOutputCommitter;
 import org.apache.hcatalog.hbase.HBaseDirectOutputFormat.HBaseDirectOutputCommitter;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
-import org.apache.hcatalog.hbase.snapshot.ZKBasedRevisionManager;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
@@ -83,6 +82,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     private final static String PROPERTY_INT_OUTPUT_LOCATION = "hcat.hbase.mapreduce.intermediateOutputLocation";
 
     private Configuration hbaseConf;
+    private Configuration jobConf;
     private HBaseAdmin admin;
 
     @Override
@@ -94,17 +94,18 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         try {
             InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(jobString);
             HCatTableInfo tableInfo = inputJobInfo.getTableInfo();
-            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
+            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedHBaseTableName(tableInfo);
             jobProperties.put(TableInputFormat.INPUT_TABLE, qualifiedTableName);
 
-            Configuration jobConf = getConf();
+            Configuration jobConf = getJobConf();
             addHbaseResources(jobConf, jobProperties);
-            Configuration copyOfConf = new Configuration(jobConf);
+            JobConf copyOfConf = new JobConf(jobConf);
             HBaseConfiguration.addHbaseResources(copyOfConf);
             //Getting hbase delegation token in getInputSplits does not work with PIG. So need to
             //do it here
-            if (jobConf instanceof JobConf) {
-                HBaseUtil.addHBaseDelegationToken((JobConf)jobConf);
+            if (jobConf instanceof JobConf) { //Should be the case
+                HBaseUtil.addHBaseDelegationToken(copyOfConf);
+                ((JobConf)jobConf).getCredentials().addAll(copyOfConf.getCredentials());
             }
 
             String outputSchema = jobConf.get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
@@ -140,11 +141,11 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         try {
             OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(jobString);
             HCatTableInfo tableInfo = outputJobInfo.getTableInfo();
-            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedName(tableInfo);
+            String qualifiedTableName = HBaseHCatStorageHandler.getFullyQualifiedHBaseTableName(tableInfo);
             jobProperties.put(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, qualifiedTableName);
             jobProperties.put(TableOutputFormat.OUTPUT_TABLE, qualifiedTableName);
 
-            Configuration jobConf = getConf();
+            Configuration jobConf = getJobConf();
             addHbaseResources(jobConf, jobProperties);
 
             Configuration copyOfConf = new Configuration(jobConf);
@@ -152,24 +153,14 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
             String txnString = outputJobInfo.getProperties().getProperty(
                     HBaseConstants.PROPERTY_WRITE_TXN_KEY);
-            String jobTxnString = jobConf.get(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
-            //Pig makes 3 calls to HCatOutputFormat.setOutput(HCatStorer) with different JobConf
-            //which leads to creating 2 transactions.
-            //So apart from fixing HCatStorer to pass same OutputJobInfo, making the call idempotent for other
-            //cases which might call multiple times but with same JobConf.
             Transaction txn = null;
-            if (txnString == null && jobTxnString == null) {
+            if (txnString == null) {
                 txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo, copyOfConf);
                 String serializedTxn = HCatUtil.serialize(txn);
                 outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
                         serializedTxn);
-                jobProperties.put(HBaseConstants.PROPERTY_WRITE_TXN_KEY, serializedTxn);
             } else {
-                txnString = (txnString == null) ? jobTxnString : txnString;
                 txn = (Transaction) HCatUtil.deserialize(txnString);
-                outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
-                        txnString);
-                jobProperties.put(HBaseConstants.PROPERTY_WRITE_TXN_KEY, txnString);
             }
             if (isBulkMode(outputJobInfo)) {
                 String tableLocation = tableInfo.getTableLocation();
@@ -259,7 +250,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         }
 
         try {
-            String tableName = getHBaseTableName(tbl);
+            String tableName = getFullyQualifiedHBaseTableName(tbl);
             String hbaseColumnsMapping = tbl.getParameters().get(
                     HBaseSerDe.HBASE_COLUMNS_MAPPING);
 
@@ -331,13 +322,9 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             // ensure the table is online
             new HTable(hbaseConf, tableDesc.getName());
 
-            //Set up znodes in revision manager.
+            //Set up table in revision manager.
             RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hbaseConf);
-            if (rm instanceof ZKBasedRevisionManager) {
-                ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
-                zkRM.setUpZNodes(tableName, new ArrayList<String>(
-                        uniqueColumnFamilies));
-            }
+            rm.createTable(tableName, new ArrayList<String>(uniqueColumnFamilies));
 
         } catch (MasterNotRunningException mnre) {
             throw new MetaException(StringUtils.stringifyException(mnre));
@@ -409,7 +396,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         }
     }
 
-    private String getHBaseTableName(Table tbl) {
+    private String getFullyQualifiedHBaseTableName(Table tbl) {
         String tableName = tbl.getParameters().get(HBaseSerDe.HBASE_TABLE_NAME);
         if (tableName == null) {
             tableName = tbl.getSd().getSerdeInfo().getParameters()
@@ -421,8 +408,26 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             } else {
                 tableName = tbl.getDbName() + "." + tbl.getTableName();
             }
+            tableName = tableName.toLowerCase();
         }
         return tableName;
+    }
+
+    static String getFullyQualifiedHBaseTableName(HCatTableInfo tableInfo){
+        String qualifiedName = tableInfo.getStorerInfo().getProperties()
+                .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
+        if (qualifiedName == null) {
+            String databaseName = tableInfo.getDatabaseName();
+            String tableName = tableInfo.getTableName();
+            if ((databaseName == null)
+                    || (databaseName.equals(MetaStoreUtils.DEFAULT_DATABASE_NAME))) {
+                qualifiedName = tableName;
+            } else {
+                qualifiedName = databaseName + "." + tableName;
+            }
+            qualifiedName = qualifiedName.toLowerCase();
+        }
+        return qualifiedName;
     }
 
     @Override
@@ -449,6 +454,10 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         return HBaseSerDe.class;
     }
 
+    public Configuration getJobConf() {
+        return jobConf;
+    }
+
     @Override
     public Configuration getConf() {
 
@@ -460,15 +469,23 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
     @Override
     public void setConf(Configuration conf) {
-        //Not cloning as we want to set tmpjars on it. Putting in jobProperties does not
-        //get propagated to JobConf in case of InputFormat as they are maintained per partition.
-        //Also we need to add hbase delegation token to the Credentials.
-        hbaseConf = conf;
+        //setConf is called both during DDL operations and  mapred read/write jobs.
+        //Creating a copy of conf for DDL and adding hbase-default and hbase-site.xml to it.
+        //For jobs, maintaining a reference instead of cloning as we need to
+        //  1) add hbase delegation token to the Credentials.
+        //  2) set tmpjars on it. Putting in jobProperties does not get propagated to JobConf
+        //     in case of InputFormat as they are maintained per partition.
+        //Not adding hbase-default.xml and hbase-site.xml to jobConf as it will override any
+        //hbase properties set in the JobConf by the user. In configureInputJobProperties and
+        //configureOutputJobProperties, we take care of adding the default properties
+        //that are not already present. TODO: Change to a copy for jobs after HCAT-308 is fixed.
+        jobConf = conf;
+        hbaseConf = HBaseConfiguration.create(conf);
     }
 
     private void checkDeleteTable(Table table) throws MetaException {
         boolean isExternal = MetaStoreUtils.isExternalTable(table);
-        String tableName = getHBaseTableName(table);
+        String tableName = getFullyQualifiedHBaseTableName(table);
         RevisionManager rm = null;
         try {
             if (!isExternal && getHBaseAdmin().tableExists(tableName)) {
@@ -478,32 +495,15 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 }
                 getHBaseAdmin().deleteTable(tableName);
 
-              //Set up znodes in revision manager.
+                //Drop table in revision manager.
                 rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hbaseConf);
-                if (rm instanceof ZKBasedRevisionManager) {
-                    ZKBasedRevisionManager zkRM = (ZKBasedRevisionManager) rm;
-                    zkRM.deleteZNodes(tableName);
-                }
+                rm.dropTable(tableName);
             }
         } catch (IOException ie) {
             throw new MetaException(StringUtils.stringifyException(ie));
         } finally {
             HBaseRevisionManagerUtil.closeRevisionManagerQuietly(rm);
         }
-    }
-
-    static String getFullyQualifiedName(HCatTableInfo tableInfo){
-        String qualifiedName;
-        String databaseName = tableInfo.getDatabaseName();
-        String tableName = tableInfo.getTableName();
-
-        if ((databaseName == null) || (databaseName.equals(MetaStoreUtils.DEFAULT_DATABASE_NAME))) {
-            qualifiedName = tableName;
-        } else {
-            qualifiedName = databaseName + "." + tableName;
-        }
-
-        return qualifiedName;
     }
 
     /**

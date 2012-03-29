@@ -83,6 +83,16 @@ public class RevisionManagerEndpoint extends BaseEndpointCoprocessor implements 
   }
 
   @Override
+  public void createTable(String table, List<String> columnFamilies) throws IOException {
+    rmImpl.createTable(table, columnFamilies);
+  }
+
+  @Override
+  public void dropTable(String table) throws IOException {
+    rmImpl.dropTable(table);
+  }
+
+  @Override
   public Transaction beginWriteTransaction(String table, List<String> families)
       throws IOException {
     return rmImpl.beginWriteTransaction(table, families);

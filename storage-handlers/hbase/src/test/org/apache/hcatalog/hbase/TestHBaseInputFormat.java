@@ -172,8 +172,10 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
     @Test
     public void TestHBaseTableReadMR() throws Exception {
         Initialize();
-        String tableName = newTableName("mytable");
-        String databaseName = newTableName("mydatabase");
+        String tableName = newTableName("MyTable");
+        String databaseName = newTableName("MyDatabase");
+        //Table name will be lower case unless specified by hbase.table.name property
+        String hbaseTableName = (databaseName + "." + tableName).toLowerCase();
         String db_dir = getTestDir() + "/hbasedb";
 
         String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '"
@@ -189,7 +191,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         assertEquals(0, responseTwo.getResponseCode());
 
         HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
-        String hbaseTableName = databaseName + "." + tableName;
         boolean doesTableExist = hAdmin.tableExists(hbaseTableName);
         assertTrue(doesTableExist);
 
@@ -243,21 +244,24 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
     public void TestHBaseTableProjectionReadMR() throws Exception {
 
         Initialize();
-        String tableName = newTableName("mytable");
+        String tableName = newTableName("MyTable");
+        //Table name as specified by hbase.table.name property
+        String hbaseTableName = "MyDB_" + tableName;
         String tableQuery = "CREATE TABLE " + tableName
-                              + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
-                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
-                              + "TBLPROPERTIES ('hbase.columns.mapping'=':key," +
-                              		"testFamily:testQualifier1,testFamily:testQualifier2')" ;
+                              + "(key string, testqualifier1 string, testqualifier2 string) STORED BY "
+                              + "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
+                              + "TBLPROPERTIES ('hbase.columns.mapping'="
+                              + "':key,testFamily:testQualifier1,testFamily:testQualifier2',"
+                              + "'hbase.table.name'='" + hbaseTableName+ "')" ;
 
         CommandProcessorResponse responseTwo = hcatDriver.run(tableQuery);
         assertEquals(0, responseTwo.getResponseCode());
 
         HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
-        boolean doesTableExist = hAdmin.tableExists(tableName);
+        boolean doesTableExist = hAdmin.tableExists(hbaseTableName);
         assertTrue(doesTableExist);
 
-        populateHBaseTable(tableName, 5);
+        populateHBaseTable(hbaseTableName, 5);
 
         Configuration conf = new Configuration(hcatConf);
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
@@ -293,7 +297,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         CommandProcessorResponse responseThree = hcatDriver.run(dropTableQuery);
         assertEquals(0, responseThree.getResponseCode());
 
-        boolean isHbaseTableThere = hAdmin.tableExists(tableName);
+        boolean isHbaseTableThere = hAdmin.tableExists(hbaseTableName);
         assertFalse(isHbaseTableThere);
     }
 

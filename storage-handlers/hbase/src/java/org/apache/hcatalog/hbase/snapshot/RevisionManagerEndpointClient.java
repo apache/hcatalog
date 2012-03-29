@@ -53,6 +53,16 @@ public class RevisionManagerEndpointClient implements RevisionManager, Configura
   }
 
   @Override
+  public void createTable(String table, List<String> columnFamilies) throws IOException {
+    rmProxy.createTable(table, columnFamilies);
+  }
+
+  @Override
+  public void dropTable(String table) throws IOException {
+    rmProxy.dropTable(table);
+  }
+
+  @Override
   public Transaction beginWriteTransaction(String table, List<String> families) throws IOException {
     return rmProxy.beginWriteTransaction(table, families);
   }

@@ -36,6 +36,8 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.cli.HCatDriver;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
+import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Test;
 
 public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
@@ -85,10 +87,93 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
 
         assertTrue(doesTableExist);
 
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        rm.open();
+        //Should be able to successfully query revision manager
+        rm.getAbortedWriteTransactions("test_table", "cf1");
+
         hcatDriver.run("drop table test_table");
         doesTableExist = hAdmin.tableExists("test_table");
-
         assertTrue(doesTableExist == false);
+
+        try {
+            rm.getAbortedWriteTransactions("test_table", "cf1");
+        } catch (Exception e) {
+            assertTrue(e.getCause() instanceof NoNodeException);
+        }
+        rm.close();
+
+    }
+
+    @Test
+    public void testTableCreateDropDifferentCase() throws Exception {
+        Initialize();
+
+        hcatDriver.run("drop table test_Table");
+        CommandProcessorResponse response = hcatDriver
+                .run("create table test_Table(key int, value string) STORED BY " +
+                             "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
+                    + "TBLPROPERTIES ('hbase.columns.mapping'=':key,cf1:val')");
+
+        assertEquals(0, response.getResponseCode());
+
+        //HBase table gets created with lower case unless specified as a table property.
+        HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
+        boolean doesTableExist = hAdmin.tableExists("test_table");
+
+        assertTrue(doesTableExist);
+
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        rm.open();
+        //Should be able to successfully query revision manager
+        rm.getAbortedWriteTransactions("test_table", "cf1");
+
+        hcatDriver.run("drop table test_table");
+        doesTableExist = hAdmin.tableExists("test_table");
+        assertTrue(doesTableExist == false);
+
+        try {
+            rm.getAbortedWriteTransactions("test_table", "cf1");
+        } catch (Exception e) {
+            assertTrue(e.getCause() instanceof NoNodeException);
+        }
+        rm.close();
+
+    }
+
+    @Test
+    public void testTableCreateDropCaseSensitive() throws Exception {
+        Initialize();
+
+        hcatDriver.run("drop table test_Table");
+        CommandProcessorResponse response = hcatDriver
+                .run("create table test_Table(key int, value string) STORED BY " +
+                             "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'"
+                    + "TBLPROPERTIES ('hbase.columns.mapping'=':key,cf1:val'," +
+                    " 'hbase.table.name'='CaseSensitiveTable')");
+
+        assertEquals(0, response.getResponseCode());
+
+        HBaseAdmin hAdmin = new HBaseAdmin(getHbaseConf());
+        boolean doesTableExist = hAdmin.tableExists("CaseSensitiveTable");
+
+        assertTrue(doesTableExist);
+
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        rm.open();
+        //Should be able to successfully query revision manager
+        rm.getAbortedWriteTransactions("CaseSensitiveTable", "cf1");
+
+        hcatDriver.run("drop table test_table");
+        doesTableExist = hAdmin.tableExists("CaseSensitiveTable");
+        assertTrue(doesTableExist == false);
+
+        try {
+            rm.getAbortedWriteTransactions("CaseSensitiveTable", "cf1");
+        } catch (Exception e) {
+            assertTrue(e.getCause() instanceof NoNodeException);
+        }
+        rm.close();
 
     }
 

@@ -552,7 +552,6 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         Job job = configureJob(testName,
                 conf, workingDir, MapWriteAbortTransaction.class,
                 outputJobInfo, inputPath);
-        job.waitForCompletion(true);
         assertFalse(job.waitForCompletion(true));
 
         // verify that revision manager has it as aborted transaction
