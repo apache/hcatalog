@@ -98,6 +98,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-312 Hcatalog rpms change the ownership of /usr/lib64 to hcat user (gkesavan via gates)
+
   HCAT-301 Reading from a table created with upper case table name throws error. (rohini via toffer)
 
   HCAT-302 unable to write to hbase channel. HBaseHCatStorageHandler class not found (rohini via gates)

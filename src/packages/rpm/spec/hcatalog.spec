@@ -155,7 +155,7 @@ bash ${RPM_INSTALL_PREFIX0}/sbin/update-hcatalog-env.sh \
 rm -f ${RPM_INSTALL_PREFIX0}/share/hcatalog/conf
 
 %files 
-%defattr(-,hcat,hadoop)
+%defattr(-,root,root)
 %attr(0755,hcat,hadoop) %{_log_dir}
 %attr(0775,hcat,hadoop) %{_pid_dir}
 %config(noreplace) %{_conf_dir}
