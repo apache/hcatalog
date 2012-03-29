@@ -55,7 +55,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
       }
 
     /**
-     * Get the record writer for the job. Uses the Table's default OutputStorageDriver
+     * Get the record writer for the job. Uses the storagehandler's OutputFormat
      * to get the record writer.
      * @param context the information about the current task.
      * @return a RecordWriter to write the output for the job.

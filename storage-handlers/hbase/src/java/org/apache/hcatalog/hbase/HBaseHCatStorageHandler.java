@@ -556,7 +556,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     public static boolean isBulkMode(OutputJobInfo outputJobInfo) {
         //Default is false
         String bulkMode = outputJobInfo.getTableInfo().getStorerInfo().getProperties()
-                .getProperty(HBaseConstants.PROPERTY_OSD_BULK_MODE_KEY,
+                .getProperty(HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY,
                         "false");
         return "true".equals(bulkMode);
     }

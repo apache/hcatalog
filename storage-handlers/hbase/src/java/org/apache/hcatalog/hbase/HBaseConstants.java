@@ -22,7 +22,7 @@ import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hcatalog.common.HCatConstants;
 
 /**
- * Constants class for constants used in HBase storage driver.
+ * Constants class for constants used in HBase storage handler.
  */
 class HBaseConstants {
 
@@ -35,8 +35,8 @@ class HBaseConstants {
     /** key used to define the column mapping of hbase to hcatalog schema */
     public static final String PROPERTY_COLUMN_MAPPING_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+"."+ HBaseSerDe.HBASE_COLUMNS_MAPPING;
 
-    /** key used to define wether bulk storage driver will be used or not  */
-    public static final String PROPERTY_OSD_BULK_MODE_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.output.bulkMode";
+    /** key used to define whether bulk storage output format will be used or not  */
+    public static final String PROPERTY_BULK_OUTPUT_MODE_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.output.bulkMode";
 
     /** key used to define the hbase table snapshot. */
     public static final String PROPERTY_TABLE_SNAPSHOT_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX + "hbase.table.snapshot";

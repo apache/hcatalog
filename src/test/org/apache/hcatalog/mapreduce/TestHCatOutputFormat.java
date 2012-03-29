@@ -42,8 +42,6 @@ import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.hcatalog.common.HCatConstants;
-import org.apache.hcatalog.rcfile.RCFileOutputDriver;
 
 public class TestHCatOutputFormat extends TestCase {
   private HiveMetaStoreClient client;

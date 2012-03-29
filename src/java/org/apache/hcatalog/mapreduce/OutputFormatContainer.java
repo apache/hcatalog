@@ -28,7 +28,7 @@ import org.apache.hcatalog.data.HCatRecord;
  *  behavior necessary to work with HCatalog (ie metastore updates, hcatalog delegation tokens, etc).
  *  Containers are also used to provide storage specific implementations of some HCatalog features (ie dynamic partitioning).
  *  Hence users wishing to create storage specific implementations of HCatalog features should implement this class and override
- *  HCatOutputStorageDriver.getOutputFormatContainer() to return the implementation.
+ *  HCatStorageHandler.getOutputFormatContainer(OutputFormat outputFormat) to return the implementation.
  *  By default DefaultOutputFormatContainer is used, which only implements the bare minimum features HCatalog features
  *  such as partitioning isn't supported.
  */

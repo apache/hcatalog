@@ -20,9 +20,7 @@ package org.apache.hcatalog.mapreduce;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 /** The class used to serialize and store the information read from the metadata server */
@@ -46,9 +44,6 @@ public class InputJobInfo implements Serializable{
 
   /** implementation specific job properties */
   private Properties properties;
-
-  /** job properties */
-  private Map<String,String> jobProperties;
 
   /**
    * Initializes a new InputJobInfo
@@ -132,8 +127,8 @@ public class InputJobInfo implements Serializable{
   }
 
   /**
-   * Set/Get Property information to be passed down to *StorageDriver implementation
-   * put implementation specific storage driver configurations here
+   * Set/Get Property information to be passed down to *StorageHandler implementation
+   * put implementation specific storage handler configurations here
    * @return the implementation specific job properties 
    */
   public Properties getProperties() {

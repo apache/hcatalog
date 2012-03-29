@@ -23,9 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.io.WritableComparable;
@@ -98,9 +95,8 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   /**
-   * Gets the output storage driver instance.
+   * Configure the output storage handler
    * @param jobContext the job context
-   * @return the output driver instance
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
@@ -110,9 +106,9 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
   }
 
   /**
-   * Gets the output storage driver instance, with allowing specification of missing dynamic partvals
+   * Configure the output storage handler with allowing specification of missing dynamic partvals
    * @param jobContext the job context
-   * @return the output driver instance
+   * @param dynamicPartVals
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
@@ -130,7 +126,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
             List<String> dynamicPartKeys = jobInfo.getDynamicPartitioningKeys();
             if (dynamicPartVals.size() != dynamicPartKeys.size()){
               throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES, 
-                  "Unable to instantiate dynamic partitioning storage driver, mismatch between"
+                  "Unable to configure dynamic partitioning for storage handler, mismatch between"
                   + " number of partition values obtained["+dynamicPartVals.size()
                   + "] and number of partition values required["+dynamicPartKeys.size()+"]");
             }
@@ -153,16 +149,17 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
         if (e instanceof HCatException){
           throw (HCatException)e;
         }else{
-          throw new HCatException(ErrorType.ERROR_INIT_STORAGE_DRIVER, e);
+          throw new HCatException(ErrorType.ERROR_INIT_STORAGE_HANDLER, e);
         }
       }
   }
 
   /**
-   * Gets the output storage driver instance, with allowing specification 
+   * Configure the output storage handler, with allowing specification 
    * of partvals from which it picks the dynamic partvals
    * @param context the job context
    * @param jobInfo the output job info
+   * @param fullPartSpec
    * @throws IOException
    */
 
@@ -191,7 +188,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     // So, find out positions of partition columns in schema provided by user.
     // We also need to update the output Schema with these deletions.
     
-    // Note that, output storage drivers never sees partition columns in data
+    // Note that, output storage handlers never sees partition columns in data
     // or schema.
 
     HCatSchema schemaWithoutParts = new HCatSchema(schema.getFields());
