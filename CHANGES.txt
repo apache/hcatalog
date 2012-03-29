@@ -98,6 +98,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-301 Reading from a table created with upper case table name throws error. (rohini via toffer)
+
   HCAT-302 unable to write to hbase channel. HBaseHCatStorageHandler class not found (rohini via gates)
 
   HCAT-335 Release notes issues for 0.4 (gates)

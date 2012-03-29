@@ -88,6 +88,16 @@ public class ZKBasedRevisionManager implements RevisionManager{
         }
     }
 
+    @Override
+    public void createTable(String table, List<String> columnFamilies) throws IOException {
+        zkUtil.createRootZNodes();
+        zkUtil.setUpZnodesForTable(table, columnFamilies);
+    }
+
+    @Override
+    public void dropTable(String table) throws IOException {
+        zkUtil.deleteZNodes(table);
+    }
 
     /* @param table
     /* @param families
@@ -412,29 +422,6 @@ public class ZKBasedRevisionManager implements RevisionManager{
                  CreateMode.PERSISTENT);
          return lockPath;
      }
-
-     /**
-      * Sets up the table, column family znodes in zookeeper.
-      *
-      * @param tableName the hbase table name
-      * @param columnFamilies the column families in hbase
-      * @throws IOException Signals that an I/O exception has occurred.
-      */
-     public void setUpZNodes(String tableName, List<String> columnFamilies) throws IOException{
-         zkUtil.createRootZNodes();
-         zkUtil.setUpZnodesForTable(tableName, columnFamilies);
-     }
-
-     /**
-      * Delete the table znodes from zookeeper.
-      *
-      * @param tableName the table name
-      * @throws IOException Signals that an I/O exception has occurred.
-      */
-     public void deleteZNodes(String tableName) throws IOException {
-         zkUtil.deleteZNodes(tableName);
-     }
-
 
     /*
      * This class is a listener class for the locks used in revision management.

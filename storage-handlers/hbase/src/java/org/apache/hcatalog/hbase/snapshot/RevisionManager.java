@@ -51,6 +51,19 @@ public interface RevisionManager {
     public void close() throws IOException;
 
     /**
+     * Setup revision management for a newly created hbase table.
+     * @param table the hbase table name
+     * @param columnFamilies the column families in the table
+     */
+    public void createTable(String table, List<String> columnFamilies) throws IOException;
+
+    /**
+     * Remove table data from revision manager for a dropped table.
+     * @param table the hbase table name
+     */
+    public void dropTable(String table) throws IOException;
+
+    /**
      * Start the write transaction.
      *
      * @param table

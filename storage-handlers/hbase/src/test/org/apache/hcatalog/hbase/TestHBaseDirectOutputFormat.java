@@ -187,12 +187,13 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         String testName = "directHCatOutputFormatTest";
         Path methodTestDir = new Path(getTestDir(),testName);
 
-        String databaseName = testName.toLowerCase();
+        String databaseName = testName;
         String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
-        String tableName = newTableName(testName).toLowerCase();
+        String tableName = newTableName(testName);
         String familyName = "my_family";
         byte[] familyNameBytes = Bytes.toBytes(familyName);
-
+        //Table name will be lower case unless specified by hbase.table.name property
+        String hbaseTableName = (databaseName + "." + tableName).toLowerCase();
 
         //include hbase config in conf file
         Configuration conf = new Configuration(allConf);
@@ -233,7 +234,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
 
         RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
         try {
-            TableSnapshot snapshot = rm.createSnapshot(databaseName+"."+tableName);
+            TableSnapshot snapshot = rm.createSnapshot(hbaseTableName);
             for(String el: snapshot.getColumnFamilies()) {
                 assertEquals(1,snapshot.getRevision(el));
             }
@@ -242,7 +243,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         }
 
         //verify
-        HTable table = new HTable(conf, databaseName+"."+tableName);
+        HTable table = new HTable(conf, hbaseTableName);
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
@@ -264,11 +265,13 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
     public void directModeAbortTest() throws Exception {
         String testName = "directModeAbortTest";
         Path methodTestDir = new Path(getTestDir(), testName);
-        String databaseName = testName.toLowerCase();
+        String databaseName = testName;
         String dbDir = new Path(methodTestDir, "DB_" + testName).toString();
-        String tableName = newTableName(testName).toLowerCase();
+        String tableName = newTableName(testName);
         String familyName = "my_family";
         byte[] familyNameBytes = Bytes.toBytes(familyName);
+        //Table name as specified by hbase.table.name property
+        String hbaseTableName = tableName;
 
         // include hbase config in conf file
         Configuration conf = new Configuration(allConf);
@@ -281,7 +284,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
                 "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
                 "TBLPROPERTIES (" +
                 "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName +
-                ":spanish')";
+                ":spanish','hbase.table.name'='"+ hbaseTableName +"')";
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
@@ -305,17 +308,16 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
                 tableName, null);
         Job job = configureJob(testName, conf, workingDir, MapWriteAbortTransaction.class,
                 outputJobInfo, inputPath);
-        job.waitForCompletion(true);
         assertFalse(job.waitForCompletion(true));
 
         // verify that revision manager has it as aborted transaction
         RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
         try {
-            TableSnapshot snapshot = rm.createSnapshot(databaseName + "." + tableName);
+            TableSnapshot snapshot = rm.createSnapshot(hbaseTableName);
             for (String family : snapshot.getColumnFamilies()) {
                 assertEquals(1, snapshot.getRevision(family));
                 List<FamilyRevision> abortedWriteTransactions = rm.getAbortedWriteTransactions(
-                        databaseName + "." + tableName, family);
+                        hbaseTableName, family);
                 assertEquals(1, abortedWriteTransactions.size());
                 assertEquals(1, abortedWriteTransactions.get(0).getRevision());
             }
@@ -324,7 +326,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         }
 
         // verify that hbase has the records of the successful maps.
-        HTable table = new HTable(conf, databaseName + "." + tableName);
+        HTable table = new HTable(conf, hbaseTableName);
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
@@ -380,12 +382,8 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         job.setOutputFormatClass(HCatOutputFormat.class);
         HCatOutputFormat.setOutput(job, outputJobInfo);
         String txnString = job.getConfiguration().get(HBaseConstants.PROPERTY_WRITE_TXN_KEY);
-        //Test passing in same jobConf or same OutputJobInfo multiple times and verify 1 transaction is created
-        //Same jobConf
-        HCatOutputFormat.setOutput(job, outputJobInfo);
-        assertEquals(txnString, job.getConfiguration().get(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
+        //Test passing in same OutputJobInfo multiple times and verify 1 transaction is created
         String jobString = job.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
-        //Same OutputJobInfo
         outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(jobString);
         Job job2 = new Job(conf);
         HCatOutputFormat.setOutput(job2, outputJobInfo);
