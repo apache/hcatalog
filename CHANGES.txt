@@ -23,6 +23,7 @@ Release 0.4.1 - Unreleased
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-287 Add data api to HCatalog (hashutosh)
 
   IMPROVEMENTS
 
