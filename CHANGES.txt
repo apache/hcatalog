@@ -25,8 +25,6 @@ Trunk (unreleased changes)
   NEW FEATURES
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
-  HCAT-287 Add data api to HCatalog (hashutosh)
-
   IMPROVEMENTS
   HCAT-329 HCatalog build fails with pig 0.9 (traviscrawford via hashutosh)
 
@@ -64,6 +62,8 @@ Release 0.4.0 - Unreleased
   HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   NEW FEATURES
+  HCAT-287 Add data api to HCatalog (hashutosh)
+
   HCAT-310 Turn current RM implementation into HBase Coprocessor (thw via toffer)
 
   HCAT-334 HCatalog should generate a POM file so it can be deployed to a maven repo (traviscrawford via gates)
