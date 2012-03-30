@@ -93,6 +93,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-354 hive-hbase-handler jar not getting put in hcat package (gates)
+
   HCAT-348 HCatUtil::getHiveConf(Configuration) ignores passed-in conf while creating HiveConf (gates)
 
   HCAT-312 Hcatalog rpms change the ownership of /usr/lib64 to hcat user (gkesavan via gates)

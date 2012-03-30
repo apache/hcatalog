@@ -521,6 +521,10 @@
         <include name="hive-cli-*.jar"/>
       </fileset>
 
+      <fileset dir="hive/external/build/hbase-handler">
+        <include name="hive-hbase-handler-*.jar"/>
+      </fileset>
+
       <fileset dir="hive/external/build/service">
         <include name="hive-service-*.jar"/>
       </fileset>
