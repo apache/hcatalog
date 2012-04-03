@@ -162,6 +162,11 @@ sub generateData
             'rows' => 100000,
             'hdfs' => "all100krc",
             'format' => "rc",
+        }, {
+            'name' => "studentcomplextab10k",
+            'filetype' => "studentcomplextab",
+            'rows' => 10000,
+            'hdfs' => "studentcomplextab10k",
         }
     );
 
