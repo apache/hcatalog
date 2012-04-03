@@ -535,13 +535,20 @@ sub findHiveJars()
         }
     } elsif ($filetype eq "studentcomplextab") {
         srand(3.14159 + $numRows);
+        my $mapTable = $tableName . "_map";
+        my $listTable = $tableName . "_list";
         print MYSQL "drop table if exists $tableName;\n";
-        print MYSQL "create table $tableName (nameagegpamap varchar(500), nameagegpatuple varchar(500), nameagegpabag varchar(500), nameagegpamap_name varchar(500), nameagegpamap_age integer, nameagegpamap_gpa float(3));\n";
-        print MYSQL "begin transaction;\n";
-        print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
-            nameagegpamap map<string, string>,
-            struct <name: string, age: int, gpa: float>,
-            array <int>)
+        print MYSQL "drop table if exists $mapTable;\n";
+        print MYSQL "drop table if exists $listTable;\n";
+        print MYSQL "create table $tableName (id integer, name varchar(100), age integer, gpa float(3));\n";
+        print MYSQL "create table $mapTable (tid integer, mkey varchar(100), mvalue varchar(100));\n";
+        print MYSQL "create table $listTable (tid integer, lvalue integer);\n";
+        print MYSQL "begin;\n";
+        print $hivefp "drop table if exists $tableName;
+        create external table $tableName(
+            m map<string, string>,
+            s struct <name: string, age: int, gpa: float>,
+            a array <int>)
         row format delimited
         fields terminated by '\\t'
         collection items terminated by ','
@@ -552,20 +559,30 @@ sub findHiveJars()
             # generate nulls in a random fashion
             my $map = rand(1) < 0.05 ? '' : randomNameAgeGpaMap();
             my $tuple = rand(1) < 0.05 ? '' : randomNameAgeGpaTuple();
-            my $bag = rand(1) < 0.05 ? '' : randomList();
-            printf MYSQL "insert into $tableName (nameagegpamap, nameagegpatuple, nameagegpabag, nameagegpamap_name, nameagegpamap_age, nameagegpamap_gpa) values(";
-            my $mapHash;
-            if($map ne '') {
-                $mapHash = getMapFields($map);
+            my $list = rand(1) < 0.05 ? '' : randomList();
+            print MYSQL "insert into $tableName (id, name, age, gpa) values(";
+            print MYSQL "$i, ";
+            if ($tuple eq '') {
+                print MYSQL "null, null, null";
+            } else {
+                my @t = split(',', $tuple);
+                print MYSQL "'$t[0]', $t[1], $t[2]";
+            }
+            print MYSQL ");\n";
+            if ($map ne '') {
+                my $mapHash = getMapFields($map);
+                foreach my $k (keys(%$mapHash)) {
+                    print MYSQL "insert into $mapTable (tid, mkey, mvalue) values($i, '$k', '$mapHash->{$k}');\n";
+                }
             }
 
-            print MYSQL ($map eq ''? "null, " : "'$map', "), 
-                        ($tuple eq ''? "null, " : "'$tuple', "),
-                        ($bag eq '' ? "null, " : "'$bag', "),
-                        ($map eq '' ? "null, " : (exists($mapHash->{'name'}) ? "'".$mapHash->{'name'}."', " : "null, ")),
-                        ($map eq '' ? "null, " : (exists($mapHash->{'age'}) ? "'".$mapHash->{'age'}."', " : "null, ")),
-                        ($map eq '' ? "null);\n" : (exists($mapHash->{'gpa'}) ? "'".$mapHash->{'gpa'}."');\n" : "null);\n"));
-            print HDFS "$map\t$tuple\t$bag\n";
+            if ($list ne '') {
+                my @ls = split(',', $list);
+                foreach my $e (@ls) {
+                    print MYSQL "insert into $listTable (tid, lvalue) values($i, $e);\n";
+                }
+            }
+            print HDFS "$map\t$tuple\t$list\n";
         }
         print MYSQL "commit;\n";
 
@@ -634,7 +651,7 @@ for (my $i = 0; $i < $numRows; $i++) {
         srand(1.41421 + $numRows);
         print MYSQL "drop table if exists $tableName;\n";
         print MYSQL "create table $tableName (name varchar(255));\n";
-        print MYSQL "begin transaction;\n";
+        print MYSQL "begin;\n";
         print $hivefp "drop table if exists $tableName;\ncreate external table $tableName(
             name string)
         row format delimited
