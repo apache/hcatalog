@@ -335,25 +335,18 @@ sub runHadoop
     push(@cmd, split(/ +/,$hadoopcmd));
 
     # Set HADOOP_CLASSPATH environment variable if provided
-    if (defined($testCmd->{'hadoop_classpath'})) {
-        #my $hadoop_classpath = $self->replaceParameters( $testCmd->{'hadoop_classpath'}, $outfile, $testCmd, $log );
-        # TODO This is a total mess.  Half the jars we need are specified in hcatalog.jar, which is set in the default.conf file, and half are set in hadoop_classpath, which
-        # has to be passed on the command line.  And most of the jars are Hive jars, thus they don't fit in the list of either hcatalog.jar or hadoop_classpath.  We need to
-        # make sense of this.
-        my $cp = $testCmd->{'hcatalog.jar'} . ":" . $testCmd->{'hadoop_classpath'};
-        $cp =~ s/,/:/g;
-        $cp .= ":" . Util::findPigWithoutHadoopJar($testCmd, $log);
-        # Add in the hcat config file
-        $cp .= ":" . $testCmd->{'hcathome'} . "/etc/hcatalog";
-        $ENV{'HADOOP_CLASSPATH'} = $cp;
-    }
+    my $cp = $testCmd->{'hcatalog.jar'}; 
+    $cp =~ s/,/:/g;
+    # Add in the hcat config file
+    $cp .= ":" . $testCmd->{'hive.conf.dir'};
+    $ENV{'HADOOP_CLASSPATH'} = $cp;
 
     if (defined($testCmd->{'hbaseconfigpath'})) {
         $ENV{'HADOOP_CLASSPATH'} = "$ENV{'HADOOP_CLASSPATH'}:$testCmd->{'hbaseconfigpath'}";
     }
 
     if (defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)) {
-        $ENV{'HADOOP_OPTS'} = "-Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
+        $ENV{'HADOOP_OPTS'} = "$ENV{'HADOOP_OPTS'} -Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
         $ENV{'HADOOP_CLIENT_OPTS'} = "-Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
     }
 
@@ -367,6 +360,7 @@ sub runHadoop
     open(FH, ">$script") or die "Unable to open file $script to write script, $ERRNO\n";
     print FH join (" ", @cmd) . "\n";
     close(FH);
+
     my @result=`chmod +x $script`;
 
     # Run the command

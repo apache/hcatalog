@@ -161,7 +161,7 @@ sub runHiveCmdFromFile($$;$$$$)
 #       push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=false");
 #   }
 
-    $ENV{'HIVE_CONF_DIR'} = "$cfg->{'hcathome'}/etc/hcatalog/";
+    $ENV{'HIVE_CONF_DIR'} = "$cfg->{'hive.conf.dir'}";
 
     if (defined($cfg->{'hive.additionaljars'})) {
         $ENV{'HIVE_AUX_JARS_PATH'} = $cfg->{'hive.additionaljars'};
@@ -558,15 +558,6 @@ sub getLocaleCmd
           ."export LC_TELEPHONE=\"$locale\";"
           ."export LC_MEASUREMENT=\"$locale\";"
           ."export LC_IDENTIFICATION=\"$locale\"";
-}
-
-sub findPigWithoutHadoopJar($$)
-{
-    my ($cfg, $log) = @_;
-
-    my $jar = `ls $cfg->{'pigpath'}/pig-*withouthadoop.jar`;
-    chomp $jar;
-    return $jar;
 }
 
 1;
