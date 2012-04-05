@@ -102,6 +102,7 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-320 Remove filtering of table properties which are not prefix with "hcat." (rohini via gates)
 
   HCAT-357 e2e harness: allow to run again pre-installed packages (thw via daijy)
 
