@@ -96,6 +96,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-320 Remove filtering of table properties which are not prefix with "hcat." (rohini via gates)
+
   HCAT-354 hive-hbase-handler jar not getting put in hcat package (gates)
 
   HCAT-348 HCatUtil::getHiveConf(Configuration) ignores passed-in conf while creating HiveConf (gates)

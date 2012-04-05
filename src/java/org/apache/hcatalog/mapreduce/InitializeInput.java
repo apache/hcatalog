@@ -27,30 +27,13 @@ import java.util.Properties;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.ql.exec.Utilities;
-import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
-import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
-import org.apache.hadoop.hive.ql.metadata.HiveUtils;
-import org.apache.hadoop.hive.ql.plan.TableDesc;
-import org.apache.hadoop.hive.serde.Constants;
-import org.apache.hadoop.hive.serde2.Deserializer;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
-
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -67,8 +50,6 @@ public class InitializeInput {
   
   private static final Log LOG = LogFactory.getLog(InitializeInput.class);
 
-  /** The prefix for keys used for storage handler arguments */
-  static final String HCAT_KEY_PREFIX = "hcat.";
   private static HiveConf hiveConf;
 
   private static HiveMetaStoreClient createHiveMetaClient(Configuration conf) throws Exception {
@@ -190,9 +171,7 @@ public class InitializeInput {
                                                             inputJobInfo);
 
     for (String key : parameters.keySet()){
-      if (key.startsWith(HCAT_KEY_PREFIX)){
         hcatProperties.put(key, parameters.get(key));
-      }
     }
     // FIXME 
     // Bloating partinfo with inputJobInfo is not good
