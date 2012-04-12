@@ -46,7 +46,7 @@ public abstract class HCatWriter {
 	public abstract WriterContext prepareWrite() throws HCatException;
 	
 	/** This method should be used at slave needs to perform writes. 
-	 * @param {@link Iterator} records to be written into HCatalog.
+	 * @param recordItr {@link Iterator} records to be written into HCatalog.
 	 * @throws {@link HCatException}
 	 */
 	public abstract void write(final Iterator<HCatRecord> recordItr) throws HCatException;
