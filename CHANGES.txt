@@ -100,6 +100,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-371 A few javadoc warnings have crept into HCat (gates)
+
   HCAT-320 Remove filtering of table properties which are not prefix with "hcat." (rohini via gates)
 
   HCAT-354 hive-hbase-handler jar not getting put in hcat package (gates)

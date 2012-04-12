@@ -78,7 +78,7 @@ public class DataTransferFactory {
 	}
 
 	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}
-	 * @param info {@link WriterContext} obtained at master node.
+	 * @param cntxt {@link WriterContext} obtained at master node.
 	 * @return {@link HCatWriter}
 	 */
 	public static HCatWriter getHCatWriter(final WriterContext cntxt) {
@@ -89,7 +89,7 @@ public class DataTransferFactory {
 	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}
 	 * If external system has some mechanism for providing state to HCatalog, this constructor
 	 *  can be used.
-	 * @param info {@link WriterContext} obtained at master node.
+	 * @param cntxt {@link WriterContext} obtained at master node.
 	 * @param sp {@link StateProvider} 
 	 * @return {@link HCatWriter}
 	 */

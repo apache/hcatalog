@@ -58,7 +58,6 @@ public abstract class HCatReader{
 
 	/** This constructor will be invoked by {@link DataTransferFactory} at slave nodes.
 	 * Don't use this constructor. Instead, use {@link DataTransferFactory} 
-	 * @param re
 	 * @param config
 	 * @param sp
 	 */
