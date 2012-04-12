@@ -31,6 +31,8 @@ Release 0.4.1 - Unreleased
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-359 hcatalog tar.gz should only have hcatalog binaries (gkesavan via gates)
+
   HCAT-267 rename 64 bit rpm/deb package (gkesavan via gates)
 
   HCAT-289 InputJobInfo still uses serverUri and serverKerberosPrincipal (khorgath via gates)
