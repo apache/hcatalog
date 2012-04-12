@@ -18,7 +18,6 @@
 
 package org.apache.hcatalog.hbase;
 
-import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hcatalog.common.HCatConstants;
 
 /**
@@ -31,9 +30,6 @@ class HBaseConstants {
 
     /** key used to define the name of the table to write to */
     public static final String PROPERTY_OUTPUT_TABLE_NAME_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.mapreduce.outputTableName";
-
-    /** key used to define the column mapping of hbase to hcatalog schema */
-    public static final String PROPERTY_COLUMN_MAPPING_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+"."+ HBaseSerDe.HBASE_COLUMNS_MAPPING;
 
     /** key used to define whether bulk storage output format will be used or not  */
     public static final String PROPERTY_BULK_OUTPUT_MODE_KEY = HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX+".hbase.output.bulkMode";

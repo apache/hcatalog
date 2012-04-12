@@ -192,7 +192,7 @@ class HBaseRevisionManagerUtil {
         try {
             rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(jobConf);
             String hBaseColumns = tableInfo.getStorerInfo().getProperties()
-                    .getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
+                    .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
             String[] splits = hBaseColumns.split("[,:]");
             Set<String> families = new HashSet<String>();
             for (int i = 0; i < splits.length; i += 2) {
@@ -234,7 +234,7 @@ class HBaseRevisionManagerUtil {
         HCatSchema hcatTableSchema = hcatTableInfo.getDataColumns();
         StorerInfo storeInfo = hcatTableInfo.getStorerInfo();
         String hbaseColumnMapping = storeInfo.getProperties().getProperty(
-                HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
+                HBaseSerDe.HBASE_COLUMNS_MAPPING);
 
         Map<String, String> hcatHbaseColMap = new HashMap<String, String>();
         List<String> columnFamilies = new ArrayList<String>();
