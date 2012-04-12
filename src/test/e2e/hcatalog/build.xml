@@ -17,9 +17,8 @@
 
 <project name="TestHarnessHCatTests" default="test">
 
-  <property name="hcat.dir" value="${basedir}/../../../../"/>
-  <property name="hive.dir" value="${basedir}/../../../../hive/external/"/>
-  <property name="hcat.jar" value="${hcat.dir}/build/hcatalog/hcatalog-${hcatalog.version}.jar"/>
+  <property name="hcat.jar"
+    value="${hcat.dir}/share/hcatalog/hcatalog-${hcatalog.version}.jar"/>
 
   <!-- Separate property name for udfs' build.xml -->
   <property name="hcat.jarfile" value="${hcat.jar}"/>
@@ -41,12 +40,14 @@
 
   <property name="harness.dir" value="${basedir}/../harness"/>
   <property name="harness.tar" value="${harness.dir}/harness.tar"/>
-  <property name="harness.PH_LOCAL" value="."/>
-  <property name="harness.PH_OUT" value="."/>
-
   <property name="test.location" value="${basedir}/testdist"/>
   <property name="benchmark.location" value="${test.location}/benchmarks"/>
-  <property name="hadoop.core.path" value="${harness.hadoop.home}"/>
+  <!--<property name="hadoop.core.path" value="${harness.hadoop.home}"/>-->
+  <property name="hadoop.core.path" value="${hadoop.home}"/>
+  <!-- Override on command line to use rpm.conf -->
+  <property name="harness.conf" value="${test.location}/conf/default.conf"/>
+  <!-- Default value for output directory -->
+  <property name="harness.PH_LOCAL" value="out"/>
 
   <!-- Build the UDFs -->
   <target name="udfs" >
@@ -60,13 +61,15 @@
   </path>
 
   <path id="hive.serde.jar.location">
-    <fileset dir="${hive.dir}/build/serde">
+    <!-- <fileset dir="${hive.dir}/build/serde"> -->
+    <fileset dir="${hive.home}/lib">
       <include name="hive-serde-*.jar"/>
     </fileset>
   </path>
 
   <path id="hive.ql.jar.location">
-    <fileset dir="${hive.dir}/build/ql">
+    <!--<fileset dir="${hive.dir}/build/ql"> -->
+    <fileset dir="${hive.home}/lib">
       <include name="hive-exec-*.jar"/>
     </fileset>
   </path>
@@ -142,83 +145,71 @@
 
   <!-- Check that the necessary properties are setup -->
   <target name="property-check">
-    <fail message="Please set the property harness.cluster.conf to the directory containing hadoop conf "
-      unless="harness.cluster.conf"/>
-    <fail message="Please set the property harness.hadoop.home to the path of your hadoop installation"
-      unless="harness.hadoop.home"/>
-    <fail message="Please set the property hive.metastore.uris to the hcat thrift server"
-      unless="hive.metastore.uris"/>
-    <fail message="Please set the property harness.pig.home to the path of your pig installation"
-      unless="harness.pig.home"/>
+    <!--
+    <fail message="Please set the property hadoop.home to the location Hadoop is installed "
+      unless="hadoop.home"/>
+      -->
+    <fail message="Please set the property hadoop.home to the location Hadoop is installed ">
+      <condition>
+        <and>
+          <not>
+            <isset property="hadoop.home"/>
+          </not>
+          <not>
+            <contains string="${harness.conf}" substring="rpm.conf"/>
+          </not>
+        </and>
+      </condition>
+    </fail>
+    <fail message="Please set the property hive.home to the location Hive is installed ">
+      <condition>
+        <and>
+          <not>
+            <isset property="hive.home"/>
+          </not>
+          <not>
+            <contains string="${harness.conf}" substring="rpm.conf"/>
+          </not>
+        </and>
+      </condition>
+    </fail>
+    <fail message="Please set the property hcat.home to the location HCatalog is installed ">
+      <condition>
+        <and>
+          <not>
+            <isset property="hcat.home"/>
+          </not>
+          <not>
+            <contains string="${harness.conf}" substring="rpm.conf"/>
+          </not>
+        </and>
+      </condition>
+    </fail>
+    <fail message="Please set the property pig.home to the location Pig is installed ">
+    <condition>
+        <and>
+          <not>
+            <isset property="pig.home"/>
+          </not>
+          <not>
+            <contains string="${harness.conf}" substring="rpm.conf"/>
+          </not>
+        </and>
+      </condition>
+    </fail>
 
-  <dirset id="hcat.dist.lib.dir.fs" dir="${hcat.dir}/build" includes="hcatalog-*/share/hcatalog/lib"/>
-  <property name="hcat.dist.lib.dir" value="${hcat.dir}/build/${toString:hcat.dist.lib.dir.fs}"/>
-  <echo message="hcat libs: ${hcat.dist.lib.dir}"/>
-
-  <path id="hbase.jars.path">
-    <fileset dir="${hcat.dist.lib.dir}">
-     <include name="hbase-*.jar" />
-   </fileset>
-  </path>
-  <!-- override this for secure hbase -->
-  <property name="hbase.jars" refid="hbase.jars.path"/>
-
-  <path id="hcat.jars.path">
-    <fileset dir="${hcat.dir}/build/hcatalog">
-     <include name="hcatalog-*.jar" />
-     <exclude name="hcatalog-server-extensions-*.jar" />
-   </fileset>
-  </path>
-  <property name="hcat.jars" refid="hcat.jars.path"/>
-
-  <path id="hcat.client.deps">
-    <pathelement path="${hcat.jars}"/>
-    <pathelement path="${hbase.jars}"/>
-    <fileset dir="${hcat.dist.lib.dir}">
-     <include name="hbase-storage-handler-*.jar" />
-     <include name="zookeeper-*.jar" />
-     <include name="guava-*.jar" /><!-- for hbase storage handler -->
-   </fileset>
-   <!-- hbase-storage-handler only here with default ant target -->
-   <fileset dir="${hcat.dir}/storage-handlers/hbase/build/hbase-storage-handler-0.1.0/lib">
-     <include name="hbase-storage-handler-*.jar" />
-     <include name="zookeeper-*.jar" />
-   </fileset>
-   <fileset dir="${hive.dir}/build/dist/lib/" erroronmissingdir="false">
-     <include name="hive-*.jar" />
-     <include name="libfb303-*.jar" />
-     <include name="guava-*.jar" />
-     <include name="antlr*.jar" />
-   </fileset>
-  </path>
-
-  <pathconvert pathsep="," property="hadoop.libjars" refid="hcat.client.deps"/>
-  <property name="hive.conf.dir" value="${hcat.install.dir}/etc/hcatalog"/>
-
-  <path id="pig.classpath">
-     <path refid="hcat.client.deps" />
-     <pathelement location="${hive.conf.dir}" />
-  </path>
-  <property name="pig.classpath" refid="pig.classpath"/>
-
-  <!-- copy of above w/o antlr -->
-  <path id="pig.additional.jars">
-    <pathelement path="${hcat.jars}"/>
-    <pathelement path="${hbase.jars}"/>
-    <fileset dir="${hcat.dist.lib.dir}">
-     <include name="hbase-storage-handler-*.jar" />
-     <include name="zookeeper-*.jar" />
-     <include name="guava-*.jar" /><!-- for hbase storage handler -->
-   </fileset>
-   <fileset dir="${hive.dir}/build/dist/lib/" erroronmissingdir="false">
-     <include name="hive-*.jar" />
-     <include name="libfb303-*.jar" />
-     <!--include name="antlr*.jar" /-->
-   </fileset>
-   <pathelement location="${hive.conf.dir}" />
-  </path>
-  <property name="pig.additional.jars" refid="pig.additional.jars"/>
-
+    <fail message="Please set the property hbase.home to the location HBase is installed ">
+      <condition>
+        <and>
+          <not>
+            <isset property="hbase.home"/>
+          </not>
+          <not>
+            <contains string="${harness.conf}" substring="rpm.conf"/>
+          </not>
+        </and>
+      </condition>
+    </fail>
   </target>
 
   <!-- Prep the test area -->
@@ -241,28 +232,15 @@
     <!-- If they have not specified tests to run then null it out -->
      <property name="tests.to.run" value=""/> 
     <echo />
-    <exec executable="./test_harness.pl" dir="${test.location}">
+    <exec executable="./test_harness.pl" dir="${test.location}" failonerror="true">
       <env key="HARNESS_ROOT" value="."/>
       <env key="PH_LOCAL" value="${harness.PH_LOCAL}"/>
-      <env key="PH_OUT" value="${harness.PH_OUT}"/>
-      <env key="PH_ROOT" value="."/>
-      <env key="HCAT_ROOT" value="${hcat.dir}"/>
-      <env key="HCAT_INSTALL_DIR" value="${hcat.install.dir}"/>
-      <env key="HIVE_ROOT" value="${hcat.dir}/hive/external/"/>
-      <env key="PIG_CLASSPATH" value="${pig.classpath}/"/>
-      <env key="HADOOP_LIBJARS" value="${hadoop.libjars}"/> 
-      <env key="HCAT_JARS" value="${hcat.jars}"/>
-      <env key="HADOOP_HOME" value="${harness.hadoop.home}/"/>
-      <env key="PH_OLDPIG" value="${harness.old.pig}"/>
-      <env key="PH_CLUSTER" value="${harness.cluster.conf}"/>
-      <env key="HCAT_URL" value="${hive.metastore.uris}"/>
-      <env key="METASTORE_PRINCIPAL" value="${metastore.principal}"/>
-      <env key="HIVE_HOME" value="${basedir}/../../../../hive/external/build/dist"/>
-      <env key="PH_CLUSTER_BIN" value="${harness.cluster.bin}"/>
-      <env key="PIG_HOME" value="${harness.pig.home}"/>
-      <env key="HBASE_CONF_DIR" value="${hbase.conf.dir}"/>
-      <env key="HIVE_CONF_DIR" value="${hive.conf.dir}"/>
-      <env key="PIG_ADDITIONAL_JARS" value="${pig.additional.jars}"/>
+      <env key="HADOOP_HOME" value="${hadoop.home}"/>
+      <env key="HIVE_HOME" value="${hive.home}"/>
+      <env key="HCAT_HOME" value="${hcat.home}"/>
+      <env key="PIG_HOME" value="${pig.home}"/>
+      <env key="HBASE_HOME" value="${hbase.home}"/>
+      <arg line="-conf ${harness.conf}"/>
       <arg line="${tests.to.run}"/>
       <arg value="${test.location}/tests/pig.conf"/>
       <arg value="${test.location}/tests/hive.conf"/>
@@ -275,29 +253,21 @@
      <!-- For now default to the existing cluster deployer, since 
     it's all there is.  Once the local deployer is available that
     should be the default. -->
-    <fail message="Please set the property harness.cluster.bin to the directory containing hadoop bin "
-      unless="harness.cluster.bin"/>
    <property name="deploy.conf"
         value="${test.location}/conf/existing_deployer.conf"/>
   </target>
 
   <target name="deploy-base" depends="property-check, tar, init-test, init-deploy">
-    <exec executable="./test_harness.pl" dir="${test.location}">
+    <exec executable="./test_harness.pl" dir="${test.location}"
+      failonerror="true">
       <env key="HARNESS_ROOT" value="."/>
       <env key="PH_LOCAL" value="${harness.PH_LOCAL}"/>
-      <env key="PH_OUT" value="${harness.PH_OUT}"/>
-      <env key="PH_ROOT" value="."/>
-      <env key="HADOOP_HOME" value="${harness.hadoop.home}/"/>
-      <env key="HIVE_ROOT" value="${hcat.dir}/hive/external/"/>
-      <env key="HCAT_ROOT" value="${hcat.dir}"/>
-      <env key="HCAT_INSTALL_DIR" value="${hcat.install.dir}"/>
-      <env key="PH_OLDPIG" value="${harness.old.pig}"/>
-      <env key="PH_CLUSTER" value="${harness.cluster.conf}"/>
-      <env key="PH_CLUSTER_BIN" value="${harness.cluster.bin}"/>
-      <env key="HIVE_HOME" value="../../../../hive/external"/>
-      <env key="PH_METASTORE_THRIFT" value="${harness.metastore.thrift}"/>
-      <env key="PIG_HOME" value="${harness.pig.home}"/>
-      <env key="PIG_JAR" value="${harness.pig.jar}"/> <!-- Pig jar without antlr -->
+      <env key="HADOOP_HOME" value="${hadoop.home}"/>
+      <env key="HIVE_HOME" value="${hive.home}"/>
+      <env key="HCAT_HOME" value="${hcat.home}"/>
+      <env key="PIG_HOME" value="${pig.home}"/>
+      <env key="HBASE_HOME" value="${hbase.home}"/>
+      <arg line="-conf ${harness.conf}"/>
       <arg value="-deploycfg"/>
       <arg value="${deploy.conf}"/>
       <arg value="${deploy.opt}"/>
@@ -317,35 +287,6 @@
     <antcall target="deploy-base">
       <param name="deploy.opt" value="-undeploy"/>
     </antcall>
-  </target>
-
-  <target name="install" depends="init-test">
-    <exec executable="./libexec/HCatTest/install.sh" dir="${test.location}">
-      <arg value="-D"/>
-      <arg value="${mysql.driver.home}"/>
-      <arg value="-d"/>
-      <arg value="${hcat.install.dir}"/>
-      <arg value="-f"/>
-      <arg value="${forrest.home}"/>
-      <arg value="-h"/>
-      <arg value="${harness.hadoop.home}"/>
-      <arg value="-m"/>
-      <arg value="localhost"/>
-      <arg value="-t"/>
-      <arg value="${hcat.tarball}"/>
-      <arg value="-p"/>
-      <arg value="${hcat.port}"/>
-      <arg value="-P"/>
-      <arg value="dbpassword"/>
-      <arg value="-w"/>
-      <arg value="/user/hive/warehouse"/>
-      <arg value="-s"/>
-      <arg value="${metastore.sasl.enabled}"/>
-      <arg value="-k"/>
-      <arg value="${metastore.keytabpath}"/>
-      <arg value="-K"/>
-      <arg value="${metastore.principal}"/>
-    </exec>
   </target>
 
   <target name="deploy-test" depends="deploy, test"/>

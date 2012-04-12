@@ -30,23 +30,10 @@
 
     <!-- common classpaths for various builds -->
     <path id="common.classpath">
-        <fileset dir="${hive.root}" includes="testlibs/*.jar"/>
-        <fileset dir="${hive.root}/lib" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/builtins" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/cli" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/common" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/serde" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/metastore" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/ql" includes="*.jar"/>
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/">
-          <include name="**/hadoop-*.jar" />
-          <exclude name="**/*test*.jar" />
-          <!-- below is for 0.23 onwards -->
-          <!--include name="share/hadoop/common/lib/*.jar" /-->
-          <exclude name="share/hadoop/common/lib/hadoop-mapreduce-*.jar" />
-          <exclude name="share/hadoop/common/lib/hadoop-yarn-*.jar" />
+        <fileset dir="${common.ivy.lib.dir}">
+          <include name="**/*.jar" />
         </fileset>
-        <fileset dir="${common.ivy.lib.dir}" includes="*.jar"/>
+        <!--
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="antlr-3.0.1.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-lang-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-logging-*.jar"/>
@@ -56,5 +43,6 @@
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="libfb303-*.jar"/>
         <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
+        -->
     </path>
 </project>

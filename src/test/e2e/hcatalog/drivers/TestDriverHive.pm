@@ -53,34 +53,10 @@ sub new
     return $self;
 }
 
-sub replaceParameters
-{
-##!!! Move this to Util.pm
-
-    my ($self, $cmd, $outfile, $testCmd, $log) = @_;
-
-    # $self
-    $cmd =~ s/:LATESTOUTPUTPATH:/$self->{'latestoutputpath'}/g;
-
-    # $outfile
-    $cmd =~ s/:OUTPATH:/$outfile/g;
-
-    # $ENV
-    $cmd =~ s/:HARNESS:/$ENV{HARNESS_ROOT}/g;
-
-    # $testCmd
-    $cmd =~ s/:INPATH:/$testCmd->{'inpathbase'}/g;
-
-    return $cmd;
-}
-
 sub globalSetup
 {
     my ($self, $globalHash, $log) = @_;
     my $subName = (caller(0))[3];
-
-    # Set up values for the metastore
-    Util::setupHiveProperties($globalHash, $log);
 
     # Setup the output path
     my $me = `whoami`;

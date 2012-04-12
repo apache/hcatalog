@@ -50,9 +50,9 @@ import org.junit.Test;
 
 public class TestHCatLoaderComplexSchema {
 
-  private static MiniCluster cluster = MiniCluster.buildCluster();
+  //private static MiniCluster cluster = MiniCluster.buildCluster();
   private static Driver driver;
-  private static Properties props;
+  //private static Properties props;
 
   private void dropTable(String tablename) throws IOException, CommandNeedRetryException{
     driver.run("drop table "+tablename);
@@ -87,8 +87,8 @@ public class TestHCatLoaderComplexSchema {
     hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
     driver = new Driver(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
-    props = new Properties();
-    props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
+    //props = new Properties();
+    //props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
 
   }
 
@@ -180,7 +180,7 @@ public class TestHCatLoaderComplexSchema {
     MockLoader.setData(tablename+"Input", data);
     try {
       createTable(tablename, tableSchema);
-      PigServer server = new PigServer(ExecType.LOCAL, props);
+      PigServer server = new PigServer(ExecType.LOCAL);
       server.setBatchOn();
       server.registerQuery("A = load '"+tablename+"Input' using org.apache.hcatalog.pig.MockLoader() AS "+pigSchema+";");
       Schema dumpedASchema = server.dumpSchema("A");

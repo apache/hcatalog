@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 
 # Licensed to the Apache Software Foundation (ASF) under one
-# or more contributor license agreements.  See the NOTICE file                                   
-# distributed with this work for additional information                                          
-# regarding copyright ownership.  The ASF licenses this file                                     
-# to you under the Apache License, Version 2.0 (the                                              
-# "License"); you may not use this file except in compliance                                     
-# with the License.  You may obtain a copy of the License at                                     
-#                                                                                                
-# http://www.apache.org/licenses/LICENSE-2.0                                                     
-#                                                                                                
-# Unless required by applicable law or agreed to in writing, software                            
-# distributed under the License is distributed on an "AS IS" BASIS,                              
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                       
-# See the License for the specific language governing permissions and                            
-# limitations under the License. 
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 bin=`which $0`
 bin=`dirname ${bin}`
 bin=`cd "$bin"; pwd`
+
+HCAT_LOG_DIR="$bin"/../var/log
 
 if [ -e "$bin/../libexec/hcat-config.sh" ]; then
   . "$bin"/../libexec/hcat-config.sh
@@ -34,7 +36,7 @@ function print_usage() {
 
 function start_hcat() {
   # back ground the metastore service and record the pid
-  PID_FILE=${HCAT_PID_DIR}/hcat.pid
+  PID_FILE=${HCAT_LOG_DIR}/hcat.pid
   SLEEP_TIME_AFTER_START=15
 
   # check if service is already running, if so exit
@@ -45,7 +47,7 @@ function start_hcat() {
     exit 1
   fi
 
-  HIVE_SITE_XML=${HCAT_CONF_DIR}/hive-site.xml
+  HIVE_SITE_XML=${HIVE_HOME}/conf/hive-site.xml
   if [ ! -e $HIVE_SITE_XML ]
   then
     echo "Missing hive-site.xml, expected at [$HIVE_SITE_XML]";
@@ -72,6 +74,10 @@ function start_hcat() {
     AUX_CLASSPATH=${AUX_CLASSPATH}:$f
   done
 
+  for f in ${HCAT_PREFIX}/share/hcatalog/*.jar ; do
+    AUX_CLASSPATH=${AUX_CLASSPATH}:$f
+  done
+
   # echo AUX_CLASSPATH = ${AUX_CLASSPATH}
   export AUX_CLASSPATH=${AUX_CLASSPATH}
 
@@ -80,7 +86,7 @@ function start_hcat() {
   export HADOOP_OPTS="${HADOOP_OPTS} -server -XX:+UseConcMarkSweepGC -XX:ErrorFile=${HCAT_LOG_DIR}/hcat_err_pid%p.log -Xloggc:${HCAT_LOG_DIR}/hcat_gc.log-`date +'%Y%m%d%H%M'` -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps"
   export HADOOP_HEAPSIZE=2048 # 8G is better if you have it
   export METASTORE_PORT=${METASTORE_PORT}
-  nohup ${HCAT_PREFIX}/bin/hive --service metastore >${HCAT_LOG_DIR}/hcat.out 2>${HCAT_LOG_DIR}/hcat.err &
+  nohup ${HIVE_HOME}/bin/hive --service metastore >${HCAT_LOG_DIR}/hcat.out 2>${HCAT_LOG_DIR}/hcat.err &
 
   PID=$!
 
@@ -105,7 +111,7 @@ function start_hcat() {
 function stop_hcat() {
   SLEEP_TIME_AFTER_KILL=30
 
-  PID_FILE=${HCAT_PID_DIR}/hcat.pid
+  PID_FILE=${HCAT_LOG_DIR}/hcat.pid
   echo looking for $PID_FILE
 
   # check if service is already running, if so exit

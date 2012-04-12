@@ -22,8 +22,6 @@
     <path id="udf-classpath">
        <fileset file="../../../../../../build/hcatalog/*.jar" />
        <fileset file="../../../../../../build/ivy/lib/hcatalog/*.jar" />
-       <fileset file="../../../../../../hive/external/build/dist/lib/*.jar" />
-       <fileset file="../../../../../../hive/external/build/hadoopcore/hadoop-0.20.1/*.jar" />
     </path>
 
     <target name="init">

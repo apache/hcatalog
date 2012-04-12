@@ -53,47 +53,7 @@ sub new
     return $self;
 }
 
-sub replaceParameters
-{
-##!!! Move this to Util.pm
 
-    my ($self, $cmd, $outfile, $testCmd, $log) = @_;
-
-    # $self
-    $cmd =~ s/:LATESTOUTPUTPATH:/$self->{'latestoutputpath'}/g;
-
-    # $outfile
-    $cmd =~ s/:OUTPATH:/$outfile/g;
-
-    # $ENV
-    $cmd =~ s/:PIGHARNESS:/$ENV{HARNESS_ROOT}/g;
-
-    # $testCmd
-    $cmd =~ s/:INPATH:/$testCmd->{'inpathbase'}/g;
-    $cmd =~ s/:OUTPATH:/$outfile/g;
-    $cmd =~ s/:FUNCPATH:/$testCmd->{'funcjarPath'}/g;
-    $cmd =~ s/:PIGPATH:/$testCmd->{'pigpath'}/g;
-    $cmd =~ s/:RUNID:/$testCmd->{'UID'}/g;
-    $cmd =~ s/:USRHOMEPATH:/$testCmd->{'userhomePath'}/g;
-    $cmd =~ s/:MAPREDJARS:/$testCmd->{'mapredjars'}/g;
-    $cmd =~ s/:SCRIPTHOMEPATH:/$testCmd->{'scriptPath'}/g;
-    $cmd =~ s/:DBUSER:/$testCmd->{'dbuser'}/g;
-    $cmd =~ s/:DBNAME:/$testCmd->{'dbdb'}/g;
-#    $cmd =~ s/:LOCALINPATH:/$testCmd->{'localinpathbase'}/g;
-#    $cmd =~ s/:LOCALOUTPATH:/$testCmd->{'localoutpathbase'}/g;
-#    $cmd =~ s/:LOCALTESTPATH:/$testCmd->{'localpathbase'}/g;
-    $cmd =~ s/:BMPATH:/$testCmd->{'benchmarkPath'}/g;
-    $cmd =~ s/:TMP:/$testCmd->{'tmpPath'}/g;
-    $cmd =~ s/:HDFSTMP:/tmp\/$testCmd->{'runid'}/g;
-
-    if ( $testCmd->{'hadoopSecurity'} eq "secure" ) { 
-      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteSecureCluster'}/g;
-    } else {
-      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteNotSecureCluster'}/g;
-    }
-
-    return $cmd;
-}
 
 sub globalSetup
 {
@@ -152,7 +112,7 @@ sub runHCatCmdLine
     my $subName = (caller(0))[3];
     my %result;
     my $outfile = $testCmd->{'outpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
-    my $hcatCmd = $self->replaceParameters( $testCmd->{'hcat'}, $outfile, $testCmd, $log);
+    my $hcatCmd = Util::replaceParameters( $testCmd->{'hcat'}, $outfile, $testCmd, $log);
     my $outdir  = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
     my ($stdoutfile, $stderrfile);
 

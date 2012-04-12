@@ -44,7 +44,6 @@
   <property name="package.dir"  location="${basedir}/src/packages"/>
   <property name="docs.src" value="${basedir}/src/docs"/>
   <property name="build.dir" value="${basedir}/build"/>
-  <property name="artifacts.dir" value="${basedir}/artifacts"/>
   <property name="build.classes" value="${build.dir}/classes" />
   <property name="build.docs" value="${build.dir}/docs" />
   <property name="build.javadoc" value="${build.docs}/api" />
@@ -69,7 +68,6 @@
   <property name="test.all.file" value="${test.src.dir}/all-tests"/>
   <property name="test.exclude.file" value="${test.src.dir}/excluded-tests"/>
   <property name="test.output" value="no"/>
-  <property name="hive.conf.dir" value="${hive.root}/conf"/>
   <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
   <property name="test.excludes" value="${test.src.dir}/e2e/**"/>
 
@@ -150,23 +148,10 @@
     <pathelement location="${test.build.classes}" />
     <pathelement location="${build.classes}" />
     <pathelement location="conf"/>
-    <pathelement location="${hive.conf.dir}"/>
-    <!-- jars Hive depends on -->
-    <fileset dir="${hive.root}/build/ivy/lib/default/">
+    <fileset dir="${ivy.lib.dir}">
       <include name="**/*.jar" />
     </fileset>
-    <!-- jars Hadoop depends on -->
     <pathelement location="${hcatalog.jar}"/>
-    <path refid="classpath"/>
-    <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/">
-      <include name="**/hadoop-*.jar" />
-      <include name="lib/**/*.jar" />
-      <exclude name="lib/**/excluded/" />
-      <!-- below is for 0.23 onwards -->
-      <include name="share/hadoop/common/lib/*.jar" />
-      <exclude name="share/hadoop/common/lib/hadoop-mapreduce-*.jar" />
-      <exclude name="share/hadoop/common/lib/hadoop-yarn-*.jar" />
-    </fileset>
   </path>
 
   <!--
@@ -226,6 +211,10 @@
     <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
       pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
     <ivy:cachepath pathid="compile.classpath" conf="common"/>     
+    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="default"/>
+    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
+      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="default"/>
+    <ivy:cachepath pathid="compile.classpath" conf="default"/>     
   </target>
 
   <target name="ivy-package" depends="ivy-init"
@@ -249,25 +238,13 @@
     <mkdir dir="${test.build.classes}" />
   </target>
 
-
-  <!-- Build the external hive code -->
-  <target name="hive.jar">
-    <echo message="Building hive with hadoop.version ${hadoop.version}" />
-    <local name="param.shims.include"/>
-    <expandToProperty name="param.shims.include" value="shims.${shims.name}.hive.shims.include"/>
-    <ant antfile="build.xml" dir="${hive.root}" target="package" useNativeBasedir='true'>
-       <property name="shims.include" value="${param.shims.include}"/>
-       <property name="hadoop.version" value="${hadoop.version}"/>
-    </ant>
-  </target>
-
   <!--
   ================================================================================
   Main Build and Jar Section
   ================================================================================
   -->
   <!-- Build HCatalog src files -->
-  <target name="compile-src" depends="hive.jar,init">
+  <target name="compile-src" depends="init">
     <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
         includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
         optimize="${javac.optimize}" target="${javac.version}"
@@ -395,21 +372,11 @@
   Clean Section
   ================================================================================
   -->
-  <!-- Clean the external hive code -->
-  <target name="hive.clean">
-    <ant antfile="${hive.root}/build.xml" dir="${hive.root}" target="clean"/>
-  </target>
-
   <!-- Clean up children -->
-  <target name="clean-builds" depends="hive.clean" description="Cleanup build">
+  <target name="clean" description="Cleanup all build artifacts">
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
-  </target>
- 
-  <!-- Clean up children -->
-  <target name="clean" depends="clean-builds" description="Cleanup all build artifacts"> 
-    <delete dir="${artifacts.dir}" />
-    <ant dir="${test.e2e.dir}" target="clean"/>
+    <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
  
   <!--
@@ -500,7 +467,37 @@
       <fileset dir="bin">
         <include name="hcat-config.sh"/>
       </fileset>
-      <!-- fileset file="hive/external/bin/hive-config.sh" /-->
+    </copy>
+
+    <copy todir="${dist.dir}/sbin">
+      <fileset dir="${package.dir}">
+        <include name="*.sh"/>
+      </fileset>
+    </copy>
+
+    <copy todir="${dist.dir}/etc/${ant.project.name}">
+      <fileset dir="conf" />
+    </copy>
+
+    <copy todir="${dist.dir}/share/${ant.project.name}/scripts">
+       <fileset dir="scripts">
+         <include name="*.sh"/>
+       </fileset>
+    </copy>
+
+    <copy todir="${dist.dir}/share/${ant.project.name}/templates/conf">
+      <fileset dir="src/packages/templates/conf">
+        <include name="*"/>
+      </fileset>
+    </copy>
+
+    <copy todir="${dist.dir}/sbin">
+      <fileset dir="${package.dir}">
+        <include name="*.sh"/>
+      </fileset>
+      <fileset dir="bin">
+        <include name="hcat_server.sh"/>
+      </fileset>
     </copy>
 
 	<!-- Copy the licenses and such -->
@@ -529,34 +526,16 @@
       </java>
     </target>
 
-    <target name="build-artifacts" depends="jar,docs" description="Build hcatalog artifacts and copy them">
-        <mkdir dir="${artifacts.dir}"/>
-        <copy todir="${artifacts.dir}">
-          <fileset dir="build/hcatalog">
-            <include name="*.jar"/>
-          </fileset>
-        </copy>
-        <mkdir dir="${artifacts.dir}/docs"/>
-        <copy todir="${artifacts.dir}/docs">
-          <fileset dir="build/docs" />
-        </copy>
-    </target>
-
-    <target name="build-artifacts-and-clean" depends="build-artifacts,clean-builds" description="First build artifacts, then clean up"/>
-
-
     <!-- ================================================================== -->
     <!-- Make release tarball                                               -->
     <!-- ================================================================== -->
-    <target name="src-release" depends="build-artifacts-and-clean" description="Source distribution">
+    <target name="src-release" depends="clean" description="Source distribution">
         <mkdir dir="${build.dir}"/>
         <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
             <tarfileset dir="${basedir}" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="conf/**"/>
-                <include name="hive/**"/>
                 <include name="ivy/**"/>
                 <exclude name="ivy/*.jar"/>
-                <include name="lib/**"/>
                 <include name="license/**"/>
                 <include name="shims/**"/>
                 <include name="src/**"/>
@@ -568,9 +547,6 @@
             <tarfileset dir="" mode="755" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="scripts/**"/>
                 <include name="bin/**"/>
-            </tarfileset>
-            <tarfileset dir="" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
-                <include name="artifacts/**"/>
             </tarfileset>
         </tar>
     </target> 
@@ -592,132 +568,6 @@
                 <include name="${final.name}/share/hcatalog/scripts/*" />
             </tarfileset>
         </tar>
-    </target>
-
-    <target name="rpm" depends="tar" description="Create rpm package">
-        <mkdir dir="${package.buildroot}/BUILD" />
-        <mkdir dir="${package.buildroot}/RPMS" />
-        <mkdir dir="${package.buildroot}/SRPMS" />
-        <mkdir dir="${package.buildroot}/SOURCES" />
-        <mkdir dir="${package.buildroot}/SPECS" />
-        <copy todir="${package.buildroot}/SOURCES">
-            <fileset dir="${build.dir}">
-                <include name="${final.name}.tar.gz" />
-            </fileset>
-        </copy>
-        <copy file="${package.dir}/rpm/spec/hcatalog.spec" todir="${package.buildroot}/SPECS">
-            <filterchain>
-                <replacetokens>
-                    <token key="final.name" value="${final.name}" />
-                    <token key="version" value="${hcatalog.version}" />
-                    <token key="package.release" value="${package.release}" />
-                    <token key="package.build.dir" value="${package.build.dir}" />
-                    <token key="package.prefix" value="${package.prefix}" />
-                    <token key="package.conf.dir" value="${package.conf.dir}" />
-                    <token key="package.log.dir" value="${package.log.dir}" />
-                    <token key="package.pid.dir" value="${package.pid.dir}" />
-                    <token key="package.var.dir" value="${package.var.dir}" />
-                </replacetokens>
-            </filterchain>
-        </copy>
-        <rpm specFile="hcatalog.spec" command="-bb --target ${os-arch}" topDir="${package.buildroot}" cleanBuildDir="true" failOnError="true"/>
-        <copy todir="${build.dir}/" flatten="true">
-            <fileset dir="${package.buildroot}/RPMS">
-                <include name="**/*.rpm" />
-            </fileset>
-        </copy>
-        <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
-    </target>
-
-    <target name="deb" depends="tar" description="Create debian package">
-        <taskdef name="deb" classname="org.vafer.jdeb.ant.DebAntTask">
-            <classpath refid="package.classpath" />
-        </taskdef>
-        <mkdir dir="${package.build.dir}/hcatalog.control" />
-        <mkdir dir="${package.build.dir}/hcatalog-server.control" />
-        <mkdir dir="${package.buildroot}/${package.prefix}" />
-        <copy todir="${package.buildroot}/${package.prefix}">
-            <fileset dir="${build.dir}/${final.name}">
-                <include name="**" />
-            </fileset>
-        </copy>
-        <copy todir="${package.build.dir}/hcatalog.control">
-            <fileset dir="${package.dir}/deb/hcatalog.control">
-                <exclude name="control" />
-                <exclude name="server.control" />
-            </fileset>
-        </copy>
-        <copy file="${package.dir}/deb/hcatalog.control/control" todir="${package.build.dir}/hcatalog.control">
-            <filterchain>
-                <replacetokens>
-                    <token key="final.name" value="${final.name}" />
-                    <token key="version" value="${hcatalog.version}" />
-                    <token key="package.release" value="${package.release}" />
-                    <token key="package.build.dir" value="${package.build.dir}" />
-                    <token key="package.prefix" value="${package.prefix}" />
-                    <token key="package.conf.dir" value="${package.conf.dir}" />
-                    <token key="package.log.dir" value="${package.log.dir}" />
-                    <token key="package.pid.dir" value="${package.pid.dir}" />
-                </replacetokens>
-            </filterchain>
-        </copy>
-        <copy file="${package.dir}/deb/hcatalog.control/server.control" tofile="${package.build.dir}/hcatalog-server.control/control">
-            <filterchain>
-                <replacetokens>
-                    <token key="final.name" value="${final.name}" />
-                    <token key="version" value="${_version}" />
-                    <token key="package.release" value="${package.release}" />
-                    <token key="package.build.dir" value="${package.build.dir}" />
-                    <token key="package.prefix" value="${package.prefix}" />
-                    <token key="package.conf.dir" value="${package.conf.dir}" />
-                    <token key="package.log.dir" value="${package.log.dir}" />
-                    <token key="package.pid.dir" value="${package.pid.dir}" />
-                </replacetokens>
-            </filterchain>
-        </copy>
-        <deb destfile="${package.buildroot}/${ant.project.name}_${_version}-${package.release}_${os-arch}.deb" control="${package.build.dir}/hcatalog.control">
-            <tarfileset dir="${build.dir}/${final.name}" filemode="644" prefix="${package.prefix}">
-                <exclude name="bin" />
-                <exclude name="etc" />
-                <exclude name="etc/**" />
-                <exclude name="sbin" />
-                <exclude name="sbin/**" />
-                <exclude name="share/hcatalog/hcatalog-server*" />
-                <include name="**" />
-            </tarfileset>
-            <tarfileset dir="${build.dir}/${final.name}/etc/hcatalog" filemode="644" prefix="${package.conf.dir}">
-                <include name="**" />
-            </tarfileset>
-            <tarfileset dir="${build.dir}/${final.name}/bin" filemode="755" prefix="${package.prefix}/bin">
-                <include name="**" />
-            </tarfileset>
-            <tarfileset dir="${build.dir}/${final.name}/sbin" filemode="755" prefix="${package.prefix}/sbin">
-                <include name="update-hcatalog-env.sh" />
-            </tarfileset>
-        </deb>
-        <copy todir="${build.dir}/" flatten="true">
-            <fileset dir="${package.buildroot}">
-                <include name="**/hcatalog*.deb" />
-            </fileset>
-        </copy>
-        <deb destfile="${package.buildroot}/${ant.project.name}-server_${_version}-${package.release}_${os-arch}.deb" control="${package.build.dir}/hcatalog-server.control">
-            <tarfileset dir="${build.dir}/${final.name}" filemode="644" prefix="${package.prefix}">
-                <include name="share/hcatalog/hcatalog-server*" />
-            </tarfileset>
-            <tarfileset dir="${build.dir}/${final.name}/sbin" filemode="755" prefix="${package.prefix}/sbin">
-                <include name="hcat_server.sh" />
-            </tarfileset>
-            <tarfileset dir="${basedir}/src/packages/deb/init.d" filemode="755" prefix="/etc/init.d">
-                <include name="**" />
-            </tarfileset>
-
-        </deb>
-        <copy todir="${build.dir}/" flatten="true">
-            <fileset dir="${package.buildroot}">
-                <include name="**/hcatalog*.deb" />
-            </fileset>
-        </copy>
-        <delete dir="${package.buildroot}" quiet="true" verbose="false"/>
     </target>
 
     <!-- ================================================================== -->
