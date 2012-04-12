@@ -64,6 +64,8 @@ Release 0.4.0 - Unreleased
   HCAT-240. Changes to HCatOutputFormat to make it use SerDes instead of StorageDriver (toffer)
 
   NEW FEATURES
+  HCAT-342 enable hcat to work with hive bigtop rpm (thejas via gates)
+
   HCAT-287 Add data api to HCatalog (hashutosh)
 
   HCAT-310 Turn current RM implementation into HBase Coprocessor (thw via toffer)
