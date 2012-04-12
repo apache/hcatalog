@@ -509,9 +509,10 @@ public class HCatUtil {
 
         if ((storageHandler == null) || (storageHandler.equals(FosterStorageHandler.class.getName()))){
             try {
-                return new FosterStorageHandler(inputFormat,
-                                                outputFormat,
-                                                serDe);
+                FosterStorageHandler fosterStorageHandler =
+                    new FosterStorageHandler(inputFormat, outputFormat, serDe);
+                fosterStorageHandler.setConf(conf);
+                return fosterStorageHandler;
             } catch (ClassNotFoundException e) {
                 throw new IOException("Failed to load "
                     + "foster storage handler",e);

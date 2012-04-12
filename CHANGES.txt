@@ -106,6 +106,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-365 HCatUtil.getStorageHandler should set the configuration (traviscrawford via gates)
+
   HCAT-371 A few javadoc warnings have crept into HCat (gates)
 
   HCAT-320 Remove filtering of table properties which are not prefix with "hcat." (rohini via gates)
