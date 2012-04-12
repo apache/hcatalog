@@ -110,6 +110,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-367 Pig writes data but partition information isn't getting updated (rohini via gates)
+
   HCAT-365 HCatUtil.getStorageHandler should set the configuration (traviscrawford via gates)
 
   HCAT-371 A few javadoc warnings have crept into HCat (gates)

@@ -62,7 +62,9 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
   @Override
   protected List<FieldSchema> getPartitionKeys() {
     List<FieldSchema> fields = new ArrayList<FieldSchema>();
+    //Defining partition names in unsorted order
     fields.add(new FieldSchema("PaRT1", Constants.STRING_TYPE_NAME, ""));
+    fields.add(new FieldSchema("part0", Constants.STRING_TYPE_NAME, ""));
     return fields;
   }
 
@@ -79,11 +81,13 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value1");
+    partitionMap.put("part0", "p0value1");
 
     runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
 
     partitionMap.clear();
     partitionMap.put("PART1", "p1value2");
+    partitionMap.put("PART0", "p0value2");
 
     runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
 
@@ -102,7 +106,8 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     //Test for publish with invalid partition key name
     exc = null;
     partitionMap.clear();
-    partitionMap.put("px", "p1value2");
+    partitionMap.put("px1", "p1value2");
+    partitionMap.put("px0", "p0value2");
 
     try {
       runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
@@ -113,6 +118,21 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     assertTrue(exc != null);
     assertTrue(exc instanceof HCatException);
     assertEquals(ErrorType.ERROR_MISSING_PARTITION_KEY, ((HCatException) exc).getErrorType());
+
+    //Test for publish with missing partition key values
+    exc = null;
+    partitionMap.clear();
+    partitionMap.put("px", "p1value2");
+
+    try {
+      runMRCreate(partitionMap, partitionColumns, writeRecords, 20,true);
+    } catch(IOException e) {
+      exc = e;
+    }
+
+    assertTrue(exc != null);
+    assertTrue(exc instanceof HCatException);
+    assertEquals(ErrorType.ERROR_INVALID_PARTITION_VALUES, ((HCatException) exc).getErrorType());
 
 
     //Test for null partition value map
@@ -135,6 +155,9 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     runMRRead(10, "part1 = \"p1value1\"");
     runMRRead(20, "part1 = \"p1value2\"");
     runMRRead(30, "part1 = \"p1value1\" or part1 = \"p1value2\"");
+    runMRRead(10, "part0 = \"p0value1\"");
+    runMRRead(20, "part0 = \"p0value2\"");
+    runMRRead(30, "part0 = \"p0value1\" or part0 = \"p0value2\"");
 
     tableSchemaTest();
     columnOrderChangeTest();
@@ -147,7 +170,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     HCatSchema tableSchema = getTableSchema();
 
-    assertEquals(3, tableSchema.getFields().size());
+    assertEquals(4, tableSchema.getFields().size());
 
     //Update partition schema to have 3 fields
     partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", Constants.STRING_TYPE_NAME, "")));
@@ -166,21 +189,24 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value5");
+    partitionMap.put("part0", "p0value5");
 
     runMRCreate(partitionMap, partitionColumns, writeRecords, 10,true);
 
     tableSchema = getTableSchema();
 
     //assert that c3 has got added to table schema
-    assertEquals(4, tableSchema.getFields().size());
+    assertEquals(5, tableSchema.getFields().size());
     assertEquals("c1", tableSchema.getFields().get(0).getName());
     assertEquals("c2", tableSchema.getFields().get(1).getName());
     assertEquals("c3", tableSchema.getFields().get(2).getName());
     assertEquals("part1", tableSchema.getFields().get(3).getName());
+    assertEquals("part0", tableSchema.getFields().get(4).getName());
 
     //Test that changing column data type fails
     partitionMap.clear();
     partitionMap.put("part1", "p1value6");
+    partitionMap.put("part0", "p0value6");
 
     partitionColumns = new ArrayList<HCatFieldSchema>();
     partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
@@ -225,13 +251,16 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     List<HCatRecord> records= runMRRead(20,"part1 = \"p1value6\"");
     assertEquals(20, records.size());
+    records= runMRRead(20,"part0 = \"p0value6\"");
+    assertEquals(20, records.size());
     Integer i =0;
     for(HCatRecord rec : records){
-      assertEquals(4, rec.size());
+      assertEquals(5, rec.size());
       assertTrue(rec.get(0).equals(i));
       assertTrue(rec.get(1).equals("c2value"+i));
       assertTrue(rec.get(2).equals("c3value"+i));
       assertTrue(rec.get(3).equals("p1value6"));
+      assertTrue(rec.get(4).equals("p0value6"));
       i++;
     }
   }
@@ -241,7 +270,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     HCatSchema tableSchema = getTableSchema();
 
-    assertEquals(4, tableSchema.getFields().size());
+    assertEquals(5, tableSchema.getFields().size());
 
     partitionColumns = new ArrayList<HCatFieldSchema>();
     partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
@@ -263,7 +292,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
     Map<String, String> partitionMap = new HashMap<String, String>();
     partitionMap.put("part1", "p1value8");
-
+    partitionMap.put("part0", "p0value8");
 
     Exception exc = null;
     try {
