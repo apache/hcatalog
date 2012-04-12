@@ -316,23 +316,14 @@
     -->
     <target name="package" depends="jar, docs" description="Create an HCatalog release">
         <mkdir dir="${dist.dir}" />
-        <mkdir dir="${dist.dir}/src" />
         <mkdir dir="${dist.dir}/lib" />
         <mkdir dir="${dist.dir}/docs" />
-        <mkdir dir="${dist.dir}/ivy" />
 
         <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
             <fileset dir="${lib.dir}" erroronmissingdir="false" />
             <fileset dir="${build.dir}/${ant.project.name}">
                 <include name="*.jar"/>
             </fileset>
-            <fileset dir="${build.dir}/ivy/lib/${ant.project.name}">
-                <include name="**/hbase*"/>
-                <include name="**/zookeeper*"/>
-            	<!-- exclude test jars -->
-                <exclude name="*-tests.jar"/>
-            </fileset>
-            <fileset dir="${hive.root}/build/hbase-handler" includes="*.jar"/>
         </copy>
 
 
@@ -340,28 +331,15 @@
             <fileset dir="${build.docs}" />
         </copy>
 
-        <!-- Copy source files so the tar ball can build -->
-        <copy todir="${dist.dir}/src/java" includeEmptyDirs="true">
-            <fileset dir="${src.dir}" />
-        </copy>
-
-        <copy todir="${dist.dir}/src/test" includeEmptyDirs="true">
-            <fileset dir="${test.src.dir}" />
-        </copy>
-
-        <copy todir="${dist.dir}/" file="build.xml" />
-        <copy todir="${dist.dir}/" file="ivy.xml" />
-
-        <copy todir="${dist.dir}/ivy">
-            <fileset dir="ivy"/>
-        </copy>
         <antcall target="package-to-handlers"/>
     </target>
 
     <target name="package-to-handlers" if="dist.handlers.dir">
         <mkdir dir="${dist.handlers.dir}/hbase"/>
         <copy todir="${dist.handlers.dir}/hbase" includeEmptyDirs="true">
-            <fileset dir="${dist.dir}"/>
+            <fileset dir="${dist.dir}">
+              <include name="**/lib/hbase-storage-handler-*.jar"/>
+            </fileset>
         </copy>
     </target>
 </project>
