@@ -50,6 +50,7 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -262,8 +263,12 @@ public abstract class HCatMapReduceTest extends TestCase {
 
     HCatOutputFormat.setSchema(job, new HCatSchema(partitionColumns));
 
-    job.waitForCompletion(true);
-    new FileOutputCommitterContainer(job,null).cleanupJob(job);
+    boolean success = job.waitForCompletion(true);
+    if (success) {
+      new FileOutputCommitterContainer(job,null).commitJob(job);
+    } else {
+      new FileOutputCommitterContainer(job,null).abortJob(job, JobStatus.State.FAILED);
+    }
     if (assertWrite){
       // we assert only if we expected to assert with this call.
       Assert.assertEquals(writeCount, MapCreate.writeCount);
