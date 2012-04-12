@@ -37,6 +37,8 @@ Trunk (unreleased changes)
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-304 Remove hcat.hbase.column.mapping table property (rohini via gates)
+
   HCAT-358 Remove externed hive code from HCat code and use maven instead (thw and gates via gates)
 
   HCAT-359 hcatalog tar.gz should only have hcatalog binaries (gkesavan via gates)

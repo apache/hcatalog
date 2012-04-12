@@ -254,9 +254,6 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             String hbaseColumnsMapping = tbl.getParameters().get(
                     HBaseSerDe.HBASE_COLUMNS_MAPPING);
 
-            tbl.putToParameters(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY,
-                    hbaseColumnsMapping);
-
             if (hbaseColumnsMapping == null) {
                 throw new MetaException(
                         "No hbase.columns.mapping defined in table"
@@ -564,7 +561,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     private String getScanColumns(HCatTableInfo tableInfo, String outputColSchema) throws IOException {
         StringBuilder builder = new StringBuilder();
         String hbaseColumnMapping = tableInfo.getStorerInfo().getProperties()
-                .getProperty(HBaseConstants.PROPERTY_COLUMN_MAPPING_KEY);
+                .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
         if (outputColSchema == null) {
             String[] splits = hbaseColumnMapping.split("[,]");
             for (int i = 0; i < splits.length; i++) {
