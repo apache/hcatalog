@@ -70,6 +70,14 @@ sub checkPrerequisites
         print $log "You must set the environment variable HADOOP_HOME";
         die "HADOOP_HOME not defined";
     }
+    if (! defined $ENV{'HCAT_HOME'} || $ENV{'HCAT_HOME'} eq "") {
+        print $log "You must set the environment variable HCAT_HOME";
+        die "HCAT_HOME not defined";
+    }
+    if (! defined $ENV{'HIVE_HOME'} || $ENV{'HIVE_HOME'} eq "") {
+        print $log "You must set the environment variable HIVEOP_HOME";
+        die "HIVE_HOME not defined";
+    }
 
     # Run a quick and easy Hadoop command to make sure we can
     Util::runHadoopCmd($cfg, $log, "fs -ls /");
@@ -171,9 +179,9 @@ sub generateData
     );
 
     
-    if (defined($cfg->{'load_hive_only'}) && $cfg->{'load_hive_only'} == 1) {
-        return $self->hiveMetaOnly($cfg, $log, \@tables);
-    }
+#   if (defined($cfg->{'load_hive_only'}) && $cfg->{'load_hive_only'} == 1) {
+#       return $self->hiveMetaOnly($cfg, $log, \@tables);
+#   }
 
     # Create the HDFS directories
     Util::runHadoopCmd($cfg, $log, "fs -mkdir $cfg->{'hcat_data_dir'}");

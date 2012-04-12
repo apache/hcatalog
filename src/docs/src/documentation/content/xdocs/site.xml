@@ -40,7 +40,7 @@ See http://forrest.apache.org/docs/linking.html for more info
 
   <docs label="HCatalog"> 
     <index label="Overview" href="index.html" />
-    <index label="Source Installation" href="install.html" />
+    <index label="Installation From Tarball" href="install.html" />
     <index label="RPM Installation" href="rpminstall.html" />
     <index label="Load &amp; Store Interfaces" href="loadstore.html" />
     <index label="Input &amp; Output Interfaces " href="inputoutput.html" />

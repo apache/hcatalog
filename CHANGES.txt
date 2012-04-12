@@ -31,6 +31,8 @@ Release 0.4.1 - Unreleased
 Release 0.4.0 - Unreleased
 
   INCOMPATIBLE CHANGES
+  HCAT-358 Remove externed hive code from HCat code and use maven instead (thw and gates via gates)
+
   HCAT-359 hcatalog tar.gz should only have hcatalog binaries (gkesavan via gates)
 
   HCAT-267 rename 64 bit rpm/deb package (gkesavan via gates)

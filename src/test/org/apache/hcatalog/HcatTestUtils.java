@@ -18,8 +18,12 @@
 
 package org.apache.hcatalog;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
@@ -28,11 +32,14 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hcatalog.data.Pair;
+import org.apache.pig.PigServer;
 
 /** 
  * Utility methods for tests
  */
 public class HcatTestUtils {
+  private static final Log LOG = LogFactory.getLog(HcatTestUtils.class);
 
   public static FsPermission perm007 = FsPermission.createImmutable((short) 0007); // -------rwx
   public static FsPermission perm070 = FsPermission.createImmutable((short) 0070); // ----rwx---
@@ -74,5 +81,21 @@ public class HcatTestUtils {
       hive.dropTable("default", tablename, true, true);
     }
   }
-  
+
+  public static void createTestDataFile(String filename, String[] lines) throws IOException {
+    FileWriter writer = null;
+    try {
+      File file = new File(filename);
+      file.deleteOnExit();
+      writer = new FileWriter(file);
+      for (String line : lines) {
+        writer.write(line + "\n");
+      }
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
+    }
+
+  }
 }

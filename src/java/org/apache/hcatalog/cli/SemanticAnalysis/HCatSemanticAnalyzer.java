@@ -19,7 +19,6 @@ package org.apache.hcatalog.cli.SemanticAnalysis;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,6 +40,7 @@ import org.apache.hadoop.hive.ql.plan.DescTableDesc;
 import org.apache.hadoop.hive.ql.plan.DropDatabaseDesc;
 import org.apache.hadoop.hive.ql.plan.DropTableDesc;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
+import org.apache.hadoop.hive.ql.plan.PartitionSpec;
 import org.apache.hadoop.hive.ql.plan.ShowDatabasesDesc;
 import org.apache.hadoop.hive.ql.plan.ShowPartitionsDesc;
 import org.apache.hadoop.hive.ql.plan.ShowTableStatusDesc;
@@ -299,10 +299,16 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
         // table is partitioned.
       } else {
         //this is actually a ALTER TABLE DROP PARITITION statement
-        for (Map<String, String> partSpec : dropTable.getPartSpecs()) {
+        for (PartitionSpec partSpec : dropTable.getPartSpecs()) {
           // partitions are not added as write entries in drop partitions in Hive
           Table table = hive.getTable(hive.getCurrentDatabase(), dropTable.getTableName());
-          List<Partition> partitions = hive.getPartitions(table, partSpec);
+          List<Partition> partitions = null;
+          try {
+            partitions = hive.getPartitionsByFilter(table, partSpec.toString());
+           } catch (Exception e) {
+            throw new HiveException(e);
+           }
+
           for (Partition part : partitions) {
             authorize(part, Privilege.DROP);
           }

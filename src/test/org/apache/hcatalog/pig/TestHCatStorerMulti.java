@@ -17,35 +17,34 @@
  */
 package org.apache.hcatalog.pig;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hcatalog.MiniCluster;
 import org.apache.hcatalog.data.Pair;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
-import org.apache.pig.impl.util.UDFContext;
 
 public class TestHCatStorerMulti extends TestCase {
+  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+      "/build/test/data/" + TestHCatStorerMulti.class.getCanonicalName();
+  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+  private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
   private static final String BASIC_TABLE = "junit_unparted_basic";
   private static final String PARTITIONED_TABLE = "junit_parted_basic";
-  private static MiniCluster cluster = MiniCluster.buildCluster();
   private static Driver driver;
-
-  private static final String basicFile = "/tmp/basic.input.data";
-  private static String basicFileFullName;
-  private static Properties props;
 
   private static Map<Integer,Pair<Integer,String>> basicInputData;
 
@@ -77,13 +76,10 @@ public class TestHCatStorerMulti extends TestCase {
       hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
       hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
       hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+      hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
       driver = new Driver(hiveConf);
       SessionState.start(new CliSessionState(hiveConf));
     }
-
-    props = new Properties();
-    props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
-    basicFileFullName = cluster.getProperties().getProperty("fs.default.name") + basicFile;
 
     cleanup();
   }
@@ -100,10 +96,9 @@ public class TestHCatStorerMulti extends TestCase {
 
     populateBasicFile();
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+basicFileFullName+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
     server.registerQuery("store A into '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatStorer();");
 
     server.executeBatch();
@@ -119,10 +114,9 @@ public class TestHCatStorerMulti extends TestCase {
 
     populateBasicFile();
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+basicFileFullName+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
 
     server.registerQuery("B2 = filter A by a < 2;");
     server.registerQuery("store B2 into '"+PARTITIONED_TABLE+"' using org.apache.hcatalog.pig.HCatStorer('bkt=0');");
@@ -145,10 +139,9 @@ public class TestHCatStorerMulti extends TestCase {
 
     populateBasicFile();
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+basicFileFullName+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
     server.registerQuery("store A into '"+BASIC_TABLE+"' using org.apache.hcatalog.pig.HCatStorer();");
 
     server.registerQuery("B2 = filter A by a < 2;");
@@ -173,20 +166,29 @@ public class TestHCatStorerMulti extends TestCase {
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     basicInputData = new HashMap<Integer,Pair<Integer,String>>();
     int k = 0;
+    File file = new File(INPUT_FILE_NAME);
+    file.deleteOnExit();
+    FileWriter writer = new FileWriter(file);
     for(int i = 1; i <= LOOP_SIZE; i++) {
       String si = i + "";
       for(int j=1;j<=LOOP_SIZE;j++) {
         String sj = "S"+j+"S";
         input[k] = si + "\t" + sj;
         basicInputData.put(k, new Pair<Integer,String>(i,sj));
+        writer.write(input[k] + "\n");
         k++;
       }
     }
-    MiniCluster.createInputFile(cluster, basicFile, input);
+    writer.close();
   }
 
   private void cleanup() throws IOException, CommandNeedRetryException {
-    MiniCluster.deleteFile(cluster, basicFile);
+    File f = new File(TEST_WAREHOUSE_DIR);
+    if (f.exists()) {
+      FileUtil.fullyDelete(f);
+    }
+    new File(TEST_WAREHOUSE_DIR).mkdirs();
+
     dropTable(BASIC_TABLE);
     dropTable(PARTITIONED_TABLE);
   }

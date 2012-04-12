@@ -361,8 +361,8 @@ sub findHiveJars()
         die 'Please set $HIVE_HOME\n';
     }
 
-    my $execJar = `ls ../../../../../hive/external/build/ql/hive-exec-*.jar`;
-    my $cliJar = `ls ../../../../../hive/external/build/cli/hive-cli-*.jar`;
+    my $execJar = `ls $ENV{HIVE_HOME}/lib/hive-exec-*.jar`;
+    my $cliJar = `ls $ENV{HIVE_HOME}/lib/hive-cli-*.jar`;
     chomp $execJar;
     chomp $cliJar;
     return ($execJar, $cliJar);

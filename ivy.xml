@@ -37,21 +37,92 @@
         <conf name="releaseaudit" visibility="private"/>
     </configurations>
     <dependencies>
+        <!-- needed to compile -->
+        <dependency org="org.antlr" name="antlr" rev="${antlr.version}"
+          conf="common->master" />
+        <dependency org="org.antlr" name="antlr-runtime" rev="${antlr.version}"
+          conf="common->master" />
         <dependency org="org.apache.pig" name="pig" rev="${pig.version}"
           conf="common->master" />
         <dependency org="commons-cli" name="commons-cli" rev="${commons-cli.version}"
           conf="common->master"/>
-        <!-- Removed until there is a secure version of hadoop in maven
-        <dependency org="org.apache.hadoop" name="hadoop-core" rev="${hadoop-core.version}"
+        <dependency org="commons-lang" name="commons-lang" rev="${commons-lang.version}"
           conf="common->master"/>
-          -->
-        <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop-tools.version}" conf="common->master" />
-        <dependency org="javax.jms" name="jms" rev="${jms.version}" conf="common->master" />
-        <dependency org="org.apache.activemq" name="activemq-all" rev="${activemq.version}" conf="common->master" />
-        <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}" conf="common->master" /> 
-        <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="releaseaudit->default"/>
-        <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="package->master"/>
-        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="${jackson.version}" conf="common->master"/>
-        <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="${jackson.version}" conf="common->master"/>
+        <dependency org="commons-logging" name="commons-logging"
+          rev="${commons-logging.version}" conf="common->master"/>
+        <dependency org="commons-logging" name="commons-logging-api"
+          rev="${commons-logging.version}" conf="common->master"/>
+        <dependency org="org.apache.hadoop" name="hadoop-tools"
+          rev="${hadoop-tools.version}" conf="common->master" />
+        <dependency org="org.apache.hadoop" name="hadoop-core"
+          rev="${hadoop-core.version}" conf="common->master" />
+        <dependency org="org.apache.hadoop" name="hadoop-test"
+          rev="${hadoop-test.version}" conf="common->master" />
+        <dependency org="javax.jms" name="jms" rev="${jms.version}"
+          conf="common->master" />
+        <dependency org="org.apache.activemq" name="activemq-all"
+          rev="${activemq.version}" conf="common->master" />
+        <dependency org="javax.management.j2ee" name="management-api"
+          rev="${javax-mgmt.version}" conf="common->master" /> 
+        <dependency org="com.google.code.p.arat" name="rat-lib"
+          rev="${rats-lib.version}" conf="releaseaudit->default"/>
+        <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}"
+          conf="package->master"/>
+        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
+          rev="${jackson.version}" conf="common->master"/>
+        <dependency org="org.codehaus.jackson" name="jackson-core-asl"
+          rev="${jackson.version}" conf="common->master"/>
+        <dependency org="org.apache.hive" name="hive-metastore"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.apache.hive" name="hive-common"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.apache.hive" name="hive-exec"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.apache.hive" name="hive-cli"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.apache.hive" name="hive-hbase-handler"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.apache.thrift" name="libfb303" rev="${fb303.version}"
+          conf="common->master"/>
+        <dependency org="junit" name="junit" rev="${junit.version}"
+          conf="common->master"/>
+
+        <!-- needed to run-->
+        <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
+          conf="common->master"/>
+        <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}"
+          conf="common->master"/>
+        <dependency org="log4j" name="log4j" rev="${log4j.version}"
+          conf="common->master"/>
+        <dependency org="javax.jdo" name="jdo2-api" rev="${jdo.version}"
+          conf="default"/>
+        <dependency org="org.datanucleus" name="datanucleus-core"
+          rev="${datanucleus-core.version}" conf="default"/>
+        <dependency org="org.datanucleus" name="datanucleus-connectionpool"
+          rev="${datanucleus-connectionpool.version}" conf="default"/>
+        <dependency org="org.datanucleus" name="datanucleus-enhancer"
+          rev="${datanucleus-enhancer.version}" conf="default"/>
+        <dependency org="org.datanucleus" name="datanucleus-rdbms"
+          rev="${datanucleus-rdbms.version}" conf="default"/>
+        <dependency org="commons-dbcp" name="commons-dbcp" rev="${commons-dbcp.version}"
+            conf="common->master">
+          <exclude module="commons-pool" />
+          <exclude org="org.apache.geronimo.specs" module="geronimo-jta_1.1_spec"/>
+        </dependency>
+        <dependency org="commons-pool" name="commons-pool" rev="${commons-pool.version}"
+          conf="default"/>
+        <dependency org="org.apache.derby" name="derby" rev="${derby.version}"
+          conf="default"/>
+        <dependency org="commons-configuration" name="commons-configuration"
+          rev="${commons-configuration.version}" conf="default"/>
+        <dependency org="commons-httpclient" name="commons-httpclient"
+          rev="${commons-httpclient.version}" conf="default"/>
+        <dependency org="org.apache.hive" name="hive-builtins"
+          rev="${hive.version}" conf="common->master"/>
+        <dependency org="org.mortbay.jetty" name="jetty"
+          rev="${jetty.version}" conf="default"/>
+        <dependency org="org.mortbay.jetty" name="jetty-util"
+          rev="${jetty.version}" conf="default"/>
+
     </dependencies>
 </ivy-module>

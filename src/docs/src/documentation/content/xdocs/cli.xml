@@ -26,7 +26,13 @@
 <!-- ==================================================================== -->
 <section>
 	<title>Set Up</title>
-<p>The HCatalog command line interface (CLI) can be invoked as <code>hcat</code>. </p>
+<p>The HCatalog command line interface (CLI) can be invoked as
+<code>HIVE_HOME=</code><em>hive_home hcat_home</em><code>bin/hcat</code>
+where <em>hive_home</em> is the directory where Hive has been installed and
+<em>hcat_home</em> is the directory where HCatalog has been installed.</p>
+
+<p>If you are using BigTop's rpms or debs you can invoke the CLI by doing
+<code>/usr/bin/hcat</code>.</p>
 
 
 </section>

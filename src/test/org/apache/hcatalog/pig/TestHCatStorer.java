@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
@@ -30,8 +29,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hcatalog.MiniCluster;
-import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.HcatTestUtils;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigException;
 import org.apache.pig.PigServer;
@@ -39,31 +37,27 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.LogUtils;
-import org.apache.pig.impl.util.UDFContext;
 
 public class TestHCatStorer extends TestCase {
+  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+      "/build/test/data/" + TestHCatStorer.class.getCanonicalName();
+  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+  private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
-  MiniCluster cluster = MiniCluster.buildCluster();
   private Driver driver;
-  Properties props;
 
   @Override
   protected void setUp() throws Exception {
-
-    HiveConf hiveConf = new HiveConf(this.getClass());
-    hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-    hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-    hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-    driver = new Driver(hiveConf);
-    SessionState.start(new CliSessionState(hiveConf));
-    props = new Properties();
-    props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
-    fullFileName = cluster.getProperties().getProperty("fs.default.name") + fileName;
+    if (driver == null) {
+      HiveConf hiveConf = new HiveConf(this.getClass());
+      hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
+      hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
+      hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+      hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
+      driver = new Driver(hiveConf);
+      SessionState.start(new CliSessionState(hiveConf));
+    }
   }
-
-  String fileName = "/tmp/input.data";
-  String fullFileName;
-
 
 //  public void testStoreFuncMap() throws IOException{
 //
@@ -79,8 +73,7 @@ public class TestHCatStorer extends TestCase {
 //    MiniCluster.deleteFile(cluster, fileName);
 //    MiniCluster.createInputFile(cluster, fileName, new String[]{"test\t{([a#haddop,b#pig])}","data\t{([b#hive,a#hcat])}"});
 //
-//    PigServer server = new PigServer(ExecType.LOCAL, props);
-//    UDFContext.getUDFContext().setClientSystemProps();
+//    PigServer server = new PigServer(ExecType.LOCAL);
 //    server.setBatchOn();
 //    server.registerQuery("A = load '"+ fullFileName +"' as (b:chararray,arr_of_maps:bag{mytup:tuple ( mymap:map[ ])});");
 //    server.registerQuery("store A into 'default.junit_unparted' using org.apache.hadoop.hive.hCatalog.pig.HCatStorer('','b:chararray,arr_of_maps:bag{mytup:tuple ( mymap:map[ ])}');");
@@ -109,16 +102,14 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
     int LOOP_SIZE = 11;
     String[] input = new String[LOOP_SIZE];
     for(int i = 0; i < LOOP_SIZE; i++) {
         input[i] = i + "\t1";
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:chararray);");
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('b=1');");
     server.registerQuery("B = load 'default.junit_unparted' using "+HCatLoader.class.getName()+"();");
     Iterator<Tuple> itr= server.openIterator("B");
@@ -135,7 +126,6 @@ public class TestHCatStorer extends TestCase {
 
     assertFalse(itr.hasNext());
     assertEquals(11, i);
-    MiniCluster.deleteFile(cluster, fileName);
   }
 
   public void testMultiPartColsInData() throws IOException, CommandNeedRetryException{
@@ -149,17 +139,15 @@ public class TestHCatStorer extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    MiniCluster.deleteFile(cluster, fullFileName);
     String[] inputData = {"111237\tKrishna\t01/01/1990\tM\tIN\tTN",
                           "111238\tKalpana\t01/01/2000\tF\tIN\tKA",
                           "111239\tSatya\t01/01/2001\tM\tIN\tKL",
                           "111240\tKavya\t01/01/2002\tF\tIN\tAP"};
 
-    MiniCluster.createInputFile(cluster, fullFileName, inputData);
-    PigServer pig = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+    PigServer pig = new PigServer(ExecType.LOCAL);
     pig.setBatchOn();
-    pig.registerQuery("A = LOAD '"+fullFileName+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
+    pig.registerQuery("A = LOAD '"+INPUT_FILE_NAME+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
     		"emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
     pig.registerQuery("TN = FILTER A BY emp_state == 'TN';");
     pig.registerQuery("KA = FILTER A BY emp_state == 'KA';");
@@ -179,7 +167,6 @@ public class TestHCatStorer extends TestCase {
     assertEquals(inputData[1], results.get(1));
     assertEquals(inputData[2], results.get(2));
     assertEquals(inputData[3], results.get(3));
-    MiniCluster.deleteFile(cluster, fullFileName);
     driver.run("drop table employee");
   }
 
@@ -191,16 +178,14 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
     int LOOP_SIZE = 11;
     String[] input = new String[LOOP_SIZE];
     for(int i = 0; i < LOOP_SIZE; i++) {
         input[i] = i+"";
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int);");
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int);");
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('b=1');");
     server.registerQuery("B = load 'default.junit_unparted' using "+HCatLoader.class.getName()+"();");
     Iterator<Tuple> itr= server.openIterator("B");
@@ -217,7 +202,6 @@ public class TestHCatStorer extends TestCase {
 
     assertFalse(itr.hasNext());
     assertEquals(11, i);
-    MiniCluster.deleteFile(cluster, fileName);
   }
 
   public void testNoAlias() throws IOException, CommandNeedRetryException{
@@ -227,12 +211,11 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    PigServer server = new PigServer(ExecType.LOCAL);
     boolean errCaught = false;
     try{
       server.setBatchOn();
-      server.registerQuery("A = load '"+ fullFileName +"' as (a:int, b:chararray);");
+      server.registerQuery("A = load '"+ INPUT_FILE_NAME +"' as (a:int, b:chararray);");
       server.registerQuery("B = foreach A generate a+10, b;");
       server.registerQuery("store B into 'junit_parted' using "+HCatStorer.class.getName()+"('ds=20100101');");
       server.executeBatch();
@@ -248,7 +231,7 @@ public class TestHCatStorer extends TestCase {
     errCaught = false;
     try{
       server.setBatchOn();
-      server.registerQuery("A = load '"+ fullFileName +"' as (a:int, B:chararray);");
+      server.registerQuery("A = load '"+ INPUT_FILE_NAME +"' as (a:int, B:chararray);");
       server.registerQuery("B = foreach A generate a, B;");
       server.registerQuery("store B into 'junit_parted' using "+HCatStorer.class.getName()+"('ds=20100101');");
       server.executeBatch();
@@ -279,7 +262,6 @@ public class TestHCatStorer extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    MiniCluster.deleteFile(cluster, fileName);
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     int k = 0;
@@ -289,17 +271,15 @@ public class TestHCatStorer extends TestCase {
         input[k++] = si + "\t"+j;
       }
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+ fullFileName +"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+ INPUT_FILE_NAME +"' as (a:int, b:chararray);");
     server.registerQuery("B = filter A by a < 2;");
     server.registerQuery("store B into 'junit_unparted' using "+HCatStorer.class.getName()+"();");
     server.registerQuery("C = filter A by a >= 2;");
     server.registerQuery("store C into 'junit_unparted2' using "+HCatStorer.class.getName()+"();");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -329,7 +309,7 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
+
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     int k = 0;
@@ -339,14 +319,12 @@ public class TestHCatStorer extends TestCase {
         input[k++] = si + "\t"+j;
       }
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+ fullFileName +"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+ INPUT_FILE_NAME +"' as (a:int, b:chararray);");
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('');");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -369,7 +347,7 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
+
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     int k = 0;
@@ -379,14 +357,12 @@ public class TestHCatStorer extends TestCase {
         input[k++] = si + "\t"+j;
       }
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+ fullFileName +"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+ INPUT_FILE_NAME +"' as (a:int, b:chararray);");
     server.registerQuery("store A into 'junit_unparted' using "+HCatStorer.class.getName()+"();");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -409,7 +385,7 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
+
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     int k = 0;
@@ -419,15 +395,13 @@ public class TestHCatStorer extends TestCase {
         input[k++] = si + "\t"+j;
       }
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
     server.registerQuery("B = filter A by a > 100;");
     server.registerQuery("store B into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int,b:chararray');");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -447,21 +421,17 @@ public class TestHCatStorer extends TestCase {
     throw new IOException("Failed to create table.");
   }
 
-  MiniCluster.deleteFile(cluster, fileName);
-  MiniCluster.createInputFile(cluster, fileName, new String[]{"zookeeper\t(2)\t{(pig)}\t{(pnuts,hdfs)}\t{(hadoop),(hcat)}",
-      "chubby\t(2)\t{(sawzall)}\t{(bigtable,gfs)}\t{(mapreduce),(hcat)}"});
+  String[] inputData = new String[]{"zookeeper\t(2)\t{(pig)}\t{(pnuts,hdfs)}\t{(hadoop),(hcat)}",
+      "chubby\t(2)\t{(sawzall)}\t{(bigtable,gfs)}\t{(mapreduce),(hcat)}"};
 
-  PigServer server = new PigServer(ExecType.LOCAL, props);
-  UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+    
+  PigServer server = new PigServer(ExecType.LOCAL);
   server.setBatchOn();
-  server.registerQuery("A = load '"+fullFileName+"' as (b:chararray, a:tuple(a1:int), arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)});");
+  server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (b:chararray, a:tuple(a1:int), arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)});");
   server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','b:chararray, a:tuple(a1:int)," +
   		" arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)}');");
   server.executeBatch();
-
-
-
-  MiniCluster.deleteFile(cluster, fileName);
 
   driver.run("select * from junit_unparted");
   ArrayList<String> res = new ArrayList<String>();
@@ -482,18 +452,17 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
+
     int LOOP_SIZE = 3;
     String[] input = new String[LOOP_SIZE*LOOP_SIZE];
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
       input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat"+"\tbinary-data";
     }
 
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:float, c:double, d:long, e:chararray, f:bytearray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:float, c:double, d:long, e:chararray, f:bytearray);");
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int, b:float, c:double, d:long, e:chararray,f:bytearray');");
     server.executeBatch();
 
@@ -517,14 +486,12 @@ public class TestHCatStorer extends TestCase {
     	count++;
     }
     assertEquals(LOOP_SIZE  * LOOP_SIZE, count);
-    MiniCluster.deleteFile(cluster, fileName);
     driver.run("drop table junit_unparted");
   }
   
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
-    MiniCluster.deleteFile(cluster, fileName);
   }
 
 
@@ -538,24 +505,22 @@ public class TestHCatStorer extends TestCase {
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
-    MiniCluster.deleteFile(cluster, fileName);
+
     int LOOP_SIZE = 3;
-    String[] input = new String[LOOP_SIZE*LOOP_SIZE];
+    String[] inputData = new String[LOOP_SIZE*LOOP_SIZE];
     int k = 0;
     for(int i = 1; i <= LOOP_SIZE; i++) {
       String si = i + "";
       for(int j=1;j<=LOOP_SIZE;j++) {
-        input[k++] = si + "\t"+j;
+        inputData[k++] = si + "\t"+j;
       }
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+    PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int, b:chararray);");
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:chararray);");
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int,b:chararray');");
     server.executeBatch();
-    MiniCluster.deleteFile(cluster, fileName);
 
     driver.run("select * from junit_unparted");
     ArrayList<String> res = new ArrayList<String>();
@@ -584,17 +549,15 @@ public class TestHCatStorer extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    MiniCluster.deleteFile(cluster, fullFileName);
     String[] inputData = {"111237\tKrishna\t01/01/1990\tM\tIN\tTN",
                           "111238\tKalpana\t01/01/2000\tF\tIN\tKA",
                           "111239\tSatya\t01/01/2001\tM\tIN\tKL",
                           "111240\tKavya\t01/01/2002\tF\tIN\tAP"};
 
-    MiniCluster.createInputFile(cluster, fullFileName, inputData);
-    PigServer pig = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+    PigServer pig = new PigServer(ExecType.LOCAL);
     pig.setBatchOn();
-    pig.registerQuery("A = LOAD '"+fullFileName+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
+    pig.registerQuery("A = LOAD '"+INPUT_FILE_NAME+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
         "emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
     pig.registerQuery("IN = FILTER A BY emp_country == 'IN';");
     pig.registerQuery("STORE IN INTO 'employee' USING "+HCatStorer.class.getName()+"('emp_country=IN');");
@@ -608,7 +571,6 @@ public class TestHCatStorer extends TestCase {
     assertEquals(inputData[1], results.get(1));
     assertEquals(inputData[2], results.get(2));
     assertEquals(inputData[3], results.get(3));
-    MiniCluster.deleteFile(cluster, fullFileName);
     driver.run("drop table employee");
   }
 
@@ -623,17 +585,15 @@ public class TestHCatStorer extends TestCase {
       throw new IOException("Failed to create table.");
     }
 
-    MiniCluster.deleteFile(cluster, fullFileName);
     String[] inputData = {"111237\tKrishna\t01/01/1990\tM\tIN\tTN",
                           "111238\tKalpana\t01/01/2000\tF\tIN\tKA",
                           "111239\tSatya\t01/01/2001\tM\tIN\tKL",
                           "111240\tKavya\t01/01/2002\tF\tIN\tAP"};
 
-    MiniCluster.createInputFile(cluster, fullFileName, inputData);
-    PigServer pig = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
+    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+    PigServer pig = new PigServer(ExecType.LOCAL);
     pig.setBatchOn();
-    pig.registerQuery("A = LOAD '"+fullFileName+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
+    pig.registerQuery("A = LOAD '"+INPUT_FILE_NAME+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
         "emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
     pig.registerQuery("IN = FILTER A BY emp_country == 'IN';");
     pig.registerQuery("STORE IN INTO 'employee' USING "+HCatStorer.class.getName()+"();");
@@ -647,7 +607,6 @@ public class TestHCatStorer extends TestCase {
     assertEquals(inputData[1], results.get(1));
     assertEquals(inputData[2], results.get(2));
     assertEquals(inputData[3], results.get(3));
-    MiniCluster.deleteFile(cluster, fullFileName);
     driver.run("drop table employee");
   }
 
@@ -662,14 +621,12 @@ public class TestHCatStorer extends TestCase {
         throw new IOException("Failed to create table.");
       }
 
-      MiniCluster.deleteFile(cluster, fullFileName);
       String[] inputData = {};
+      HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
 
-      MiniCluster.createInputFile(cluster, fullFileName, inputData);
-      PigServer pig = new PigServer(ExecType.LOCAL, props);
-      UDFContext.getUDFContext().setClientSystemProps();
+      PigServer pig = new PigServer(ExecType.LOCAL);
       pig.setBatchOn();
-      pig.registerQuery("A = LOAD '"+fullFileName+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
+      pig.registerQuery("A = LOAD '"+INPUT_FILE_NAME+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
           "emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
       pig.registerQuery("IN = FILTER A BY emp_country == 'IN';");
       pig.registerQuery("STORE IN INTO 'employee' USING "+HCatStorer.class.getName()+"();");
@@ -678,9 +635,6 @@ public class TestHCatStorer extends TestCase {
       ArrayList<String> results = new ArrayList<String>();
       driver.getResults(results);
       assertEquals(0, results.size());
-      MiniCluster.deleteFile(cluster, fullFileName);
       driver.run("drop table employee");
     }
-
-
 }

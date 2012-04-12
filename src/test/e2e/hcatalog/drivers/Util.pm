@@ -27,12 +27,14 @@
 package Util;
 
 use IPC::Run qw(run);
+use strict;
+use English;
 
 sub prepareHCat
 {
     my ($self, $testCmd, $log) = @_;
     my $outfile = $testCmd->{'outpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
-    my $hcatCmd = $self->replaceParameters( $testCmd->{'hcat_prep'}, $outfile, $testCmd, $log);
+    my $hcatCmd = replaceParameters( $testCmd->{'hcat_prep'}, $outfile, $testCmd, $log);
 
     my @hivefiles = ();
     my @outfiles = ();
@@ -48,46 +50,6 @@ sub prepareHCat
     close(FH);
 
     Util::runHCatCmdFromFile($testCmd, $log, $hivefiles[0]);
-}
-
-##############################################################################
-#  Sub: setupHiveProperties
-#
-#  Assure that necessary values are set in config in order to set Hive
-#  Java properties.
-#
-#  Returns:
-#  Nothing
-sub  setupHiveProperties($$)
-{
-    my ($cfg, $log) = @_;
-
-    # Set up values for the metastore
-    if (defined($cfg->{'metastore_thrift'}) && $cfg->{'metastore_thrift'} == 1) {
-        if (! defined $cfg->{'metastore_host'} || $cfg->{'metastore_host'} eq "") {
-            print $log "When using thrift, you must set the key " .
-                " 'metastore_host' to the machine your metastore is on\n";
-            die "metastore_host is not set in existing.conf\n";
-        }
-
-        $cfg->{'metastore_connection'} =
-            "jdbc:$cfg->{'metastore_db'}://$cfg->{'metastore_host'}/hivemetastoredb?createDatabaseIfNotExist=true";
-   
-        if (! defined $cfg->{'metastore_passwd'} || $cfg->{'metastore_passwd'} eq "") {
-            $cfg->{'metastore_passwd'} = 'hive';
-        }
-
-        if (! defined $cfg->{'metastore_port'} || $cfg->{'metastore_port'} eq "") {
-            $cfg->{'metastore_port'} = '9933';
-        }
-
-        $cfg->{'metastore_uri'} =
-            "thrift://$cfg->{'metastore_host'}:$cfg->{'metastore_port'}";
-    } else {
-        $cfg->{'metastore_connection'} =
-            "jdbc:derby:;databaseName=metastore_db;create=true";
-        $cfg->{'metastore_driver'} = "org.apache.derby.jdbc.EmbeddedDriver";
-    }
 }
 
 sub getHadoopCmd
@@ -113,7 +75,8 @@ sub getHadoopCmd
     }
     push (@baseCmd, $cmd);
 
-    push (@baseCmd, '--config', $properties->{'testconfigpath'}) if defined($properties->{'testconfigpath'});
+    push (@baseCmd, '--config', $properties->{'hadoopconfdir'})
+        if defined($properties->{'hadoopconfdir'});
 
     return @baseCmd;
 }
@@ -148,31 +111,11 @@ sub runHiveCmdFromFile($$;$$$$)
     $outfile = $log if (!defined($outfile));
     $errfile = $log if (!defined($errfile));
 
-    my @cmd = ("$cfg->{'hivehome'}/bin/hive");
-
-    # Add all of the modified properties we want to set
-#   push(@cmd, "--hiveconf", "hive.metastore.uris=$cfg->{'thriftserver'}");
-#   push(@cmd, "--hiveconf", "hive.metastore.local=false");
-
-#   if( defined($cfg->{'metastore.principal'}) && ($cfg->{'metastore.principal'} =~ m/\S+/)
-#       &&  ($cfg->{'metastore.principal'} ne '${metastore.principal}')){
-#       push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=true",  "--hiveconf", "hive.metastore.kerberos.principal=$cfg->{'metastore.principal'}");
-#   } else {
-#       push(@cmd, "--hiveconf", "hive.metastore.sasl.enabled=false");
-#   }
-
-    $ENV{'HIVE_CONF_DIR'} = "$cfg->{'hive.conf.dir'}";
-
-    if (defined($cfg->{'hive.additionaljars'})) {
-        $ENV{'HIVE_AUX_JARS_PATH'} = $cfg->{'hive.additionaljars'};
-    }
-
-#   if (defined($cfg->{'hiveconf'})) {
-#       foreach my $hc (@{$cfg->{'hiveconf'}}) {
-#           push(@cmd, "--hiveconf", $hc);
-#       }
-#   }
-
+    my @cmd = ($cfg->{'hivebin'});
+  
+    $ENV{'HIVE_CONF_DIR'} = $cfg->{'hiveconf'};
+    $ENV{'HIVE_AUX_JARS_PATH'} = $cfg->{'hcatshare'};
+ 
     if (defined($cfg->{'hivecmdargs'})) {
         push(@cmd, @{$cfg->{'hivecmdargs'}});
     }
@@ -230,26 +173,28 @@ sub runHCatCmdFromFile($$;$$$$)
     my ($cfg, $log, $sql, $outfile, $errfile, $noFailOnFail) = @_;
 
     if (!defined($ENV{'HADOOP_HOME'})) {
-        die "Cannot run hive when HADOOP_HOME environment variable is not set.";
+        die "Cannot run hcat when HADOOP_HOME environment variable is not set.";
     }
 
     $outfile = $log if (!defined($outfile));
     $errfile = $log if (!defined($errfile));
 
     # unset HADOOP_CLASSPATH
-    $ENV{'HADOOP_CLASSPATH'} = "";
-    $ENV{'HADOOP_CLASSPATH'} = $cfg->{'pigjar'};
+#   $ENV{'HADOOP_CLASSPATH'} = "";
+    $ENV{'HADOOP_CLASSPATH'} = $cfg->{'hbaseconf'};
+    $ENV{'HCAT_CLASSPATH'} = Util::getHBaseLibs($cfg, $log);
 
     my @cmd;
     if (defined($sql)) {
-        @cmd = ("$cfg->{'hcathome'}/bin/hcat", "-f", $sql);
+        @cmd = ("$cfg->{'hcatbin'}", "-f", $sql);
     } else {
-        @cmd = ("$cfg->{'hcathome'}/bin/hcat");
+        @cmd = ("$cfg->{'hcatbin'}");
     }
 
     my $envStr;
     for my $k (keys(%ENV)) {
-        $envStr .= $k . "=" . $ENV{$k} . " " if ($k =~ /HADOOP/ || $k =~ /HIVE/);
+        $envStr .= $k . "=" . $ENV{$k} . " " if ($k =~ /HADOOP/ || $k =~ /HIVE/ ||
+                $k =~ /HCAT/);
     }
     $envStr .= " ";
     print $log "Going to run hcat command [" . join(" ", @cmd) .
@@ -327,198 +272,33 @@ sub show_call_stack {
 
 sub getPigCmd
 {
-    my $subName        = (caller(0))[3];
-    my $jarkey         = shift;
-    my ( $properties ) = @_;
-    my $isPigSqlEnabled= 0;
-    my @baseCmd;
-    die "$0.$subName: null properties" if (! $properties );
+    my ( $cfg, $log ) = @_;
 
-show_call_stack();
-    #UGLY HACK for pig sql support
-    if ( $jarkey =~ /testsql/ ) {
+    my @cmd = ("$cfg->{'pigbin'}");
 
-       $isPigSqlEnabled= 1;
-       $jarkey = "testjar";
-
+    
+    # sets the queue, for exampel "grideng"
+    if(defined($cfg->{'queue'})) {
+        push( @cmd,'-Dmapred.job.queue.name='.$cfg->{'queue'});
     }
-
-    my $cmd;
-    if ( $properties->{'use-pig.pl'} ) {
-      # The directive gives that
-      # 1) the 'pig' command will be called, as opposed to java
-      # 2) the conf file has full control over what options and parameters are 
-      #    passed to pig. 
-      #    I.e. no parameters should be passed automatically by the script here. 
-      #
-      # This allows for testing of the pig script as installed, and for testin of
-      # the pig script's options, including error testing. 
-
-print 'use-pig.pl?????';
-
-      $cmd = $properties->{'gridstack.root'} . "/pig/" . $properties->{'pigTestBuildName'} . "/bin/pig";
-      if ( ! -x "$cmd" ) {
-        print STDERR "\n$0::$subName WARNING: Can't find pig command: $cmd\n";
-        $cmd = `which pig`;
-        chomp $cmd;
-        print STDERR "$0::$subName WARNING: Instead using command: $cmd\n";
-      }
-      die "\n$0::$subName FATAL: Pig command does not exist: $cmd\n" if ( ! -x $cmd  );
-      push (@baseCmd, $cmd );
-   
-       if(defined($properties->{'additionaljars'})) {
-          push( @baseCmd,'-Dpig.additional.jars='.$properties->{'additionaljars'});
-        }
-        $ENV{'PIG_CLASSPATH'}=$properties->{'additionaljars'};  
-
-      if ( $properties->{'use-pig.pl'} eq 'raw' ) { # add _no_ arguments automatically
-        # !!! 
-	return @baseCmd;
-      }
-
-    } else {
-        $cmd="java";
-
-print 'not use-pig.pl?????';
-        # Set JAVA options
-
-        # User can provide only one of
-        # (-c <cluster>) OR (-testjar <jar> -testconfigpath <path>)
-        # "-c <cluster>" is allowed only in non local mode
-        if(defined($properties->{'cluster.name'})) {
-            # use provided cluster
-            @baseCmd = ($cmd, '-c', $properties->{'cluster.name'});
-        } else {
     
-                die "\n$0::$subName FATAL: The jar file name must be passed in at the command line or defined in the configuration file\n" if ( !defined( $properties->{$jarkey} ) );
-                die "\n$0::$subName FATAL: The jar file does not exist.\n" . $properties->{$jarkey}."\n" if ( ! -e  $properties->{$jarkey}  );
+    my $cp = Util::getHCatLibs($cfg, $log) .  Util::getHiveLibsForPig($cfg, $log) .
+        Util::getHBaseLibs($cfg, $log);
+    push(@cmd, ('-Dpig.additional.jars='. $cp));
+    $cp .= ':' . $cfg->{'hiveconf'};
+    $cp .= ':' . $cfg->{'hbaseconf'};
+    $ENV{'PIG_CLASSPATH'} = $cp;
     
-            # use user provided jar
-                my $classpath;
+    # sets the permissions on the jobtracker for the logs
+    push( @cmd,'-Dmapreduce.job.acl-view-job=*');
 
-				if (defined $properties->{'jythonjar'}) {
-					$classpath = "$classpath:" . $properties->{'jythonjar'};
-				}
-                if( $properties->{'exectype'} eq "local") {
-                   # in local mode, we should not use
-                   # any hadoop-site.xml
-                   $classpath= "$classpath:" . $properties->{$jarkey};
-                   $classpath= "$classpath:$properties->{'classpath'}" if ( defined( $properties->{'classpath'} ) );
-                   @baseCmd = ($cmd, '-cp', $classpath, '-Xmx1024m');
-    
-                } else {
-    
-                   # non local mode, we also need to specify
-                   # location of hadoop-site.xml
-                   die "\n$0::$subName FATAL: The hadoop configuration file name must be passed in at the command line or defined in the configuration file\n" 
-			if ( !defined( $properties->{'testconfigpath'} ) );
-                   die "\n$0::$subName FATAL $! " . $properties->{'testconfigpath'}."\n\n"  
-                   	if (! -e $properties->{'testconfigpath'} );
-
-                   $classpath= "$classpath:" . $properties->{$jarkey}.":".$properties->{'testconfigpath'};
-                   $classpath= "$classpath:$properties->{'classpath'}" if ( defined( $properties->{'classpath'} ) );
-                   $classpath= "$classpath:$properties->{'howl.jar'}" if ( defined( $properties->{'howl.jar'} ) );
-                   @baseCmd = ($cmd, '-cp', $classpath );
-            }
-        }
-    
-        # sets the queue, for exampel "grideng"
-        if(defined($properties->{'queue'})) {
-          push( @baseCmd,'-Dmapred.job.queue.name='.$properties->{'queue'});
-        }
-    
-        if(defined($properties->{'additionaljars'})) {
-          push( @baseCmd,'-Dpig.additional.jars='.$properties->{'additionaljars'});
-        }
-    
-        if( ( $isPigSqlEnabled == 1 ) ){
-
-	    if(defined($properties->{'metadata.uri'})) {
-		push( @baseCmd, '-Dmetadata.uri='.$properties->{'metadata.uri'});
-	    }
-
-	    if(defined($properties->{'metadata.impl'})) {
-		push( @baseCmd, '-Dmetadata.impl='.$properties->{'metadata.impl'});
-	    }else{
-		push( @baseCmd, '-Dmetadata.impl=org.apache.hadoop.owl.pig.metainterface.OwlPigMetaTables');
-	    }
-        }
-
-        # Add howl support
-	if(defined($properties->{'howl.metastore.uri'})) {
-	  push( @baseCmd, '-Dhowl.metastore.uri='.$properties->{'howl.metastore.uri'});
-	}
-    
-      # Set local mode property
-      # if ( defined($properties->{'exectype'}) && $properties->{'exectype'}=~ "local" ) {
-      # Removed above 'if...' for Pig 8.
-        my $java=`which java`;
-        my $version=`file $java`;
-        if ( $version =~ '32-bit' ){
-           push(@baseCmd,'-Djava.library.path='.$ENV{HADOOP_HOME}.'/lib/native/Linux-i386-32');
-        } else {
-           push(@baseCmd,'-Djava.library.path='.$ENV{HADOOP_HOME}.'/lib/native/Linux-amd64-64');
-        }
-      # }
-
-
-        # Add user provided java options if they exist
-        if (defined($properties->{'java_params'})) {
-          push(@baseCmd, @{$properties->{'java_params'}});
-        }
-    
-        if(defined($properties->{'hod'})) {
-          push( @baseCmd, '-Dhod.server=');
-        }
-
-      # sets the permissions on the jobtracker for the logs
-      push( @baseCmd,'-Dmapreduce.job.acl-view-job=*');
-
-
-      # Add Main
-      push(@baseCmd, 'org.apache.pig.Main');
 
       # Set local mode PIG option
-      if ( defined($properties->{'exectype'}) && $properties->{'exectype'}=~ "local" ) {
-          push(@baseCmd, '-x');
-          push(@baseCmd, 'local');
-      }
-
-      # Set Pig SQL options
-      if( ( $isPigSqlEnabled == 1 ) && defined($properties->{'metadata.uri'})) {
-  
-         if ( defined($properties->{'testoutpath'}) ) {
-           push( @baseCmd, '-u' );
-           push( @baseCmd, $properties->{'testoutpath'} );
-         }
-  
-         push( @baseCmd, '-s' );
-         push( @baseCmd, '-f' );
-      }
-
-    } # end else of if use-pig.pl
-
-
-    # Add -latest or -useversion 
-    if ( $cmd =~ 'pig$' ) {
-      # Add -latest, or -useversion if 'current' is not target build
-      if ( defined($properties->{'pigTestBuildName'})) {
-        if ($properties->{'pigTestBuildName'} eq 'latest') {
-            push(@baseCmd, '-latest');
-        } elsif ($properties->{'pigTestBuildName'} ne 'current') {
-            push(@baseCmd, '-useversion', "$properties->{'pigTestBuildName'}");
-        }
-      }
-    } elsif ( $cmd =~ 'java' ) {
-
-      # is this ever used: ???
-      # Add latest if it's there
-      if (defined($properties->{'latest'})) {
-          push(@baseCmd, '-latest');
-      }
+    if ( defined($cfg->{'exectype'}) && $cfg->{'exectype'}=~ "local" ) {
+        push(@cmd, ('-x', 'local'));
     }
 
-    return @baseCmd;
+    return @cmd;
 }
 
 
@@ -527,18 +307,18 @@ sub setLocale
    my $locale= shift;
 #   $locale = "en_US.UTF-8" if ( !$locale );
 $locale = "ja_JP.utf8" if ( !$locale );
-   $ENV[LC_CTYPE]="$locale";
-   $ENV[LC_NUMERIC]="$locale";
-   $ENV[LC_TIME]="$locale";
-   $ENV[LC_COLLATE]="$locale";
-   $ENV[LC_MONETARY]="$locale";
-   $ENV[LC_MESSAGES]="$locale";
-   $ENV[LC_PAPER]="$locale";
-   $ENV[LC_NAME]="$locale";
-   $ENV[LC_ADDRESS]="$locale";
-   $ENV[LC_TELEPHONE]="$locale";
-   $ENV[LC_MEASUREMENT]="$locale";
-   $ENV[LC_IDENTIFICATION]="$locale";
+   $ENV['LC_CTYPE']="$locale";
+   $ENV['LC_NUMERIC']="$locale";
+   $ENV['LC_TIME']="$locale";
+   $ENV['LC_COLLATE']="$locale";
+   $ENV['LC_MONETARY']="$locale";
+   $ENV['LC_MESSAGES']="$locale";
+   $ENV['LC_PAPER']="$locale";
+   $ENV['LC_NAME']="$locale";
+   $ENV['LC_ADDRESS']="$locale";
+   $ENV['LC_TELEPHONE']="$locale";
+   $ENV['LC_MEASUREMENT']="$locale";
+   $ENV['LC_IDENTIFICATION']="$locale";
 }
 
 sub getLocaleCmd 
@@ -559,5 +339,155 @@ sub getLocaleCmd
           ."export LC_MEASUREMENT=\"$locale\";"
           ."export LC_IDENTIFICATION=\"$locale\"";
 }
+
+sub replaceParameters
+{
+
+    my ($cmd, $outfile, $testCmd, $log) = @_;
+
+    # $self
+# $cmd =~ s/:LATESTOUTPUTPATH:/$self->{'latestoutputpath'}/g;
+
+    # $outfile
+    $cmd =~ s/:OUTPATH:/$outfile/g;
+
+    # $ENV
+    $cmd =~ s/:PIGHARNESS:/$ENV{HARNESS_ROOT}/g;
+
+    # $testCmd
+    $cmd =~ s/:INPATH:/$testCmd->{'inpathbase'}/g;
+    $cmd =~ s/:OUTPATH:/$outfile/g;
+    $cmd =~ s/:FUNCPATH:/$testCmd->{'funcjarPath'}/g;
+    $cmd =~ s/:PIGPATH:/$testCmd->{'pighome'}/g;
+    $cmd =~ s/:RUNID:/$testCmd->{'UID'}/g;
+    $cmd =~ s/:USRHOMEPATH:/$testCmd->{'userhomePath'}/g;
+    $cmd =~ s/:MAPREDJARS:/$testCmd->{'mapredjars'}/g;
+    $cmd =~ s/:SCRIPTHOMEPATH:/$testCmd->{'scriptPath'}/g;
+    $cmd =~ s/:DBUSER:/$testCmd->{'dbuser'}/g;
+    $cmd =~ s/:DBNAME:/$testCmd->{'dbdb'}/g;
+#    $cmd =~ s/:LOCALINPATH:/$testCmd->{'localinpathbase'}/g;
+#    $cmd =~ s/:LOCALOUTPATH:/$testCmd->{'localoutpathbase'}/g;
+#    $cmd =~ s/:LOCALTESTPATH:/$testCmd->{'localpathbase'}/g;
+    $cmd =~ s/:BMPATH:/$testCmd->{'benchmarkPath'}/g;
+    $cmd =~ s/:TMP:/$testCmd->{'tmpPath'}/g;
+    $cmd =~ s/:HDFSTMP:/tmp\/$testCmd->{'runid'}/g;
+    $cmd =~ s/:HCAT_JAR:/$testCmd->{'libjars'}/g;
+
+    if ( $testCmd->{'hadoopSecurity'} eq "secure" ) { 
+      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteSecureCluster'}/g;
+    } else {
+      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteNotSecureCluster'}/g;
+    }
+
+    return $cmd;
+}
+
+sub getHiveLibs($$)
+{
+    my ($cfg, $log) = @_;
+
+    my $cp;
+    opendir(LIB, $cfg->{'hivelib'}) or die "Cannot open $cfg->{'hivelib'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+    return $cp;
+}
+
+# Pig needs a limited set of the Hive libs, since they include some of the same jars
+# and we get version mismatches if it picks up all the libraries.
+sub getHiveLibsForPig($$)
+{
+    my ($cfg, $log) = @_;
+
+    my $cp;
+    opendir(LIB, $cfg->{'hivelib'}) or die "Cannot open $cfg->{'hivelib'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /hive-.*\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /libfb303.jar/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /libthrift.jar/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /datanucleus-.*\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /jdo2-api-.*\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /commons-dbcp-.*\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+        /commons-pool-.*\.jar$/ && do {
+            $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+        };
+#       /hbase-.*\.jar$/ && do {
+#           $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+#       };
+#       /zookeeper-.*\.jar$/ && do {
+#           $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
+#       };
+    }
+    closedir(LIB);
+    return $cp;
+}
+
+sub getHBaseLibs($$)
+{
+    my ($cfg, $log) = @_;
+
+    my $cp;
+    opendir(LIB, $cfg->{'hbaselibdir'}) or die "Cannot open $cfg->{'hbaselibdir'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /hbase-.*\.jar$/ && do {
+            $cp .= $cfg->{'hbaselibdir'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+    opendir(LIB, $cfg->{'zklibdir'}) or die "Cannot open $cfg->{'zklibdir'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /zookeeper.*\.jar$/ && do {
+            $cp .= $cfg->{'zklibdir'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+    return $cp;
+}
+ 
+
+sub getHCatLibs($$)
+{
+    my ($cfg, $log) = @_;
+
+    my $cp;
+    opendir(LIB, $cfg->{'hcatshare'}) or die "Cannot open $cfg->{'hcatshare'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /hcatalog-[0-9].*\.jar$/ && do {
+            $cp .= $cfg->{'hcatshare'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+    opendir(LIB, $cfg->{'hcatlib'}) or die "Cannot open $cfg->{'hcatlib'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /hbase-storage-handler.*\.jar$/ && do {
+            $cp .= $cfg->{'hcatlib'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+    return $cp;
+}
+        
 
 1;

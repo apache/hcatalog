@@ -52,52 +52,6 @@ sub new
     return $self;
 }
 
-sub replaceParameters
-{
-##!!! Move this to Util.pm
-
-    my ($self, $cmd, $outfile, $testCmd, $log) = @_;
-
-    # $self
-    $cmd =~ s/:LATESTOUTPUTPATH:/$self->{'latestoutputpath'}/g;
-
-    # $outfile
-    $cmd =~ s/:OUTPATH:/$outfile/g;
-
-    # $ENV
-    $cmd =~ s/:PIGHARNESS:/$ENV{HARNESS_ROOT}/g;
-
-    # $testCmd
-    $cmd =~ s/:INPATH:/$testCmd->{'inpathbase'}/g;
-    $cmd =~ s/:OUTPATH:/$outfile/g;
-    $cmd =~ s/:FUNCPATH:/$testCmd->{'funcjarPath'}/g;
-    $cmd =~ s/:PIGPATH:/$testCmd->{'pigpath'}/g;
-    $cmd =~ s/:RUNID:/$testCmd->{'UID'}/g;
-    $cmd =~ s/:USRHOMEPATH:/$testCmd->{'userhomePath'}/g;
-    $cmd =~ s/:MAPREDJARS:/$testCmd->{'mapredjars'}/g;
-    $cmd =~ s/:SCRIPTHOMEPATH:/$testCmd->{'scriptPath'}/g;
-    $cmd =~ s/:DBUSER:/$testCmd->{'dbuser'}/g;
-    $cmd =~ s/:DBNAME:/$testCmd->{'dbdb'}/g;
-#    $cmd =~ s/:LOCALINPATH:/$testCmd->{'localinpathbase'}/g;
-#    $cmd =~ s/:LOCALOUTPATH:/$testCmd->{'localoutpathbase'}/g;
-#    $cmd =~ s/:LOCALTESTPATH:/$testCmd->{'localpathbase'}/g;
-    $cmd =~ s/:BMPATH:/$testCmd->{'benchmarkPath'}/g;
-    $cmd =~ s/:TMP:/$testCmd->{'tmpPath'}/g;
-    $cmd =~ s/:HDFSTMP:/tmp\/$testCmd->{'runid'}/g;
-
-    if ( $testCmd->{'hadoopSecurity'} eq "secure" ) { 
-      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteSecureCluster'}/g;
-    } else {
-      $cmd =~ s/:REMOTECLUSTER:/$testCmd->{'remoteNotSecureCluster'}/g;
-    }
-
-    $cmd =~ s/:THRIFTSERVER:/$testCmd->{'thriftserver'}/g;
-    $cmd =~ s/:HADOOP_CLASSPATH:/$testCmd->{'hadoop_classpath'}/g;
-    $cmd =~ s/:HCAT_JAR:/$testCmd->{'hcatalog.jar'}/g;
-
-    return $cmd;
-}
-
 sub globalSetup
 {
     my ($self, $globalHash, $log) = @_;
@@ -127,10 +81,7 @@ sub globalSetup
         $ENV{'PATH'} = $globalHash->{'scriptPath'};
     }
 
-    my @cmd = ($self->getPigCmd($globalHash, $log), '-e', 'mkdir', $globalHash->{'outpath'});
-
-    print $log "Going to run " . join(" ", @cmd) . "\n";
-    IPC::Run::run(\@cmd, \undef, $log, $log) or die "Cannot create HDFS directory " . $globalHash->{'outpath'} . ": $? - $!\n";
+    Util::runHadoopCmd($globalHash, $log, "fs -mkdir $globalHash->{'outpath'}");
 
     IPC::Run::run(['mkdir', '-p', $globalHash->{'localpath'}], \undef, $log, $log) or
         die "Cannot create localpath directory " . $globalHash->{'localpath'} .
@@ -145,10 +96,7 @@ sub globalSetup
         die "Cannot create temporary directory " . $globalHash->{'tmpPath'} .
         " " . "$ERRNO\n";
 
-    # Create the HDFS temporary directory
-    @cmd = ($self->getPigCmd($globalHash, $log), '-e', 'mkdir', "tmp/$globalHash->{'runid'}");
-        print $log "Going to run " . join(" ", @cmd) . "\n";
-    IPC::Run::run(\@cmd, \undef, $log, $log) or die "Cannot create HDFS directory " . $globalHash->{'outpath'} . ": $? - $!\n";
+    Util::runHadoopCmd($globalHash, $log, "fs -mkdir tmp/$globalHash->{'runid'}");
 }
 
 sub globalCleanup
@@ -199,8 +147,8 @@ sub runTest
                    my $outfile = $testCmd->{'outpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
 
                    # Copy result file out of hadoop
-                   my @baseCmd = $self->getPigCmd($testCmd, $log);
-                   my $testOut = $self->postProcessSingleOutputFile($outfile, $localdir, \@baseCmd, $testCmd, $log);
+                   my @baseCmd = Util::getPigCmd($testCmd, $log);
+                   my $testOut = $self->postProcessSingleOutputFile($outfile, $localdir, $testCmd, $log);
                    $outputs[$i] = $testOut;
                    $id++;
                }
@@ -236,18 +184,16 @@ sub dumpPigTable
 
 
     # Build the command
-    my @baseCmd = $self->getPigCmd($testCmd, $log);
+    my @baseCmd = Util::getPigCmd($testCmd, $log);
     my @cmd = @baseCmd;
 
     push(@cmd, $pigfile);
 
 
     # Run the command
-    print $log "Setting PIG_CLASSPATH to $ENV{'PIG_CLASSPATH'}\n";
     print $log "$0::$className::$subName INFO: Going to run pig command: @cmd\n";
 
-    IPC::Run::run(\@cmd, \undef, $log, $log) or
-        die "Failed running $pigfile\n";
+    IPC::Run::run(\@cmd, \undef, $log, $log) or die "Failed running $pigfile\n";
     $result{'rc'} = $? >> 8;
 
 
@@ -255,23 +201,17 @@ sub dumpPigTable
     my $localoutfile;
     my $localdir = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . $id . ".dump.out";
        
-    $outfile = $self->postProcessSingleOutputFile($outfile, $localdir, \@baseCmd, $testCmd, $log);
+    $outfile = $self->postProcessSingleOutputFile($outfile, $localdir, $testCmd, $log);
     return $outfile;
 }
 
 sub postProcessSingleOutputFile
 {
-    my ($self, $outfile, $localdir, $baseCmd, $testCmd, $log) = @_;
+    my ($self, $outfile, $localdir, $testCmd, $log) = @_;
     my $subName  = (caller(0))[3];
 
-    my @baseCmd = @{$baseCmd};
-    my @copyCmd = @baseCmd;
-    push(@copyCmd, ('-e', 'copyToLocal', $outfile, $localdir)); 
-    print $log "$0::$className::$subName INFO: Going to run pig command: @copyCmd\n";
+    Util::runHadoopCmd($globalHash, $log, "fs -copyToLocal $outfile $localdir");
  
-    IPC::Run::run(\@copyCmd, \undef, $log, $log) or die "Cannot copy results from HDFS $outfile to $localdir\n";
-
-
     # Sort the result if necessary.  Keep the original output in one large file.
     # Use system not IPC run so that the '*' gets interpolated by the shell.
     
@@ -301,8 +241,6 @@ sub postProcessSingleOutputFile
 }
 
 sub runHadoop
-# Being modified from runPig
-# !!! Works, but need to add other arguments, like queue...???
 {
     my ($self, $testCmd, $log) = @_;
     my $subName  = (caller(0))[3];
@@ -313,7 +251,13 @@ sub runHadoop
     my $hadoopfile = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".hadoop";
     my $outfile = $testCmd->{'outpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
 
-    my $hadoopcmd = $self->replaceParameters( $testCmd->{'hadoop'}, $outfile, $testCmd, $log );
+    # Get all of the additional jars we'll need.
+    my $additionalJars = Util::getHBaseLibs($testCmd, $log); #hbase before hive for precedence over bundled hbase
+    $additionalJars .= Util::getHiveLibs($testCmd, $log);
+    $additionalJars .= Util::getHCatLibs($testCmd, $log);
+    $testCmd->{'libjars'} = $additionalJars;
+    $testCmd->{'libjars'} =~ s/:/,/g;
+    my $hadoopcmd = Util::replaceParameters( $testCmd->{'hadoop'}, $outfile, $testCmd, $log );
 
     # adjust for the leading and trailing new line often seen in the conf file's command directives
     $hadoopcmd =~ s/^\s*(.*?)\s*$/\1/s;
@@ -338,16 +282,12 @@ sub runHadoop
     my $cp = $testCmd->{'hcatalog.jar'}; 
     $cp =~ s/,/:/g;
     # Add in the hcat config file
-    $cp .= ":" . $testCmd->{'hive.conf.dir'};
+    $cp .= ":" . $testCmd->{'hiveconf'};
+    $cp .= ":" . $additionalJars;
     $ENV{'HADOOP_CLASSPATH'} = $cp;
 
-    if (defined($testCmd->{'hbaseconfigpath'})) {
-        $ENV{'HADOOP_CLASSPATH'} = "$ENV{'HADOOP_CLASSPATH'}:$testCmd->{'hbaseconfigpath'}";
-    }
-
-    if (defined($testCmd->{'metastore.principal'}) && ($testCmd->{'metastore.principal'} =~ m/\S+/)) {
-        $ENV{'HADOOP_OPTS'} = "$ENV{'HADOOP_OPTS'} -Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
-        $ENV{'HADOOP_CLIENT_OPTS'} = "-Dhive.metastore.kerberos.principal=" . $testCmd->{'metastore.principal'};
+    if (defined($testCmd->{'hbaseconf'})) {
+        $ENV{'HADOOP_CLASSPATH'} = "$ENV{'HADOOP_CLASSPATH'}:$testCmd->{'hbaseconf'}";
     }
 
     # Add su user if provided
@@ -373,10 +313,10 @@ sub runHadoop
         die "Failed running $script\n";
 
     my $localdir = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . $id . ".dump.out";
-    my @baseCmd = $self->getPigCmd($testCmd, $log);
+    my @baseCmd = Util::getPigCmd($testCmd, $log);
     if ($self->countStores($testCmd)==1) {
         @outputs = ();
-        $outputs[0] = $self->postProcessSingleOutputFile($outfile, $localdir, \@baseCmd, $testCmd, $log);
+        $outputs[0] = $self->postProcessSingleOutputFile($outfile, $localdir, $testCmd, $log);
         $result{'outputs'} = \@outputs;
     }
 
@@ -535,7 +475,7 @@ sub runPig
     my $pigfile = $testCmd->{'localpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".pig";
     my $outfile = $testCmd->{'outpath'} . $testCmd->{'group'} . "_" . $testCmd->{'num'} . ".out";
 
-    my $pigcmd = $self->replaceParameters( $testCmd->{'pig'}, $outfile, $testCmd, $log );
+    my $pigcmd = Util::replaceParameters( $testCmd->{'pig'}, $outfile, $testCmd, $log );
 
     open(FH, "> $pigfile") or die "Unable to open file $pigfile to write pig script, $ERRNO\n";
     print FH $pigcmd . "\n";
@@ -543,7 +483,8 @@ sub runPig
 
 
     # Build the command
-    my @baseCmd = $self->getPigCmd($testCmd, $log);
+    #my @baseCmd = $self->getPigCmd($testCmd, $log);
+    my @baseCmd = Util::getPigCmd($testCmd, $log);
     my @cmd = @baseCmd;
 
     # Add option -l giving location for secondary logs
@@ -580,7 +521,7 @@ sub runPig
     # single query
     if ($stores == 1) {
         if ($copyResults) {
-            $result{'output'} = $self->postProcessSingleOutputFile($outfile, $localdir, \@baseCmd, $testCmd, $log);
+            $result{'output'} = $self->postProcessSingleOutputFile($outfile, $localdir, $testCmd, $log);
             $result{'originalOutput'} = "$localdir/out_original"; # populated by postProcessSingleOutputFile
         } else {
             $result{'output'} = "NO_COPY";
@@ -596,7 +537,7 @@ sub runPig
             # Copy result file out of hadoop
             my $testOut;
             if ($copyResults) {
-              $testOut = $self->postProcessSingleOutputFile($localoutfile, $localdir, \@baseCmd, $testCmd, $log);
+              $testOut = $self->postProcessSingleOutputFile($localoutfile, $localdir, $testCmd, $log);
             } else {
               $testOut = "NO_COPY";
             }
@@ -613,47 +554,6 @@ sub runPig
     }
 
     return \%result;
-}
-
-sub getPigCmd($$$)
-{
-    my ($self, $testCmd, $log) = @_;
-
-    my @pigCmd;
-
-    # set the PIG_CLASSPATH environment variable
-	my $pcp .= $testCmd->{'jythonjar'} if (defined($testCmd->{'jythonjar'}));
-    $pcp .= ":" . $testCmd->{'classpath'} if (defined($testCmd->{'classpath'}));
-    $pcp .= ":" . $testCmd->{'additionaljars'} if (defined($testCmd->{'additionaljars'}));
-    # Only add testconfigpath to PIG_CLASSPATH if HADOOP_HOME isn't defined
-    $pcp .= ":" . $testCmd->{'testconfigpath'} if ($testCmd->{'exectype'} ne "local"); #&& (! defined $ENV{'HADOOP_HOME'});
-    $pcp .= ":" . $testCmd->{'hbaseconfigpath'} if ($testCmd->{'exectype'} ne "local" && defined($testCmd->{'hbaseconfigpath'} && $testCmd->{'hbaseconfigpath'} ne ""));
-
-    # Set it in our current environment.  It will get inherited by the IPC::Run
-    # command.
-    $ENV{'PIG_CLASSPATH'} = $pcp;
-
-    @pigCmd = ("$testCmd->{'pigpath'}/bin/pig");
-
-    if (defined($testCmd->{'additionaljars'})) {
-        push(@pigCmd, '-Dpig.additional.jars='.$testCmd->{'additionaljars'});
-    }
-
-    if ($testCmd->{'exectype'} eq "local") {
-		push(@{$testCmd->{'java_params'}}, "-Xmx1024m");
-        push(@pigCmd, ("-x", "local"));
-    }
-
-    my $opts .= "-Dhive.metastore.uris=$testCmd->{'thriftserver'}";
-    if (defined($testCmd->{'java_params'})) {
-        $opts = $opts . " " . join(" ", @{$testCmd->{'java_params'}});
-    }
-
-    $ENV{'PIG_OPTS'} = $opts;
-
-	print $log "Returning Pig command " . join(" ", @pigCmd) . "\n";
-	print $log "With PIG_CLASSPATH set to " . $ENV{'PIG_CLASSPATH'} . " and PIG_OPTS set to " . $ENV{'PIG_OPTS'} . "\n";
-    return @pigCmd;
 }
 
 sub compareSingleOutput

@@ -108,7 +108,7 @@ fi
 
 # Create the needed directories in root
 #for dir in var conf var/log bin lib ; do
-for dir in var var/log bin etc libexec sbin share src; do
+for dir in var var/log bin etc libexec sbin share ; do
     if [ ! -d $root/$dir ] ; then
         mkdir $root/$dir
     fi
@@ -117,7 +117,7 @@ done
 # Move files into the appropriate directories
 if [ "$alternate_root" == "y" ] ; then
     echo Installing into [$root]
-    for dir in bin etc libexec sbin share src ; do
+    for dir in bin etc libexec sbin share ; do
         for file in ./$dir/* ; do
             cp -R $file $root/$dir
         done
@@ -136,11 +136,11 @@ ln -sf $root/etc/hcatalog $root/share/hcatalog/conf
 #done
 
 # Move the proto-hive-site.xml to hive-site.xml
-cp $root/etc/hcatalog/proto-hive-site.xml $root/etc/hcatalog/hive-site.xml
+#cp $root/etc/hcatalog/proto-hive-site.xml $root/etc/hcatalog/hive-site.xml
 
 # Set permissions on hive-site.xml to 700, since it will contain the password to the 
 # database
-chmod 700 $root/etc/hcatalog/hive-site.xml
+#chmod 700 $root/etc/hcatalog/hive-site.xml
 
 # Write out an environment file so that the start file can use it later
 cat > $root/etc/hcatalog/hcat-env.sh <<!!

@@ -39,7 +39,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hcatalog.HcatTestUtils;
-import org.apache.hcatalog.MiniCluster;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
@@ -57,11 +56,10 @@ public class TestPassProperties {
   private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
   private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
-    private static MiniCluster cluster = MiniCluster.buildCluster();
     private static Driver driver;
+    private static PigServer server;
     private static String[] input;
     private static HiveConf hiveConf;
-    private static final String basicFile = "/tmp/basic.input.data";
 
     public void Initialize() throws Exception {
         hiveConf = new HiveConf(this.getClass());
@@ -81,8 +79,8 @@ public class TestPassProperties {
             String col2 = "b" + i;
             input[i] = i + "," + col1 + "," + col2;
         }
-        MiniCluster.deleteFile(cluster, basicFile);
-        MiniCluster.createInputFile(cluster, basicFile, input);
+        HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+        server = new PigServer(ExecType.LOCAL);
     }
 
     @Test

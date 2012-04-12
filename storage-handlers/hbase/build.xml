@@ -75,7 +75,7 @@
 
     <!-- ivy properteis set here -->
     <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
-    <property name="ivy.dir" location="ivy" />
+    <property name="ivy.dir" location="../../ivy" />
     <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
     <property name="asfrepo" value="https://repository.apache.org"/>
     <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
@@ -103,29 +103,14 @@
         <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
         <fileset dir="${hcatalog.dir}/build/hcatalog" includes=" *.jar"/>
         <path refid="common.classpath"/>
-        <fileset dir="${hive.root}/build/hbase-handler" includes="*.jar"/>
     </path>
 
     <path id="test.classpath">
         <pathelement location="${test.build.classes}" />
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
-        <pathelement location="${hive.conf.dir}"/>
-        <!-- jars Hadoop depends on -->
-        <fileset dir="${hive.root}/build/hadoopcore/hadoop-${hadoop.version}/" >
-            <include name="**/lib/*.jar" />
-            <include name="hadoop-test-*.jar" />
-        </fileset>
-        <path refid="classpath"/>
-        <pathelement location="${handler.jar}"/>
-        <!-- jars Hive depends on -->
-        <fileset dir="${hive.root}/build/ivy/lib/default/">
-            <include name="**/*.jar" />
-            <exclude name="*hbase*.jar" />
-            <exclude name="zookeeper*.jar" />
-            <exclude name="guava*.jar" />
-            <exclude name="slf4j*.jar" />
-        </fileset>
+        <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
+        <fileset dir="${hcatalog.dir}/build/hcatalog" includes=" *.jar"/>
     </path>
 
     <!--
@@ -184,6 +169,11 @@
         <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
                       pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
         <ivy:cachepath pathid="compile.classpath" conf="common"/>
+        <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="default"/>
+        <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
+                      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}"
+                      conf="default"/>
+        <ivy:cachepath pathid="compile.classpath" conf="default"/>
     </target>
 
     <target name="ivy-releaseaudit" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for releaseaudit configuration">

@@ -18,13 +18,15 @@
 
 package org.apache.hcatalog.mapreduce;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -32,28 +34,29 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hcatalog.MiniCluster;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.pig.HCatLoader;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.util.UDFContext;
-
 
 public class TestHCatHiveCompatibility extends TestCase {
+  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+      "/build/test/data/" + TestHCatHiveCompatibility.class.getCanonicalName();
+  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+  private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
-  MiniCluster cluster = MiniCluster.buildCluster();
   private Driver driver;
-  Properties props;
-
   private HiveMetaStoreClient client;
-
-  String fileName = "/tmp/input.data";
-  String fullFileName;
 
   @Override
   protected void setUp() throws Exception {
+    File f = new File(TEST_WAREHOUSE_DIR);
+    if (f.exists()) {
+      FileUtil.fullyDelete(f);
+    }
+
+    new File(TEST_WAREHOUSE_DIR).mkdirs();
 
     HiveConf hiveConf = new HiveConf(this.getClass());
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -62,22 +65,15 @@ public class TestHCatHiveCompatibility extends TestCase {
     driver = new Driver(hiveConf);
     client = new HiveMetaStoreClient(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
-    props = new Properties();
-    props.setProperty("fs.default.name", cluster.getProperties().getProperty("fs.default.name"));
-    fullFileName = cluster.getProperties().getProperty("fs.default.name") + fileName;
 
-    MiniCluster.deleteFile(cluster, fileName);
     int LOOP_SIZE = 11;
-    String[] input = new String[LOOP_SIZE];
+    File file = new File(INPUT_FILE_NAME);
+    file.deleteOnExit();
+    FileWriter writer = new FileWriter(file);
     for(int i = 0; i < LOOP_SIZE; i++) {
-        input[i] = i + "\t1";
+      writer.write(i + "\t1\n");
     }
-    MiniCluster.createInputFile(cluster, fileName, input);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    MiniCluster.deleteFile(cluster, fileName);
+    writer.close();
   }
 
   public void testUnpartedReadWrite() throws Exception{
@@ -93,9 +89,8 @@ public class TestHCatHiveCompatibility extends TestCase {
     Table table = client.getTable("default", "junit_unparted_noisd");
     assertTrue(table.getSd().getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS));
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int);");
+    PigServer server = new PigServer(ExecType.LOCAL);
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int);");
     server.registerQuery("store A into 'default.junit_unparted_noisd' using org.apache.hcatalog.pig.HCatStorer();");
     server.registerQuery("B = load 'default.junit_unparted_noisd' using "+HCatLoader.class.getName()+"();");
     Iterator<Tuple> itr= server.openIterator("B");
@@ -133,9 +128,8 @@ public class TestHCatHiveCompatibility extends TestCase {
 
     assertTrue(table.getSd().getInputFormat().equals(HCatConstants.HIVE_RCFILE_IF_CLASS));
 
-    PigServer server = new PigServer(ExecType.LOCAL, props);
-    UDFContext.getUDFContext().setClientSystemProps();
-    server.registerQuery("A = load '"+fullFileName+"' as (a:int);");
+    PigServer server = new PigServer(ExecType.LOCAL);
+    server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int);");
     server.registerQuery("store A into 'default.junit_parted_noisd' using org.apache.hcatalog.pig.HCatStorer('b=42');");
     server.registerQuery("B = load 'default.junit_parted_noisd' using "+HCatLoader.class.getName()+"();");
     Iterator<Tuple> itr= server.openIterator("B");
