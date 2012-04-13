@@ -221,25 +221,4 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     jobInfo.setPosOfDynPartCols(posOfDynPartCols);
     jobInfo.setOutputSchema(schemaWithoutParts);
   }
-
-  static void cancelDelegationTokens(JobContext context, OutputJobInfo outputJobInfo) throws Exception {
-    HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
-    HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
-    // cancel the deleg. tokens that were acquired for this job now that
-    // we are done - we should cancel if the tokens were acquired by
-    // HCatOutputFormat and not if they were supplied by Oozie. In the latter
-    // case the HCAT_KEY_TOKEN_SIGNATURE property in the conf will not be set
-    String tokenStrForm = client.getTokenStrForm();
-    if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-      client.cancelDelegationToken(tokenStrForm);
-    }
-
-    String jcTokenStrForm =
-      context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_STRFORM);
-    String jcTokenSignature =
-      context.getConfiguration().get(HCatConstants.HCAT_KEY_JOBCLIENT_TOKEN_SIGNATURE);
-    if(jcTokenStrForm != null && jcTokenSignature != null) {
-      HCatUtil.cancelJobTrackerDelegationToken(tokenStrForm,jcTokenSignature);
-    }
-  }
 }
