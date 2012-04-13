@@ -186,11 +186,8 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         FsPermission.setUMask(conf, FsPermission.getDefault().applyUMask(
             tblPath.getFileSystem(conf).getFileStatus(tblPath).getPermission()));
 
-        try {
-          UserGroupInformation.class.getMethod("isSecurityEnabled");
-          Security.getInstance().handleSecurity(job, outputJobInfo, client, conf, harRequested);
-        } catch (NoSuchMethodException e) {
-          LOG.info("Security is not supported by this version of hadoop.");
+        if(Security.getInstance().isSecurityEnabled()) {
+            Security.getInstance().handleSecurity(job, outputJobInfo, client, conf, harRequested);
         }
       } catch(Exception e) {
         if( e instanceof HCatException ) {

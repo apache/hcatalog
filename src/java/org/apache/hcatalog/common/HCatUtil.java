@@ -358,38 +358,11 @@ public class HCatUtil {
         // return null;
     }
 
-    public static void cancelJobTrackerDelegationToken(String tokenStrForm,
-            String tokenSignature) throws Exception {
-        // LOG.info("cancelJobTrackerDelegationToken("+tokenStrForm+","+tokenSignature+")");
-        JobClient jcl = new JobClient(new JobConf(new Configuration(),
-                HCatOutputFormat.class));
-        Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> t = extractJobTrackerToken(
-                tokenStrForm, tokenSignature);
-        // LOG.info("canceling "+t);
-        try {
-            jcl.cancelDelegationToken(t);
-        } catch (Exception e) {
-            // HCatUtil.logToken(LOG, "jcl token to cancel", t);
-            // ignore if token has already been invalidated.
-        }
-    }
-
     public static Token<? extends AbstractDelegationTokenIdentifier> extractThriftToken(
             String tokenStrForm, String tokenSignature) throws MetaException,
             TException, IOException {
         // LOG.info("extractThriftToken("+tokenStrForm+","+tokenSignature+")");
         Token<? extends AbstractDelegationTokenIdentifier> t = new Token<DelegationTokenIdentifier>();
-        t.decodeFromUrlString(tokenStrForm);
-        t.setService(new Text(tokenSignature));
-        // LOG.info("returning "+t);
-        return t;
-    }
-
-    public static Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> extractJobTrackerToken(
-            String tokenStrForm, String tokenSignature) throws MetaException,
-            TException, IOException {
-        // LOG.info("extractJobTrackerToken("+tokenStrForm+","+tokenSignature+")");
-        Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier> t = new Token<org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier>();
         t.decodeFromUrlString(tokenStrForm);
         t.setService(new Text(tokenSignature));
         // LOG.info("returning "+t);
