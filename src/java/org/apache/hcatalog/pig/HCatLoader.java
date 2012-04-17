@@ -18,7 +18,11 @@
 package org.apache.hcatalog.pig;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.Path;
@@ -26,6 +30,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.Pair;
@@ -54,10 +59,13 @@ public class HCatLoader extends HCatBaseLoader {
   private String hcatServerUri;
   private String partitionFilterString;
   private final PigHCatUtil phutil = new PigHCatUtil();
-  
+
   // Signature for wrapped loader, see comments in LoadFuncBasedInputDriver.initialize
   final public static String INNER_SIGNATURE = "hcatloader.inner.signature";
   final public static String INNER_SIGNATURE_PREFIX = "hcatloader_inner_signature";
+  // A hash map which stores job credentials. The key is a signature passed by Pig, which is
+  //unique to the load func and input file name (table, in our case).
+  private static Map<String, Credentials> jobCredentials = new HashMap<String, Credentials>();
 
   @Override
   public InputFormat<?,?> getInputFormat() throws IOException {
@@ -75,11 +83,16 @@ public class HCatLoader extends HCatBaseLoader {
 @Override
   public void setLocation(String location, Job job) throws IOException {
 
+    UDFContext udfContext = UDFContext.getUDFContext();
+    Properties udfProps = udfContext.getUDFProperties(this.getClass(),
+        new String[]{signature});
     job.getConfiguration().set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + signature);
     Pair<String, String> dbTablePair = PigHCatUtil.getDBTableNames(location);
     dbName = dbTablePair.first;
     tableName = dbTablePair.second;
 
+    RequiredFieldList requiredFieldsInfo = (RequiredFieldList) udfProps
+    .get(PRUNE_PROJECTION_INFO);
     // get partitionFilterString stored in the UDFContext - it would have
     // been stored there by an earlier call to setPartitionFilter
     // call setInput on HCatInputFormat only in the frontend because internally
@@ -87,50 +100,71 @@ public class HCatLoader extends HCatBaseLoader {
     // the backend
     // in the hadoop front end mapred.task.id property will not be set in
     // the Configuration
-    if (!HCatUtil.checkJobContextIfRunningFromBackend(job)){
-      HCatInputFormat.setInput(job,
-                               InputJobInfo.create(dbName,
-                                                   tableName,
-                                                   getPartitionFilterString()));
-    }
 
-    // Need to also push projections by calling setOutputSchema on
-    // HCatInputFormat - we have to get the RequiredFields information
-    // from the UdfContext, translate it to an Schema and then pass it
-    // The reason we do this here is because setLocation() is called by
-    // Pig runtime at InputFormat.getSplits() and
-    // InputFormat.createRecordReader() time - we are not sure when
-    // HCatInputFormat needs to know about pruned projections - so doing it
-    // here will ensure we communicate to HCatInputFormat about pruned
-    // projections at getSplits() and createRecordReader() time
+        if (udfProps.containsKey(HCatConstants.HCAT_PIG_LOADER_LOCATION_SET)) {
+            for( Enumeration<Object> emr = udfProps.keys();emr.hasMoreElements();) {
+                PigHCatUtil.getConfigFromUDFProperties(udfProps,
+                            job.getConfiguration(), emr.nextElement().toString());
+            }
+            Credentials crd = jobCredentials.get(INNER_SIGNATURE_PREFIX + "_" + signature);
+            if (crd != null) {
+                job.getCredentials().addAll(crd);
+            }
 
-    UDFContext udfContext = UDFContext.getUDFContext();
-    Properties props = udfContext.getUDFProperties(this.getClass(),
-        new String[]{signature});
-    RequiredFieldList requiredFieldsInfo =
-      (RequiredFieldList)props.get(PRUNE_PROJECTION_INFO);
-    if(requiredFieldsInfo != null) {
-      // convert to hcatschema and pass to HCatInputFormat
-      try {
-        outputSchema = phutil.getHCatSchema(requiredFieldsInfo.getFields(),signature,this.getClass());
-        HCatInputFormat.setOutputSchema(job, outputSchema);
-      } catch (Exception e) {
-        throw new IOException(e);
-      }
-    } else{
-      // else - this means pig's optimizer never invoked the pushProjection
-      // method - so we need all fields and hence we should not call the
-      // setOutputSchema on HCatInputFormat
-      if (HCatUtil.checkJobContextIfRunningFromBackend(job)){
-        try {
-          HCatSchema hcatTableSchema = (HCatSchema) props.get(HCatConstants.HCAT_TABLE_SCHEMA);
-          outputSchema = hcatTableSchema;
-          HCatInputFormat.setOutputSchema(job, outputSchema);
-        } catch (Exception e) {
-          throw new IOException(e);
+        } else {
+            Job clone = new Job(job.getConfiguration());
+            HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
+                    tableName, getPartitionFilterString()));
+
+            // We will store all the new /changed properties in the job in the
+            // udf context, so the the HCatInputFormat.setInput method need not
+            //be called many times.
+            for (Entry<String,String> keyValue : job.getConfiguration()) {
+                String oldValue = clone.getConfiguration().get(keyValue.getKey());
+                if ((oldValue == null) || (keyValue.getValue().equals(oldValue) == false)) {
+                    udfProps.put(keyValue.getKey(), keyValue.getValue());
+                }
+            }
+            udfProps.put(HCatConstants.HCAT_PIG_LOADER_LOCATION_SET, true);
+
+            //Store credentials in a private hash map and not the udf context to
+            // make sure they are not public.
+            jobCredentials.put(INNER_SIGNATURE_PREFIX + "_" + signature,job.getCredentials());
         }
-      }
-    }
+
+        // Need to also push projections by calling setOutputSchema on
+        // HCatInputFormat - we have to get the RequiredFields information
+        // from the UdfContext, translate it to an Schema and then pass it
+        // The reason we do this here is because setLocation() is called by
+        // Pig runtime at InputFormat.getSplits() and
+        // InputFormat.createRecordReader() time - we are not sure when
+        // HCatInputFormat needs to know about pruned projections - so doing it
+        // here will ensure we communicate to HCatInputFormat about pruned
+        // projections at getSplits() and createRecordReader() time
+
+        if(requiredFieldsInfo != null) {
+          // convert to hcatschema and pass to HCatInputFormat
+          try {
+            outputSchema = phutil.getHCatSchema(requiredFieldsInfo.getFields(),signature,this.getClass());
+            HCatInputFormat.setOutputSchema(job, outputSchema);
+          } catch (Exception e) {
+            throw new IOException(e);
+          }
+        } else{
+          // else - this means pig's optimizer never invoked the pushProjection
+          // method - so we need all fields and hence we should not call the
+          // setOutputSchema on HCatInputFormat
+          if (HCatUtil.checkJobContextIfRunningFromBackend(job)){
+            try {
+              HCatSchema hcatTableSchema = (HCatSchema) udfProps.get(HCatConstants.HCAT_TABLE_SCHEMA);
+              outputSchema = hcatTableSchema;
+              HCatInputFormat.setOutputSchema(job, outputSchema);
+            } catch (Exception e) {
+              throw new IOException(e);
+            }
+          }
+        }
+
   }
 
   @Override

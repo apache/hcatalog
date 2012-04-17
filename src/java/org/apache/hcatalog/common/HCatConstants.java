@@ -28,15 +28,17 @@ public final class HCatConstants {
 
   public static final String SEQUENCEFILE_INPUT = SequenceFileInputFormat.class.getName();
   public static final String SEQUENCEFILE_OUTPUT = SequenceFileOutputFormat.class.getName();
-  
+
   public static final String HCAT_PIG_STORAGE_CLASS = "org.apache.pig.builtin.PigStorage";
   public static final String HCAT_PIG_LOADER = "hcat.pig.loader";
+  public static final String HCAT_PIG_LOADER_LOCATION_SET = HCAT_PIG_LOADER + ".location.set" ;
   public static final String HCAT_PIG_LOADER_ARGS = "hcat.pig.loader.args";
   public static final String HCAT_PIG_STORER = "hcat.pig.storer";
   public static final String HCAT_PIG_STORER_ARGS = "hcat.pig.storer.args";
   public static final String HCAT_PIG_ARGS_DELIMIT = "hcat.pig.args.delimiter";
   public static final String HCAT_PIG_ARGS_DELIMIT_DEFAULT = ",";
-  
+  public static final String HCAT_PIG_STORER_LOCATION_SET = HCAT_PIG_STORER + ".location.set" ;
+
   //The keys used to store info into the job Configuration
   public static final String HCAT_KEY_BASE = "mapreduce.lib.hcat";
 
@@ -59,7 +61,7 @@ public final class HCatConstants {
 
   public static final String HCAT_CREATE_DB_NAME = "hcat.create.db.name";
 
-  public static final String HCAT_METASTORE_PRINCIPAL 
+  public static final String HCAT_METASTORE_PRINCIPAL
           = HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname;
 
   // IMPORTANT IMPORTANT IMPORTANT!!!!!
@@ -82,11 +84,11 @@ public final class HCatConstants {
 
   public static final String HCAT_MSG_CLEAN_FREQ = "hcat.msg.clean.freq";
   public static final String HCAT_MSG_EXPIRY_DURATION = "hcat.msg.expiry.duration";
-  
+
   public static final String HCAT_MSGBUS_TOPIC_NAME = "hcat.msgbus.topic.name";
   public static final String HCAT_MSGBUS_TOPIC_NAMING_POLICY = "hcat.msgbus.topic.naming.policy";
   public static final String HCAT_MSGBUS_TOPIC_PREFIX = "hcat.msgbus.topic.prefix";
-  
+
   public static final String HCAT_DYNAMIC_PTN_JOBID = HCAT_KEY_OUTPUT_BASE + "dynamic.jobid";
   public static final boolean HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED = false;
 
@@ -103,7 +105,7 @@ public final class HCatConstants {
 
   // System environment variables
   public static final String SYSENV_HADOOP_TOKEN_FILE_LOCATION = "HADOOP_TOKEN_FILE_LOCATION";
-  
+
   // Hadoop Conf Var Names
   public static final String CONF_MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
 

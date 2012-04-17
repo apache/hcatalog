@@ -19,15 +19,19 @@
 package org.apache.hcatalog.pig;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
@@ -49,6 +53,9 @@ public class HCatStorer extends HCatBaseStorer {
   // Signature for wrapped storer, see comments in LoadFuncBasedInputDriver.initialize
   final public static String INNER_SIGNATURE = "hcatstorer.inner.signature";
   final public static String INNER_SIGNATURE_PREFIX = "hcatstorer_inner_signature";
+  // A hash map which stores job credentials. The key is a signature passed by Pig, which is
+  //unique to the store func and out file name (table, in our case).
+  private static Map<String, Credentials> jobCredentials = new HashMap<String, Credentials>();
 
 
   public HCatStorer(String partSpecs, String schema) throws Exception {
@@ -70,73 +77,76 @@ public class HCatStorer extends HCatBaseStorer {
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
-    job.getConfiguration().set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + sign);
-    Properties p = UDFContext.getUDFContext().getUDFProperties(this.getClass(), new String[]{sign});
-
-    String[] userStr = location.split("\\.");
-    OutputJobInfo outputJobInfo;
-
-    String outInfoString = p.getProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO);
-    if (outInfoString != null) {
-      outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(outInfoString);
-    } else {
-      if(userStr.length == 2) {
-        outputJobInfo = OutputJobInfo.create(userStr[0],
-                                                             userStr[1],
-                                                             partitions);
-      } else if(userStr.length == 1) {
-        outputJobInfo = OutputJobInfo.create(null,
-                                                             userStr[0],
-                                                             partitions);
-      } else {
-        throw new FrontendException("location "+location+" is invalid. It must be of the form [db.]table", PigHCatUtil.PIG_EXCEPTION_CODE);
-      }
-    }
-
 
     Configuration config = job.getConfiguration();
-    if(!HCatUtil.checkJobContextIfRunningFromBackend(job)){
+    config.set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + sign);
+    Properties udfProps = UDFContext.getUDFContext().getUDFProperties(
+            this.getClass(), new String[] { sign });
+    String[] userStr = location.split("\\.");
 
-      Schema schema = (Schema)ObjectSerializer.deserialize(p.getProperty(PIG_SCHEMA));
-      if(schema != null){
+    if (udfProps.containsKey(HCatConstants.HCAT_PIG_STORER_LOCATION_SET)) {
+      for(Enumeration<Object> emr = udfProps.keys();emr.hasMoreElements();){
+        PigHCatUtil.getConfigFromUDFProperties(udfProps, config, emr.nextElement().toString());
+      }
+      Credentials crd = jobCredentials.get(INNER_SIGNATURE_PREFIX + "_" + sign);
+      if (crd != null) {
+        job.getCredentials().addAll(crd);
+      }
+    } else {
+      Job clone = new Job(job.getConfiguration());
+      OutputJobInfo outputJobInfo;
+      if (userStr.length == 2) {
+        outputJobInfo = OutputJobInfo.create(userStr[0], userStr[1], partitions);
+      } else if (userStr.length == 1) {
+        outputJobInfo = OutputJobInfo.create(null, userStr[0], partitions);
+      } else {
+        throw new FrontendException("location " + location
+              + " is invalid. It must be of the form [db.]table",
+              PigHCatUtil.PIG_EXCEPTION_CODE);
+      }
+      Schema schema = (Schema) ObjectSerializer.deserialize(udfProps.getProperty(PIG_SCHEMA));
+      if (schema != null) {
         pigSchema = schema;
       }
-      if(pigSchema == null){
-        throw new FrontendException("Schema for data cannot be determined.", PigHCatUtil.PIG_EXCEPTION_CODE);
+      if (pigSchema == null) {
+        throw new FrontendException(
+            "Schema for data cannot be determined.",
+            PigHCatUtil.PIG_EXCEPTION_CODE);
       }
-      try{
+      try {
         HCatOutputFormat.setOutput(job, outputJobInfo);
-      } catch(HCatException he) {
-          // pass the message to the user - essentially something about the table
-          // information passed to HCatOutputFormat was not right
-          throw new PigException(he.getMessage(), PigHCatUtil.PIG_EXCEPTION_CODE, he);
+      } catch (HCatException he) {
+        // pass the message to the user - essentially something about
+        // the table
+        // information passed to HCatOutputFormat was not right
+        throw new PigException(he.getMessage(),
+            PigHCatUtil.PIG_EXCEPTION_CODE, he);
       }
       HCatSchema hcatTblSchema = HCatOutputFormat.getTableSchema(job);
-      try{
+      try {
         doSchemaValidations(pigSchema, hcatTblSchema);
-      } catch(HCatException he){
+      } catch (HCatException he) {
         throw new FrontendException(he.getMessage(), PigHCatUtil.PIG_EXCEPTION_CODE, he);
       }
-      computedSchema = convertPigSchemaToHCatSchema(pigSchema,hcatTblSchema);
+      computedSchema = convertPigSchemaToHCatSchema(pigSchema, hcatTblSchema);
       HCatOutputFormat.setSchema(job, computedSchema);
-      p.setProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO, config.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+      udfProps.setProperty(COMPUTED_OUTPUT_SCHEMA,ObjectSerializer.serialize(computedSchema));
 
-      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_HIVE_CONF);
-      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
-      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
-      PigHCatUtil.saveConfigIntoUDFProperties(p, config,HCatConstants.HCAT_KEY_OUTPUT_INFO);
-
-      p.setProperty(COMPUTED_OUTPUT_SCHEMA,ObjectSerializer.serialize(computedSchema));
-
-    }else{
-      config.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, p.getProperty(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-
-      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_HIVE_CONF);
-      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
-      PigHCatUtil.getConfigFromUDFProperties(p, config, HCatConstants.HCAT_KEY_TOKEN_SIGNATURE);
+      // We will store all the new /changed properties in the job in the
+      // udf context, so the the HCatOutputFormat.setOutput and setSchema
+      // methods need not be called many times.
+      for ( Entry<String,String> keyValue : job.getConfiguration()) {
+        String oldValue = clone.getConfiguration().get(keyValue.getKey());
+        if ((oldValue == null) || (keyValue.getValue().equals(oldValue) == false)) {
+          udfProps.put(keyValue.getKey(), keyValue.getValue());
+        }
+      }
+      //Store credentials in a private hash map and not the udf context to
+      // make sure they are not public.
+      jobCredentials.put(INNER_SIGNATURE_PREFIX + "_" + sign,job.getCredentials());
+      udfProps.put(HCatConstants.HCAT_PIG_STORER_LOCATION_SET, true);
     }
   }
-
 
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
