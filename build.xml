@@ -519,10 +519,10 @@
       <antcall target="package-storage-handlers"/>
     </target>
 
-    <target name="releaseaudit" depends="ivy-releaseaudit, package" description="Release Audit activities">
+    <target name="releaseaudit" depends="ivy-releaseaudit" description="Release Audit activities">
       <java classname="${rat.reporting.classname}" fork="true">
         <classpath refid="releaseaudit.classpath"/>
-        <arg value="${build.dir}/${final.name}"/>
+        <arg value="${basedir}/src"/>
       </java>
     </target>
 
