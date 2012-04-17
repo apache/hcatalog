@@ -112,6 +112,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-363 HCat leaks metastore connection (rohini via toffer)
+
   HCAT-314 HCatOutputFormat.setOutput is called more than once by HCatStorer (avandana via toffer)
 
   HCAT-378 Found a few source files missing Apache headers (gates)

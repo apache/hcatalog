@@ -70,17 +70,16 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     @SuppressWarnings("unchecked")
     public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
       HiveMetaStoreClient client = null;
-      HiveConf hiveConf = null;
 
       try {
 
         Configuration conf = job.getConfiguration();
-        hiveConf = HCatUtil.getHiveConf(conf);
+        HiveConf hiveConf = HCatUtil.getHiveConf(conf);
         client = HCatUtil.createHiveClient(hiveConf);
         Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
-        
+
         List<String> indexList = client.listIndexNames(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), Short.MAX_VALUE);
-        
+
         for (String indexName : indexList) {
             Index index = client.getIndex(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), indexName);
             if (!index.isDeferredRebuild()) {
@@ -88,19 +87,19 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             }
         }
         StorageDescriptor sd = table.getSd();
-        
+
         if (sd.isCompressed()) {
             throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a compressed partition from Pig/Mapreduce is not supported");
         }
-        
+
         if (sd.getBucketCols()!=null && !sd.getBucketCols().isEmpty()) {
             throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with bucket definition from Pig/Mapreduce is not supported");
         }
-        
+
         if (sd.getSortCols()!=null && !sd.getSortCols().isEmpty()) {
             throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with sorted column definition from Pig/Mapreduce is not supported");
         }
-        
+
         if (table.getPartitionKeysSize() == 0 ){
           if ((outputJobInfo.getPartitionValues() != null) && (!outputJobInfo.getPartitionValues().isEmpty())){
             // attempt made to save partition values in non-partitioned table - throw error.
@@ -196,10 +195,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           throw new HCatException(ErrorType.ERROR_SET_OUTPUT, e);
         }
       } finally {
-        if( client != null ) {
-          client.close();
-        }
-//        HCatUtil.logAllTokens(LOG,job);
+        HCatUtil.closeHiveClientQuietly(client);
       }
     }
 
@@ -247,7 +243,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
     private static int getMaxDynamicPartitions(HiveConf hConf) {
-      // by default the bounds checking for maximum number of 
+      // by default the bounds checking for maximum number of
       // dynamic partitions is disabled (-1)
       int maxDynamicPartitions = -1;
 
@@ -262,5 +258,5 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     private static boolean getHarRequested(HiveConf hConf) {
       return hConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
     }
-   
+
 }
