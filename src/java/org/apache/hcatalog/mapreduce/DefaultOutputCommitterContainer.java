@@ -90,15 +90,18 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
         getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
 
         //Cancel HCat and JobTracker tokens
+        HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
-            HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.createHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
               client.cancelDelegationToken(tokenStrForm);
             }
         } catch (Exception e) {
             LOG.warn("Failed to cancel delegation token", e);
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
         }
     }
 }

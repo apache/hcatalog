@@ -591,10 +591,18 @@ public class HCatUtil {
         }
     }
 
-    //TODO remove url component, everything should be encapsulated in HiveConf
-    public static HiveMetaStoreClient createHiveClient(HiveConf hiveConf) 
-    throws MetaException {
-      return new HiveMetaStoreClient(hiveConf);
+    public static HiveMetaStoreClient createHiveClient(HiveConf hiveConf)
+            throws MetaException {
+        return new HiveMetaStoreClient(hiveConf);
+    }
+
+    public static void closeHiveClientQuietly(HiveMetaStoreClient client) {
+        try {
+            if (client != null)
+                client.close();
+        } catch (Exception e) {
+            LOG.debug("Error closing metastore client", e);
+        }
     }
 
 

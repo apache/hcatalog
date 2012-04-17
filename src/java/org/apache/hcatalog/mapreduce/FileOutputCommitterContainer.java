@@ -172,15 +172,14 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             }
         }
 
-        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
-
+        HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(jobContext.getConfiguration());
-            HiveMetaStoreClient client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.createHiveClient(hiveConf);
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
             // HCatOutputFormat and not if they were supplied by Oozie.
-            // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in 
+            // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in
             // the conf will not be set
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && jobContext.getConfiguration().get
@@ -193,9 +192,12 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             } else {
                 throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
             }
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
         }
 
         Path src;
+        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
         if (dynamicPartitioningUsed){
             src = new Path(getPartitionRootLocation(
                     jobInfo.getLocation().toString(),jobInfo.getTableInfo().getTable().getPartitionKeysSize()
@@ -402,9 +404,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
             }
         } finally {
-            if( client != null ) {
-                client.close();
-            }
+            HCatUtil.closeHiveClientQuietly(client);
         }
     }
 

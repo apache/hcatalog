@@ -47,16 +47,8 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  * info required in the client process context.
  */
 public class InitializeInput {
-  
+
   private static final Log LOG = LogFactory.getLog(InitializeInput.class);
-
-  private static HiveConf hiveConf;
-
-  private static HiveMetaStoreClient createHiveMetaClient(Configuration conf) throws Exception {
-
-      hiveConf = HCatUtil.getHiveConf(conf);
-      return new HiveMetaStoreClient(hiveConf, null);
-  }
 
   /**
    * Set the input to use for the Job. This queries the metadata server with the specified partition predicates,
@@ -71,7 +63,7 @@ public class InitializeInput {
     //* Serialize the InputJobInfo and save in the Job's Configuration object
 
     job.getConfiguration().set(
-        HCatConstants.HCAT_KEY_JOB_INFO, 
+        HCatConstants.HCAT_KEY_JOB_INFO,
         getSerializedHcatKeyJobInfo(job, inputJobInfo,null));
   }
 
@@ -79,14 +71,14 @@ public class InitializeInput {
     //* Create and initialize an InputJobInfo object
 
     HiveMetaStoreClient client = null;
-
+    HiveConf hiveConf = null;
     try {
       if (job != null){
-        client = createHiveMetaClient(job.getConfiguration());
+        hiveConf = HCatUtil.getHiveConf(job.getConfiguration());
       } else {
         hiveConf = new HiveConf(HCatInputFormat.class);
-        client = new HiveMetaStoreClient(hiveConf, null);
       }
+      client = HCatUtil.createHiveClient(hiveConf);
       Table table = client.getTable(inputJobInfo.getDatabaseName(),
                                     inputJobInfo.getTableName());
 
@@ -108,8 +100,8 @@ public class InitializeInput {
 
         // populate partition info
         for (Partition ptn : parts){
-          PartInfo partInfo = extractPartInfo(ptn.getSd(),ptn.getParameters(), 
-                                              job.getConfiguration(), 
+          PartInfo partInfo = extractPartInfo(ptn.getSd(),ptn.getParameters(),
+                                              job.getConfiguration(),
                                               inputJobInfo);
           partInfo.setPartitionValues(createPtnKeyValueMap(table, ptn));
           partInfoList.add(partInfo);
@@ -118,7 +110,7 @@ public class InitializeInput {
       }else{
         //Non partitioned table
         PartInfo partInfo = extractPartInfo(table.getSd(),table.getParameters(),
-                                            job.getConfiguration(), 
+                                            job.getConfiguration(),
                                             inputJobInfo);
         partInfo.setPartitionValues(new HashMap<String,String>());
         partInfoList.add(partInfo);
@@ -127,13 +119,11 @@ public class InitializeInput {
 
       return HCatUtil.serialize(inputJobInfo);
     } finally {
-      if (client != null ) {
-        client.close();
-      }
+      HCatUtil.closeHiveClientQuietly(client);
     }
 
   }
-  
+
   private static Map<String, String> createPtnKeyValueMap(Table table, Partition ptn) throws IOException{
     List<String> values = ptn.getValues();
     if( values.size() != table.getPartitionKeys().size() ) {
@@ -155,25 +145,25 @@ public class InitializeInput {
     return ptnKeyValues;
   }
 
-  static PartInfo extractPartInfo(StorageDescriptor sd, 
-      Map<String,String> parameters, Configuration conf, 
+  static PartInfo extractPartInfo(StorageDescriptor sd,
+      Map<String,String> parameters, Configuration conf,
       InputJobInfo inputJobInfo) throws IOException{
     HCatSchema schema = HCatUtil.extractSchemaFromStorageDescriptor(sd);
     StorerInfo storerInfo = InternalUtil.extractStorerInfo(sd,parameters);
 
     Properties hcatProperties = new Properties();
-    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf, 
+    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf,
                                                                    storerInfo);
 
     // copy the properties from storageHandler to jobProperties
     Map<String, String>jobProperties = HCatUtil.getInputJobProperties(
-                                                            storageHandler, 
+                                                            storageHandler,
                                                             inputJobInfo);
 
     for (String key : parameters.keySet()){
         hcatProperties.put(key, parameters.get(key));
     }
-    // FIXME 
+    // FIXME
     // Bloating partinfo with inputJobInfo is not good
     return new PartInfo(schema, storageHandler,
                         sd.getLocation(), hcatProperties,

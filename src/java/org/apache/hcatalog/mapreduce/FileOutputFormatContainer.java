@@ -113,11 +113,13 @@ class FileOutputFormatContainer extends OutputFormatContainer {
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
+        HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
+            client = HCatUtil.createHiveClient(hiveConf);
             handleDuplicatePublish(context,
                     jobInfo,
-                    HCatUtil.createHiveClient(hiveConf),
+                    client,
                     jobInfo.getTableInfo().getTable());
         } catch (MetaException e) {
             throw new IOException(e);
@@ -125,6 +127,8 @@ class FileOutputFormatContainer extends OutputFormatContainer {
             throw new IOException(e);
         } catch (NoSuchObjectException e) {
             throw new IOException(e);
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
         }
 
         if(!jobInfo.isDynamicPartitioningUsed()) {
