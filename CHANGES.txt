@@ -85,6 +85,8 @@ Release 0.4.0 - Unreleased
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-379 Fix mapred.out.dir hack in FileOutputCommitterContainer (toffer)
+
   HCAT-69 Fix token usage from HCat (toffer)
 
   HCAT-352 Need tests for complex types (gates)

@@ -69,7 +69,7 @@
   <property name="test.exclude.file" value="${test.src.dir}/excluded-tests"/>
   <property name="test.output" value="no"/>
   <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
-  <property name="test.excludes" value="${test.src.dir}/e2e/**"/>
+  <property name="test.excludes" value="e2e/**"/>
 
   <!-- e2e test properties -->
   <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
