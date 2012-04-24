@@ -28,7 +28,7 @@
   <title>Set Up</title>
   
 <p>The HCatLoader and HCatStorer interfaces are used with Pig scripts to read and write data in HCatalog managed tables.</p>
-<p><strong>Authentication</strong></p>
+
 </section>
   
       
@@ -115,12 +115,22 @@ variable. In the case where you have installed Hadoop and HCatalog via tar, you 
 <source>
 export HADOOP_HOME=&lt;path_to_hadoop_install&gt;
 export HCAT_HOME=&lt;path_to_hcat_install&gt;
-PIG_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-metastore-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libthrift-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-exec-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/jdo2-api-2.3-ec.jar:$HCAT_HOME/etc/hcatalog:$HADOOP_HOME/conf:$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar
+PIG_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:$HCAT_HOME/share/hcatalog/lib/
+hive-metastore-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libthrift-0.7.0.jar:$HCAT_HOME/
+share/hcatalog/lib/hive-exec-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar:
+$HCAT_HOME/share/hcatalog/lib/jdo2-api-2.3-ec.jar:$HCAT_HOME/etc/hcatalog:$HADOOP_HOME/
+conf:$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar
 export PIG_OPTS=-Dhive.metastore.uris=thrift://&lt;hostname&gt;:&lt;port&gt;
 
-&lt;path_to_pig_install&gt;/bin/pig -Dpig.additional.jars=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-metastore-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libthrift-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-exec-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/jdo2-api-2.3-ec.jar:$HCAT_HOME/etc/hcatalog:$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar &lt;script.pig&gt;
+&lt;path_to_pig_install&gt;/bin/pig -Dpig.additional.jars=$HCAT_HOME/share/hcatalog/
+hcatalog-0.4.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-metastore-0.8.1.jar:$HCAT_HOME/
+share/hcatalog/lib/libthrift-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/hive-exec-0.8.1.jar:
+$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar:$HCAT_HOME/share/hcatalog/lib/jdo2-
+api-2.3-ec.jar:$HCAT_HOME/etc/hcatalog:$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar
+ &lt;script.pig&gt;
 </source>
 
+<p><strong>Authentication</strong></p>
 <table>
 	<tr>
 	<td><p>If you are using a secure cluster and a failure results in a message like "2010-11-03 16:17:28,225 WARN hive.metastore ... - Unable to connect metastore with URI thrift://..." in /tmp/&lt;username&gt;/hive.log, then make sure you have run "kinit &lt;username&gt;@FOO.COM" to get a Kerberos ticket and to be able to authenticate to the HCatalog server. </p></td>
@@ -148,17 +158,15 @@ A = LOAD 'tablename' USING org.apache.hcatalog.pig.HCatLoader();
 A = LOAD 'tablename' USING  org.apache.hcatalog.pig.HCatLoader();
 
 -- date is a partition column; age is not
-
 B = filter A by date == '20100819' and age &lt; 30; 
 
 -- both date and country are partition columns
-
 C = filter A by date == '20100819' and country == 'US'; 
 ...
 ...
 </source>
 
-<p>To scan a whole table:</p>
+<p>To scan a whole table, for example:</p>
 
 <source>
 a = load 'student_data' using org.apache.hcatalog.pig.HCatLoader();
@@ -169,14 +177,14 @@ b = foreach a generate name, age;
 <p>Notice that the schema is automatically provided to Pig, there's no need to declare name and age as fields, as if
 you were loading from a file.</p>
 
-<p>Example of scanning a single partition. Assume the table web_logs is partitioned by the column datestamp:</p>
+<p>To scan a single partition of the table web_logs, for example, partitioned by the column datestamp:</p>
 
 <source>
 a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
 b = filter a by datestamp == '20110924';
 </source>
 
-<p>Pig will push the datestamp filter shown here to HCatalog, so that HCat knows to just scan the partition where
+<p>Pig will push the datestamp filter shown here to HCatalog, so that HCatalog knows to just scan the partition where
 datestamp = '20110924'. You can combine this filter with others via 'and':</p>
 
 <source>
@@ -184,12 +192,38 @@ a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
 b = filter a by datestamp == '20110924' and user is not null;
 </source>
 
-<p>Pig will split the above filter, pushing the datestamp portion to HCatalog and retaining the user is not null part
-to apply itself. You can also give a more complex filter to retrieve a set of partitions:</p>
+<p>Pig will split the above filter, pushing the datestamp portion to HCatalog and retaining the <code>user is not null</code> part
+to apply itself. You can also give a more complex filter to retrieve a set of partitions.</p>
+
+<p><strong>Filter Operators</strong></p>
+
+<p>A filter can contain the operators 'and', 'or', '()', '==', '!=', '&lt;', '&gt;', '&lt;='
+and '&gt;='.</p>
+
+<p>For example:</p>
+
+<source>
+a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
+b = filter a by datestamp &gt; '20110924';
+</source>
+
+<p>A complex filter can have various combinations of operators, such as:</p>
+
+<source>
+a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
+b = filter a by datestamp == '20110924' or datestamp == '20110925';
+</source>
+
+<p>These two examples have the same effect:</p>
 
 <source>
 a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
 b = filter a by datestamp &gt;= '20110924' and datestamp &lt;= '20110925';
+</source>
+
+<source>
+a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
+b = filter a by datestamp &lt;= '20110925' and datestamp &gt;= '20110924';
 </source>
 
 </section> 
@@ -247,8 +281,8 @@ attention to the quoting, as the whole string must be single quoted and separate
 <p>To write into multiple partitions at one, make sure that the partition column is present in your data, then call
 HCatStorer with no argument:</p>
 
-<source>store z into 'web_data' using org.apache.hcatalog.pig.HCatStorer(); -- datestamp
-must be a field in the relation z</source>
+<source>store z into 'web_data' using org.apache.hcatalog.pig.HCatStorer(); 
+  -- datestamp must be a field in the relation z</source>
 
 
 	</section>

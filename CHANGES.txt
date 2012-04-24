@@ -79,6 +79,8 @@ Release 0.4.0 - Unreleased
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-372 Add filter information to Load/Store and Input/Output docs (lefty via gates)
+
   HCAT-357 e2e harness: allow to run again pre-installed packages (thw via gates)
 
   HCAT-352 Need tests for complex types (gates)
