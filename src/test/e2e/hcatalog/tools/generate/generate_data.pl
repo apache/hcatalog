@@ -368,8 +368,19 @@ sub findHiveJars()
     return ($execJar, $cliJar);
 }
 
-
-
+sub getJavaCmd() 
+{
+    if (defined $ENV{'JAVA_HOME'}) {
+        return "$ENV{'JAVA_HOME'}/bin/java";
+    } else {
+        my $java = `which java`;
+        if ($?) {
+            die "Unable to find java executable;"
+        } else {
+            return $java;
+        }
+    }
+}
 
 # main
 {
@@ -422,7 +433,7 @@ sub findHiveJars()
             my ($hadoopCoreJar, $commonsLoggingJar, $commonsConfigJar,
                 $commonsLangJar, $commonsCliJar) = findHadoopJars();
             my ($hiveExecJar, $hiveCliJar) = findHiveJars();
-            my @cmd = ('java', '-cp',
+            my @cmd = (getJavaCmd(), '-cp',
                 "../tools/generate/java/hive-gen.jar:$hadoopCoreJar:" .
                 "$commonsLoggingJar:$commonsConfigJar:$commonsLangJar:" .
                 "$hiveExecJar",

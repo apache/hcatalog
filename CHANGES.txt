@@ -114,6 +114,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-386 e2e tests should respect JAVA_HOME when it's set (gates)
+
   HCAT-363 HCat leaks metastore connection (rohini via toffer)
 
   HCAT-314 HCatOutputFormat.setOutput is called more than once by HCatStorer (avandana via toffer)
