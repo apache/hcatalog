@@ -114,6 +114,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-382 NPE in pig when a binary field is null (rohini vi avandana)
+
   HCAT-386 e2e tests should respect JAVA_HOME when it's set (gates)
 
   HCAT-363 HCat leaks metastore connection (rohini via toffer)

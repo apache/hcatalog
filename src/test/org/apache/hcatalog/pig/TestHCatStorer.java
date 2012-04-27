@@ -424,8 +424,8 @@ public class TestHCatStorer extends TestCase {
   String[] inputData = new String[]{"zookeeper\t(2)\t{(pig)}\t{(pnuts,hdfs)}\t{(hadoop),(hcat)}",
       "chubby\t(2)\t{(sawzall)}\t{(bigtable,gfs)}\t{(mapreduce),(hcat)}"};
 
-    HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
-    
+  HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, inputData);
+
   PigServer server = new PigServer(ExecType.LOCAL);
   server.setBatchOn();
   server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (b:chararray, a:tuple(a1:int), arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)});");
@@ -447,22 +447,23 @@ public class TestHCatStorer extends TestCase {
   public void testStoreFuncAllSimpleTypes() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
-    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string, f binary) stored as RCFILE";
+    String createTable = "create table junit_unparted(a int, b float, c double, d bigint, e string, f binary, g binary) stored as RCFILE";
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
       throw new IOException("Failed to create table.");
     }
 
-    int LOOP_SIZE = 3;
-    String[] input = new String[LOOP_SIZE*LOOP_SIZE];
-    for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      input[i] = i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat"+"\tbinary-data";
-    }
+    int i =0;
+    String[] input = new String[3];
+    input[i++]= "0\t\t\t\t\t\t"; //Empty values except first column
+    input[i++]= "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat"+"\tbinary-data"; //First column empty
+    input[i++]= i + "\t" + i * 2.1f +"\t"+ i*1.1d + "\t" + i * 2L +"\t"+"lets hcat"+"\tbinary-data";
 
     HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
     PigServer server = new PigServer(ExecType.LOCAL);
     server.setBatchOn();
     server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (a:int, b:float, c:double, d:long, e:chararray, f:bytearray);");
+    //null gets stored into column g which is a binary field.
     server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','a:int, b:float, c:double, d:long, e:chararray,f:bytearray');");
     server.executeBatch();
 
@@ -472,23 +473,24 @@ public class TestHCatStorer extends TestCase {
     driver.getResults(res);
 
     Iterator<String> itr = res.iterator();
-    for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      assertEquals( input[i] ,itr.next());
-    }
-
+    assertEquals( "0\tNULL\tNULL\tNULL\tNULL\t\tnull" ,itr.next());
+    assertEquals( "NULL\t4.2\t2.2\t4\tlets hcat\tbinary-data\tnull" ,itr.next());
+    assertEquals( "3\t6.2999997\t3.3000000000000003\t6\tlets hcat\tbinary-data\tnull",itr.next());
     assertFalse(itr.hasNext());
+
     server.registerQuery("B = load 'junit_unparted' using "+HCatLoader.class.getName()+";");
-    Iterator<Tuple> i = server.openIterator("B");
+    Iterator<Tuple> iter = server.openIterator("B");
     int count = 0;
-    while(i.hasNext()){
-    	Object o = i.next().get(5);
-    	assertTrue(o instanceof DataByteArray);
-    	count++;
+    while(iter.hasNext()){
+        Tuple t = iter.next();
+        assertTrue(t.get(5) instanceof DataByteArray);
+        assertNull(t.get(6));
+        count++;
     }
-    assertEquals(LOOP_SIZE  * LOOP_SIZE, count);
+    assertEquals(3, count);
     driver.run("drop table junit_unparted");
   }
-  
+
   @Override
   protected void tearDown() throws Exception {
     super.tearDown();
@@ -536,7 +538,7 @@ public class TestHCatStorer extends TestCase {
    assertFalse(itr.hasNext());
 
   }
-  
+
 
   public void testDynamicPartitioningMultiPartColsInDataPartialSpec() throws IOException, CommandNeedRetryException{
 
