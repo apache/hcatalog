@@ -307,7 +307,7 @@ public class PigHCatUtil {
     Type itemType = hfs.getType();
     switch (itemType){
     case BINARY:
-      result = new DataByteArray(((ByteArrayRef)o).getData());
+      result = (o == null) ? null : new DataByteArray(((ByteArrayRef)o).getData());
       break;
     case STRUCT:
       result = transformToTuple((List<Object>)o,hfs);
