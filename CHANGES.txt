@@ -25,6 +25,7 @@ Release 0.4.1 - Unreleased
   NEW FEATURES
 
   IMPROVEMENTS
+  HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
 
   BUG FIXES
 
