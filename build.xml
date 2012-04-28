@@ -471,6 +471,7 @@
              author="true"
              version="true"
              use="true"
+             noqualifier="all"
              windowtitle="HCatalog ${hcatalog.version} API"
              doctitle="HCatalog ${hcatalog.version} API"
              failonerror="true">

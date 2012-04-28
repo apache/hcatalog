@@ -51,8 +51,8 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 
-/** The OutputFormat to use to write data to HCat. The key value is ignored and
- * and should be given as null. The value is the HCatRecord to write.*/
+/** The OutputFormat to use to write data to HCatalog. The key value is ignored and
+ *  should be given as null. The value is the HCatRecord to write.*/
 public class HCatOutputFormat extends HCatBaseOutputFormat {
 
     static final private Log LOG = LogFactory.getLog(HCatOutputFormat.class);
@@ -61,10 +61,11 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     private static boolean harRequested;
 
     /**
-     * Set the info about the output to write for the Job. This queries the metadata server
-     * to find the StorageHandler to use for the table.  Throws error if partition is already published.
+     * Set the information about the output to write for the job. This queries the metadata server
+     * to find the StorageHandler to use for the table.  It throws an error if the 
+     * partition is already published.
      * @param job the job object
-     * @param outputJobInfo the table output info
+     * @param outputJobInfo the table output information for the job
      * @throws IOException the exception in communicating with the metadata server
      */
     @SuppressWarnings("unchecked")
@@ -204,6 +205,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      * table schema is used by default for the partition if this is not called.
      * @param job the job object
      * @param schema the schema for the data
+     * @throws IOException
      */
     public static void setSchema(final Job job, final HCatSchema schema) throws IOException {
 
@@ -214,11 +216,12 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
     /**
-     * Get the record writer for the job. Uses the StorageHandler's default OutputFormat
-     * to get the record writer.
-     * @param context the information about the current task.
-     * @return a RecordWriter to write the output for the job.
+     * Get the record writer for the job. This uses the StorageHandler's default 
+     * OutputFormat to get the record writer.
+     * @param context the information about the current task
+     * @return a RecordWriter to write the output for the job
      * @throws IOException
+     * @throws InterruptedException
      */
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord>

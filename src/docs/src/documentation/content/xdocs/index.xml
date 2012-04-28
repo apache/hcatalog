@@ -25,8 +25,8 @@
    <section>
       <title>HCatalog </title>
       
-       <p>HCatalog is a table and storage management layer for Hadoop that enables users with different data processing tools – Pig, MapReduce, and Hive – to more easily read and write data on the grid. HCatalog’s table abstraction presents users with a relational view of data in the Hadoop distributed file system (HDFS) and ensures that users need not worry about where or in what format their data is stored – RCFile format, text files, or sequence files. </p>
-<p>HCatalog supports reading and writing files in any format for which a SerDe can be written. By default, HCatalog supports RCFile, CSV, JSON, and sequence file formats. To use a custom format, you must provide the InputFormat, OutputFormat, and SerDe.</p>
+       <p>HCatalog is a table and storage management layer for Hadoop that enables users with different data processing tools – Pig, MapReduce, and Hive – to more easily read and write data on the grid. HCatalog’s table abstraction presents users with a relational view of data in the Hadoop distributed file system (HDFS) and ensures that users need not worry about where or in what format their data is stored – RCFile format, text files, or SequenceFiles. </p>
+<p>HCatalog supports reading and writing files in any format for which a SerDe can be written. By default, HCatalog supports RCFile, CSV, JSON, and SequenceFile formats. To use a custom format, you must provide the InputFormat, OutputFormat, and SerDe.</p>
 <p></p>
 <figure src="images/hcat-product.jpg" align="left" alt="HCatalog Product"/>
 
@@ -36,16 +36,15 @@
       
       <section>
       <title>HCatalog Architecture</title>
-      <p>HCatalog is built on top of the Hive metastore and incorporates components from the Hive DDL. HCatalog provides read and write interfaces for Pig and MapReduce and uses
-      Hive's command line interface for issuing data definition and metadata exploration commands.</p>
+      <p>HCatalog is built on top of the Hive metastore and incorporates Hive's DDL. HCatalog provides read and write interfaces for Pig and MapReduce and uses Hive's command line interface for issuing data definition and metadata exploration commands.</p>
 
 <p></p>
 
 <section>
 <title>Interfaces</title>   
-<p>The HCatalog interface for Pig – HCatLoader and HCatStorer – is an implementation of the Pig load and store interfaces. HCatLoader accepts a table to read data from; you can indicate which partitions to scan by immediately following the load statement with a partition filter statement. HCatStorer accepts a table to write to and optionally a specification of partition keys to create a new partition. You can write to a single partition by specifying the partition key(s) and value(s) in the STORE clause; and you can write to multiple partitions if the partition key(s) are columns in the data being stored. HCatLoader and HCatStorer are implemented on top of HCatInputFormat and HCatOutputFormat, respectively (see <a href="loadstore.html">HCatalog Load and Store</a>).</p>
+<p>The HCatalog interface for Pig consists of HCatLoader and HCatStorer, which implement the Pig load and store interfaces respectively. HCatLoader accepts a table to read data from; you can indicate which partitions to scan by immediately following the load statement with a partition filter statement. HCatStorer accepts a table to write to and optionally a specification of partition keys to create a new partition. You can write to a single partition by specifying the partition key(s) and value(s) in the STORE clause; and you can write to multiple partitions if the partition key(s) are columns in the data being stored. HCatLoader is implemented on top of HCatInputFormat and HCatStorer is implemented on top of HCatOutputFormat (see <a href="loadstore.html">HCatalog Load and Store</a>).</p>
 
-<p>The HCatalog interface for MapReduce – HCatInputFormat and HCatOutputFormat – is an implementation of Hadoop InputFormat and OutputFormat. HCatInputFormat accepts a table to read data from and optionally a selection predicate to indicate which partitions to scan. HCatOutputFormat accepts a table to write to and optionally a specification of partition keys to create a new partition. You can write to a single partition by specifying the partition key(s) and value(s) in the STORE clause; and you can write to multiple partitions if the partition key(s) are columns in the data being stored. (See <a href="inputoutput.html">HCatalog Input and Output</a>.)</p>
+<p>HCatInputFormat and HCatOutputFormat are HCatalog's interface for MapReduce; they implement Hadoop's InputFormat and OutputFormat, respectively. HCatInputFormat accepts a table to read data from and optionally a selection predicate to indicate which partitions to scan. HCatOutputFormat accepts a table to write to and optionally a specification of partition keys to create a new partition. You can write to a single partition by specifying the partition key(s) and value(s) in the STORE clause; and you can write to multiple partitions if the partition key(s) are columns in the data being stored. (See <a href="inputoutput.html">HCatalog Input and Output</a>.)</p>
 
 <p>Note: There is no Hive-specific interface. Since HCatalog uses Hive's metastore, Hive can read data in HCatalog directly.</p>
 

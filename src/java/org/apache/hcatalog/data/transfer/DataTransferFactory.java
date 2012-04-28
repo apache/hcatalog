@@ -33,9 +33,9 @@ import org.apache.hcatalog.data.transfer.state.StateProvider;
 public class DataTransferFactory {
 
 	/**
-	 * This should be called once from master node to obtain an instance of {@link HCatReader}
-	 * @param re built using {@link ReadEntity.Builder}
-	 * @param config Any configuration which master node wants to pass to HCatalog
+	 * This should be called once from master node to obtain an instance of {@link HCatReader}.
+	 * @param re ReadEntity built using {@link ReadEntity.Builder}
+	 * @param config any configuration which master node wants to pass to HCatalog
 	 * @return {@link HCatReader}
 	 */
 	public static HCatReader getHCatReader(final ReadEntity re, final Map<String,String> config) {
@@ -44,9 +44,9 @@ public class DataTransferFactory {
 	}
 
 	/**
-	 * This should only be called once from every slave nodes to obtain an instance of {@link HCatReader}
-	 * @param split obtained at master node.
-	 * @param config obtained at master node.
+	 * This should only be called once from every slave node to obtain an instance of {@link HCatReader}.
+	 * @param split input split obtained at master node
+	 * @param config configuration obtained at master node
 	 * @return {@link HCatReader}
 	 */
 	public static HCatReader getHCatReader(final InputSplit split, final Configuration config) {
@@ -55,11 +55,11 @@ public class DataTransferFactory {
 	}
 
 	/**
-	 * This should only be called once from every slave nodes to obtain an instance of {@link HCatReader}
-	 * This should be called if external system has some state to provide to HCatalog
-	 * @param split obtained at master node.
-	 * @param config obtained at master node.
-	 * @param sp 
+	 * This should only be called once from every slave node to obtain an instance of {@link HCatReader}.
+	 * This should be called if an external system has some state to provide to HCatalog.
+	 * @param split input split obtained at master node
+	 * @param config configuration obtained at master node
+	 * @param sp {@link StateProvider}
 	 * @return {@link HCatReader}
 	 */
 	public static HCatReader getHCatReader(final InputSplit split, final Configuration config, StateProvider sp) {
@@ -67,9 +67,9 @@ public class DataTransferFactory {
 		return new HCatInputFormatReader(split, config, sp);
 	}
 	
-	/** This should be called at master node to obtain an instance of {@link HCatWriter}
-	 * @param we built using {@link WriteEntity.Builder}
-	 * @param config Any configuration which master wants to pass to HCatalog
+	/** This should be called at master node to obtain an instance of {@link HCatWriter}.
+	 * @param we WriteEntity built using {@link WriteEntity.Builder}
+	 * @param config any configuration which master wants to pass to HCatalog
 	 * @return {@link HCatWriter}
 	 */
 	public static HCatWriter getHCatWriter(final WriteEntity we, final Map<String,String> config) {
@@ -77,8 +77,8 @@ public class DataTransferFactory {
 		return new HCatOutputFormatWriter(we, config);
 	}
 
-	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}
-	 * @param cntxt {@link WriterContext} obtained at master node.
+ 	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}.
+ 	 * @param cntxt {@link WriterContext} obtained at master node
 	 * @return {@link HCatWriter}
 	 */
 	public static HCatWriter getHCatWriter(final WriterContext cntxt) {
@@ -86,10 +86,10 @@ public class DataTransferFactory {
 		return getHCatWriter(cntxt, DefaultStateProvider.get());
 	}
 	
-	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}
-	 * If external system has some mechanism for providing state to HCatalog, this constructor
+ 	/** This should be called at slave nodes to obtain an instance of {@link HCatWriter}.
+ 	 *  If an external system has some mechanism for providing state to HCatalog, this constructor
 	 *  can be used.
-	 * @param cntxt {@link WriterContext} obtained at master node.
+ 	 * @param cntxt {@link WriterContext} obtained at master node
 	 * @param sp {@link StateProvider} 
 	 * @return {@link HCatWriter}
 	 */

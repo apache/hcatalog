@@ -27,7 +27,7 @@ import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 
-/** The Class used to serialize the partition information read from the metadata server that maps to a partition */
+/** The Class used to serialize the partition information read from the metadata server that maps to a partition. */
 public class PartInfo implements Serializable {
 
   /** The serialization version */
@@ -63,6 +63,8 @@ public class PartInfo implements Serializable {
    * @param storageHandler the storage handler
    * @param location the location
    * @param hcatProperties hcat-specific properties at the partition
+   * @param jobProperties the job properties
+   * @param tableInfo the table information
    */
   public PartInfo(HCatSchema partitionSchema, HCatStorageHandler storageHandler,
                   String location, Properties hcatProperties, 
@@ -116,8 +118,8 @@ public class PartInfo implements Serializable {
   }
 
   /**
-   * Gets the value of hcatProperties.
-   * @return the hcatProperties
+   * Gets the input storage handler properties.
+   * @return HCat-specific properties set at the partition 
    */
   public Properties getInputStorageHandlerProperties() {
     return hcatProperties;
@@ -147,10 +149,18 @@ public class PartInfo implements Serializable {
     return partitionValues;
   }
 
+  /**
+   * Gets the job properties.
+   * @return a map of the job properties
+   */
   public Map<String,String> getJobProperties() {
     return jobProperties;
   }
 
+  /**
+   * Gets the HCatalog table information.
+   * @return the table information
+   */
   public HCatTableInfo getTableInfo() {
     return tableInfo;
   }

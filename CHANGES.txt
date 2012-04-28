@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
+
   HCAT-387 Trunk should point to 0.10 snapshot to match hive trunk (toffer)
 
   HCAT-329 HCatalog build fails with pig 0.9 (traviscrawford via hashutosh)

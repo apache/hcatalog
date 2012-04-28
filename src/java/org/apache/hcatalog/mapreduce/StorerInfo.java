@@ -19,7 +19,7 @@ package org.apache.hcatalog.mapreduce;
 import java.io.Serializable;
 import java.util.Properties;
 
-/** Info about the storer to use for writing the data */
+/** Information about the storer to use for writing the data. */
 public class StorerInfo implements Serializable {
 
     /** The serialization version */
@@ -37,12 +37,12 @@ public class StorerInfo implements Serializable {
     private String storageHandlerClass;
 
     /**
-     * Initialize the storer info
-     * @param ifClass
-     * @param ofClass
-     * @param serdeClass
-     * @param storageHandlerClass
-     * @param properties
+     * Initialize the storer information.
+     * @param ifClass the input format class
+     * @param ofClass the output format class
+     * @param serdeClass the SerDe class
+     * @param storageHandlerClass the storage handler class
+     * @param properties the properties for the storage handler
      */
     public StorerInfo(String ifClass, String ofClass, String serdeClass, String storageHandlerClass, Properties properties) {
       super();
@@ -53,35 +53,50 @@ public class StorerInfo implements Serializable {
       this.properties = properties;
     }
 
+    /**
+     * @return the input format class
+     */
     public String getIfClass() {
         return ifClass;
     }
 
+    /**
+     * @param ifClass the input format class
+     */
     public void setIfClass(String ifClass) {
         this.ifClass = ifClass;
     }
 
+    /**
+     * @return the output format class
+     */
     public String getOfClass() {
         return ofClass;
     }
 
+    /**
+     * @return the serdeClass
+     */
     public String getSerdeClass() {
         return serdeClass;
     }
 
+    /**
+     * @return the storageHandlerClass
+     */
     public String getStorageHandlerClass() {
         return storageHandlerClass;
     }
 
     /**
-     * @return the properties
+     * @return the storer properties
      */
     public Properties getProperties() {
       return properties;
     }
 
     /**
-     * @param properties the properties to set
+     * @param properties the storer properties to set 
      */
     public void setProperties(Properties properties) {
       this.properties = properties;
