@@ -113,7 +113,7 @@
     where you have installed Hive.  If you are using Hive rpms, then this will
     be <code>/usr/lib/hive</code>.</p>
 
-    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hivedb.acme.com</em><code> -p &lt; </code><em>hive_home</em><code>scripts/metastore/upgrade/mysql/hive-schema-0.9.0.mysql.sql</code></p>
+    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hivedb.acme.com</em><code> -p &lt; </code><em>hive_home</em><code>/scripts/metastore/upgrade/mysql/hive-schema-0.9.0.mysql.sql</code></p>
 
     <p><strong>Thrift Server Setup</strong></p>
 

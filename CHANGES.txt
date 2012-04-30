@@ -122,6 +122,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-393 Several hcat 0.4 document fixes (daijy via gates)
+
   HCAT-395 Hcat 0.4 last minute doc fixes (gates)
 
   HCAT-382 NPE in pig when a binary field is null (rohini vi avandana)

@@ -149,28 +149,21 @@ pass the Hive and HCatalog jars MapReduce as well, via the -libjars argument.</p
 export HADOOP_HOME=&lt;path_to_hadoop_install&gt;
 export HCAT_HOME=&lt;path_to_hcat_install&gt;
 export LIB_JARS=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar,
-$HCAT_HOME/share/hcatalog/lib/hive-metastore-0.8.1.jar,$HCAT_HOME/share/hcatalog/lib/libthrift-0.7.0.jar,
-$HCAT_HOME/share/hcatalog/lib/hive-exec-0.8.1.jar,$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar,
-$HCAT_HOME/share/hcatalog/lib/jdo2-api-2.3-ec.jar,$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar,
-$HCAT_HOME/share/hcatalog/lib/antlr-runtime-3.0.1.jar,
-$HCAT_HOME/share/hcatalog/lib/datanucleus-connectionpool-2.0.3.jar,
-$HCAT_HOME/share/hcatalog/lib/datanucleus-core-2.0.3.jar,
-$HCAT_HOME/share/hcatalog/lib/datanucleus-enhancer-2.0.3.jar,
-$HCAT_HOME/share/hcatalog/lib/datanucleus-rdbms-2.0.3.jar,
-$HCAT_HOME/share/hcatalog/lib/commons-dbcp-1.4.jar,
-$HCAT_HOME/share/hcatalog/lib/commons-pool-1.5.4.jar
+$HIVE_HOME/lib/hive-metastore-0.9.0.jar,
+$HIVE_HOME/lib/libthrift-0.7.0.jar,
+$HIVE_HOME/lib/hive-exec-0.9.0.jar,
+$HIVE_HOME/lib/libfb303-0.7.0.jar,
+$HIVE_HOME/lib/jdo2-api-2.3-ec.jar,
+$HIVE_HOME/lib/slf4j-api-1.6.1.jar
+
 export HADOOP_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:
-$HCAT_HOME/share/hcatalog/lib/hive-metastore-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libthrift-0.7.0.jar:
-$HCAT_HOME/share/hcatalog/lib/hive-exec-0.8.1.jar:$HCAT_HOME/share/hcatalog/lib/libfb303-0.7.0.jar:
-$HCAT_HOME/share/hcatalog/lib/jdo2-api-2.3-ec.jar:$HCAT_HOME/share/hcatalog/lib/slf4j-api-1.6.1.jar:
-$HCAT_HOME/share/hcatalog/lib/antlr-runtime-3.0.1.jar:
-$HCAT_HOME/share/hcatalog/lib/datanucleus-connectionpool-2.0.3.jar:
-$HCAT_HOME/share/hcatalog/lib/datanucleus-core-2.0.3.jar:
-$HCAT_HOME/share/hcatalog/lib/datanucleus-enhancer-2.0.3.jar:
-$HCAT_HOME/share/hcatalog/lib/datanucleus-rdbms-2.0.3.jar:
-$HCAT_HOME/share/hcatalog/lib/commons-dbcp-1.4.jar:
-$HCAT_HOME/share/hcatalog/lib/commons-pool-1.5.4.jar:
-$HCAT_HOME/etc/hcatalog
+$HIVE_HOME/lib/hive-metastore-0.9.0.jar:
+$HIVE_HOME/lib/libthrift-0.7.0.jar:
+$HIVE_HOME/lib/hive-exec-0.9.0.jar:
+$HIVE_HOME/lib/libfb303-0.7.0.jar:
+$HIVE_HOME/lib/jdo2-api-2.3-ec.jar:
+$HIVE_HOME/conf:$HADOOP_HOME/conf:
+$HIVE_HOME/lib/slf4j-api-1.6.1.jar
 
 $HADOOP_HOME/bin/hadoop --config $HADOOP_HOME/conf jar &lt;path_to_jar&gt;
 &lt;main_class&gt; -libjars $LIB_JARS &lt;program_arguments&gt;
