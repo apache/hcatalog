@@ -27,7 +27,7 @@
 <section>
 	<title>Set Up</title>
 <p>The HCatalog command line interface (CLI) can be invoked as
-<code>HIVE_HOME=</code><em>hive_home hcat_home</em><code>bin/hcat</code>
+<code>HIVE_HOME=</code><em>hive_home hcat_home</em><code>/bin/hcat</code>
 where <em>hive_home</em> is the directory where Hive has been installed and
 <em>hcat_home</em> is the directory where HCatalog has been installed.</p>
 
@@ -82,6 +82,7 @@ Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" 
      <li>ALTER TABLE ... REBUILD</li> 
      <li>ALTER TABLE ... CONCATENATE</li>
      <li>ANALYZE TABLE ... COMPUTE STATISTICS</li>
+     <li>ALTER TABLE ARCHIVE/UNARCHIVE PARTITION</li>
    </ul>
 
 <section>
@@ -160,6 +161,10 @@ Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" 
 </section>
 	
 	<!-- ==================================================================== -->
+<section>
+	<title>"dfs" command and "set" command</title>
+	<p>Supported. Behavior same as Hive.</p>
+</section>
 <section>
 	<title>Other Commands</title>
 	<p>Any command not listed above is NOT supported and throws an exception with the message "Operation Not Supported". </p>
