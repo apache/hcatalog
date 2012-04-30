@@ -108,6 +108,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-395 Hcat 0.4 last minute doc fixes (gates)
+
   HCAT-394 HCatalog 0.4 should pull hive-0.9.0 from maven instead of 0.9.0-SNAPSHOT (gates)
 
   HCAT-386 e2e tests should respect JAVA_HOME when it's set (gates)

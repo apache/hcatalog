@@ -47,13 +47,27 @@ Major changes since the last release include:
   - Switch from StorageDrivers to SerDes.  See "Backward Incompatibilities"
     below.
   - Addition of JSonSerDe to support reading and writing JSON data.
+  - Rather than releasing rpms from HCatalog, we rely on the rpms provided by
+    Apache Bigtop.
+  - The HCatalog binary distribution no longer includes Apache Hive.  We now
+    require that Hive first be installed.
+  - The HCatalog source distribution no longer includes Apache Hive source.
+    It now pulls the required jars via maven.
+
 
 For a full list of changes see CHANGES.txt located in the same directory as this file.
 
 Backward Incompatibilities
 ==========================
-HCatalog no longer supports its own StorageDriver classes for data 
-(de)serialization.  Instead it uses Hive's SerDe classes.
+- HCatalog no longer supports its own StorageDriver classes for data 
+  (de)serialization.  Instead it uses Hive's SerDe classes.
+- Rather than releasing rpms from HCatalog, we rely on the rpms provided by
+  Apache Bigtop.
+- The HCatalog binary distribution no longer includes Apache Hive.  We now
+  require that Hive first be installed.
+- The HCatalog source distribution no longer includes Apache Hive source.
+  It now pulls the required jars via maven.
+
 
 Notes
 =====
