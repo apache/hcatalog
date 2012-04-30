@@ -126,6 +126,16 @@
     purposes of these instructions we will refer to this machine as
     <em>hcatsvr.acme.com</em>.</p>
 
+    <p>If you have not already done so, install Hive 0.9 on this machine.  You
+    can use the
+    <a href="http://hive.apache.org/releases.html">binary distributions</a> 
+    provided by Hive or rpms available from
+    <a href="http://incubator.apache.org/bigtop/">Apache Bigtop</a>.  If you use
+    the Apache Hive binary distribution, select a directory, henceforth 
+    referred to as <code>hive_home</code>, and untar the distribution there.
+    If you use the rpms, <code>hive_home</code> will be
+    <code>/usr/lib/hive</code>.</p>
+
     <p>Install the MySQL Java connector libraries on <em>hcatsvr.acme.com</em>.
     You can obtain these from
     <a href="http://www.mysql.com/downloads/connector/j/5.1.html">MySQL's
@@ -234,15 +244,6 @@
         </tr>
     </table>
 
-    <p>A more potent script exists in the form of src/packages/hcat-configure.sh
-      which can configure the hive-site.xml to conform to the changes mentioned
-      above. It has predefined values for the most of the above mentioned fields
-      except for the ConnectionPassword and keytabs. It is capable of taking 
-      those fields too as parameters in the command line. Just run it once 
-      without parameters to see a full description of the usage of the script.
-      Users looking to automate the hcat installation should look to leverage
-      this script.
-    </p>
     <p>You can now procede to starting the server.</p>
   </section>
 
@@ -271,7 +272,7 @@
     <title>Stopping the Server</title>
 
     <p>To stop the HCatalog server, change directories to the <em>root</em>
-    directory and invoking <code>sbin/hcat_server.sh stop</code></p>
+    directory and invoking <code>HIVE_HOME=</code><em>hive_home</em><code> sbin/hcat_server.sh stop</code></p>
 
   </section>
 
