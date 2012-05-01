@@ -150,12 +150,10 @@ public class JsonSerDe implements SerDe {
         populateRecord(r,token,p,schema);
       }
     } catch (JsonParseException e) {
-        LOG.warn("Error [{}] parsing json text [{}].", e, t);
-        LOG.debug(null,e);
+        LOG.warn("Error [{}] parsing json location [{}].", e.getMessage(), e.getLocation());
       throw new SerDeException(e);
     } catch (IOException e) {
-        LOG.warn("Error [{}] parsing json text [{}].", e, t);
-        LOG.debug(null,e);
+        LOG.warn("Error [{}] parsing json text [{}].", e.getMessage(),t);
       throw new SerDeException(e);
     }
 

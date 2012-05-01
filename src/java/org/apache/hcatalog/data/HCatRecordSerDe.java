@@ -87,8 +87,8 @@ public class HCatRecordSerDe implements SerDe {
     }
 
 
-    LOG.debug("columns: {} {}",columnNameProperty,columnNames);
-    LOG.debug("types: {} {}", columnTypeProperty, columnTypes);
+    LOG.debug("columns: {}",columnNameProperty,columnNames);
+    LOG.debug("types: {}", columnTypeProperty, columnTypes);
     assert (columnNames.size() == columnTypes.size());
 
     rowTypeInfo = (StructTypeInfo) TypeInfoFactory.getStructTypeInfo(columnNames, columnTypes);
