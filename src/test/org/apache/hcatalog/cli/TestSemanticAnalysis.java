@@ -44,12 +44,15 @@ import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.listener.NotificationListener;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestSemanticAnalysis extends TestCase{
 
   private Driver hcatDriver;
   private Driver hiveDriver;
   private HiveMetaStoreClient msc;
+  private static final Logger LOG = LoggerFactory.getLogger(TestSemanticAnalysis.class);
 
   @Override
   protected void setUp() throws Exception {
@@ -62,7 +65,7 @@ public class TestSemanticAnalysis extends TestCase{
 
     HiveConf hiveConf = new HiveConf(hcatConf,this.getClass());
     hiveDriver = new Driver(hiveConf);
-  
+
     hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
     hcatDriver = new Driver(hcatConf);
 
@@ -83,7 +86,7 @@ public class TestSemanticAnalysis extends TestCase{
 	assertTrue(result.get(0).contains("mydb.db"));
 	hcatDriver.run("drop database mydb cascade");
   }
-  
+
   public void testCreateTblWithLowerCasePartNames() throws CommandNeedRetryException, MetaException, TException, NoSuchObjectException{
     hiveDriver.run("drop table junit_sem_analysis");
     CommandProcessorResponse resp = hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (B string) stored as TEXTFILE");
@@ -93,7 +96,7 @@ public class TestSemanticAnalysis extends TestCase{
     assertEquals("Partition key name case problem", "b" , tbl.getPartitionKeys().get(0).getName());
     hiveDriver.run("drop table junit_sem_analysis");
   }
-  
+
   public void testAlterTblFFpart() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException {
 
     hiveDriver.run("drop table junit_sem_analysis");
@@ -117,9 +120,9 @@ public class TestSemanticAnalysis extends TestCase{
 
 
   public void testUsNonExistentDB() throws CommandNeedRetryException {
-	assertEquals(9, hcatDriver.run("use no_such_db").getResponseCode());  
+	assertEquals(9, hcatDriver.run("use no_such_db").getResponseCode());
   }
-  
+
   public void testDatabaseOperations() throws MetaException, CommandNeedRetryException {
 
     List<String> dbs = msc.getAllDatabases();
@@ -208,7 +211,7 @@ public class TestSemanticAnalysis extends TestCase{
     response = hcatDriver.run("alter table junit_sem_analysis add columns (d tinyint)");
     assertEquals(0, response.getResponseCode());
     assertNull(response.getErrorMessage());
-    
+
     response = hcatDriver.run("describe extended junit_sem_analysis");
     assertEquals(0, response.getResponseCode());
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
@@ -358,7 +361,7 @@ public class TestSemanticAnalysis extends TestCase{
       hcatDriver.run("drop table junit_sem_analysis");
     }
     catch( Exception e){
-      System.err.println(e.getMessage());
+      LOG.error("Error in drop table.",e);
     }
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE";
 

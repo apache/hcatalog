@@ -26,21 +26,15 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
@@ -49,8 +43,6 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
-import org.apache.hadoop.hive.serde2.SerDe;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
@@ -59,12 +51,8 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenIdentifier;
 import org.apache.hadoop.security.token.delegation.AbstractDelegationTokenIdentifier;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.hcatalog.data.DataType;
-import org.apache.hcatalog.data.HCatRecord;
-import org.apache.hcatalog.data.HCatRecordSerDe;
 import org.apache.hcatalog.data.Pair;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
@@ -77,10 +65,12 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.apache.hcatalog.mapreduce.PartInfo;
 import org.apache.hcatalog.mapreduce.StorerInfo;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HCatUtil {
 
-    static final private Log LOG = LogFactory.getLog(HCatUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HCatUtil.class);
 
     public static boolean checkJobContextIfRunningFromBackend(JobContext j) {
         if (j.getConfiguration().get("mapred.task.id", "").equals("")) {
@@ -370,72 +360,6 @@ public class HCatUtil {
     }
 
     /**
-     * Logging stack trace
-     *
-     * @param logger
-     */
-    public static void logStackTrace(Log logger) {
-        StackTraceElement[] stackTrace = new Exception().getStackTrace();
-        for (int i = 1; i < stackTrace.length; i++) {
-            logger.debug("\t" + stackTrace[i].toString());
-        }
-    }
-
-    /**
-     * debug log the hive conf
-     *
-     * @param logger
-     * @param hc
-     */
-    public static void logHiveConf(Log logger, HiveConf hc) {
-        logEntrySet(logger, "logging hiveconf:", hc.getAllProperties()
-                .entrySet());
-    }
-
-    public static void logList(Log logger, String itemName,
-            List<? extends Object> list) {
-        logger.debug(itemName + ":");
-        for (Object item : list) {
-            logger.debug("\t[" + item + "]");
-        }
-    }
-
-    public static void logMap(Log logger, String itemName,
-            Map<? extends Object, ? extends Object> map) {
-        logEntrySet(logger, itemName, map.entrySet());
-    }
-
-    public static void logEntrySet(Log logger, String itemName,
-            Set<? extends Entry> entrySet) {
-        logIterableSet(logger,itemName,entrySet.iterator());
-    }
-
-    public static void logIterableSet(Log logger, String itemName, Iterator<? extends Entry> iterator){
-      logger.info(itemName + ":");
-      while (iterator.hasNext()){
-        Entry e = iterator.next();
-        logger.debug("\t[" + e.getKey() + "]=>[" + e.getValue() + "]");
-      }
-    }
-    
-    public static void logAllTokens(Log logger, JobContext context)
-            throws IOException {
-        for (Token<? extends TokenIdentifier> t : context.getCredentials()
-                .getAllTokens()) {
-            logToken(logger, "token", t);
-        }
-    }
-
-    public static void logToken(Log logger, String itemName,
-            Token<? extends TokenIdentifier> t) throws IOException {
-        logger.info(itemName + ":");
-        logger.info("\tencodeToUrlString : " + t.encodeToUrlString());
-        logger.info("\ttoString : " + t.toString());
-        logger.info("\tkind : " + t.getKind());
-        logger.info("\tservice : " + t.getService());
-    }
-
-    /**
      * Create an instance of a storage handler defined in storerInfo. If one cannot be found
      * then FosterStorageHandler is used to encapsulate the InputFormat, OutputFormat and SerDe.
      * This StorageHandler assumes the other supplied storage artifacts are for a file-based storage system.
@@ -451,12 +375,12 @@ public class HCatUtil {
                                  storerInfo.getIfClass(),
                                  storerInfo.getOfClass());
     }
-    
+
     public static HCatStorageHandler getStorageHandler(Configuration conf, PartInfo partitionInfo) throws IOException {
       return HCatUtil.getStorageHandler(
-          conf, 
-          partitionInfo.getStorageHandlerClassName(), 
-          partitionInfo.getSerdeClassName(), 
+          conf,
+          partitionInfo.getStorageHandlerClassName(),
+          partitionInfo.getSerdeClassName(),
           partitionInfo.getInputFormatClassName(),
           partitionInfo.getOutputFormatClassName());
     }
@@ -477,7 +401,7 @@ public class HCatUtil {
                                                        String storageHandler,
                                                        String serDe,
                                                        String inputFormat,
-                                                       String outputFormat) 
+                                                       String outputFormat)
     throws IOException {
 
         if ((storageHandler == null) || (storageHandler.equals(FosterStorageHandler.class.getName()))){
@@ -493,7 +417,7 @@ public class HCatUtil {
         }
 
         try {
-            Class<? extends HCatStorageHandler> handlerClass = 
+            Class<? extends HCatStorageHandler> handlerClass =
                         (Class<? extends HCatStorageHandler>) Class
                     .forName(storageHandler, true, JavaUtils.getClassLoader());
             return (HCatStorageHandler)ReflectionUtils.newInstance(
@@ -530,26 +454,26 @@ public class HCatUtil {
         Map<String,String> jobProperties = new HashMap<String,String>();
         try {
             tableDesc.getJobProperties().put(
-                HCatConstants.HCAT_KEY_JOB_INFO, 
+                HCatConstants.HCAT_KEY_JOB_INFO,
                 HCatUtil.serialize(inputJobInfo));
 
             storageHandler.configureInputJobProperties(tableDesc,
-                                                       jobProperties);
+                                                                jobProperties);
 
         } catch (IOException e) {
             throw new IllegalStateException(
                 "Failed to configure StorageHandler",e);
         }
-        
+
         return jobProperties;
     }
 
 
-    public static void 
+    public static void
       configureOutputStorageHandler(HCatStorageHandler storageHandler,
                                     JobContext context,
                                     OutputJobInfo outputJobInfo) {
-        //TODO replace IgnoreKeyTextOutputFormat with a 
+        //TODO replace IgnoreKeyTextOutputFormat with a
         //HiveOutputFormatWrapper in StorageHandler
         TableDesc tableDesc = new TableDesc(storageHandler.getSerDeClass(),
                   storageHandler.getInputFormatClass(),
@@ -564,7 +488,7 @@ public class HCatUtil {
         Map<String,String> jobProperties = new HashMap<String,String>();
         try {
             tableDesc.getJobProperties().put(
-                HCatConstants.HCAT_KEY_OUTPUT_INFO, 
+                HCatConstants.HCAT_KEY_OUTPUT_INFO,
                 HCatUtil.serialize(outputJobInfo));
 
             storageHandler.configureOutputJobProperties(tableDesc,
@@ -606,7 +530,7 @@ public class HCatUtil {
     }
 
 
-    public static HiveConf getHiveConf(Configuration conf) 
+    public static HiveConf getHiveConf(Configuration conf)
       throws IOException {
 
       HiveConf hiveConf = new HiveConf(conf, HCatUtil.class);
@@ -614,7 +538,7 @@ public class HCatUtil {
       //copy the hive conf into the job conf and restore it
       //in the backend context
       if( conf.get(HCatConstants.HCAT_KEY_HIVE_CONF) == null ) {
-        conf.set(HCatConstants.HCAT_KEY_HIVE_CONF, 
+        conf.set(HCatConstants.HCAT_KEY_HIVE_CONF,
             HCatUtil.serialize(hiveConf.getAllProperties()));
       } else {
         //Copy configuration properties into the hive conf
@@ -625,22 +549,22 @@ public class HCatUtil {
           if( prop.getValue() instanceof String ) {
             hiveConf.set((String) prop.getKey(), (String) prop.getValue());
           } else if( prop.getValue() instanceof Integer ) {
-            hiveConf.setInt((String) prop.getKey(), 
+            hiveConf.setInt((String) prop.getKey(),
                 (Integer) prop.getValue());
           } else if( prop.getValue() instanceof Boolean ) {
-            hiveConf.setBoolean((String) prop.getKey(), 
+            hiveConf.setBoolean((String) prop.getKey(),
                 (Boolean) prop.getValue());
           } else if( prop.getValue() instanceof Long ) {
             hiveConf.setLong((String) prop.getKey(), (Long) prop.getValue());
           } else if( prop.getValue() instanceof Float ) {
-            hiveConf.setFloat((String) prop.getKey(), 
+            hiveConf.setFloat((String) prop.getKey(),
                 (Float) prop.getValue());
           }
         }
       }
 
       if(conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-        hiveConf.set("hive.metastore.token.signature", 
+        hiveConf.set("hive.metastore.token.signature",
                      conf.get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE));
       }
 
@@ -648,7 +572,7 @@ public class HCatUtil {
     }
 
 
-    public static JobConf getJobConfFromContext(JobContext jobContext) 
+    public static JobConf getJobConfFromContext(JobContext jobContext)
     {
       JobConf jobConf;
       // we need to convert the jobContext into a jobConf
@@ -657,7 +581,7 @@ public class HCatUtil {
       jobConf = new JobConf(jobContext.getConfiguration());
       // ..end of conversion
 
-      
+
       return jobConf;
     }
 

@@ -22,24 +22,20 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapreduce.InputSplit;
-
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The HCatSplit wrapper around the InputSplit returned by the underlying InputFormat */
-public class HCatSplit extends InputSplit 
+public class HCatSplit extends InputSplit
   implements Writable,org.apache.hadoop.mapred.InputSplit {
 
-    Log LOG = LogFactory.getLog(HCatSplit.class);
-    
+    private static final Logger LOG = LoggerFactory.getLogger(HCatSplit.class);
     /** The partition info for the split. */
     private PartInfo partitionInfo;
 
@@ -64,7 +60,7 @@ public class HCatSplit extends InputSplit
      * @param baseMapRedSplit the base mapred split
      * @param tableSchema the table level schema
      */
-    public HCatSplit(PartInfo partitionInfo, 
+    public HCatSplit(PartInfo partitionInfo,
         org.apache.hadoop.mapred.InputSplit baseMapRedSplit,
         HCatSchema tableSchema) {
 
@@ -97,7 +93,7 @@ public class HCatSplit extends InputSplit
     public HCatSchema getDataSchema() {
         return this.partitionInfo.getPartitionSchema();
     }
-    
+
     /**
      * Gets the table schema.
      * @return the table schema
@@ -114,8 +110,7 @@ public class HCatSplit extends InputSplit
         try {
           return baseMapRedSplit.getLength();
         } catch (IOException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
+          LOG.warn("Exception in HCatSplit",e);
         }
         return 0; // we errored
     }
@@ -128,8 +123,7 @@ public class HCatSplit extends InputSplit
         try {
           return baseMapRedSplit.getLocations();
         } catch (IOException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
+            LOG.warn("Exception in HCatSplit",e);
         }
         return new String[0]; // we errored
     }
@@ -151,7 +145,7 @@ public class HCatSplit extends InputSplit
 
             //Class.forName().newInstance() does not work if the underlying
             //InputSplit has package visibility
-            Constructor<? extends org.apache.hadoop.mapred.InputSplit> 
+            Constructor<? extends org.apache.hadoop.mapred.InputSplit>
               constructor =
                 splitClass.getDeclaredConstructor(new Class[]{});
             constructor.setAccessible(true);

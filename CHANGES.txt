@@ -80,6 +80,8 @@ Release 0.4.0 - Unreleased
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-68 Logging from HCat (avandana via toffer)
+
   HCAT-383 Add clover to build.xml (gates)
 
   HCAT-372 Add filter information to Load/Store and Input/Output docs (lefty via gates)

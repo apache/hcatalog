@@ -19,39 +19,30 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.SerDe;
-
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.LazyHCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.hcatalog.data.schema.HCatFieldSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/** The HCat wrapper for the underlying RecordReader, 
+/** The HCat wrapper for the underlying RecordReader,
  * this ensures that the initialize on
- * the underlying record reader is done with the underlying split, 
+ * the underlying record reader is done with the underlying split,
  * not with HCatSplit.
  */
 class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
-  
-    Log LOG = LogFactory.getLog(HCatRecordReader.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(HCatRecordReader.class);
     WritableComparable currentKey;
     Writable currentValue;
 
@@ -74,28 +65,28 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      * Instantiates a new hcat record reader.
      * @param baseRecordReader the base record reader
      */
-    public HCatRecordReader(HCatStorageHandler storageHandler, 
-        org.apache.hadoop.mapred.RecordReader<WritableComparable, 
-                     Writable> baseRecordReader, 
-                     SerDe serde, 
+    public HCatRecordReader(HCatStorageHandler storageHandler,
+        org.apache.hadoop.mapred.RecordReader<WritableComparable,
+                     Writable> baseRecordReader,
+                     SerDe serde,
                      Map<String,String> valuesNotInDataCols) {
       this.baseRecordReader = baseRecordReader;
       this.storageHandler = storageHandler;
       this.serde = serde;
       this.valuesNotInDataCols = valuesNotInDataCols;
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.RecordReader#initialize(
-     * org.apache.hadoop.mapreduce.InputSplit, 
+     * org.apache.hadoop.mapreduce.InputSplit,
      * org.apache.hadoop.mapreduce.TaskAttemptContext)
      */
     @Override
-    public void initialize(org.apache.hadoop.mapreduce.InputSplit split, 
+    public void initialize(org.apache.hadoop.mapreduce.InputSplit split,
                            TaskAttemptContext taskContext)
     throws IOException, InterruptedException {
         org.apache.hadoop.mapred.InputSplit baseSplit;
-        
+
         // Pull the output schema out of the TaskAttemptContext
         outputSchema = (HCatSchema)HCatUtil.deserialize(
           taskContext.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA));
@@ -113,9 +104,9 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
         // Pull the table schema out of the Split info
         // TODO This should be passed in the TaskAttemptContext instead
         dataSchema = ((HCatSplit)split).getDataSchema();
-        
+
         Properties properties = new Properties();
-        for (Map.Entry<String, String>param : 
+        for (Map.Entry<String, String>param :
             ((HCatSplit)split).getPartitionInfo()
                               .getJobProperties().entrySet()) {
           properties.setProperty(param.getKey(), param.getValue());
@@ -126,7 +117,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentKey()
      */
     @Override
-    public WritableComparable getCurrentKey() 
+    public WritableComparable getCurrentKey()
     throws IOException, InterruptedException {
       return currentKey;
     }
@@ -135,7 +126,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentValue()
      */
     @Override
-    public HCatRecord getCurrentValue() 
+    public HCatRecord getCurrentValue()
     throws IOException, InterruptedException {
       HCatRecord r;
 
@@ -153,10 +144,10 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
           }
           i++;
         }
-        
+
         return dr;
-          
-      } catch (Exception e) { 
+
+      } catch (Exception e) {
         throw new IOException("Failed to create HCatRecord ",e);
       }
     }
@@ -169,8 +160,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
         try {
           return baseRecordReader.getProgress();
         } catch (IOException e) {
-          LOG.warn(e.getMessage());
-          LOG.warn(e.getStackTrace());
+            LOG.warn("Exception in HCatRecord reader",e);
         }
         return 0.0f; // errored
     }
@@ -185,7 +175,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
         currentValue = baseRecordReader.createValue();
       }
 
-        return baseRecordReader.next(currentKey, 
+        return baseRecordReader.next(currentKey,
                                      currentValue);
     }
 

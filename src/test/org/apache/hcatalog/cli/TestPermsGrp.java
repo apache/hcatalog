@@ -49,6 +49,8 @@ import org.apache.hcatalog.cli.HCatCli;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestPermsGrp extends TestCase {
 
@@ -58,6 +60,7 @@ public class TestPermsGrp extends TestCase {
   private Warehouse clientWH;
   private Thread t;
   private HiveMetaStoreClient msc;
+  private static final Logger LOG = LoggerFactory.getLogger(TestPermsGrp.class);
 
   private static class RunMS implements Runnable {
 
@@ -66,7 +69,7 @@ public class TestPermsGrp extends TestCase {
       try {
         HiveMetaStore.main(new String[]{"-v","-p",msPort});
       } catch(Throwable t) {
-        System.err.println("Exiting. Got exception from metastore: " + t.getMessage()); 
+          LOG.error("Exiting. Got exception from metastore: ", t);
       }
     }
 
@@ -193,8 +196,7 @@ public class TestPermsGrp extends TestCase {
       }
 
     } catch (Exception e) {
-      System.err.println(StringUtils.stringifyException(e));
-      System.err.println("testCustomPerms failed.");
+        LOG.error("testCustomPerms failed.", e);
       throw e;
     }
   }

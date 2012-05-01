@@ -60,7 +60,9 @@
           rev="${hadoop-test.version}" conf="common->master" />
         <dependency org="javax.jms" name="jms" rev="${jms.version}"
           conf="common->master" />
-        <dependency org="org.apache.activemq" name="activemq-all"
+        <dependency org="org.apache.activemq" name="activemq-core"
+          rev="${activemq.version}" conf="common->master" />
+	<dependency org="org.apache.activemq" name="kahadb"
           rev="${activemq.version}" conf="common->master" />
         <dependency org="javax.management.j2ee" name="management-api"
           rev="${javax-mgmt.version}" conf="common->master" /> 

@@ -23,8 +23,6 @@ import java.net.URI;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.cli.CliSessionState;
@@ -39,6 +37,8 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.common.HCatConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class TestEximSemanticAnalysis extends TestCase {
@@ -47,7 +47,7 @@ public class TestEximSemanticAnalysis extends TestCase {
   private HiveConf hcatConf;
   private HCatDriver hcatDriver;
   private Warehouse wh;
-  private static final Log LOG = LogFactory.getLog(TestEximSemanticAnalysis.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TestEximSemanticAnalysis.class);
 
   @Override
   protected void setUp() throws Exception {
@@ -93,7 +93,7 @@ public class TestEximSemanticAnalysis extends TestCase {
     Runtime.getRuntime().exec("rm -rf /tmp/hcat");
     response = hcatDriver.run("drop table junit_sem_analysis");
     if (response.getResponseCode() != 0) {
-      System.err.println(response.getErrorMessage());
+      LOG.error(response.getErrorMessage());
       fail("Drop table failed");
     }
   }
@@ -130,7 +130,7 @@ public class TestEximSemanticAnalysis extends TestCase {
     cluster.getFileSystem().setPermission(whPath, FsPermission.valueOf("-rwxrwxrwx"));
     response = hcatDriver.run("drop table junit_sem_analysis");
     if (response.getResponseCode() != 0) {
-      System.err.println(response.getErrorMessage());
+        LOG.error(response.getErrorMessage());
       fail("Drop table failed");
     }
   }
@@ -164,7 +164,7 @@ public class TestEximSemanticAnalysis extends TestCase {
 
     response = hcatDriver.run("drop table junit_sem_analysis_imported");
     if (response.getResponseCode() != 0) {
-      System.err.println(response.getErrorMessage());
+      LOG.error(response.getErrorMessage());
       fail("Drop table failed");
     }
   }

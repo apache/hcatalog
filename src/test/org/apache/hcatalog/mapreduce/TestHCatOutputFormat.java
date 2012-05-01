@@ -42,8 +42,12 @@ import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestHCatOutputFormat extends TestCase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestHCatOutputFormat.class);
   private HiveMetaStoreClient client;
   private HiveConf hiveConf;
 
@@ -60,8 +64,7 @@ public class TestHCatOutputFormat extends TestCase {
 
       initTable();
     } catch (Throwable e) {
-      System.err.println("Unable to open the metastore");
-      System.err.println(StringUtils.stringifyException(e));
+      LOG.error("Unable to open the metastore", e);
       throw new Exception(e);
     }
   }
@@ -75,8 +78,7 @@ public class TestHCatOutputFormat extends TestCase {
 
       client.close();
     } catch (Throwable e) {
-      System.err.println("Unable to close metastore");
-      System.err.println(StringUtils.stringifyException(e));
+        LOG.error("Unable to close metastore", e);
       throw new Exception(e);
     }
   }

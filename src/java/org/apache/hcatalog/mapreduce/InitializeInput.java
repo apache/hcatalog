@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -39,6 +37,8 @@ import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Class which handles querying the metadata server using the MetaStoreClient. The list of
@@ -48,7 +48,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  */
 public class InitializeInput {
 
-  private static final Log LOG = LogFactory.getLog(InitializeInput.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InitializeInput.class);
 
   /**
    * Set the input to use for the Job. This queries the metadata server with the specified partition predicates,

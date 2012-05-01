@@ -139,7 +139,7 @@ public class HCatCli {
     }
 
     if (execString != null && fileName != null) {
-      System.err.println("The '-e' and '-f' options cannot be specified simultaneously");
+      ss.err.println("The '-e' and '-f' options cannot be specified simultaneously");
       printUsage(options,ss.err);
       System.exit(1);
     }
