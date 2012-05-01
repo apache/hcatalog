@@ -48,6 +48,8 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.har.HarOutputCommitterPostProcessor;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -64,6 +66,7 @@ import java.util.Map.Entry;
  */
 class FileOutputCommitterContainer extends OutputCommitterContainer {
 
+    private static final Logger LOG = LoggerFactory.getLogger(FileOutputCommitterContainer.class);
     private final boolean dynamicPartitioningUsed;
     private boolean partitionsDiscovered;
 
@@ -436,20 +439,18 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
         partition.setParameters(params);
 
-        // Sets permissions and group name on partition dirs.
+        // Sets permissions and group name on partition dirs and files.
 
         Path partPath = new Path(partLocnRoot);
-        for(FieldSchema partKey : table.getPartitionKeys()){
-            partPath = constructPartialPartPath(partPath, partKey.getName().toLowerCase(), partKVs);
-//        LOG.info("Setting perms for "+partPath.toString());
-            fs.setPermission(partPath, perms);
-            try{
-                fs.setOwner(partPath, null, grpName);
-            } catch(AccessControlException ace){
-                // log the messages before ignoring. Currently, logging is not built in Hcatalog.
-//          LOG.warn(ace);
+        int i = 0;
+        for (FieldSchema partKey : table.getPartitionKeys()) {
+            if (i++ != 0) {
+                applyGroupAndPerms(fs, partPath, perms, grpName, false);
             }
+            partPath = constructPartialPartPath(partPath, partKey.getName().toLowerCase(), partKVs);
         }
+        // Apply the group and permissions to the leaf partition and files.
+        applyGroupAndPerms(fs, partPath, perms, grpName, true);
         if (dynamicPartitioningUsed){
             String dynamicPartitionDestination = getFinalDynamicPartitionDestination(table,partKVs);
             if (harProcessor.isEnabled()){
@@ -466,7 +467,30 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         return partition;
     }
 
-
+    private void applyGroupAndPerms(FileSystem fs, Path dir, FsPermission permission,
+            String group, boolean recursive)
+            throws IOException {
+        fs.setPermission(dir, permission);
+        try {
+            fs.setOwner(dir, null, group);
+        } catch (AccessControlException ace) {
+            LOG.warn("Error changing group of " + dir, ace);
+        }
+        if (recursive) {
+            for (FileStatus fileStatus : fs.listStatus(dir)) {
+                if (fileStatus.isDir()) {
+                    applyGroupAndPerms(fs, fileStatus.getPath(), permission, group, recursive);
+                } else {
+                    fs.setPermission(fileStatus.getPath(), permission);
+                    try {
+                        fs.setOwner(dir, null, group);
+                    } catch (AccessControlException ace) {
+                        LOG.warn("Error changing group of " + dir, ace);
+                    }
+                }
+            }
+        }
+    }
 
     private String getFinalDynamicPartitionDestination(Table table, Map<String,String> partKVs) {
         // file:///tmp/hcat_junit_warehouse/employee/_DYN0.7770480401313761/emp_country=IN/emp_state=KA  ->
