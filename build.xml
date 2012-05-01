@@ -606,6 +606,7 @@
                 <include name="license/**"/>
                 <include name="shims/**"/>
                 <include name="src/**"/>
+                <include name="lib/"/> <!-- want just the directory, not any contents -->
                 <include name="storage-handlers/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>

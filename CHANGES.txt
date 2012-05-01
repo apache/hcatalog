@@ -124,6 +124,8 @@ Release 0.4.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-396 src-release leaves out lib directory (gates)
+
   HCAT-393 Several hcat 0.4 document fixes (daijy via gates)
 
   HCAT-395 Hcat 0.4 last minute doc fixes (gates)
