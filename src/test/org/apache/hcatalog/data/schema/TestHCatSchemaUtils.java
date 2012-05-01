@@ -24,13 +24,13 @@ import junit.framework.TestCase;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.data.schema.HCatFieldSchema;
-import org.apache.hcatalog.data.schema.HCatSchema;
-import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestHCatSchemaUtils extends TestCase {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TestHCatSchemaUtils.class);
     public void testSimpleOperation() throws Exception{
         String typeString = "struct<name:string,studentid:int,"
             + "contact:struct<phno:string,email:string>,"
@@ -41,8 +41,8 @@ public class TestHCatSchemaUtils extends TestCase {
         TypeInfo ti = TypeInfoUtils.getTypeInfoFromTypeString(typeString);
 
         HCatSchema hsch = HCatSchemaUtils.getHCatSchemaFromTypeString(typeString);
-        System.out.println(ti.getTypeName());
-        System.out.println(hsch.toString());
+        LOG.info(ti.getTypeName());
+        LOG.info("HCatSchema : {}",hsch);
         assertEquals(ti.getTypeName(),hsch.toString());
         assertEquals(hsch.toString(),typeString);
     }

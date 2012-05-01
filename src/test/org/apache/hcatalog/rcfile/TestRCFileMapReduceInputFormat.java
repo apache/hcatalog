@@ -25,8 +25,6 @@ import java.util.Properties;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -44,8 +42,9 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
-import org.apache.hcatalog.rcfile.RCFileMapReduceInputFormat;
 import org.apache.hcatalog.shims.HCatHadoopShims;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
   /**
    * TestRCFile.
@@ -53,7 +52,7 @@ import org.apache.hcatalog.shims.HCatHadoopShims;
    */
   public class TestRCFileMapReduceInputFormat extends TestCase {
 
-    private static final Log LOG = LogFactory.getLog(TestRCFileMapReduceInputFormat.class);
+    private static final Logger LOG = LoggerFactory.getLogger(TestRCFileMapReduceInputFormat.class);
 
     private static Configuration conf = new Configuration();
 
@@ -124,7 +123,7 @@ import org.apache.hcatalog.shims.HCatHadoopShims;
 
       String usage = "Usage: RCFile " + "[-count N]" + " file";
       if (args.length == 0) {
-        System.err.println(usage);
+        LOG.error(usage);
         System.exit(-1);
       }
 
@@ -141,16 +140,16 @@ import org.apache.hcatalog.shims.HCatHadoopShims;
         }
 
         if (file == null) {
-          System.err.println(usage);
+          LOG.error(usage);
           System.exit(-1);
         }
 
-        LOG.info("count = " + count);
-        LOG.info("create = " + create);
-        LOG.info("file = " + file);
+        LOG.info("count = {}", count);
+        LOG.info("create = {}", create);
+        LOG.info("file = {}" ,file);
 
            // test.performanceTest();
-        System.out.println("Finished.");
+        LOG.info("Finished.");
       } finally {
         fs.close();
       }

@@ -21,18 +21,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
+
+import junit.framework.TestCase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-
-import junit.framework.Assert;
-import junit.framework.TestCase;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestJsonSerDe extends TestCase{
+
+  private static final Logger LOG = LoggerFactory.getLogger(TestJsonSerDe.class);
 
   public List<Pair<Properties,HCatRecord>> getData(){
     List<Pair<Properties,HCatRecord>> data = new ArrayList<Pair<Properties,HCatRecord>>();
@@ -51,12 +52,12 @@ public class TestJsonSerDe extends TestCase{
     innerStruct.add(new String("abc"));
     innerStruct.add(new String("def"));
     rlist.add(innerStruct);
-    
+
     List<Integer> innerList = new ArrayList<Integer>();
     innerList.add(314);
     innerList.add(007);
     rlist.add(innerList);
-    
+
     Map<Short, String> map = new HashMap<Short, String>(3);
     map.put(new Short("2"), "hcat is cool");
     map.put(new Short("3"), "is it?");
@@ -64,7 +65,7 @@ public class TestJsonSerDe extends TestCase{
     rlist.add(map);
 
     rlist.add(new Boolean(true));
-    
+
     List<Object> c1 = new ArrayList<Object>();
       List<Object> c1_1 = new ArrayList<Object>();
       c1_1.add(new Integer(12));
@@ -81,7 +82,7 @@ public class TestJsonSerDe extends TestCase{
       c1_1.add(i2);
       c1.add(c1_1);
     rlist.add(c1);
-    
+
     List<Object> nlist = new ArrayList<Object>(13);
     nlist.add(null); // tinyint
     nlist.add(null); // smallint
@@ -97,12 +98,12 @@ public class TestJsonSerDe extends TestCase{
     nlist.add(null); // bool
     nlist.add(null); // complex
 
-    String typeString = 
+    String typeString =
         "tinyint,smallint,int,bigint,double,float,string,string,"
         + "struct<a:string,b:string>,array<int>,map<smallint,string>,boolean,"
         + "array<struct<i1:int,i2:struct<ii1:array<int>,ii2:map<string,struct<iii1:int>>>>>";
     Properties props = new Properties();
-    
+
     props.put(Constants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1");
     props.put(Constants.LIST_COLUMN_TYPES, typeString);
 //    props.put(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
@@ -120,26 +121,26 @@ public class TestJsonSerDe extends TestCase{
     for (Pair<Properties,HCatRecord> e : getData()){
       Properties tblProps = e.first;
       HCatRecord r = e.second;
-      
+
       HCatRecordSerDe hrsd = new HCatRecordSerDe();
       hrsd.initialize(conf, tblProps);
 
       JsonSerDe jsde = new JsonSerDe();
       jsde.initialize(conf, tblProps);
-      
-      System.out.println("ORIG:"+r.toString());
+
+      LOG.info("ORIG:{}",r);
 
       Writable s = hrsd.serialize(r,hrsd.getObjectInspector());
-      System.out.println("ONE:"+s.toString());
-      
+      LOG.info("ONE:{}",s);
+
       Object o1 = hrsd.deserialize(s);
       assertTrue(HCatDataCheckUtil.recordsEqual(r, (HCatRecord) o1));
-      
+
       Writable s2 = jsde.serialize(o1, hrsd.getObjectInspector());
-      System.out.println("TWO:"+s2.toString());
+      LOG.info("TWO:{}",s2);
       Object o2 = jsde.deserialize(s2);
-      System.out.println("deserialized TWO : "+o2);
-      
+      LOG.info("deserialized TWO : {} ", o2);
+
       assertTrue(HCatDataCheckUtil.recordsEqual(r, (HCatRecord) o2));
     }
 

@@ -21,8 +21,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -32,23 +30,24 @@ import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ObjectInspectorFactory for HCatRecordObjectInspectors (and associated helper inspectors)
  */
 public class HCatRecordObjectInspectorFactory {
-  
-  public static final Log LOG = LogFactory
-      .getLog(HCatRecordObjectInspectorFactory.class.getName());
 
-  static HashMap<TypeInfo, HCatRecordObjectInspector> cachedHCatRecordObjectInspectors = 
+  private final static Logger LOG = LoggerFactory.getLogger(HCatRecordObjectInspectorFactory.class);
+
+  static HashMap<TypeInfo, HCatRecordObjectInspector> cachedHCatRecordObjectInspectors =
       new HashMap<TypeInfo, HCatRecordObjectInspector>();
-  static HashMap<TypeInfo, ObjectInspector> cachedObjectInspectors = 
+  static HashMap<TypeInfo, ObjectInspector> cachedObjectInspectors =
       new HashMap<TypeInfo, ObjectInspector>();
 
   /**
    * Returns HCatRecordObjectInspector given a StructTypeInfo type definition for the record to look into
-   * @param typeInfo Type definition for the record to look into 
+   * @param typeInfo Type definition for the record to look into
    * @return appropriate HCatRecordObjectInspector
    * @throws SerDeException
    */
@@ -56,8 +55,8 @@ public class HCatRecordObjectInspectorFactory {
       StructTypeInfo typeInfo) throws SerDeException {
     HCatRecordObjectInspector oi = cachedHCatRecordObjectInspectors.get(typeInfo);
     if (oi == null) {
-      LOG.debug("Got asked for OI for "+typeInfo.getCategory()+"["+typeInfo.getTypeName()+"]");
 
+      LOG.debug("Got asked for OI for {} [{} ]",typeInfo.getCategory(),typeInfo.getTypeName());
       switch (typeInfo.getCategory()) {
       case STRUCT :
         StructTypeInfo structTypeInfo = (StructTypeInfo) typeInfo;
@@ -70,9 +69,9 @@ public class HCatRecordObjectInspectorFactory {
         oi = new HCatRecordObjectInspector(fieldNames,fieldObjectInspectors);
 
         break;
-      default: 
-        // Hmm.. not good, 
-        // the only type expected here is STRUCT, which maps to HCatRecord 
+      default:
+        // Hmm.. not good,
+        // the only type expected here is STRUCT, which maps to HCatRecord
         // - anything else is an error. Return null as the inspector.
         throw new SerDeException("TypeInfo ["+typeInfo.getTypeName()
             + "] was not of struct type - HCatRecord expected struct type, got ["
@@ -84,12 +83,12 @@ public class HCatRecordObjectInspectorFactory {
   }
 
   public static ObjectInspector getStandardObjectInspectorFromTypeInfo(TypeInfo typeInfo) {
-    
+
 
     ObjectInspector oi = cachedObjectInspectors.get(typeInfo);
     if (oi == null){
-      LOG.debug("Got asked for OI for "+typeInfo.getCategory()+"["+typeInfo.getTypeName()+"]");
 
+      LOG.debug("Got asked for OI for {}, [{}]",typeInfo.getCategory(), typeInfo.getTypeName());
       switch (typeInfo.getCategory()) {
       case PRIMITIVE:
         oi = PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(
@@ -99,7 +98,7 @@ public class HCatRecordObjectInspectorFactory {
         StructTypeInfo structTypeInfo = (StructTypeInfo) typeInfo;
         List<String> fieldNames = structTypeInfo.getAllStructFieldNames();
         List<TypeInfo> fieldTypeInfos = structTypeInfo.getAllStructFieldTypeInfos();
-        List<ObjectInspector> fieldObjectInspectors = 
+        List<ObjectInspector> fieldObjectInspectors =
             new ArrayList<ObjectInspector>(fieldTypeInfos.size());
         for (int i = 0; i < fieldTypeInfos.size(); i++) {
           fieldObjectInspectors.add(getStandardObjectInspectorFromTypeInfo(fieldTypeInfos.get(i)));
@@ -127,6 +126,6 @@ public class HCatRecordObjectInspectorFactory {
     }
     return oi;
   }
-  
-  
+
+
 }

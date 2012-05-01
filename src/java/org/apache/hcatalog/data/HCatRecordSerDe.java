@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -34,55 +32,53 @@ import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Writable;
-import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SerDe class for serializing to and from HCatRecord
  */
 public class HCatRecordSerDe implements SerDe {
-  
-  public static final Log LOG = LogFactory
-      .getLog(HCatRecordSerDe.class.getName());
+
+    private static final Logger LOG = LoggerFactory.getLogger(HCatRecordSerDe.class);
 
   public HCatRecordSerDe() throws SerDeException{
   }
-  
+
   private List<String> columnNames;
   private List<TypeInfo> columnTypes;
   private StructTypeInfo rowTypeInfo;
 
   private HCatRecordObjectInspector cachedObjectInspector;
-  
+
   @Override
   public void initialize(Configuration conf, Properties tbl)
       throws SerDeException {
 
-    if (LOG.isDebugEnabled()){
-      LOG.debug("Initializing HCatRecordSerDe");
-      HCatUtil.logEntrySet(LOG, "props to serde", tbl.entrySet());
-    }
-    
+    LOG.debug("Initializing HCatRecordSerDe");
+    LOG.debug("props to serde: {}",tbl.entrySet());
+
     // Get column names and types
     String columnNameProperty = tbl.getProperty(Constants.LIST_COLUMNS);
     String columnTypeProperty = tbl.getProperty(Constants.LIST_COLUMN_TYPES);
-    
+
     // all table column names
     if (columnNameProperty.length() == 0) {
       columnNames = new ArrayList<String>();
     } else {
       columnNames = Arrays.asList(columnNameProperty.split(","));
     }
-    
+
     // all column types
     if (columnTypeProperty.length() == 0) {
       columnTypes = new ArrayList<TypeInfo>();
@@ -90,40 +86,27 @@ public class HCatRecordSerDe implements SerDe {
       columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(columnTypeProperty);
     }
 
-    if (LOG.isDebugEnabled()){
-      LOG.debug("columns:" + columnNameProperty);
-      for (String s : columnNames){
-        LOG.debug("cn:"+s);
-      }
-      LOG.debug("types: " + columnTypeProperty);
-      for (TypeInfo t : columnTypes){
-        LOG.debug("ct:"+t.getTypeName()+",type:"+t.getCategory());
-      }
-    }
-  
-    
+
+    LOG.debug("columns: {}",columnNameProperty,columnNames);
+    LOG.debug("types: {}", columnTypeProperty, columnTypes);
     assert (columnNames.size() == columnTypes.size());
-    
+
     rowTypeInfo = (StructTypeInfo) TypeInfoFactory.getStructTypeInfo(columnNames, columnTypes);
-    
     cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
-    
   }
-  
+
   public void initialize(HCatSchema hsch) throws SerDeException {
 
-    if (LOG.isDebugEnabled()){
-      LOG.debug("Initializing HCatRecordSerDe through HCatSchema" + hsch.toString());
-    }
-    
+      LOG.debug("Initializing HCatRecordSerDe through HCatSchema {}." ,hsch);
+
     rowTypeInfo = (StructTypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(hsch.toString());
     cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
-    
+
   }
-  
+
 
   /**
-   * The purpose of a deserialize method is to turn a data blob 
+   * The purpose of a deserialize method is to turn a data blob
    * which is a writable representation of the data into an
    * object that can then be parsed using the appropriate
    * ObjectInspector. In this case, since HCatRecord is directly
@@ -145,10 +128,10 @@ public class HCatRecordSerDe implements SerDe {
    * The purpose of the serialize method is to turn an object-representation
    * with a provided ObjectInspector into a Writable format, which
    * the underlying layer can then use to write out.
-   * 
+   *
    * In this case, it means that Hive will call this method to convert
-   * an object with appropriate objectinspectors that it knows about, 
-   * to write out a HCatRecord. 
+   * an object with appropriate objectinspectors that it knows about,
+   * to write out a HCatRecord.
    */
   @Override
   public Writable serialize(Object obj, ObjectInspector objInspector)
@@ -161,12 +144,12 @@ public class HCatRecordSerDe implements SerDe {
     return new DefaultHCatRecord((List<Object>)serializeStruct(obj,(StructObjectInspector)objInspector));
   }
 
-  
+
   /**
-   * Return serialized HCatRecord from an underlying 
+   * Return serialized HCatRecord from an underlying
    * object-representation, and readable by an ObjectInspector
    * @param obj : Underlying object-representation
-   * @param soi : StructObjectInspector 
+   * @param soi : StructObjectInspector
    * @return HCatRecord
    */
   private static List<?> serializeStruct(Object obj, StructObjectInspector soi)
@@ -174,7 +157,7 @@ public class HCatRecordSerDe implements SerDe {
 
     List<? extends StructField> fields = soi.getAllStructFieldRefs();
     List<Object> list = soi.getStructFieldsDataAsList(obj);
-    
+
     if (list == null){
       return null;
     }
@@ -195,7 +178,7 @@ public class HCatRecordSerDe implements SerDe {
   }
 
   /**
-   * Return underlying Java Object from an object-representation 
+   * Return underlying Java Object from an object-representation
    * that is readable by a provided ObjectInspector.
    */
   public static Object serializeField(Object field,
@@ -210,7 +193,7 @@ public class HCatRecordSerDe implements SerDe {
     } else if (fieldObjectInspector.getCategory() == Category.MAP){
       res = serializeMap(field,(MapObjectInspector)fieldObjectInspector);
     } else {
-      throw new SerDeException(HCatRecordSerDe.class.toString() 
+      throw new SerDeException(HCatRecordSerDe.class.toString()
           + " does not know what to do with fields of unknown category: "
           + fieldObjectInspector.getCategory() + " , type: " + fieldObjectInspector.getTypeName());
     }
@@ -270,7 +253,7 @@ public class HCatRecordSerDe implements SerDe {
       }
       return list;
     } else {
-      throw new SerDeException(HCatRecordSerDe.class.toString() 
+      throw new SerDeException(HCatRecordSerDe.class.toString()
           + " does not know what to do with fields of unknown category: "
           + eloi.getCategory() + " , type: " + eloi.getTypeName());
     }
@@ -278,8 +261,8 @@ public class HCatRecordSerDe implements SerDe {
 
 
   /**
-   * Return an object inspector that can read through the object 
-   * that we return from deserialize(). To wit, that means we need 
+   * Return an object inspector that can read through the object
+   * that we return from deserialize(). To wit, that means we need
    * to return an ObjectInspector that can read HCatRecord, given
    * the type info for it during initialize(). This also means
    * that this method cannot and should not be called before initialize()
@@ -300,5 +283,5 @@ public class HCatRecordSerDe implements SerDe {
     return null;
   }
 
-  
+
 }

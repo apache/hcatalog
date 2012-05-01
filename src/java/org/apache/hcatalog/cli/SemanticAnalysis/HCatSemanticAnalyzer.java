@@ -20,8 +20,6 @@ package org.apache.hcatalog.cli.SemanticAnalysis;
 import java.io.Serializable;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.metadata.Hive;
@@ -55,7 +53,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
   private AbstractSemanticAnalyzerHook hook;
   private ASTNode ast;
 
-  private static final Log LOG = LogFactory.getLog(HCatSemanticAnalyzer.class);
+
 
   @Override
   public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
@@ -72,7 +70,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_CREATEDATABASE:
         hook = new CreateDatabaseHook();
         return hook.preAnalyze(context, ast);
-      
+
       case HiveParser.TOK_ALTERTABLE_PARTITION:
           if (((ASTNode)ast.getChild(1)).getToken().getType() == HiveParser.TOK_ALTERTABLE_FILEFORMAT) {
             return ast;
@@ -82,7 +80,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
           } else {
               return ast;
           }
-      
+
       // HCat will allow these operations to be performed.
       // Database DDL
       case HiveParser.TOK_SHOWDATABASES:
@@ -96,19 +94,19 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_CREATEINDEX:
       case HiveParser.TOK_DROPINDEX:
       case HiveParser.TOK_SHOWINDEXES:
-      
+
       // View DDL
       // "alter view add partition" does not work because of the nature of implementation
-      // of the DDL in hive. Hive will internally invoke another Driver on the select statement, 
+      // of the DDL in hive. Hive will internally invoke another Driver on the select statement,
       // and HCat does not let "select" statement through. I cannot find a way to get around it
-      // without modifying hive code. So just leave it unsupported. 
+      // without modifying hive code. So just leave it unsupported.
       //case HiveParser.TOK_ALTERVIEW_ADDPARTS:
       case HiveParser.TOK_ALTERVIEW_DROPPARTS:
       case HiveParser.TOK_ALTERVIEW_PROPERTIES:
       case HiveParser.TOK_ALTERVIEW_RENAME:
       case HiveParser.TOK_CREATEVIEW:
       case HiveParser.TOK_DROPVIEW:
-      
+
       // Authorization DDL
       case HiveParser.TOK_CREATEROLE:
       case HiveParser.TOK_DROPROLE:
@@ -119,7 +117,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_REVOKE:
       case HiveParser.TOK_SHOW_GRANT:
       case HiveParser.TOK_SHOW_ROLE_GRANT:
-      
+
       // Misc DDL
       case HiveParser.TOK_LOCKTABLE:
       case HiveParser.TOK_UNLOCKTABLE:
@@ -127,7 +125,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_DESCFUNCTION:
       case HiveParser.TOK_SHOWFUNCTIONS:
       case HiveParser.TOK_EXPLAIN:
-      
+
       // Table DDL
       case HiveParser.TOK_ALTERTABLE_ADDPARTS:
       case HiveParser.TOK_ALTERTABLE_ADDCOLS:
@@ -166,7 +164,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_CREATETABLE:
       case HiveParser.TOK_CREATEDATABASE:
       case HiveParser.TOK_ALTERTABLE_PARTITION:
-      
+
       // HCat will allow these operations to be performed.
       // Database DDL
       case HiveParser.TOK_SHOWDATABASES:
@@ -180,7 +178,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_CREATEINDEX:
       case HiveParser.TOK_DROPINDEX:
       case HiveParser.TOK_SHOWINDEXES:
-      
+
       // View DDL
       //case HiveParser.TOK_ALTERVIEW_ADDPARTS:
       case HiveParser.TOK_ALTERVIEW_DROPPARTS:
@@ -188,7 +186,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_ALTERVIEW_RENAME:
       case HiveParser.TOK_CREATEVIEW:
       case HiveParser.TOK_DROPVIEW:
-      
+
       // Authorization DDL
       case HiveParser.TOK_CREATEROLE:
       case HiveParser.TOK_DROPROLE:
@@ -199,7 +197,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_REVOKE:
       case HiveParser.TOK_SHOW_GRANT:
       case HiveParser.TOK_SHOW_ROLE_GRANT:
-      
+
       // Misc DDL
       case HiveParser.TOK_LOCKTABLE:
       case HiveParser.TOK_UNLOCKTABLE:
@@ -207,7 +205,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       case HiveParser.TOK_DESCFUNCTION:
       case HiveParser.TOK_SHOWFUNCTIONS:
       case HiveParser.TOK_EXPLAIN:
-      
+
       // Table DDL
       case HiveParser.TOK_ALTERTABLE_ADDPARTS:
       case HiveParser.TOK_ALTERTABLE_ADDCOLS:
@@ -231,9 +229,9 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       default:
         throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, "Unexpected token: "+ast.getToken());
       }
-      
+
       authorizeDDL(context, rootTasks);
-      
+
     } catch(HCatException e){
       throw new SemanticException(e);
     } catch (HiveException e) {
@@ -295,7 +293,7 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
     DropTableDesc dropTable = work.getDropTblDesc();
     if (dropTable != null) {
       if (dropTable.getPartSpecs() == null) {
-        // drop table is already enforced by Hive. We only check for table level location even if the 
+        // drop table is already enforced by Hive. We only check for table level location even if the
         // table is partitioned.
       } else {
         //this is actually a ALTER TABLE DROP PARITITION statement
@@ -326,9 +324,9 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       }
 
       String newLocation = alterTable.getNewLocation();
-      
-      /* Hcat requires ALTER_DATA privileges for ALTER TABLE LOCATION statements 
-       * for the old table/partition location and the new location.  
+
+      /* Hcat requires ALTER_DATA privileges for ALTER TABLE LOCATION statements
+       * for the old table/partition location and the new location.
        */
       if (alterTable.getOp() == AlterTableDesc.AlterTableTypes.ALTERLOCATION) {
         if (part != null) {

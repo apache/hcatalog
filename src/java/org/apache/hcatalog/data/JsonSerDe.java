@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.SerDe;
@@ -43,7 +40,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.UnionObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.BinaryObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.BooleanObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.ByteObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.DoubleObjectInspector;
@@ -57,56 +53,53 @@ import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
-
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JsonSerDe implements SerDe {
 
-  public static final Log LOG = LogFactory
-      .getLog(JsonSerDe.class.getName());
-
+  private static final Logger LOG = LoggerFactory.getLogger(JsonSerDe.class);
   private List<String> columnNames;
   private List<TypeInfo> columnTypes;
-  
+
   private StructTypeInfo rowTypeInfo;
   private HCatSchema schema;
 
   private JsonFactory jsonFactory = null;
-      
+
   private HCatRecordObjectInspector cachedObjectInspector;
 
   @Override
   public void initialize(Configuration conf, Properties tbl)
       throws SerDeException {
 
-    if (LOG.isDebugEnabled()){
-      LOG.debug("Initializing JsonSerDe");
-      HCatUtil.logEntrySet(LOG, "props to serde", tbl.entrySet());
-    }
-    
+
+    LOG.debug("Initializing JsonSerDe");
+    LOG.debug("props to serde: {}",tbl.entrySet());
+
+
     // Get column names and types
     String columnNameProperty = tbl.getProperty(Constants.LIST_COLUMNS);
     String columnTypeProperty = tbl.getProperty(Constants.LIST_COLUMN_TYPES);
-    
+
     // all table column names
     if (columnNameProperty.length() == 0) {
       columnNames = new ArrayList<String>();
     } else {
       columnNames = Arrays.asList(columnNameProperty.split(","));
     }
-    
+
     // all column types
     if (columnTypeProperty.length() == 0) {
       columnTypes = new ArrayList<TypeInfo>();
@@ -114,28 +107,18 @@ public class JsonSerDe implements SerDe {
       columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(columnTypeProperty);
     }
 
-    if (LOG.isDebugEnabled()){
-      LOG.debug("columns:" + columnNameProperty);
-      for (String s : columnNames){
-        LOG.debug("cn:"+s);
-      }
-      LOG.debug("types: " + columnTypeProperty);
-      for (TypeInfo t : columnTypes){
-        LOG.debug("ct:"+t.getTypeName()+",type:"+t.getCategory());
-      }
-    }
-    
+    LOG.debug("columns: {}, {}" , columnNameProperty, columnNames);
+    LOG.debug("types: {}, {} ", columnTypeProperty, columnTypes);
+
     assert (columnNames.size() == columnTypes.size());
-    
+
     rowTypeInfo = (StructTypeInfo) TypeInfoFactory.getStructTypeInfo(columnNames, columnTypes);
 
     cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
     try {
       schema = HCatSchemaUtils.getHCatSchema(rowTypeInfo).get(0).getStructSubSchema();
-      if (LOG.isDebugEnabled()){
-        LOG.debug("schema : "+ schema);
-        LOG.debug("\tfields : "+schema.getFieldNames());
-      }
+      LOG.debug("schema : {}", schema);
+      LOG.debug("fields : {}", schema.getFieldNames());
     } catch (HCatException e) {
       throw new SerDeException(e);
     }
@@ -144,15 +127,15 @@ public class JsonSerDe implements SerDe {
   }
 
   /**
-   * Takes JSON string in Text form, and has to return an object representation above 
+   * Takes JSON string in Text form, and has to return an object representation above
    * it that's readable by the corresponding object inspector.
-   * 
+   *
    * For this implementation, since we're using the jackson parser, we can construct
    * our own object implementation, and we use HCatRecord for it
    */
   @Override
   public Object deserialize(Writable blob) throws SerDeException {
-    
+
     Text t = (Text)blob;
     JsonParser p;
     List<Object> r = new ArrayList<Object>(Collections.nCopies(columnNames.size(), null));
@@ -167,13 +150,13 @@ public class JsonSerDe implements SerDe {
         populateRecord(r,token,p,schema);
       }
     } catch (JsonParseException e) {
-      LOG.warn("Error ["+ e.getMessage()+"] parsing json text ["+t+"]");
+        LOG.warn("Error [{}] parsing json location [{}].", e.getMessage(), e.getLocation());
       throw new SerDeException(e);
     } catch (IOException e) {
-      LOG.warn("Error ["+ e.getMessage()+"] parsing json text ["+t+"]");
+        LOG.warn("Error [{}] parsing json text [{}].", e.getMessage(),t);
       throw new SerDeException(e);
     }
-    
+
     return new DefaultHCatRecord(r);
   }
 
@@ -190,13 +173,13 @@ public class JsonSerDe implements SerDe {
 
   /**
    * Utility method to extract current expected field from given JsonParser
-   * 
+   *
    * To get the field, we need either a type or a hcatFieldSchema(necessary for complex types)
-   * It is possible that one of them can be null, and so, if so, the other is instantiated 
+   * It is possible that one of them can be null, and so, if so, the other is instantiated
    * from the other
-   * 
-   * isTokenCurrent is a boolean variable also passed in, which determines 
-   * if the JsonParser is already at the token we expect to read next, or 
+   *
+   * isTokenCurrent is a boolean variable also passed in, which determines
+   * if the JsonParser is already at the token we expect to read next, or
    * needs advancing to the next before we read.
    */
   private Object extractCurrentField(JsonParser p, Type t,
@@ -247,7 +230,7 @@ public class JsonSerDe implements SerDe {
       throw new IOException("JsonSerDe does not support BINARY type");
     case ARRAY:
       if (valueToken == JsonToken.VALUE_NULL){
-        val = null; 
+        val = null;
         break;
       }
       if (valueToken != JsonToken.START_ARRAY){
@@ -261,7 +244,7 @@ public class JsonSerDe implements SerDe {
       break;
     case MAP:
       if (valueToken == JsonToken.VALUE_NULL){
-        val = null; 
+        val = null;
         break;
       }
       if (valueToken != JsonToken.START_OBJECT){
@@ -274,7 +257,7 @@ public class JsonSerDe implements SerDe {
         Object k = getObjectOfCorrespondingPrimitiveType(p.getCurrentName(),keyType);
         Object v;
         if (valueSchema.getType() == HCatFieldSchema.Type.STRUCT){
-          v = extractCurrentField(p,null, valueSchema,false); 
+          v = extractCurrentField(p,null, valueSchema,false);
         } else {
           v = extractCurrentField(p,null, valueSchema,true);
         }
@@ -285,7 +268,7 @@ public class JsonSerDe implements SerDe {
       break;
     case STRUCT:
       if (valueToken == JsonToken.VALUE_NULL){
-        val = null; 
+        val = null;
         break;
       }
       if (valueToken != JsonToken.START_OBJECT){
@@ -293,7 +276,7 @@ public class JsonSerDe implements SerDe {
       }
       HCatSchema subSchema = hcatFieldSchema.getStructSubSchema();
       int sz = subSchema.getFieldNames().size();
-      
+
       List<Object> struct = new ArrayList<Object>(Collections.nCopies(sz, null));
       while ((valueToken = p.nextToken()) != JsonToken.END_OBJECT) {
         populateRecord(struct, valueToken, p, subSchema);
@@ -360,7 +343,7 @@ public class JsonSerDe implements SerDe {
       }
 
     } catch (IOException e) {
-      LOG.warn("Error ["+ e.getMessage()+"] generating json text from object");
+      LOG.warn("Error generating json text from object.", e);
       throw new SerDeException(e);
     }
     return new Text(sb.toString());
@@ -530,7 +513,7 @@ public class JsonSerDe implements SerDe {
     }
   }
 
-  
+
   /**
    *  Returns an object inspector for the specified schema that
    *  is capable of reading in the object representation of the JSON string

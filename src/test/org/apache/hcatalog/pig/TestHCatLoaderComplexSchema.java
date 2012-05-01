@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 
 import junit.framework.Assert;
 
@@ -33,7 +32,6 @@ import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hcatalog.MiniCluster;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
 import org.apache.pig.backend.executionengine.ExecException;
@@ -47,13 +45,15 @@ import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestHCatLoaderComplexSchema {
 
   //private static MiniCluster cluster = MiniCluster.buildCluster();
   private static Driver driver;
   //private static Properties props;
-
+  private static final Logger LOG = LoggerFactory.getLogger(TestHCatLoaderComplexSchema.class);
   private void dropTable(String tablename) throws IOException, CommandNeedRetryException{
     driver.run("drop table "+tablename);
   }
@@ -66,7 +66,7 @@ public class TestHCatLoaderComplexSchema {
     }
     createTable = createTable + "stored as RCFILE tblproperties('hcat.isd'='org.apache.hcatalog.rcfile.RCFileInputDriver'," +
         "'hcat.osd'='org.apache.hcatalog.rcfile.RCFileOutputDriver') ";
-    System.out.println("Creating table:\n"+createTable);
+    LOG.info("Creating table:\n {}", createTable);
     CommandProcessorResponse result = driver.run(createTable);
     int retCode = result.getResponseCode();
     if(retCode != 0) {
@@ -187,7 +187,7 @@ public class TestHCatLoaderComplexSchema {
       server.registerQuery("STORE A into '"+tablename+"' using org.apache.hcatalog.pig.HCatStorer("
           + (provideSchemaToStorer ? "'', '"+pigSchema+"'" : "")
           + ");");
-      
+
       ExecJob execJob = server.executeBatch().get(0);
       if (!execJob.getStatistics().isSuccessful()) {
         throw new RuntimeException("Import failed", execJob.getException());
@@ -201,7 +201,7 @@ public class TestHCatLoaderComplexSchema {
         Tuple input = data.get(i++);
         Tuple output = it.next();
         Assert.assertEquals(input.toString(), output.toString());
-        System.out.println(output);
+        LOG.info("tuple : {} ",output);
       }
       Schema dumpedXSchema = server.dumpSchema("X");
 

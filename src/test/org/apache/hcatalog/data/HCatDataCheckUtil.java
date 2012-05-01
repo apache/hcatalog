@@ -22,21 +22,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.MiniCluster;
-import org.apache.hcatalog.common.HCatUtil;
-import org.apache.hcatalog.mapreduce.HCatOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Helper class for Other Data Testers
  */
 public class HCatDataCheckUtil {
+
+  private static final Logger LOG = LoggerFactory.getLogger(HCatDataCheckUtil.class);
 
   public static Driver instantiateDriver(MiniCluster cluster) {
     HiveConf hiveConf = new HiveConf(HCatDataCheckUtil.class);
@@ -46,10 +46,8 @@ public class HCatDataCheckUtil {
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-    
-    Log logger = LogFactory.getLog(HCatOutputFormat.class);
-    HCatUtil.logHiveConf(logger , hiveConf);
-    
+
+    LOG.debug("Hive conf : {}", hiveConf.getAllProperties());
     Driver driver = new Driver(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
     return driver;
@@ -82,13 +80,11 @@ public class HCatDataCheckUtil {
     driver.run(selectCmd);
     ArrayList<String> src_values = new ArrayList<String>();
     driver.getResults(src_values);
-    for (String s : src_values){
-      System.out.println(name+":"+s);
-    }
+    LOG.info("{} : {}", name, src_values);
     return src_values;
   }
 
-  
+
   public static boolean recordsEqual(HCatRecord first, HCatRecord second) {
     return (compareRecords(first,second) == 0);
   }

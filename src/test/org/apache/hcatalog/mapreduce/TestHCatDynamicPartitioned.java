@@ -20,16 +20,10 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
@@ -38,11 +32,14 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
   private List<HCatRecord> writeRecords;
   private List<HCatFieldSchema> dataColumns;
+  private static final Logger LOG = LoggerFactory.getLogger(TestHCatDynamicPartitioned.class);
 
   @Override
   protected void initialize() throws Exception {
@@ -101,7 +98,7 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     runMRRead(4, "p1 = \"4\"");
 
     // read from hive to test
-    
+
     String query = "select * from " + tableName;
     int retCode = driver.run(query).getResponseCode();
 
@@ -113,7 +110,7 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     driver.getResults(res);
     assertEquals(20, res.size());
 
-    
+
     //Test for duplicate publish
     IOException exc = null;
     try {
@@ -127,8 +124,8 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     assertTrue(exc instanceof HCatException);
     assertTrue( "Got exception of type ["+((HCatException) exc).getErrorType().toString()
         + "] Expected ERROR_PUBLISHING_PARTITION or ERROR_MOVE_FAILED",
-        (ErrorType.ERROR_PUBLISHING_PARTITION == ((HCatException) exc).getErrorType()) 
-        || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType()) 
+        (ErrorType.ERROR_PUBLISHING_PARTITION == ((HCatException) exc).getErrorType())
+        || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType())
         );
   }
 
@@ -138,7 +135,7 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     HiveConf hc = new HiveConf(this.getClass());
 
     int maxParts = hiveConf.getIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
-    System.out.println("Max partitions allowed = " + maxParts);
+    LOG.info("Max partitions allowed = {}", maxParts);
 
     IOException exc = null;
     try {

@@ -20,16 +20,16 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.mapred.HCatMapRedUtil;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Part of the DefaultOutput*Container classes
@@ -37,7 +37,7 @@ import org.apache.hcatalog.common.HCatUtil;
  */
 class DefaultOutputCommitterContainer extends OutputCommitterContainer {
 
-    private static final Log LOG = LogFactory.getLog(DefaultOutputCommitterContainer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultOutputCommitterContainer.class);
 
     /**
      * @param context current JobContext

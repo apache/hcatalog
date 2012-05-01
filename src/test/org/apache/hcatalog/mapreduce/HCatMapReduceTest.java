@@ -58,6 +58,8 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test for HCatOutputFormat. Writes a partition using HCatOutputFormat and reads
@@ -65,6 +67,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  */
 public abstract class HCatMapReduceTest extends TestCase {
 
+  private static final Logger LOG = LoggerFactory.getLogger(HCatMapReduceTest.class);
   protected String dbName = "default";
   protected String tableName = "testHCatMapReduceTable";
 
@@ -104,7 +107,7 @@ public abstract class HCatMapReduceTest extends TestCase {
     thriftUri = System.getenv("HCAT_METASTORE_URI");
 
     if( thriftUri != null ) {
-      System.out.println("Using URI " + thriftUri);
+      LOG.info("Using URI {}", thriftUri);
 
       hiveConf.set("hive.metastore.local", "false");
       hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, thriftUri);
