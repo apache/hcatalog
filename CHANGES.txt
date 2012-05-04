@@ -28,6 +28,7 @@ Release 0.4.1 - Unreleased
   HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
 
   BUG FIXES
+  HCAT-400 HCatalog build fails from git checkout due to missing lib directory (traviscrawford via gates)
 
 Release 0.4.0 - Unreleased
 
