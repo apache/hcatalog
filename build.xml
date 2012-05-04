@@ -520,10 +520,6 @@
       </fileset>
     </copy>
 
-    <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false">
-      <fileset dir="${lib.dir}"/>
-   </copy>
-
     <copy todir="${dist.dir}/bin">
       <fileset dir="bin/">
         <include name="hcat"/>
@@ -606,7 +602,6 @@
                 <include name="license/**"/>
                 <include name="shims/**"/>
                 <include name="src/**"/>
-                <include name="lib/"/> <!-- want just the directory, not any contents -->
                 <include name="storage-handlers/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>
