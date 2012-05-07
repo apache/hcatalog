@@ -467,7 +467,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         }
     }
 
-    private class MultiOutputCommitter extends OutputCommitter {
+    public class MultiOutputCommitter extends OutputCommitter {
 
         private final Map<String, BaseOutputCommitterContainer> outputCommitters;
 
@@ -516,7 +516,11 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         public void commitTask(TaskAttemptContext taskContext) throws IOException {
             for (String alias : outputCommitters.keySet()) {
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
-                outputContainer.getBaseCommitter().commitTask(outputContainer.getContext());
+                OutputCommitter baseCommitter = outputContainer.getBaseCommitter();
+                TaskAttemptContext committerContext = outputContainer.getContext();
+                if (baseCommitter.needsTaskCommit(committerContext)) {
+                    baseCommitter.commitTask(committerContext);
+                }
             }
         }
 
