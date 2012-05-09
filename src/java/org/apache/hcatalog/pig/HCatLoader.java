@@ -100,17 +100,17 @@ public class HCatLoader extends HCatBaseLoader {
     // the backend
     // in the hadoop front end mapred.task.id property will not be set in
     // the Configuration
-
         if (udfProps.containsKey(HCatConstants.HCAT_PIG_LOADER_LOCATION_SET)) {
             for( Enumeration<Object> emr = udfProps.keys();emr.hasMoreElements();) {
                 PigHCatUtil.getConfigFromUDFProperties(udfProps,
                             job.getConfiguration(), emr.nextElement().toString());
             }
-            Credentials crd = jobCredentials.get(INNER_SIGNATURE_PREFIX + "_" + signature);
-            if (crd != null) {
+            if (!HCatUtil.checkJobContextIfRunningFromBackend(job)) {
+                //Combine credentials and credentials from job takes precedence for freshness
+                Credentials crd = jobCredentials.get(INNER_SIGNATURE_PREFIX + "_" + signature);
+                crd.addAll(job.getCredentials());
                 job.getCredentials().addAll(crd);
             }
-
         } else {
             Job clone = new Job(job.getConfiguration());
             HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
@@ -129,7 +129,9 @@ public class HCatLoader extends HCatBaseLoader {
 
             //Store credentials in a private hash map and not the udf context to
             // make sure they are not public.
-            jobCredentials.put(INNER_SIGNATURE_PREFIX + "_" + signature,job.getCredentials());
+            Credentials crd = new Credentials();
+            crd.addAll(job.getCredentials());
+            jobCredentials.put(INNER_SIGNATURE_PREFIX + "_" + signature, crd);
         }
 
         // Need to also push projections by calling setOutputSchema on
