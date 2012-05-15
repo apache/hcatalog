@@ -37,6 +37,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-409 MultiOutputformat should make getJobContext public
+
   HCAT-403 MultiOutputFormat will call taskCommit on all formats if only one ever needs commit (rohini via avandana)
 
   HCAT-400 HCatalog build fails from git checkout due to missing lib directory (traviscrawford via gates)

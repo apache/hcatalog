@@ -156,6 +156,35 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
     }
 
     /**
+     * Get the JobContext with the related OutputFormat configuration populated given the alias
+     * and the actual JobContext
+     * @param alias the name given to the OutputFormat configuration
+     * @param context the JobContext
+     * @return a copy of the JobContext with the alias configuration populated
+     */
+    public static JobContext getJobContext(String alias, JobContext context) {
+        String aliasConf = context.getConfiguration().get(getAliasConfName(alias));
+        JobContext aliasContext = new JobContext(context.getConfiguration(), context.getJobID());
+        addToConfig(aliasConf, aliasContext.getConfiguration());
+        return aliasContext;
+    }
+
+    /**
+     * Get the TaskAttemptContext with the related OutputFormat configuration populated given the alias
+     * and the actual TaskAttemptContext
+     * @param alias the name given to the OutputFormat configuration
+     * @param context the Mapper or Reducer Context
+     * @return a copy of the TaskAttemptContext with the alias configuration populated
+     */
+    public static TaskAttemptContext getTaskAttemptContext(String alias, TaskAttemptContext context) {
+        String aliasConf = context.getConfiguration().get(getAliasConfName(alias));
+        TaskAttemptContext aliasContext = new TaskAttemptContext(context.getConfiguration(),
+                context.getTaskAttemptID());
+        addToConfig(aliasConf, aliasContext.getConfiguration());
+        return aliasContext;
+    }
+
+    /**
      * Write the output key and value using the OutputFormat defined by the
      * alias.
      *
@@ -263,21 +292,6 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             builder.append(value).append(COMMA_DELIM);
         }
         return builder.substring(0, builder.length() - COMMA_DELIM.length());
-    }
-
-    private static JobContext getJobContext(String alias, JobContext context) {
-        String aliasConf = context.getConfiguration().get(getAliasConfName(alias));
-        JobContext aliasContext = new JobContext(context.getConfiguration(), context.getJobID());
-        addToConfig(aliasConf, aliasContext.getConfiguration());
-        return aliasContext;
-    }
-
-    private static TaskAttemptContext getTaskContext(String alias, TaskAttemptContext context) {
-        String aliasConf = context.getConfiguration().get(getAliasConfName(alias));
-        TaskAttemptContext aliasContext = new TaskAttemptContext(context.getConfiguration(),
-                context.getTaskAttemptID());
-        addToConfig(aliasConf, aliasContext.getConfiguration());
-        return aliasContext;
     }
 
     private static String getAliasConfName(String alias) {
@@ -408,7 +422,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             baseRecordWriters = new LinkedHashMap<String, BaseRecordWriterContainer>();
             String[] aliases = getOutputFormatAliases(context);
             for (String alias : aliases) {
-                TaskAttemptContext aliasContext = getTaskContext(alias, context);
+                TaskAttemptContext aliasContext = getTaskAttemptContext(alias, context);
                 Configuration aliasConf = aliasContext.getConfiguration();
                 // Create output directory if not already created.
                 String outDir = aliasConf.get("mapred.output.dir");
@@ -476,7 +490,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             outputCommitters = new LinkedHashMap<String, MultiOutputFormat.BaseOutputCommitterContainer>();
             String[] aliases = getOutputFormatAliases(context);
             for (String alias : aliases) {
-                TaskAttemptContext aliasContext = getTaskContext(alias, context);
+                TaskAttemptContext aliasContext = getTaskAttemptContext(alias, context);
                 OutputCommitter baseCommitter = getOutputFormatInstance(aliasContext)
                         .getOutputCommitter(aliasContext);
                 outputCommitters.put(alias,
