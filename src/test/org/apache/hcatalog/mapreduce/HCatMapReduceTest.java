@@ -49,6 +49,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -267,6 +268,13 @@ public abstract class HCatMapReduceTest extends TestCase {
     HCatOutputFormat.setSchema(job, new HCatSchema(partitionColumns));
 
     boolean success = job.waitForCompletion(true);
+
+    // Ensure counters are set when data has actually been read.
+    if (partitionValues != null) {
+      assertTrue(job.getCounters().getGroup("FileSystemCounters")
+          .findCounter("FILE_BYTES_READ").getValue() > 0);
+    }
+
     if (success) {
       new FileOutputCommitterContainer(job,null).commitJob(job);
     } else {

@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -168,4 +169,18 @@ static Reporter createReporter(TaskAttemptContext context) {
       return new ProgressReporter(context);
   }
 
+  /**
+   * Casts an InputSplit into a HCatSplit, providing a useful error message if the cast fails.
+   * @param split the InputSplit
+   * @return the HCatSplit
+   * @throws IOException
+   */
+  public static HCatSplit castToHCatSplit(InputSplit split) throws IOException {
+    if (split instanceof HCatSplit) {
+      return (HCatSplit) split;
+    } else {
+      throw new IOException("Split must be " + HCatSplit.class.getName()
+          + " but found " + split.getClass().getName());
+    }
+  }
 }

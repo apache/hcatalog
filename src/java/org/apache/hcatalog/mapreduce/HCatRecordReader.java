@@ -19,13 +19,15 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
@@ -47,9 +49,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
     Writable currentValue;
 
     /** The underlying record reader to delegate to. */
-    //org.apache.hadoop.mapred.
-    private final org.apache.hadoop.mapred.RecordReader
-      <WritableComparable, Writable> baseRecordReader;
+    private org.apache.hadoop.mapred.RecordReader<WritableComparable, Writable> baseRecordReader;
 
     /** The storage handler used */
     private final HCatStorageHandler storageHandler;
@@ -63,16 +63,10 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
 
     /**
      * Instantiates a new hcat record reader.
-     * @param baseRecordReader the base record reader
      */
     public HCatRecordReader(HCatStorageHandler storageHandler,
-        org.apache.hadoop.mapred.RecordReader<WritableComparable,
-                     Writable> baseRecordReader,
-                     SerDe serde,
                      Map<String,String> valuesNotInDataCols) {
-      this.baseRecordReader = baseRecordReader;
       this.storageHandler = storageHandler;
-      this.serde = serde;
       this.valuesNotInDataCols = valuesNotInDataCols;
     }
 
@@ -83,37 +77,56 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
      */
     @Override
     public void initialize(org.apache.hadoop.mapreduce.InputSplit split,
-                           TaskAttemptContext taskContext)
-    throws IOException, InterruptedException {
-        org.apache.hadoop.mapred.InputSplit baseSplit;
+        TaskAttemptContext taskContext) throws IOException, InterruptedException {
 
-        // Pull the output schema out of the TaskAttemptContext
-        outputSchema = (HCatSchema)HCatUtil.deserialize(
+      HCatSplit hcatSplit = InternalUtil.castToHCatSplit(split);
+
+      baseRecordReader = createBaseRecordReader(hcatSplit, storageHandler, taskContext);
+      serde = createSerDe(hcatSplit, storageHandler, taskContext);
+
+      // Pull the output schema out of the TaskAttemptContext
+      outputSchema = (HCatSchema) HCatUtil.deserialize(
           taskContext.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA));
 
-        if( split instanceof HCatSplit ) {
-            baseSplit = ((HCatSplit) split).getBaseSplit();
-        } else {
-          throw new IOException("Not a HCatSplit");
-        }
+      if (outputSchema == null) {
+        outputSchema = hcatSplit.getTableSchema();
+      }
 
-        if (outputSchema == null){
-          outputSchema = ((HCatSplit) split).getTableSchema();
-        }
-
-        // Pull the table schema out of the Split info
-        // TODO This should be passed in the TaskAttemptContext instead
-        dataSchema = ((HCatSplit)split).getDataSchema();
-
-        Properties properties = new Properties();
-        for (Map.Entry<String, String>param :
-            ((HCatSplit)split).getPartitionInfo()
-                              .getJobProperties().entrySet()) {
-          properties.setProperty(param.getKey(), param.getValue());
-        }
+      // Pull the table schema out of the Split info
+      // TODO This should be passed in the TaskAttemptContext instead
+      dataSchema = hcatSplit.getDataSchema();
     }
 
-    /* (non-Javadoc)
+    private org.apache.hadoop.mapred.RecordReader createBaseRecordReader(HCatSplit hcatSplit,
+        HCatStorageHandler storageHandler, TaskAttemptContext taskContext) throws IOException {
+
+      JobConf jobConf = HCatUtil.getJobConfFromContext(taskContext);
+      HCatUtil.copyJobPropertiesToJobConf(hcatSplit.getPartitionInfo().getJobProperties(), jobConf);
+      org.apache.hadoop.mapred.InputFormat inputFormat =
+          HCatInputFormat.getMapRedInputFormat(jobConf, storageHandler.getInputFormatClass());
+      return inputFormat.getRecordReader(hcatSplit.getBaseSplit(), jobConf,
+          InternalUtil.createReporter(taskContext));
+    }
+
+    private SerDe createSerDe(HCatSplit hcatSplit, HCatStorageHandler storageHandler,
+        TaskAttemptContext taskContext) throws IOException {
+
+      SerDe serde = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),
+          taskContext.getConfiguration());
+
+      try {
+        InternalUtil.initializeInputSerDe(serde, storageHandler.getConf(),
+            hcatSplit.getPartitionInfo().getTableInfo(),
+            hcatSplit.getPartitionInfo().getPartitionSchema());
+      } catch (SerDeException e) {
+        throw new IOException("Failed initializing SerDe "
+            + storageHandler.getSerDeClass().getName(), e);
+      }
+
+      return serde;
+    }
+
+  /* (non-Javadoc)
      * @see org.apache.hadoop.mapreduce.RecordReader#getCurrentKey()
      */
     @Override
