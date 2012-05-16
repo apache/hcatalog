@@ -36,7 +36,7 @@ Release 0.4.1 - Unreleased
 
   HCAT-400 HCatalog build fails from git checkout due to missing lib directory (traviscrawford via gates)
 
-Release 0.4.0 - Unreleased
+Release 0.4.0 - May 16 2012
 
   INCOMPATIBLE CHANGES
   HCAT-304 Remove hcat.hbase.column.mapping table property (rohini via gates)
