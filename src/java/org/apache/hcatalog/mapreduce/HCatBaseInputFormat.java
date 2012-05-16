@@ -25,15 +25,12 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.hadoop.hive.serde2.SerDe;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -83,7 +80,7 @@ public abstract class HCatBaseInputFormat
                                HCatUtil.serialize(hcatSchema));
   }
 
-  private static 
+  protected static
     org.apache.hadoop.mapred.InputFormat<WritableComparable, Writable>
     getMapRedInputFormat (JobConf job, Class inputFormatClass) throws IOException {
       return (
@@ -178,7 +175,7 @@ public abstract class HCatBaseInputFormat
   createRecordReader(InputSplit split,
       TaskAttemptContext taskContext) throws IOException, InterruptedException {
 
-    HCatSplit hcatSplit = (HCatSplit) split;
+    HCatSplit hcatSplit = InternalUtil.castToHCatSplit(split);
     PartInfo partitionInfo = hcatSplit.getPartitionInfo();
     JobContext jobContext = taskContext;
 
@@ -186,46 +183,17 @@ public abstract class HCatBaseInputFormat
         jobContext.getConfiguration(), partitionInfo);
     
     JobConf jobConf = HCatUtil.getJobConfFromContext(jobContext);
-
-    Class inputFormatClass = storageHandler.getInputFormatClass();
-    org.apache.hadoop.mapred.InputFormat inputFormat = 
-                              getMapRedInputFormat(jobConf, inputFormatClass);
-
     Map<String, String> jobProperties = partitionInfo.getJobProperties();
     HCatUtil.copyJobPropertiesToJobConf(jobProperties, jobConf);
-    Reporter reporter = InternalUtil.createReporter(taskContext);
-    org.apache.hadoop.mapred.RecordReader recordReader =
-      inputFormat.getRecordReader(hcatSplit.getBaseSplit(), jobConf, reporter);
-
-    SerDe serde;
-    try {
-      serde = ReflectionUtils.newInstance(storageHandler.getSerDeClass(), 
-                                          jobContext.getConfiguration());
-
-//    HCatUtil.logEntrySet(LOG, "props to serde", properties.entrySet());
-
-      Configuration conf = storageHandler.getConf();
-      InternalUtil.initializeInputSerDe(serde, conf, 
-                                  partitionInfo.getTableInfo(),partitionInfo.getPartitionSchema());
-                                  
-    } catch (Exception e) {
-      throw new IOException("Unable to create objectInspector "
-          + "for serde class " + storageHandler.getSerDeClass().getName()
-          + e);
-    }
 
     Map<String,String> valuesNotInDataCols = getColValsNotInDataColumns(
         getOutputSchema(jobContext),partitionInfo
         );
 
-    HCatRecordReader hcatRecordReader = new HCatRecordReader(storageHandler, 
-                                                             recordReader, 
-                                                             serde,
-                                                             valuesNotInDataCols);
-    return hcatRecordReader;
+    return new HCatRecordReader(storageHandler, valuesNotInDataCols);
   }
 
-  
+
   /**
    * gets values for fields requested by output schema which will not be in the data
    */

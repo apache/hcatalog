@@ -21,53 +21,65 @@ package org.apache.hcatalog.mapreduce;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.StatusReporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
-import org.apache.hadoop.util.Progressable;
 
-class ProgressReporter implements  Reporter {
+class ProgressReporter extends StatusReporter implements Reporter {
 
-    private Progressable progressable;
+  private TaskInputOutputContext context = null;
+  private TaskAttemptContext taskAttemptContext = null;
 
-    public ProgressReporter(TaskAttemptContext context) {
-            this(context instanceof TaskInputOutputContext?
-                    (TaskInputOutputContext)context:
-                    Reporter.NULL);
+  public ProgressReporter(TaskAttemptContext context) {
+    if (context instanceof TaskInputOutputContext) {
+      this.context = (TaskInputOutputContext) context;
+    } else {
+      taskAttemptContext = context;
     }
+  }
 
-    public ProgressReporter(Progressable progressable) {
-        this.progressable = progressable;
+  @Override
+  public void setStatus(String status) {
+    if (context != null) {
+      context.setStatus(status);
     }
+  }
 
-    @Override
-    public void setStatus(String status) {
-    }
+  @Override
+  public Counters.Counter getCounter(Enum<?> name) {
+    return (context != null) ? (Counters.Counter) context.getCounter(name) : null;
+  }
 
-    @Override
-    public Counters.Counter getCounter(Enum<?> name) {
-        return Reporter.NULL.getCounter(name);
-    }
+  @Override
+  public Counters.Counter getCounter(String group, String name) {
+    return (context != null) ? (Counters.Counter) context.getCounter(group, name) : null;
+  }
 
-    @Override
-    public Counters.Counter getCounter(String group, String name) {
-        return Reporter.NULL.getCounter(group,name);
+  @Override
+  public void incrCounter(Enum<?> key, long amount) {
+    if (context != null) {
+      context.getCounter(key).increment(amount);
     }
+  }
 
-    @Override
-    public void incrCounter(Enum<?> key, long amount) {
+  @Override
+  public void incrCounter(String group, String counter, long amount) {
+    if (context != null) {
+      context.getCounter(group, counter).increment(amount);
     }
+  }
 
-    @Override
-    public void incrCounter(String group, String counter, long amount) {
-    }
+  @Override
+  public InputSplit getInputSplit() throws UnsupportedOperationException {
+    return null;
+  }
 
-    @Override
-    public InputSplit getInputSplit() throws UnsupportedOperationException {
-        return Reporter.NULL.getInputSplit();
+  @Override
+  public void progress() {
+    if (context != null) {
+      context.progress();
+    } else {
+      taskAttemptContext.progress();
     }
-
-    @Override
-    public void progress() {
-        progressable.progress();
-    }
+  }
 }
