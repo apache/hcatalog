@@ -28,7 +28,9 @@ Release 0.4.1 - Unreleased
   HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
 
   BUG FIXES
-  HCAT-409 MultiOutputformat should make getJobContext public
+  HCAT-355 Include 1.1.0 version of hadoop as test dependency to fix random test failures in build (rohini via avandana)
+
+  HCAT-409 MultiOutputformat should make getJobContext public (rohini via avandana)
 
   HCAT-403 MultiOutputFormat will call taskCommit on all formats if only one ever needs commit (rohini via avandana)
 
