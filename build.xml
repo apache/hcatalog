@@ -31,7 +31,7 @@
   ================================================================================
   -->
   <!-- name and version -->
-  <property name="_version" value="0.4.0"/>
+  <property name="_version" value="0.4.1"/>
   <property name="_vtype" value="-dev"/> 
   <property name="hcatalog.version" value="${_version}${_vtype}"/>
   <property name="hcatalog.jar" value="${ant.project.name}-${hcatalog.version}.jar"/>
