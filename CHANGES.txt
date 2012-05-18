@@ -98,6 +98,8 @@ Release 0.4.0 - Release May 16 2012
   HCAT-2 Support nested schema conversion between Hive an Pig (julienledem via hashutosh)
 
   IMPROVEMENTS
+  HCAT-404 add separate configuration for revision manager (toffer)
+
   HCAT-373 ProgressReporter should work with both old and new MR API (traviscrawford via toffer) 
 
   HCAT-68 Logging from HCat (avandana via toffer)

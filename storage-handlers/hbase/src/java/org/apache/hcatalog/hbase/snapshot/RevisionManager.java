@@ -17,6 +17,8 @@
  */
 package org.apache.hcatalog.hbase.snapshot;
 
+import org.apache.hadoop.conf.Configuration;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -34,7 +36,7 @@ public interface RevisionManager {
     /**
      * Initialize the revision manager.
      */
-    public void initialize(Properties properties);
+    public void initialize(Configuration conf);
 
     /**
      * Opens the revision manager.

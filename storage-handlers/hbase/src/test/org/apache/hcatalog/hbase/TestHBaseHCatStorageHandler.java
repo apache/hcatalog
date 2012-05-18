@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -37,6 +38,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.cli.HCatDriver;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerConfiguration;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Test;
 
@@ -58,12 +60,14 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
         hcatConf.set(ConfVars.METASTOREWAREHOUSE.varname, whPath.toString());
 
         //Add hbase properties
-
         for (Map.Entry<String, String> el : getHbaseConf()) {
             if (el.getKey().startsWith("hbase.")) {
                 hcatConf.set(el.getKey(), el.getValue());
             }
         }
+        HBaseConfiguration.merge(
+                hcatConf,
+                RevisionManagerConfiguration.create());
 
         SessionState.start(new CliSessionState(hcatConf));
         hcatDriver = new HCatDriver();
@@ -87,7 +91,7 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
 
         assertTrue(doesTableExist);
 
-        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hcatConf);
         rm.open();
         //Should be able to successfully query revision manager
         rm.getAbortedWriteTransactions("test_table", "cf1");
@@ -123,7 +127,7 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
 
         assertTrue(doesTableExist);
 
-        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hcatConf);
         rm.open();
         //Should be able to successfully query revision manager
         rm.getAbortedWriteTransactions("test_table", "cf1");
@@ -159,7 +163,7 @@ public class TestHBaseHCatStorageHandler extends SkeletonHBaseTest {
 
         assertTrue(doesTableExist);
 
-        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+        RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hcatConf);
         rm.open();
         //Should be able to successfully query revision manager
         rm.getAbortedWriteTransactions("CaseSensitiveTable", "cf1");

@@ -41,7 +41,7 @@ public class TestRevisionManagerEndpoint extends SkeletonHBaseTest {
     testConf.setStrings(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY,
         "org.apache.hcatalog.hbase.snapshot.RevisionManagerEndpoint",
         "org.apache.hadoop.hbase.coprocessor.GenericEndpoint");
-    testConf.set(RevisionManagerEndpoint.REVISION_MGR_ENDPOINT_IMPL_CLASS, MockRM.class.getName());
+    testConf.set(RMConstants.REVISION_MGR_ENDPOINT_IMPL_CLASS, MockRM.class.getName());
   }
 
   /**
@@ -106,8 +106,9 @@ public class TestRevisionManagerEndpoint extends SkeletonHBaseTest {
     }
 
     @Override
-    public void initialize(Properties properties) {
-      INSTANCES.put("default", this);
+    public void initialize(Configuration conf) {
+      if(!INSTANCES.containsKey(DEFAULT_INSTANCE))
+        INSTANCES.put(DEFAULT_INSTANCE, this);
     }
 
     @Override

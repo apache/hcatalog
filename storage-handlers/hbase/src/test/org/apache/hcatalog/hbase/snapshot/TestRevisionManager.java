@@ -23,8 +23,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hcatalog.hbase.SkeletonHBaseTest;
 import org.apache.hcatalog.hbase.snapshot.transaction.thrift.*;
 import org.apache.zookeeper.KeeperException;
@@ -84,11 +84,10 @@ public class TestRevisionManager extends SkeletonHBaseTest{
             sb.append(port);
         }
 
-        Properties props = new Properties();
-        props.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
-        props.put(ZKBasedRevisionManager.DATADIR, "/rm_base");
+        Configuration conf = RevisionManagerConfiguration.create(getHbaseConf());
+        conf.set(RMConstants.ZOOKEEPER_DATADIR, "/rm_base");
         ZKBasedRevisionManager  manager = new ZKBasedRevisionManager();
-        manager.initialize(props);
+        manager.initialize(conf);
         manager.open();
         ZKUtil zkutil = new ZKUtil(sb.toString(), "/rm_base");
 
@@ -132,11 +131,10 @@ public class TestRevisionManager extends SkeletonHBaseTest{
 
         int port = getHbaseConf().getInt("hbase.zookeeper.property.clientPort", 2181);
         String host = getHbaseConf().get("hbase.zookeeper.quorum");
-        Properties props = new Properties();
-        props.put(ZKBasedRevisionManager.HOSTLIST, host + ':' + port);
-        props.put(ZKBasedRevisionManager.DATADIR, "/rm_base");
+        Configuration conf = RevisionManagerConfiguration.create(getHbaseConf());
+        conf.set(RMConstants.ZOOKEEPER_DATADIR, "/rm_base");
         ZKBasedRevisionManager  manager = new ZKBasedRevisionManager();
-        manager.initialize(props);
+        manager.initialize(conf);
         manager.open();
         ZKUtil zkutil = new ZKUtil(host + ':' + port, "/rm_base");
 
@@ -196,11 +194,10 @@ public class TestRevisionManager extends SkeletonHBaseTest{
             sb.append(port);
         }
 
-        Properties props = new Properties();
-        props.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
-        props.put(ZKBasedRevisionManager.DATADIR, "/rm_base");
+        Configuration conf = RevisionManagerConfiguration.create(getHbaseConf());
+        conf.set(RMConstants.ZOOKEEPER_DATADIR, "/rm_base");
         ZKBasedRevisionManager  manager = new ZKBasedRevisionManager();
-        manager.initialize(props);
+        manager.initialize(conf);
         manager.open();
         String tableName = newTableName("testTable");
         List<String> columnFamilies = Arrays.asList("cf1", "cf2");
@@ -221,11 +218,10 @@ public class TestRevisionManager extends SkeletonHBaseTest{
     public void testCreateSnapshot() throws IOException{
         int port = getHbaseConf().getInt("hbase.zookeeper.property.clientPort", 2181);
         String host = getHbaseConf().get("hbase.zookeeper.quorum");
-        Properties props = new Properties();
-        props.put(ZKBasedRevisionManager.HOSTLIST, host + ':' + port);
-        props.put(ZKBasedRevisionManager.DATADIR, "/rm_base");
+        Configuration conf = RevisionManagerConfiguration.create(getHbaseConf());
+        conf.set(RMConstants.ZOOKEEPER_DATADIR, "/rm_base");
         ZKBasedRevisionManager  manager = new ZKBasedRevisionManager();
-        manager.initialize(props);
+        manager.initialize(conf);
         manager.open();
         String tableName = newTableName("testTable");
         List<String> cfOne = Arrays.asList("cf1", "cf2");

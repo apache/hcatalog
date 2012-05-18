@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
@@ -66,6 +67,7 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerConfiguration;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
@@ -80,13 +82,39 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
     private final byte[] QUALIFIER1 = Bytes.toBytes("testQualifier1");
     private final byte[] QUALIFIER2 = Bytes.toBytes("testQualifier2");
 
+   public TestHBaseInputFormat() throws Exception {
+        hcatConf = getHiveConf();
+        hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
+                HCatSemanticAnalyzer.class.getName());
+        URI fsuri = getFileSystem().getUri();
+        Path whPath = new Path(fsuri.getScheme(), fsuri.getAuthority(),
+                getTestDir());
+        hcatConf.set(HiveConf.ConfVars.HADOOPFS.varname, fsuri.toString());
+        hcatConf.set(ConfVars.METASTOREWAREHOUSE.varname, whPath.toString());
+
+        //Add hbase properties
+
+        for (Map.Entry<String, String> el : getHbaseConf()) {
+            if (el.getKey().startsWith("hbase.")) {
+                hcatConf.set(el.getKey(), el.getValue());
+            }
+        }
+        HBaseConfiguration.merge(hcatConf,
+               RevisionManagerConfiguration.create());
+
+
+        SessionState.start(new CliSessionState(hcatConf));
+        hcatDriver = new HCatDriver();
+
+    }
+
     private List<Put> generatePuts(int num, String tableName) throws IOException {
 
         List<String> columnFamilies = Arrays.asList("testFamily");
         RevisionManager rm = null;
         List<Put> myPuts;
         try {
-            rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+            rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hcatConf);
             rm.open();
             myPuts = new ArrayList<Put>();
             for (int i = 1; i <= num; i++) {
@@ -106,29 +134,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         return myPuts;
     }
 
-   private void Initialize() throws Exception {
-        hcatConf = getHiveConf();
-        hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
-                HCatSemanticAnalyzer.class.getName());
-        URI fsuri = getFileSystem().getUri();
-        Path whPath = new Path(fsuri.getScheme(), fsuri.getAuthority(),
-                getTestDir());
-        hcatConf.set(HiveConf.ConfVars.HADOOPFS.varname, fsuri.toString());
-        hcatConf.set(ConfVars.METASTOREWAREHOUSE.varname, whPath.toString());
-
-        //Add hbase properties
-
-        for (Map.Entry<String, String> el : getHbaseConf()) {
-            if (el.getKey().startsWith("hbase.")) {
-                hcatConf.set(el.getKey(), el.getValue());
-            }
-        }
-
-        SessionState.start(new CliSessionState(hcatConf));
-        hcatDriver = new HCatDriver();
-
-    }
-
    private void populateHBaseTable(String tName, int revisions) throws IOException {
         List<Put> myPuts = generatePuts(revisions, tName);
         HTable table = new HTable(getHbaseConf(), Bytes.toBytes(tName));
@@ -142,7 +147,7 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
         List<Put> myPuts = new ArrayList<Put>();
         long revision;
         try {
-            rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(getHbaseConf());
+            rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(hcatConf);
             rm.open();
             Transaction tsx = rm.beginWriteTransaction(tName, columnFamilies);
 
@@ -171,7 +176,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
 
     @Test
     public void TestHBaseTableReadMR() throws Exception {
-        Initialize();
         String tableName = newTableName("MyTable");
         String databaseName = newTableName("MyDatabase");
         //Table name will be lower case unless specified by hbase.table.name property
@@ -243,7 +247,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
     @Test
     public void TestHBaseTableProjectionReadMR() throws Exception {
 
-        Initialize();
         String tableName = newTableName("MyTable");
         //Table name as specified by hbase.table.name property
         String hbaseTableName = "MyDB_" + tableName;
@@ -304,7 +307,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
     @Test
     public void TestHBaseInputFormatProjectionReadMR() throws Exception {
 
-        Initialize();
         String tableName = newTableName("mytable");
         String tableQuery = "CREATE TABLE " + tableName
                               + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
@@ -377,7 +379,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
 
     @Test
     public void TestHBaseTableIgnoreAbortedTransactions() throws Exception {
-        Initialize();
         String tableName = newTableName("mytable");
         String tableQuery = "CREATE TABLE " + tableName
                               + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +
@@ -437,7 +438,6 @@ public class TestHBaseInputFormat extends SkeletonHBaseTest {
 
     @Test
     public void TestHBaseTableIgnoreAbortedAndRunningTransactions() throws Exception {
-        Initialize();
         String tableName = newTableName("mytable");
         String tableQuery = "CREATE TABLE " + tableName
                               + "(key string, testqualifier1 string, testqualifier2 string) STORED BY " +

@@ -25,6 +25,8 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hcatalog.hbase.snapshot.lock.LockListener;
 import org.apache.hcatalog.hbase.snapshot.lock.WriteLock;
 import org.apache.zookeeper.CreateMode;
@@ -36,27 +38,37 @@ import org.apache.zookeeper.ZooDefs.Ids;
  */
 public class ZKBasedRevisionManager implements RevisionManager{
 
-    public static final String HOSTLIST = "revision.manager.zk.HostList";
-    public static final String DATADIR = "revision.manager.zk.DataDir";
-    public static final String DEFAULT_DATADIR = "/revision-management";
-    public static final String DEFAULT_HOSTLIST = "localhost:2181";
-    private static  int DEFAULT_WRITE_TRANSACTION_TIMEOUT = 14400000;
     private static final Log LOG = LogFactory.getLog(ZKBasedRevisionManager.class);
     private String zkHostList;
     private String baseDir;
     private ZKUtil zkUtil;
+    private long writeTxnTimeout;
 
 
     /*
      * @see org.apache.hcatalog.hbase.snapshot.RevisionManager#initialize()
      */
     @Override
-    public void initialize(Properties properties) {
-        this.zkHostList = properties.getProperty(
-                ZKBasedRevisionManager.HOSTLIST,
-                ZKBasedRevisionManager.DEFAULT_HOSTLIST);
-        this.baseDir = properties.getProperty(ZKBasedRevisionManager.DATADIR,
-                ZKBasedRevisionManager.DEFAULT_DATADIR);
+    public void initialize(Configuration conf) {
+        conf = new Configuration(conf);
+        if (conf.get(RMConstants.ZOOKEEPER_HOSTLIST) == null) {
+           String zkHostList = conf.get(HConstants.ZOOKEEPER_QUORUM);
+           int port = conf.getInt(HConstants.ZOOKEEPER_CLIENT_PORT,
+                   HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
+           String[] splits = zkHostList.split(",");
+           StringBuffer sb = new StringBuffer();
+           for (String split : splits) {
+               sb.append(split);
+               sb.append(':');
+               sb.append(port);
+               sb.append(',');
+           }
+           sb.deleteCharAt(sb.length() - 1);
+           conf.set(RMConstants.ZOOKEEPER_HOSTLIST, sb.toString());
+        }
+        this.zkHostList = conf.get(RMConstants.ZOOKEEPER_HOSTLIST);
+        this.baseDir = conf.get(RMConstants.ZOOKEEPER_DATADIR);
+        this.writeTxnTimeout = Long.parseLong(conf.get(RMConstants.WRITE_TRANSACTION_TIMEOUT));
     }
 
     /**
@@ -118,7 +130,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
         if (keepAlive != -1) {
             transaction.setKeepAlive(keepAlive);
         } else {
-            transaction.setKeepAlive(DEFAULT_WRITE_TRANSACTION_TIMEOUT);
+            transaction.setKeepAlive(writeTxnTimeout);
         }
 
         refreshTransactionList(transaction.getTableName());

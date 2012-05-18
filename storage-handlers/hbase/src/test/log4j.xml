@@ -27,7 +27,7 @@
 
 
     <root>
-        <priority value ="INFO" />
+        <priority value ="DEBUG" />
         <appender-ref ref="ConsoleAppender" />
     </root>
     <!--<logger name="org.apache.hadoop.mapred">-->

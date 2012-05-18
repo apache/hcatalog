@@ -26,6 +26,7 @@ import java.net.URI;
 import java.util.Map;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -64,7 +65,9 @@ public class TestZNodeSetUp extends SkeletonHBaseTest{
                 hcatConf.set(el.getKey(), el.getValue());
             }
         }
-        hcatConf.set("revision.manager.zk.DataDir", "/rm_base");
+        HBaseConfiguration.merge(hcatConf,
+                RevisionManagerConfiguration.create());
+        hcatConf.set(RMConstants.ZOOKEEPER_DATADIR, "/rm_base");
         SessionState.start(new CliSessionState(hcatConf));
         hcatDriver = new HCatDriver();
 

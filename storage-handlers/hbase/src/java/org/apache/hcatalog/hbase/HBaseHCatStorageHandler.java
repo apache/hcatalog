@@ -59,6 +59,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.hbase.HBaseBulkOutputFormat.HBaseBulkOutputCommitter;
 import org.apache.hcatalog.hbase.HBaseDirectOutputFormat.HBaseDirectOutputCommitter;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerConfiguration;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.HCatTableInfo;
@@ -98,7 +99,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             jobProperties.put(TableInputFormat.INPUT_TABLE, qualifiedTableName);
 
             Configuration jobConf = getJobConf();
-            addHbaseResources(jobConf, jobProperties);
+            addResources(jobConf, jobProperties);
             JobConf copyOfConf = new JobConf(jobConf);
             HBaseConfiguration.addHbaseResources(copyOfConf);
             //Getting hbase delegation token in getInputSplits does not work with PIG. So need to
@@ -114,8 +115,10 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             String serSnapshot = (String) inputJobInfo.getProperties().get(
                     HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
             if (serSnapshot == null) {
-                HCatTableSnapshot snapshot = HBaseRevisionManagerUtil.createSnapshot(copyOfConf,
-                        qualifiedTableName, tableInfo);
+                HCatTableSnapshot snapshot =
+                        HBaseRevisionManagerUtil.createSnapshot(
+                            RevisionManagerConfiguration.create(copyOfConf),
+                            qualifiedTableName, tableInfo);
                 jobProperties.put(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY,
                         HCatUtil.serialize(snapshot));
             }
@@ -146,7 +149,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             jobProperties.put(TableOutputFormat.OUTPUT_TABLE, qualifiedTableName);
 
             Configuration jobConf = getJobConf();
-            addHbaseResources(jobConf, jobProperties);
+            addResources(jobConf, jobProperties);
 
             Configuration copyOfConf = new Configuration(jobConf);
             HBaseConfiguration.addHbaseResources(copyOfConf);
@@ -155,7 +158,8 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                     HBaseConstants.PROPERTY_WRITE_TXN_KEY);
             Transaction txn = null;
             if (txnString == null) {
-                txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo, copyOfConf);
+                txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo,
+                        RevisionManagerConfiguration.create(copyOfConf));
                 String serializedTxn = HCatUtil.serialize(txn);
                 outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
                         serializedTxn);
@@ -477,7 +481,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         //configureOutputJobProperties, we take care of adding the default properties
         //that are not already present. TODO: Change to a copy for jobs after HCAT-308 is fixed.
         jobConf = conf;
-        hbaseConf = HBaseConfiguration.create(conf);
+        hbaseConf = RevisionManagerConfiguration.create(HBaseConfiguration.create(conf));
     }
 
     private void checkDeleteTable(Table table) throws MetaException {
@@ -540,10 +544,11 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
      * @param jobConf Job configuration
      * @param newJobProperties  Map to which new properties should be added
      */
-    private void addHbaseResources(Configuration jobConf,
-            Map<String, String> newJobProperties) {
+    private void addResources(Configuration jobConf,
+                              Map<String, String> newJobProperties) {
         Configuration conf = new Configuration(false);
         HBaseConfiguration.addHbaseResources(conf);
+        RevisionManagerConfiguration.addResources(conf);
         for (Entry<String, String> entry : conf) {
             if (jobConf.get(entry.getKey()) == null)
                 newJobProperties.put(entry.getKey(), entry.getValue());

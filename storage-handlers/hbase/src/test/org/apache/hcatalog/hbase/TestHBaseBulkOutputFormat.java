@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -59,6 +60,7 @@ import org.apache.hcatalog.hbase.TestHBaseDirectOutputFormat.MapReadAbortedTrans
 import org.apache.hcatalog.hbase.TestHBaseDirectOutputFormat.MapWriteAbortTransaction;
 import org.apache.hcatalog.hbase.snapshot.FamilyRevision;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerConfiguration;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
@@ -100,6 +102,9 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         for (Map.Entry<String, String> el : getJobConf())
             allConf.set(el.getKey(), el.getValue());
 
+        HBaseConfiguration.merge(
+                allConf,
+                RevisionManagerConfiguration.create());
         SessionState.start(new CliSessionState(allConf));
         hcatDriver = new HCatDriver();
     }

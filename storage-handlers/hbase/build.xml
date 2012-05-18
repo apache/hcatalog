@@ -43,6 +43,7 @@
     <!-- build properties -->
     <property name="lib.dir" value="${basedir}/lib/" />
     <property name="src.dir"  location="${basedir}/src/java"/>
+    <property name="resources.dir"  location="${basedir}/src/resources"/>
     <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="build.dir" value="${basedir}/build"/>
     <property name="build.classes" value="${build.dir}/classes" />
@@ -195,7 +196,7 @@
     -->
     <!-- Compile src files -->
     <target name="compile-src" depends="init">
-        <javac encoding="${build.encoding}" srcdir="${src.dir}:${basedir}/src/gen-java" excludes="${excludes}"
+        <javac encoding="${build.encoding}" srcdir="${src.dir}:${basedir}/src/gen-java:${basedir}/src/resources" excludes="${excludes}"
                includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
                optimize="${javac.optimize}" target="${javac.version}"
                source="${javac.version}" deprecation="${javac.deprecation}"
@@ -207,6 +208,11 @@
 
     <!-- Build the jar -->
     <target name="jar" depends="compile-src">
+        <copy todir="${build.classes}" includeEmptyDirs="false">
+            <fileset dir="${resources.dir}">
+                <include name="*"/>
+            </fileset>
+        </copy>
         <jar jarfile="${build.dir}/${ant.project.name}/${handler.jar}" basedir="${build.classes}"/>
     </target>
 
@@ -306,6 +312,7 @@
     -->
     <target name="package" depends="jar, docs" description="Create an HCatalog release">
         <mkdir dir="${dist.dir}" />
+        <mkdir dir="${dist.dir}/conf" />
         <mkdir dir="${dist.dir}/lib" />
         <mkdir dir="${dist.dir}/docs" />
 
@@ -320,6 +327,9 @@
         <copy todir="${dist.dir}/docs">
             <fileset dir="${build.docs}" />
         </copy>
+        <copy todir="${dist.dir}/conf">
+            <fileset dir="${basedir}/conf" />
+        </copy>
 
         <antcall target="package-to-handlers"/>
     </target>
@@ -329,6 +339,7 @@
         <copy todir="${dist.handlers.dir}/hbase" includeEmptyDirs="true">
             <fileset dir="${dist.dir}">
               <include name="**/lib/hbase-storage-handler-*.jar"/>
+              <include name="**/conf/**/*"/>
             </fileset>
         </copy>
     </target>
