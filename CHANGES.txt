@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-374 Add HCatBaseTest and one example usage (traviscrawford via gates)
+
   HCAT-390 Add e2e test for Hive with different file formats in different partitions (daijy via gates)
 
   HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
