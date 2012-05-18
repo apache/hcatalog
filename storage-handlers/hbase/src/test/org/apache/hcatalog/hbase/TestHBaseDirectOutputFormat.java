@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -55,6 +56,7 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.hbase.snapshot.FamilyRevision;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
+import org.apache.hcatalog.hbase.snapshot.RevisionManagerConfiguration;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
@@ -67,9 +69,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -92,7 +96,9 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
             allConf.set(el.getKey(), el.getValue());
         for (Map.Entry<String, String> el : getJobConf())
             allConf.set(el.getKey(), el.getValue());
-
+        HBaseConfiguration.merge(
+                allConf,
+                RevisionManagerConfiguration.create());
         SessionState.start(new CliSessionState(allConf));
         hcatDriver = new HCatDriver();
     }
@@ -330,8 +336,11 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
-        int index = 0;
+        int count = 0;
         for (Result result : scanner) {
+            String key = Bytes.toString(result.getRow());
+            assertNotSame(MapWriteAbortTransaction.failedKey, key);
+            int index = Integer.parseInt(key)-1;
             String vals[] = data[index].toString().split(",");
             for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
@@ -341,9 +350,9 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
                 assertEquals(1l, result.getColumn(familyNameBytes, Bytes.toBytes(pair[0])).get(0)
                         .getTimestamp());
             }
-            index++;
+            count++;
         }
-        assertEquals(data.length - 1, index);
+        assertEquals(data.length - 1, count);
 
         // verify that the inputformat returns empty results.
         Path outputDir = new Path(getTestDir(),
@@ -441,6 +450,8 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
     }
 
     static class MapWriteAbortTransaction extends Mapper<LongWritable, Text, BytesWritable, HCatRecord> {
+        public static String failedKey;
+        private static int count = 0;
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
@@ -449,14 +460,19 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
             HCatSchema schema = jobInfo.getOutputSchema();
             String vals[] = value.toString().split(",");
             record.setInteger("key", schema, Integer.parseInt(vals[0]));
-            if (vals[0].equals("3")) {
-                throw new IOException("Failing map to test abort");
+            synchronized (MapWriteAbortTransaction.class) {
+                if (count == 2) {
+                    failedKey = vals[0];
+                    throw new IOException("Failing map to test abort");
+                }
+                for (int i = 1; i < vals.length; i++) {
+                    String pair[] = vals[i].split(":");
+                    record.set(pair[0], schema, pair[1]);
+                }
+                context.write(null, record);
+                count++;
             }
-            for (int i = 1; i < vals.length; i++) {
-                String pair[] = vals[i].split(":");
-                record.set(pair[0], schema, pair[1]);
-            }
-            context.write(null, record);
+
         }
 
     }

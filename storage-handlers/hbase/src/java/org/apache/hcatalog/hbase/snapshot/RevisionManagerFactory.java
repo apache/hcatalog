@@ -35,11 +35,11 @@ public class RevisionManagerFactory {
   /**
    * Gets an instance of revision manager.
    *
-   * @param properties The properties required to created the revision manager.
+   * @param conf The configuration required to created the revision manager.
    * @return the revision manager An instance of revision manager.
    * @throws IOException Signals that an I/O exception has occurred.
    */
-   private static RevisionManager getRevisionManager(String className, Properties properties) throws IOException{
+   private static RevisionManager getRevisionManager(String className, Configuration conf) throws IOException{
 
         RevisionManager revisionMgr;
         ClassLoader classLoader = Thread.currentThread()
@@ -51,7 +51,7 @@ public class RevisionManagerFactory {
             Class<? extends RevisionManager> revisionMgrClass = Class
                     .forName(className, true , classLoader).asSubclass(RevisionManager.class);
             revisionMgr = (RevisionManager) revisionMgrClass.newInstance();
-            revisionMgr.initialize(properties);
+            revisionMgr.initialize(conf);
         } catch (ClassNotFoundException e) {
             throw new IOException(
                     "The implementation class of revision manager not found.",
@@ -81,30 +81,7 @@ public class RevisionManagerFactory {
     */
    static RevisionManager getOpenedRevisionManager(String className, Configuration conf) throws IOException {
 
-       Properties properties = new Properties();
-       String zkHostList = conf.get(HConstants.ZOOKEEPER_QUORUM);
-       int port = conf.getInt(HConstants.ZOOKEEPER_CLIENT_PORT,
-               HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
-
-       if (zkHostList != null) {
-           String[] splits = zkHostList.split(",");
-           StringBuffer sb = new StringBuffer();
-           for (String split : splits) {
-               sb.append(split);
-               sb.append(':');
-               sb.append(port);
-               sb.append(',');
-           }
-
-           sb.deleteCharAt(sb.length() - 1);
-           properties.put(ZKBasedRevisionManager.HOSTLIST, sb.toString());
-       }
-       String dataDir = conf.get(ZKBasedRevisionManager.DATADIR);
-       if (dataDir != null) {
-           properties.put(ZKBasedRevisionManager.DATADIR, dataDir);
-       }
-       RevisionManager revisionMgr = RevisionManagerFactory
-               .getRevisionManager(className, properties);
+       RevisionManager revisionMgr = RevisionManagerFactory.getRevisionManager(className, conf);
        if (revisionMgr instanceof Configurable) {
          ((Configurable)revisionMgr).setConf(conf);
        }
@@ -116,14 +93,14 @@ public class RevisionManagerFactory {
     * Gets an instance of revision manager which is opened.
     * The revision manager implementation can be specified as {@link #REVISION_MGR_IMPL_CLASS},
     * default is {@link ZKBasedRevisionManager}.
-    * @param hbaseConf The HBase configuration.
+    * @param conf revision manager configuration
     * @return RevisionManager An instance of revision manager.
     * @throws IOException
     */
-   public static RevisionManager getOpenedRevisionManager(Configuration hbaseConf) throws IOException {
-     String className = hbaseConf.get(RevisionManagerFactory.REVISION_MGR_IMPL_CLASS,
+   public static RevisionManager getOpenedRevisionManager(Configuration conf) throws IOException {
+     String className = conf.get(RevisionManagerFactory.REVISION_MGR_IMPL_CLASS,
          ZKBasedRevisionManager.class.getName());
-     return getOpenedRevisionManager(className, hbaseConf);
+     return getOpenedRevisionManager(className, conf);
    }
 
 }

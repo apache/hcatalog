@@ -38,7 +38,6 @@ public class RevisionManagerEndpoint extends BaseEndpointCoprocessor implements 
 
   private static final Logger LOGGER =
 		      LoggerFactory.getLogger(RevisionManagerEndpoint.class.getName());
-  public static final String REVISION_MGR_ENDPOINT_IMPL_CLASS = "revision.manager.endpoint.impl.class";
   
   private RevisionManager rmImpl = null;
 
@@ -46,9 +45,10 @@ public class RevisionManagerEndpoint extends BaseEndpointCoprocessor implements 
   public void start(CoprocessorEnvironment env) {
     super.start(env);
     try {
-      Configuration conf = env.getConfiguration();
-      String className = conf.get(REVISION_MGR_ENDPOINT_IMPL_CLASS,
+      Configuration conf = RevisionManagerConfiguration.create(env.getConfiguration());
+      String className = conf.get(RMConstants.REVISION_MGR_ENDPOINT_IMPL_CLASS,
           ZKBasedRevisionManager.class.getName());
+      LOGGER.debug("Using Revision Manager implementation: {}",className);
       rmImpl = RevisionManagerFactory.getOpenedRevisionManager(className, conf);
     } catch (IOException e) {
       LOGGER.error("Failed to initialize revision manager", e);
@@ -68,7 +68,7 @@ public class RevisionManagerEndpoint extends BaseEndpointCoprocessor implements 
   }
 
   @Override
-  public void initialize(Properties properties) {
+  public void initialize(Configuration conf) {
     // do nothing, HBase controls life cycle
   }
 

@@ -30,7 +30,7 @@ public class RevisionManagerEndpointClient implements RevisionManager, Configura
   }
 
   @Override
-  public void initialize(Properties properties) {
+  public void initialize(Configuration conf) {
     // do nothing
   }
 
@@ -41,7 +41,7 @@ public class RevisionManagerEndpointClient implements RevisionManager, Configura
     // conf.set("hbase.ipc.client.connect.max.retries", "0");
     // conf.setInt(HConstants.HBASE_CLIENT_RPC_MAXATTEMPTS, 1);
     clonedConf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 1); // do not retry RPC
-    HTable table = new HTable(clonedConf, HConstants.META_TABLE_NAME);
+    HTable table = new HTable(clonedConf, HConstants.ROOT_TABLE_NAME);
     rmProxy = table.coprocessorProxy(RevisionManagerProtocol.class,
         Bytes.toBytes("anyRow"));
     rmProxy.open();
