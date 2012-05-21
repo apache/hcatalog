@@ -41,6 +41,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-411 Incorrect example provided in the HCatalog documentation (Overview page) avandana
+
   HCAT-355 Include 1.1.0 version of hadoop as test dependency to fix random test failures in build (rohini via avandana)
 
   HCAT-409 MultiOutputformat should make getJobContext public (rohini via avandana)

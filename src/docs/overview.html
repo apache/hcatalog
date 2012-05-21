@@ -98,7 +98,7 @@ store Z into 'data/processedevents/20100819/data';
 <p>With HCatalog, HCatalog will send a JMS message that data is available. The Pig job can then be started.</p>
 <pre class="code">
 A = load 'rawevents' using HCatLoader;
-B = filter A by date = '20100819' and by bot_finder(zeta) = 0;
+B = filter A by date == '20100819' and by bot_finder(zeta) = 0;
 &hellip;
 store Z into 'processedevents' using HCatStorer("date=20100819");
 </pre>
