@@ -135,7 +135,7 @@ sub runHCatCmdLine
 
     open(FH, "> $hcatfiles[0]") or
         die "Unable to open file $hcatfiles[0] to write SQL script, $ERRNO\n";
-    print FH $testCmd->{'hcat'} . "\n";
+    print FH $hcatCmd . "\n";
     close(FH);
 
     Util::runHCatCmdFromFile($testCmd, $log, $hcatfiles[0], $stdoutfile, $stderrfile, 1);

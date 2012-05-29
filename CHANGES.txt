@@ -25,6 +25,8 @@ Release 0.4.1 - Unreleased
   NEW FEATURES
 
   IMPROVEMENTS
+  HCAT-414 More HCat e2e tests (khorgath via gates)
+
   HCAT-390 Add e2e test for Hive with different file formats in different partitions (daijy via gates)
 
   HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
