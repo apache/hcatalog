@@ -120,7 +120,8 @@ public class TestSemanticAnalysis extends TestCase{
 
 
   public void testUsNonExistentDB() throws CommandNeedRetryException {
-	assertEquals(9, hcatDriver.run("use no_such_db").getResponseCode());
+      CommandProcessorResponse resp = hcatDriver.run("use no_such_db");
+      assertEquals(1, resp.getResponseCode());
   }
 
   public void testDatabaseOperations() throws MetaException, CommandNeedRetryException {
@@ -274,8 +275,8 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int) as select * from tbl2";
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10, response.getResponseCode());
-    assertTrue(response.getErrorMessage().contains("FAILED: Error in semantic analysis: Operation not supported. Create table as Select is not a valid operation."));
+    assertEquals(40000, response.getResponseCode());
+    assertTrue(response.getErrorMessage().contains("FAILED: SemanticException Operation not supported. Create table as Select is not a valid operation."));
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
@@ -308,8 +309,8 @@ public class TestSemanticAnalysis extends TestCase{
     query =  "create table junit_sem_analysis (a int) partitioned by (b int)  stored as RCFILE";
 
     CommandProcessorResponse response = hcatDriver.run(query);
-    assertEquals(10,response.getResponseCode());
-    assertEquals("FAILED: Error in semantic analysis: Operation not supported. HCatalog only supports partition columns of type string. For column: b Found type: int",
+    assertEquals(40000,response.getResponseCode());
+    assertEquals("FAILED: SemanticException Operation not supported. HCatalog only supports partition columns of type string. For column: b Found type: int",
         response.getErrorMessage());
 
   }

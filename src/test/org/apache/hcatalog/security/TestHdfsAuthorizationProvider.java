@@ -132,9 +132,12 @@ public class TestHdfsAuthorizationProvider {
     String command = String.format(format, args);
     CommandProcessorResponse resp = hcatDriver.run(command);
     Assert.assertNotSame(resp.getErrorMessage(), 0, resp.getResponseCode());
-    Assert.assertTrue(resp.getResponseCode() == 403 || //hive checks fail with 403
-        resp.getErrorMessage().contains("org.apache.hadoop.hive.ql.metadata.AuthorizationException")); 
+    Assert.assertTrue((resp.getResponseCode() == 40000) || (resp.getResponseCode() == 403));
+    if(resp.getErrorMessage() != null){
+     Assert.assertTrue(resp.getErrorMessage().contains("org.apache.hadoop.security.AccessControlException"));
+    }
   }
+
   
   /** 
    * Tests whether the warehouse directory is writable by the current user (as defined by Hadoop)
