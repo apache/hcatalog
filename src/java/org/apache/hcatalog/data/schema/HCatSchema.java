@@ -139,4 +139,22 @@ public class HCatSchema implements Serializable{
         }
         return sb.toString();
     }
+
+    public String getSchemaAsTypeString(){
+        boolean first = true;
+        StringBuilder sb = new StringBuilder();
+        for (HCatFieldSchema hfs : fieldSchemas){
+            if (!first){
+                sb.append(",");
+            }else{
+                first = false;
+            }
+            if (hfs.getName() != null){
+                sb.append(hfs.getName());
+                sb.append(":");
+            }
+            sb.append(hfs.getTypeString());
+        }
+        return sb.toString();
+    }
 }

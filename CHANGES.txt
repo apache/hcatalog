@@ -18,20 +18,35 @@
 
 Apache HCatalog Change Log
 
-Release 0.4.1 - Unreleased
+Trunk (unreleased changes)
 
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
   HCAT-414 More HCat e2e tests (khorgath via gates)
+
+  HCAT-374 Add HCatBaseTest and one example usage (traviscrawford via gates)
 
   HCAT-390 Add e2e test for Hive with different file formats in different partitions (daijy via gates)
 
   HCAT-368 Documentation improvements: doc set & API docs (lefty via gates)
 
+  HCAT-387 Trunk should point to 0.10 snapshot to match hive trunk (toffer)
+
+  HCAT-329 HCatalog build fails with pig 0.9 (traviscrawford via hashutosh)
+
+  HCAT-233 gitignore file (enis via gates)
+
+  OPTIMIZATIONS
+
   BUG FIXES
+  HCAT-406 The "toString" method in HCatFieldSchema class return only type information. (avandana)
+
+  HCAT-421 Unit test failures in trunk build (avandana)
+
   HCAT-411 Incorrect example provided in the HCatalog documentation (Overview page) avandana
 
   HCAT-355 Include 1.1.0 version of hadoop as test dependency to fix random test failures in build (rohini via avandana)
@@ -42,7 +57,7 @@ Release 0.4.1 - Unreleased
 
   HCAT-400 HCatalog build fails from git checkout due to missing lib directory (traviscrawford via gates)
 
-Release 0.4.0 - May 16 2012
+Release 0.4.0 - Release May 16 2012
 
   INCOMPATIBLE CHANGES
   HCAT-304 Remove hcat.hbase.column.mapping table property (rohini via gates)
@@ -86,7 +101,7 @@ Release 0.4.0 - May 16 2012
 
   HCAT-334 HCatalog should generate a POM file so it can be deployed to a maven repo (traviscrawford via gates)
 
-  HCAT-296 Hcatalog should be able talk to secure hbase server using hbase delegation tokens (rohini via toffer)
+  HCAT-296 Hcatalog should be able talk to secure hbase server using hbase delegation token (rohini via toffer)
 
   HCAT-249 Rework JSON StorageDriver into a JSON SerDe (khorgath via gates)
 
@@ -109,15 +124,13 @@ Release 0.4.0 - May 16 2012
 
   HCAT-69 Fix token usage from HCat (toffer)
 
-  HCAT-357 e2e harness: allow to run again pre-installed packages (thw via gates)
-
   HCAT-352 Need tests for complex types (gates)
 
   HCAT-268 Remove remnants of storage drivers. (rohini via gates)
 
   HCAT-306 Need more end-to-end tests (gates)
 
-  HCAT-130 Documentation improvements (lefty and gates via gates)
+  HCAT-130 Documentation improvements (gates and lefty via gates)
 
   HCAT-266 Upgrade HBase dependency to 0.92 (thw via toffer)
 
@@ -144,8 +157,6 @@ Release 0.4.0 - May 16 2012
 
   HCAT-395 Hcat 0.4 last minute doc fixes (gates)
 
-  HCAT-394 HCatalog 0.4 should pull hive-0.9.0 from maven instead of 0.9.0-SNAPSHOT (gates)
-
   HCAT-382 NPE in pig when a binary field is null (rohini vi avandana)
 
   HCAT-386 e2e tests should respect JAVA_HOME when it's set (gates)
@@ -166,6 +177,10 @@ Release 0.4.0 - May 16 2012
 
   HCAT-320 Remove filtering of table properties which are not prefix with "hcat." (rohini via gates)
 
+  HCAT-357 e2e harness: allow to run again pre-installed packages (thw via daijy)
+
+  HCAT-356 Compilation failure due to API change in HIVE-2908 (rohini via gates)
+
   HCAT-354 hive-hbase-handler jar not getting put in hcat package (gates)
 
   HCAT-348 HCatUtil::getHiveConf(Configuration) ignores passed-in conf while creating HiveConf (gates)
@@ -174,13 +189,13 @@ Release 0.4.0 - May 16 2012
 
   HCAT-301 Reading from a table created with upper case table name throws error. (rohini via toffer)
 
-  HCAT-319 Cleanup of 0.3 mapred classes (khorgath via gates)
-
   HCAT-302 unable to write to hbase channel. HBaseHCatStorageHandler class not found (rohini via gates)
+
+  HCAT-335 Release notes issues for 0.4 (gates)
 
   HCAT-338 A couple of typos in the 0.4.0 document (gates)
 
-  HCAT-335 Release notes issues for 0.4 (gates)
+  HCAT-319 Cleanup of 0.3 mapred classes (khorgath via gates)
 
   HCAT-291 Pig and MR fail to write to a sequence file (avandana via gates)
 
@@ -198,11 +213,11 @@ Release 0.4.0 - May 16 2012
 
   HCAT-281 HCat use table schema instead of partition schema to read partition data (daijy and khorgath via gates)
 
-  HCAT 286 NPE in HdfsAuthorizationProvider (enis via gates)
+  HCAT-286 NPE in HdfsAuthorizationProvider (enis via gates)
 
-  HCAT 290 Changes in HBase maven objects breaks hcat build (thw via gates)
+  HCAT-290 Changes in HBase maven objects breaks hcat build (thw via gates)
 
-  HCAT 280 part file name prefix with attempxxxx (daijy via gates)
+  HCAT-280 part file name prefix with attempxxxx (daijy via gates)
 
   HCAT-275 JSON SerDe issues (khorgath via gates)
 
