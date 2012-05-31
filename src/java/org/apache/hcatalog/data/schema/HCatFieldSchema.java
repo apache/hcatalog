@@ -208,8 +208,12 @@ public class HCatFieldSchema implements Serializable {
     }
 
     @Override
-    public String toString(){
-        return getTypeString();
+    public String toString() {
+        return "HCatFieldSchema ["
+                + (fieldName != null ? "fieldName=" + fieldName + ", " : "fieldName=null")
+                + (comment != null ? "comment=" + comment + ", " : "comment=null")
+                + (type != null ? "type=" + getTypeString() + ", " : "type=null")
+                + (category != null ? "category=" + category : "category=null") + "]";
     }
 
     public String getTypeString(){
@@ -222,17 +226,17 @@ public class HCatFieldSchema implements Serializable {
             sb.append(type);
         }else if (Category.STRUCT == category){
             sb.append("struct<");
-            sb.append(subSchema.toString());
+            sb.append(subSchema.getSchemaAsTypeString());
             sb.append(">");
         }else if (Category.ARRAY == category){
             sb.append("array<");
-            sb.append(subSchema.toString());
+            sb.append(subSchema.getSchemaAsTypeString());
             sb.append(">");
         }else if (Category.MAP == category){
             sb.append("map<");
             sb.append(mapKeyType);
             sb.append(",");
-            sb.append(subSchema.toString());
+            sb.append(subSchema.getSchemaAsTypeString());
             sb.append(">");
         }
         return (typeString = sb.toString().toLowerCase());

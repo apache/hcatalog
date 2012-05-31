@@ -99,7 +99,7 @@ public class HCatRecordSerDe implements SerDe {
 
       LOG.debug("Initializing HCatRecordSerDe through HCatSchema {}." ,hsch);
 
-    rowTypeInfo = (StructTypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(hsch.toString());
+    rowTypeInfo = (StructTypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(hsch.getSchemaAsTypeString());
     cachedObjectInspector = HCatRecordObjectInspectorFactory.getHCatRecordObjectInspector(rowTypeInfo);
 
   }

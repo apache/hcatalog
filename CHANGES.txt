@@ -43,6 +43,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-406 The "toString" method in HCatFieldSchema class return only type information. (avandana)
+
   HCAT-421 Unit test failures in trunk build (avandana)
 
   HCAT-411 Incorrect example provided in the HCatalog documentation (Overview page) avandana

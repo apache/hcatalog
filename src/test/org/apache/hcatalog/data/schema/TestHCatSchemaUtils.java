@@ -41,10 +41,11 @@ public class TestHCatSchemaUtils extends TestCase {
         TypeInfo ti = TypeInfoUtils.getTypeInfoFromTypeString(typeString);
 
         HCatSchema hsch = HCatSchemaUtils.getHCatSchemaFromTypeString(typeString);
-        LOG.info(ti.getTypeName());
+        LOG.info("Type name : {}",ti.getTypeName());
         LOG.info("HCatSchema : {}",hsch);
-        assertEquals(ti.getTypeName(),hsch.toString());
-        assertEquals(hsch.toString(),typeString);
+        assertEquals(hsch.size(), 1);
+        assertEquals(ti.getTypeName(),hsch.get(0).getTypeString());
+        assertEquals(hsch.get(0).getTypeString(),typeString);
     }
 
     @SuppressWarnings("unused")
