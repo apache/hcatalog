@@ -35,7 +35,8 @@
         <li>an RDBMS - we recommend MySQL and provide instructions for it</li>
         <li>Hadoop cluster</li>
         <li>Unix user that the server will run as, and, if you are running your
-        cluster in secure mode, an associated Kerberos service principal and keytabs.</li>
+          cluster in secure mode, an associated Kerberos service principal and keytabs.</li>
+        <li>Apache Ant 1.8 or greater. Version 1.7.x is not supported.</li>
     </ul>
 
     <p>Throughout these instructions when you see a word in <em>italics</em> it

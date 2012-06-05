@@ -43,6 +43,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-417 List Ant 1.8 in install pre-reqs (jghoman via daijy)
+
   HCAT-422 missing guava lib in trunk build causes unit test failures
 
   HCAT-406 The "toString" method in HCatFieldSchema class return only type information. (avandana)
