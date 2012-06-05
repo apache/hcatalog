@@ -49,12 +49,17 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 
 /** 
- * An AuthorizationProvider, which checks against the data access level permissions on HDFS. 
+ * An AuthorizationProvider, which checks against the data access level permissions on HDFS.
+ * It makes sense to eventually move this class to Hive, so that all hive users can
+ * use this authorization model. 
  */
 public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
 
   protected Warehouse wh;
   
+  //Config variables : create an enum to store them if we have more
+  private static final String PROXY_USER_NAME = "proxy.user.name";
+
   public HdfsAuthorizationProvider() {
     super();
   }
@@ -234,17 +239,21 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
    * Checks the permissions for the given path and current user on Hadoop FS. If the given path 
    * does not exists, it checks for it's parent folder.
    */
-  public static void checkPermissions(final Configuration conf, final Path path, 
+  protected static void checkPermissions(final Configuration conf, final Path path, 
       final EnumSet<FsAction> actions) throws IOException, LoginException {
 
     if (path == null) {
       throw new IllegalArgumentException("path is null");
     }
-    
-    final UserGroupInformation ugi;
-    
+
     HadoopShims shims = ShimLoader.getHadoopShims();
-    ugi = shims.getUGIForConf(conf);
+    final UserGroupInformation ugi;
+    if(conf.get(PROXY_USER_NAME) != null){
+        ugi = UserGroupInformation.createRemoteUser(conf.get(PROXY_USER_NAME));
+    }
+    else {
+        ugi = shims.getUGIForConf(conf);
+    }
     final String user = shims.getShortUserName(ugi);  
         
     final FileSystem fs = path.getFileSystem(conf);
@@ -270,7 +279,7 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
    * does not exists, it returns.
    */
   @SuppressWarnings("deprecation")
-  public static void checkPermissions(final FileSystem fs, final Path path,
+  protected static void checkPermissions(final FileSystem fs, final Path path,
       final EnumSet<FsAction> actions, String user, String[] groups) throws IOException,
       AccessControlException {
     
