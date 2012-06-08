@@ -228,7 +228,7 @@ sub runDbCmd($$$;$)
 
     my @cmd = ('mysql', '-u', $cfg->{'dbuser'}, '-D', $cfg->{'dbdb'},
         '-h', $cfg->{'dbhost'}, "--password=$cfg->{'dbpasswd'}",
-        "--skip-column-names");
+        "--skip-column-names","--local-infile");
 
     print $log "Going to run [" . join(" ", @cmd) . "] passing in [$sqlfile]\n";
 

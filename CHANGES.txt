@@ -43,6 +43,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-362 add --local-infile to the mysql command (arpitgupta via daijy)
+
   HCAT-417 List Ant 1.8 in install pre-reqs (jghoman via daijy)
 
   HCAT-422 missing guava lib in trunk build causes unit test failures
