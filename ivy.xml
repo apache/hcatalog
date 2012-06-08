@@ -120,7 +120,9 @@
         <dependency org="commons-configuration" name="commons-configuration"
           rev="${commons-configuration.version}" conf="default"/>
         <dependency org="commons-httpclient" name="commons-httpclient"
-          rev="${commons-httpclient.version}" conf="default"/>
+          rev="${commons-httpclient.version}" conf="default">
+          <exclude org="junit"/>
+        </dependency>
         <dependency org="org.apache.hive" name="hive-builtins"
           rev="${hive.version}" conf="common->master"/>
         <dependency org="org.mortbay.jetty" name="jetty"

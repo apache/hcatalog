@@ -249,6 +249,14 @@
     <ivy:cachepath pathid="releaseaudit.classpath" conf="releaseaudit"/>
   </target>
 
+  <target name="ivy-report" depends="ivy-init" description="Generate Ivy dependency report">
+    <ivy:report todir="${build.ivy.report.dir}"
+      conf="common, default"
+      organisation="org.apache.hcatalog"
+      module="hcatalog"
+      graph="false"/>
+  </target>
+
   <target name="init" depends="ivy-compile, ivy-package" >
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${build.classes}" />

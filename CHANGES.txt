@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-331 Update HCatalog to junit 4 (traviscrawford via khorgath)
+
   HCAT-414 More HCat e2e tests (khorgath via gates)
 
   HCAT-374 Add HCatBaseTest and one example usage (traviscrawford via gates)
