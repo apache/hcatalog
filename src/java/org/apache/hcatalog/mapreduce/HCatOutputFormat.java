@@ -200,7 +200,6 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         }
       } finally {
         if( client != null ) {
-          client.close();
         }
 //        HCatUtil.logAllTokens(LOG,job);
       }

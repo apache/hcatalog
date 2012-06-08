@@ -427,7 +427,6 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             }
         } finally {
             if( client != null ) {
-                client.close();
             }
         }
     }

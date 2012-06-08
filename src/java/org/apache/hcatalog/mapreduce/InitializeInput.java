@@ -128,7 +128,6 @@ public class InitializeInput {
       return HCatUtil.serialize(inputJobInfo);
     } finally {
       if (client != null ) {
-        client.close();
       }
     }
 
