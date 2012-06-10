@@ -157,4 +157,15 @@ public class HCatSchema implements Serializable{
         }
         return sb.toString();
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return !((other == null) || !(other instanceof HCatSchema))
+            && this.hashCode() == other.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return toString().hashCode();
+    }
 }
