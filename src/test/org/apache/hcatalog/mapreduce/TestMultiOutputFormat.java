@@ -21,10 +21,12 @@ package org.apache.hcatalog.mapreduce;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Random;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -118,7 +120,26 @@ public class TestMultiOutputFormat {
         String inputFile = createInputFile(fileContent);
         FileInputFormat.setInputPaths(job, new Path(inputFile));
 
+        //Test for merging of configs
+        DistributedCache.addFileToClassPath(new Path(inputFile), job.getConfiguration(), fs);
+        String dummyFile = createInputFile("dummy file");
+        DistributedCache.addFileToClassPath(new Path(dummyFile), configurer.getJob("out1")
+                .getConfiguration(), fs);
+        // duplicate of the value. Merging should remove duplicates
+        DistributedCache.addFileToClassPath(new Path(inputFile), configurer.getJob("out2")
+                .getConfiguration(), fs);
+
         configurer.configure();
+
+        // Verify if the configs are merged
+        Path[] fileClassPaths = DistributedCache.getFileClassPaths(job.getConfiguration());
+        Assert.assertArrayEquals(new Path[] {new Path(inputFile), new Path(dummyFile)},
+                fileClassPaths);
+        URI[] expectedCacheFiles = new URI[] {new Path(inputFile).makeQualified(fs).toUri(),
+                new Path(dummyFile).makeQualified(fs).toUri()};
+        URI[] cacheFiles = DistributedCache.getCacheFiles(job.getConfiguration());
+        Assert.assertArrayEquals(expectedCacheFiles, cacheFiles);
+
         Assert.assertTrue(job.waitForCompletion(true));
 
         Path textOutPath = new Path(outDir, "out1/part-m-00000");

@@ -45,6 +45,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT_416 MultiOutputFormat should handle merging of DistributedCache configurations (rohini via avandana)
+
   HCAT-423 HCatalog should include SerDe-reported fields in the table schema (traviscrawford via khorgath)
 
   HCAT-362 add --local-infile to the mysql command (arpitgupta via daijy)

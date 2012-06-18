@@ -22,14 +22,18 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -43,7 +47,8 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
-import org.apache.hadoop.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The MultiOutputFormat class simplifies writing output data to multiple
@@ -128,20 +133,26 @@ import org.apache.hadoop.util.StringUtils;
  */
 public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MultiOutputFormat.class.getName());
     private static final String MO_ALIASES = "mapreduce.multiout.aliases";
     private static final String MO_ALIAS = "mapreduce.multiout.alias";
     private static final String CONF_KEY_DELIM = "%%";
     private static final String CONF_VALUE_DELIM = ";;";
     private static final String COMMA_DELIM = ",";
     private static final List<String> configsToOverride = new ArrayList<String>();
-    private static final List<String> configsToMerge = new ArrayList<String>();
+    private static final Map<String, String> configsToMerge = new HashMap<String, String>();
 
     static {
         configsToOverride.add("mapred.output.dir");
-        configsToMerge.add(JobContext.JOB_NAMENODES);
-        configsToMerge.add("tmpfiles");
-        configsToMerge.add("tmpjars");
-        configsToMerge.add("tmparchives");
+        configsToOverride.add(DistributedCache.CACHE_SYMLINK);
+        configsToMerge.put(JobContext.JOB_NAMENODES, COMMA_DELIM);
+        configsToMerge.put("tmpfiles", COMMA_DELIM);
+        configsToMerge.put("tmpjars", COMMA_DELIM);
+        configsToMerge.put("tmparchives", COMMA_DELIM);
+        configsToMerge.put(DistributedCache.CACHE_ARCHIVES, COMMA_DELIM);
+        configsToMerge.put(DistributedCache.CACHE_FILES, COMMA_DELIM);
+        configsToMerge.put("mapred.job.classpath.archives", System.getProperty("path.separator"));
+        configsToMerge.put("mapred.job.classpath.files", System.getProperty("path.separator"));
     }
 
     /**
@@ -204,6 +215,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         for (String alias : getOutputFormatAliases(context)) {
+            LOGGER.debug("Calling checkOutputSpecs for alias: " + alias);
             JobContext aliasContext = getJobContext(alias, context);
             OutputFormat<?, ?> outputFormat = getOutputFormatInstance(aliasContext);
             outputFormat.checkOutputSpecs(aliasContext);
@@ -264,8 +276,8 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             String value = conf.getValue();
             String jobValue = userConf.getRaw(key);
             if (jobValue == null || !jobValue.equals(value)) {
-                if (configsToMerge.contains(key)) {
-                    String mergedValue = getMergedConfValue(jobValue, value);
+                if (configsToMerge.containsKey(key)) {
+                    String mergedValue = getMergedConfValue(jobValue, value, configsToMerge.get(key));
                     userConf.set(key, mergedValue);
                 } else {
                     if (configsToOverride.contains(key)) {
@@ -280,18 +292,18 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         userConf.set(getAliasConfName(alias), builder.toString());
     }
 
-    private static String getMergedConfValue(String originalValues, String newValues) {
+    private static String getMergedConfValue(String originalValues, String newValues, String separator) {
         if (originalValues == null) {
             return newValues;
         }
-        Set<String> mergedValues = new HashSet<String>();
-        mergedValues.addAll(StringUtils.getStringCollection(originalValues));
-        mergedValues.addAll(StringUtils.getStringCollection(newValues));
+        Set<String> mergedValues = new LinkedHashSet<String>();
+        mergedValues.addAll(Arrays.asList(StringUtils.split(originalValues, separator)));
+        mergedValues.addAll(Arrays.asList(StringUtils.split(newValues, separator)));
         StringBuilder builder = new StringBuilder(originalValues.length() + newValues.length() + 2);
         for (String value : mergedValues) {
-            builder.append(value).append(COMMA_DELIM);
+            builder.append(value).append(separator);
         }
-        return builder.substring(0, builder.length() - COMMA_DELIM.length());
+        return builder.substring(0, builder.length() - separator.length());
     }
 
     private static String getAliasConfName(String alias) {
@@ -422,6 +434,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             baseRecordWriters = new LinkedHashMap<String, BaseRecordWriterContainer>();
             String[] aliases = getOutputFormatAliases(context);
             for (String alias : aliases) {
+                LOGGER.info("Creating record writer for alias: " + alias);
                 TaskAttemptContext aliasContext = getTaskAttemptContext(alias, context);
                 Configuration aliasConf = aliasContext.getConfiguration();
                 // Create output directory if not already created.
@@ -455,7 +468,9 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
 
         @Override
         public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-            for (BaseRecordWriterContainer baseRWContainer : baseRecordWriters.values()) {
+            for (Entry<String, BaseRecordWriterContainer> entry : baseRecordWriters.entrySet()) {
+                BaseRecordWriterContainer baseRWContainer = entry.getValue();
+                LOGGER.info("Closing record writer for alias: " + entry.getKey());
                 baseRWContainer.getRecordWriter().close(baseRWContainer.getContext());
             }
         }
@@ -490,6 +505,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
             outputCommitters = new LinkedHashMap<String, MultiOutputFormat.BaseOutputCommitterContainer>();
             String[] aliases = getOutputFormatAliases(context);
             for (String alias : aliases) {
+                LOGGER.info("Creating output committer for alias: " + alias);
                 TaskAttemptContext aliasContext = getTaskAttemptContext(alias, context);
                 OutputCommitter baseCommitter = getOutputFormatInstance(aliasContext)
                         .getOutputCommitter(aliasContext);
@@ -501,6 +517,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         @Override
         public void setupJob(JobContext jobContext) throws IOException {
             for (String alias : outputCommitters.keySet()) {
+                LOGGER.info("Calling setupJob for alias: " + alias);
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
                 outputContainer.getBaseCommitter().setupJob(outputContainer.getContext());
             }
@@ -509,6 +526,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         @Override
         public void setupTask(TaskAttemptContext taskContext) throws IOException {
             for (String alias : outputCommitters.keySet()) {
+                LOGGER.info("Calling setupTask for alias: " + alias);
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
                 outputContainer.getBaseCommitter().setupTask(outputContainer.getContext());
             }
@@ -533,6 +551,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
                 OutputCommitter baseCommitter = outputContainer.getBaseCommitter();
                 TaskAttemptContext committerContext = outputContainer.getContext();
                 if (baseCommitter.needsTaskCommit(committerContext)) {
+                    LOGGER.info("Calling commitTask for alias: " + alias);
                     baseCommitter.commitTask(committerContext);
                 }
             }
@@ -541,6 +560,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         @Override
         public void abortTask(TaskAttemptContext taskContext) throws IOException {
             for (String alias : outputCommitters.keySet()) {
+                LOGGER.info("Calling abortTask for alias: " + alias);
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
                 outputContainer.getBaseCommitter().abortTask(outputContainer.getContext());
             }
@@ -549,6 +569,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         @Override
         public void commitJob(JobContext jobContext) throws IOException {
             for (String alias : outputCommitters.keySet()) {
+                LOGGER.info("Calling commitJob for alias: " + alias);
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
                 outputContainer.getBaseCommitter().commitJob(outputContainer.getContext());
             }
@@ -557,6 +578,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         @Override
         public void abortJob(JobContext jobContext, State state) throws IOException {
             for (String alias : outputCommitters.keySet()) {
+                LOGGER.info("Calling abortJob for alias: " + alias);
                 BaseOutputCommitterContainer outputContainer = outputCommitters.get(alias);
                 outputContainer.getBaseCommitter().abortJob(outputContainer.getContext(), state);
             }
