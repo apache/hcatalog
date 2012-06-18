@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-331 Update HCatalog to junit 4 (traviscrawford via khorgath)
+
   HCAT-414 More HCat e2e tests (khorgath via gates)
 
   HCAT-374 Add HCatBaseTest and one example usage (traviscrawford via gates)
@@ -43,8 +45,15 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT_416 MultiOutputFormat should handle merging of DistributedCache configurations (rohini via avandana)
 
-  HCAT-410: support proxy user in hcat client (thejas via daijy)
+  HCAT-423 HCatalog should include SerDe-reported fields in the table schema (traviscrawford via khorgath)
+
+  HCAT-362 add --local-infile to the mysql command (arpitgupta via daijy)
+
+  HCAT-417 List Ant 1.8 in install pre-reqs (jghoman via daijy)
+
+  HCAT-422 missing guava lib in trunk build causes unit test failures
 
   HCAT-406 The "toString" method in HCatFieldSchema class return only type information. (avandana)
 
@@ -152,6 +161,8 @@ Release 0.4.0 - Release May 16 2012
   OPTIMIZATIONS
 
   BUG FIXES
+  HCATALOG-410 support proxy user in hcat client (thejas via daijy)
+
   HCAT-380 If pig script does load then order by, hive-site.xml doesn't seem to propagate properly (toffer)
 
   HCAT-396 src-release leaves out lib directory (gates)
