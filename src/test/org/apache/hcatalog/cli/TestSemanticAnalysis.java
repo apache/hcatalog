@@ -57,7 +57,7 @@ public class TestSemanticAnalysis extends TestCase{
   @Override
   protected void setUp() throws Exception {
 
-	System.setProperty(ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
+  System.setProperty(ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
     HiveConf hcatConf = new HiveConf(this.getClass());
     hcatConf.set(ConfVars.PREEXECHOOKS.varname, "");
     hcatConf.set(ConfVars.POSTEXECHOOKS.varname, "");
@@ -77,14 +77,14 @@ public class TestSemanticAnalysis extends TestCase{
   private final String tblName = "junit_sem_analysis";
 
   public void testDescDB() throws CommandNeedRetryException, IOException {
-	hcatDriver.run("drop database mydb cascade");
-	assertEquals(0, hcatDriver.run("create database mydb").getResponseCode());
-	CommandProcessorResponse resp = hcatDriver.run("describe database mydb");
-	assertEquals(0, resp.getResponseCode());
-	ArrayList<String> result = new ArrayList<String>();
-	hcatDriver.getResults(result);
-	assertTrue(result.get(0).contains("mydb.db"));
-	hcatDriver.run("drop database mydb cascade");
+  hcatDriver.run("drop database mydb cascade");
+  assertEquals(0, hcatDriver.run("create database mydb").getResponseCode());
+  CommandProcessorResponse resp = hcatDriver.run("describe database mydb");
+  assertEquals(0, resp.getResponseCode());
+  ArrayList<String> result = new ArrayList<String>();
+  hcatDriver.getResults(result);
+  assertTrue(result.get(0).contains("mydb.db"));
+  hcatDriver.run("drop database mydb cascade");
   }
 
   public void testCreateTblWithLowerCasePartNames() throws CommandNeedRetryException, MetaException, TException, NoSuchObjectException{
@@ -292,8 +292,8 @@ public class TestSemanticAnalysis extends TestCase{
 
     hcatDriver.run("drop table junit_sem_analysis");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string)  stored as " +
-    		"INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
-    		"'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver' ";
+        "INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
+        "'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver' ";
     assertEquals(0,hcatDriver.run(query).getResponseCode());
 
     Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);

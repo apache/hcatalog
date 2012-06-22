@@ -42,112 +42,121 @@ import org.apache.hcatalog.data.transfer.state.StateProvider;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 
-/** This writer writes via {@link HCatOutputFormat}
+/**
+ * This writer writes via {@link HCatOutputFormat}
  * 
  */
 public class HCatOutputFormatWriter extends HCatWriter {
 
-	public HCatOutputFormatWriter(WriteEntity we, Map<String, String> config) {
-		super(we, config);
-	}
+  public HCatOutputFormatWriter(WriteEntity we, Map<String, String> config) {
+    super(we, config);
+  }
 
-	public HCatOutputFormatWriter(Configuration config, StateProvider sp) {
-		super(config, sp);
-	}
+  public HCatOutputFormatWriter(Configuration config, StateProvider sp) {
+    super(config, sp);
+  }
 
-	@Override
-	public WriterContext prepareWrite() throws HCatException {
-		OutputJobInfo jobInfo = OutputJobInfo.create(we.getDbName(), we.getTableName(), we.getPartitionKVs());
-		Job job;
-		try {
-			job = new Job(conf);
-			HCatOutputFormat.setOutput(job, jobInfo);
-			HCatOutputFormat.setSchema(job, HCatOutputFormat.getTableSchema(job));
-			HCatOutputFormat outFormat = new HCatOutputFormat();
-			outFormat.checkOutputSpecs(job);
-			outFormat.getOutputCommitter(new TaskAttemptContext(job.getConfiguration(), new TaskAttemptID())).setupJob(job);
-		} catch (IOException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		} catch (InterruptedException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		}
-		WriterContext cntxt = new WriterContext(); 
-		cntxt.setConf(job.getConfiguration());
-		return cntxt;
-	}
+  @Override
+  public WriterContext prepareWrite() throws HCatException {
+    OutputJobInfo jobInfo = OutputJobInfo.create(we.getDbName(),
+        we.getTableName(), we.getPartitionKVs());
+    Job job;
+    try {
+      job = new Job(conf);
+      HCatOutputFormat.setOutput(job, jobInfo);
+      HCatOutputFormat.setSchema(job, HCatOutputFormat.getTableSchema(job));
+      HCatOutputFormat outFormat = new HCatOutputFormat();
+      outFormat.checkOutputSpecs(job);
+      outFormat.getOutputCommitter(
+          new TaskAttemptContext(job.getConfiguration(), new TaskAttemptID()))
+          .setupJob(job);
+    } catch (IOException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    } catch (InterruptedException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    }
+    WriterContext cntxt = new WriterContext();
+    cntxt.setConf(job.getConfiguration());
+    return cntxt;
+  }
 
-	@Override
-	public void write(Iterator<HCatRecord> recordItr) throws HCatException {
-		
-		int id = sp.getId();
-		setVarsInConf(id);
-		HCatOutputFormat outFormat = new HCatOutputFormat();
-		TaskAttemptContext cntxt = new TaskAttemptContext(conf, new TaskAttemptID(new TaskID(), id));
-		OutputCommitter committer = null;
-		RecordWriter<WritableComparable<?>, HCatRecord> writer;
-		try {
-			committer = outFormat.getOutputCommitter(cntxt);
-			committer.setupTask(cntxt);
-			writer   = outFormat.getRecordWriter(cntxt);
-			while(recordItr.hasNext()){
-				HCatRecord rec = recordItr.next();
-				writer.write(null, rec);
-			}
-			writer.close(cntxt);
-			if(committer.needsTaskCommit(cntxt)){
-				committer.commitTask(cntxt);				
-			}
-		} catch (IOException e) {
-			if(null != committer) {
-				try {
-					committer.abortTask(cntxt);
-				} catch (IOException e1) {
-					throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, e1);
-				}
-			}
-			throw new HCatException("Failed while writing",e);
-		} catch (InterruptedException e) {
-			if(null != committer) {
-				try {
-					committer.abortTask(cntxt);
-				} catch (IOException e1) {
-					throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, e1);
-				}
-			}
-			throw new HCatException("Failed while writing", e);
-		}
-	}
+  @Override
+  public void write(Iterator<HCatRecord> recordItr) throws HCatException {
 
-	@Override
-	public void commit(WriterContext context) throws HCatException {
-		try {
-			new HCatOutputFormat().getOutputCommitter(new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
-			.commitJob(new JobContext(context.getConf(), null));
-		} catch (IOException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		} catch (InterruptedException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		}
-	}
+    int id = sp.getId();
+    setVarsInConf(id);
+    HCatOutputFormat outFormat = new HCatOutputFormat();
+    TaskAttemptContext cntxt = new TaskAttemptContext(conf, new TaskAttemptID(
+        new TaskID(), id));
+    OutputCommitter committer = null;
+    RecordWriter<WritableComparable<?>, HCatRecord> writer;
+    try {
+      committer = outFormat.getOutputCommitter(cntxt);
+      committer.setupTask(cntxt);
+      writer = outFormat.getRecordWriter(cntxt);
+      while (recordItr.hasNext()) {
+        HCatRecord rec = recordItr.next();
+        writer.write(null, rec);
+      }
+      writer.close(cntxt);
+      if (committer.needsTaskCommit(cntxt)) {
+        committer.commitTask(cntxt);
+      }
+    } catch (IOException e) {
+      if (null != committer) {
+        try {
+          committer.abortTask(cntxt);
+        } catch (IOException e1) {
+          throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, e1);
+        }
+      }
+      throw new HCatException("Failed while writing", e);
+    } catch (InterruptedException e) {
+      if (null != committer) {
+        try {
+          committer.abortTask(cntxt);
+        } catch (IOException e1) {
+          throw new HCatException(ErrorType.ERROR_INTERNAL_EXCEPTION, e1);
+        }
+      }
+      throw new HCatException("Failed while writing", e);
+    }
+  }
 
-	@Override
-	public void abort(WriterContext context) throws HCatException {
-		try {
-			new HCatOutputFormat().getOutputCommitter(new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
-			.abortJob(new JobContext(context.getConf(), null),State.FAILED);
-		} catch (IOException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		} catch (InterruptedException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		}
-	}
-	
-	private void setVarsInConf(int id) {
-		
-		// Following two config keys are required by FileOutputFormat to work correctly.
-		// In usual case of Hadoop, JobTracker will set these before launching tasks.
-		// Since there is no jobtracker here, we set it ourself.
-		conf.setInt("mapred.task.partition", id);
-		conf.set("mapred.task.id", "attempt__0000_r_000000_"+id); 
-	}
+  @Override
+  public void commit(WriterContext context) throws HCatException {
+    try {
+      new HCatOutputFormat().getOutputCommitter(
+          new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
+          .commitJob(new JobContext(context.getConf(), null));
+    } catch (IOException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    } catch (InterruptedException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    }
+  }
+
+  @Override
+  public void abort(WriterContext context) throws HCatException {
+    try {
+      new HCatOutputFormat().getOutputCommitter(
+          new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
+          .abortJob(new JobContext(context.getConf(), null), State.FAILED);
+    } catch (IOException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    } catch (InterruptedException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    }
+  }
+
+  private void setVarsInConf(int id) {
+
+    // Following two config keys are required by FileOutputFormat to work
+    // correctly.
+    // In usual case of Hadoop, JobTracker will set these before launching
+    // tasks.
+    // Since there is no jobtracker here, we set it ourself.
+    conf.setInt("mapred.task.partition", id);
+    conf.set("mapred.task.id", "attempt__0000_r_000000_" + id);
+  }
 }

@@ -20,35 +20,40 @@ package org.apache.hcatalog.data.transfer;
 
 import java.util.Map;
 
-/** This is a base class for {@link ReadEntity.Builder} / {@link WriteEntity.Builder}. Many fields in them are common,
- *  so this class contains the common fields.
+/**
+ * This is a base class for 
+ * {@link ReadEntity.Builder} / {@link WriteEntity.Builder}.
+ * Many fields in them are common, so this class
+ * contains the common fields.
  */
 
 abstract class EntityBase {
 
-	String region;
-	String tableName;
-	String dbName;
-	Map<String,String> partitionKVs;
+  String region;
+  String tableName;
+  String dbName;
+  Map<String, String> partitionKVs;
 
+  /**
+   * Common methods for {@link ReadEntity} and {@link WriteEntity}
+   */
 
+  abstract static class Entity extends EntityBase {
 
-	/** Common methods for {@link ReadEntity} and {@link WriteEntity}
-	 */
+    public String getRegion() {
+      return region;
+    }
 
-	abstract static class Entity extends EntityBase{
+    public String getTableName() {
+      return tableName;
+    }
 
-		public String getRegion() {
-			return region;
-		}
-		public String getTableName() {
-			return tableName;
-		}
-		public String getDbName() {
-			return dbName;
-		}
-		public Map<String, String> getPartitionKVs() {
-			return partitionKVs;
-		}
-	}
+    public String getDbName() {
+      return dbName;
+    }
+
+    public Map<String, String> getPartitionKVs() {
+      return partitionKVs;
+    }
+  }
 }

@@ -52,134 +52,143 @@ import org.junit.Test;
 
 public class TestReaderWriter {
 
-	@Test
-	public void test() throws MetaException, CommandNeedRetryException, IOException, ClassNotFoundException {
+  @Test
+  public void test() throws MetaException, CommandNeedRetryException,
+      IOException, ClassNotFoundException {
 
-		HiveConf conf = new HiveConf(getClass());
-		Driver driver = new Driver(conf);
-		SessionState.start(new CliSessionState(conf));
-		driver.run("drop table mytbl");
-		driver.run("create table mytbl (a string, b int)");
-		Iterator<Entry<String,String>> itr = conf.iterator();
-		Map<String,String> map = new HashMap<String, String>();
-		while(itr.hasNext()){
-			Entry<String,String> kv = itr.next();
-			map.put(kv.getKey(), kv.getValue());
-		}
-		
-		WriterContext cntxt = runsInMaster(map);
-		
-		File writeCntxtFile = File.createTempFile("hcat-write", "temp");
-		writeCntxtFile.deleteOnExit();
-		
-		// Serialize context.
-		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(writeCntxtFile));
-		oos.writeObject(cntxt);
-		oos.flush();
-		oos.close();
-		
-		// Now, deserialize it.
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(writeCntxtFile));
-		cntxt = (WriterContext) ois.readObject();
-		ois.close();
-		
-		runsInSlave(cntxt);
-		commit(map, true, cntxt);
-		
-		ReaderContext readCntxt = runsInMaster(map, false);
-		
-		File readCntxtFile = File.createTempFile("hcat-read", "temp");
-		readCntxtFile.deleteOnExit();
-		oos = new ObjectOutputStream(new FileOutputStream(readCntxtFile));
-		oos.writeObject(readCntxt);
-		oos.flush();
-		oos.close();
-		
-		ois = new ObjectInputStream(new FileInputStream(readCntxtFile));
-		readCntxt = (ReaderContext) ois.readObject();
-		ois.close();
-		
-		
-		for(InputSplit split : readCntxt.getSplits()){
-			runsInSlave(split, readCntxt.getConf());			
-		}
-	}
+    HiveConf conf = new HiveConf(getClass());
+    Driver driver = new Driver(conf);
+    SessionState.start(new CliSessionState(conf));
+    driver.run("drop table mytbl");
+    driver.run("create table mytbl (a string, b int)");
+    Iterator<Entry<String, String>> itr = conf.iterator();
+    Map<String, String> map = new HashMap<String, String>();
+    while (itr.hasNext()) {
+      Entry<String, String> kv = itr.next();
+      map.put(kv.getKey(), kv.getValue());
+    }
 
-	private WriterContext runsInMaster(Map<String, String> config) throws HCatException {
+    WriterContext cntxt = runsInMaster(map);
 
-		WriteEntity.Builder builder = new WriteEntity.Builder();
-		WriteEntity entity = builder.withTable("mytbl").build();
-		HCatWriter writer = DataTransferFactory.getHCatWriter(entity, config);
-		WriterContext info = writer.prepareWrite();
-		return info;
-	}
-	
-	private ReaderContext runsInMaster(Map<String,String> config, boolean bogus) throws HCatException {
+    File writeCntxtFile = File.createTempFile("hcat-write", "temp");
+    writeCntxtFile.deleteOnExit();
 
-		ReadEntity.Builder builder = new ReadEntity.Builder();
-		ReadEntity entity = builder.withTable("mytbl").build();
-		HCatReader reader = DataTransferFactory.getHCatReader(entity, config);
-		ReaderContext cntxt = reader.prepareRead();
-		return cntxt;
-	}
+    // Serialize context.
+    ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
+        writeCntxtFile));
+    oos.writeObject(cntxt);
+    oos.flush();
+    oos.close();
 
-	private void runsInSlave(InputSplit split, Configuration config) throws HCatException {
+    // Now, deserialize it.
+    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(
+        writeCntxtFile));
+    cntxt = (WriterContext) ois.readObject();
+    ois.close();
 
-		HCatReader reader = DataTransferFactory.getHCatReader(split, config);
-		Iterator<HCatRecord> itr = reader.read();
-		int i = 1;
-		while(itr.hasNext()){
-			HCatRecord read = itr.next();
-			HCatRecord written = getRecord(i++);
-			// Argh, HCatRecord doesnt implement equals()
-			Assert.assertTrue("Read: " + read.get(0) + "Written: " + written.get(0),  written.get(0).equals(read.get(0)));
-			Assert.assertTrue("Read: " + read.get(1) + "Written: " + written.get(1),  written.get(1).equals(read.get(1)));
-			Assert.assertEquals(2, read.size());
-		}
-		Assert.assertFalse(itr.hasNext());
-	}
-	
-	private void runsInSlave(WriterContext context) throws HCatException {
+    runsInSlave(cntxt);
+    commit(map, true, cntxt);
 
-		HCatWriter writer = DataTransferFactory.getHCatWriter(context);
-		writer.write(new HCatRecordItr());
-	}
+    ReaderContext readCntxt = runsInMaster(map, false);
 
-	private void commit(Map<String, String> config, boolean status, WriterContext context) throws IOException {
+    File readCntxtFile = File.createTempFile("hcat-read", "temp");
+    readCntxtFile.deleteOnExit();
+    oos = new ObjectOutputStream(new FileOutputStream(readCntxtFile));
+    oos.writeObject(readCntxt);
+    oos.flush();
+    oos.close();
 
-		WriteEntity.Builder builder = new WriteEntity.Builder();
-		WriteEntity entity = builder.withTable("mytbl").build();
-		HCatWriter writer = DataTransferFactory.getHCatWriter(entity, config);
-		if(status){
-			writer.commit(context);			
-		} else {
-			writer.abort(context);
-		}
-	} 
+    ois = new ObjectInputStream(new FileInputStream(readCntxtFile));
+    readCntxt = (ReaderContext) ois.readObject();
+    ois.close();
 
-	private static HCatRecord getRecord(int i) {
-		List<Object> list = new ArrayList<Object>(2);
-		list.add("Row #: " + i);
-		list.add(i);
-		return new DefaultHCatRecord(list);
-	}
-	
-	private static class HCatRecordItr implements Iterator<HCatRecord> {
+    for (InputSplit split : readCntxt.getSplits()) {
+      runsInSlave(split, readCntxt.getConf());
+    }
+  }
 
-		int i = 0;
-		@Override
-		public boolean hasNext() {
-			return i++ < 100 ? true : false;
-		}
+  private WriterContext runsInMaster(Map<String, String> config)
+      throws HCatException {
 
-		@Override
-		public HCatRecord next() {
-			return getRecord(i);
-		}
+    WriteEntity.Builder builder = new WriteEntity.Builder();
+    WriteEntity entity = builder.withTable("mytbl").build();
+    HCatWriter writer = DataTransferFactory.getHCatWriter(entity, config);
+    WriterContext info = writer.prepareWrite();
+    return info;
+  }
 
-		@Override
-		public void remove() {
-			throw new RuntimeException();
-		}
-	}
+  private ReaderContext runsInMaster(Map<String, String> config, boolean bogus)
+      throws HCatException {
+
+    ReadEntity.Builder builder = new ReadEntity.Builder();
+    ReadEntity entity = builder.withTable("mytbl").build();
+    HCatReader reader = DataTransferFactory.getHCatReader(entity, config);
+    ReaderContext cntxt = reader.prepareRead();
+    return cntxt;
+  }
+
+  private void runsInSlave(InputSplit split, Configuration config)
+      throws HCatException {
+
+    HCatReader reader = DataTransferFactory.getHCatReader(split, config);
+    Iterator<HCatRecord> itr = reader.read();
+    int i = 1;
+    while (itr.hasNext()) {
+      HCatRecord read = itr.next();
+      HCatRecord written = getRecord(i++);
+      // Argh, HCatRecord doesnt implement equals()
+      Assert.assertTrue("Read: " + read.get(0) + "Written: " + written.get(0),
+          written.get(0).equals(read.get(0)));
+      Assert.assertTrue("Read: " + read.get(1) + "Written: " + written.get(1),
+          written.get(1).equals(read.get(1)));
+      Assert.assertEquals(2, read.size());
+    }
+    Assert.assertFalse(itr.hasNext());
+  }
+
+  private void runsInSlave(WriterContext context) throws HCatException {
+
+    HCatWriter writer = DataTransferFactory.getHCatWriter(context);
+    writer.write(new HCatRecordItr());
+  }
+
+  private void commit(Map<String, String> config, boolean status,
+      WriterContext context) throws IOException {
+
+    WriteEntity.Builder builder = new WriteEntity.Builder();
+    WriteEntity entity = builder.withTable("mytbl").build();
+    HCatWriter writer = DataTransferFactory.getHCatWriter(entity, config);
+    if (status) {
+      writer.commit(context);
+    } else {
+      writer.abort(context);
+    }
+  }
+
+  private static HCatRecord getRecord(int i) {
+    List<Object> list = new ArrayList<Object>(2);
+    list.add("Row #: " + i);
+    list.add(i);
+    return new DefaultHCatRecord(list);
+  }
+
+  private static class HCatRecordItr implements Iterator<HCatRecord> {
+
+    int i = 0;
+
+    @Override
+    public boolean hasNext() {
+      return i++ < 100 ? true : false;
+    }
+
+    @Override
+    public HCatRecord next() {
+      return getRecord(i);
+    }
+
+    @Override
+    public void remove() {
+      throw new RuntimeException();
+    }
+  }
 }

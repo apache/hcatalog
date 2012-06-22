@@ -20,66 +20,69 @@ package org.apache.hcatalog.data.transfer;
 
 import java.util.Map;
 
-public class ReadEntity extends EntityBase.Entity{
+public class ReadEntity extends EntityBase.Entity {
 
-	private String filterString;
+  private String filterString;
 
-	/** Don't instantiate {@link ReadEntity} directly. Use, {@link ReadEntity.Builder} instead.
-	 * 
-	 */
-	private ReadEntity() {
-		// Not allowed
-	}
-	
-	private ReadEntity(Builder builder) {
+  /**
+   * Don't instantiate {@link ReadEntity} directly. Use,
+   * {@link ReadEntity.Builder} instead.
+   * 
+   */
+  private ReadEntity() {
+    // Not allowed
+  }
 
-		this.region       = builder.region;
-		this.dbName       = builder.dbName;
-		this.tableName    = builder.tableName;
-		this.partitionKVs = builder.partitionKVs;
-		this.filterString = builder.filterString;
-	}
+  private ReadEntity(Builder builder) {
 
-	public String getFilterString() {
-		return this.filterString;
-	}
+    this.region = builder.region;
+    this.dbName = builder.dbName;
+    this.tableName = builder.tableName;
+    this.partitionKVs = builder.partitionKVs;
+    this.filterString = builder.filterString;
+  }
 
-	/** This class should be used to build {@link ReadEntity}. It follows builder pattern, letting you build
-	 * your {@link ReadEntity} with whatever level of detail you want.
-	 *
-	 */
-	public static class Builder extends EntityBase {
+  public String getFilterString() {
+    return this.filterString;
+  }
 
-		private String filterString;
+  /**
+   * This class should be used to build {@link ReadEntity}. It follows builder
+   * pattern, letting you build your {@link ReadEntity} with whatever level of
+   * detail you want.
+   * 
+   */
+  public static class Builder extends EntityBase {
 
-		public Builder withRegion(final String region) {
-			this.region = region;
-			return this;
-		}
+    private String filterString;
 
+    public Builder withRegion(final String region) {
+      this.region = region;
+      return this;
+    }
 
-		public Builder withDatabase(final String dbName) {
-			this.dbName = dbName;
-			return this;
-		}
+    public Builder withDatabase(final String dbName) {
+      this.dbName = dbName;
+      return this;
+    }
 
-		public Builder withTable(final String tblName) {
-			this.tableName = tblName;
-			return this;
-		}
+    public Builder withTable(final String tblName) {
+      this.tableName = tblName;
+      return this;
+    }
 
-		public Builder withPartition(final Map<String,String> partKVs) {
-			this.partitionKVs = partKVs;
-			return this;
-		}
+    public Builder withPartition(final Map<String, String> partKVs) {
+      this.partitionKVs = partKVs;
+      return this;
+    }
 
-		public Builder withFilter(String filterString) {
-			this.filterString = filterString;
-			return this;
-		}
+    public Builder withFilter(String filterString) {
+      this.filterString = filterString;
+      return this;
+    }
 
-		public ReadEntity build() {
-			return new ReadEntity(this);
-		}
-	}
+    public ReadEntity build() {
+      return new ReadEntity(this);
+    }
+  }
 }

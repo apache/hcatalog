@@ -156,7 +156,7 @@ public class HCatStorer extends HCatBaseStorer {
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
         getOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext(
-        		job.getConfiguration(), new TaskAttemptID())).cleanupJob(job);
+            job.getConfiguration(), new TaskAttemptID())).cleanupJob(job);
       } catch (IOException e) {
         throw new IOException("Failed to cleanup job",e);
       } catch (InterruptedException e) {

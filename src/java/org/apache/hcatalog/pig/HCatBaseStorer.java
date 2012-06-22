@@ -166,7 +166,7 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       return new HCatFieldSchema(fSchema.alias, Type.DOUBLE, null);
 
     case DataType.BYTEARRAY:
-    	return new HCatFieldSchema(fSchema.alias, Type.BINARY, null);
+      return new HCatFieldSchema(fSchema.alias, Type.BINARY, null);
 
     case DataType.BAG:
       Schema bagSchema = fSchema.schema;

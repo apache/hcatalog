@@ -21,26 +21,27 @@ package org.apache.hcatalog.data.transfer.state;
 import java.text.NumberFormat;
 import java.util.Random;
 
-
 public class DefaultStateProvider implements StateProvider {
 
-	/** Default implementation. Here, ids are generated randomly.
-	 */
-	@Override
-	public int getId() {
-		
-		NumberFormat numberFormat = NumberFormat.getInstance();
-	    numberFormat.setMinimumIntegerDigits(5);
-	    numberFormat.setGroupingUsed(false);
-		return Integer.parseInt(numberFormat.format(Math.abs(new Random().nextInt())));
-	}
+  /**
+   * Default implementation. Here, ids are generated randomly.
+   */
+  @Override
+  public int getId() {
 
-	private static StateProvider sp;
-	
-	public static synchronized StateProvider get() {
-		if (null == sp) {
-			sp = new DefaultStateProvider();
-		}
-		return sp;
-	}
+    NumberFormat numberFormat = NumberFormat.getInstance();
+    numberFormat.setMinimumIntegerDigits(5);
+    numberFormat.setGroupingUsed(false);
+    return Integer
+        .parseInt(numberFormat.format(Math.abs(new Random().nextInt())));
+  }
+
+  private static StateProvider sp;
+
+  public static synchronized StateProvider get() {
+    if (null == sp) {
+      sp = new DefaultStateProvider();
+    }
+    return sp;
+  }
 }

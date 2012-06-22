@@ -110,18 +110,18 @@ public class TestHCatLoaderComplexSchema {
     String pigSchema =
         "(" +
           "a: " +
-    		    "(" +
-    		      "aa: chararray, " +
-    		      "ab: long, " +
-    		      "ac: map[], " +
-    		      "ad: { t: (ada: long) }, " +
-    		      "ae: { t: (aea:long, aeb: ( aeba: chararray, aebb: long)) }," +
-    		      "af: (afa: chararray, afb: long) " +
-    		    ")," +
-    		   "b: chararray, " +
-    		   "c: long, " +
-    		   "d:  { t: (da:long, db: ( dba: chararray, dbb: long), dc: { t: (dca: long) } ) } " +
-    		 ")";
+            "(" +
+              "aa: chararray, " +
+              "ab: long, " +
+              "ac: map[], " +
+              "ad: { t: (ada: long) }, " +
+              "ae: { t: (aea:long, aeb: ( aeba: chararray, aebb: long)) }," +
+              "af: (afa: chararray, afb: long) " +
+            ")," +
+           "b: chararray, " +
+           "c: long, " +
+           "d:  { t: (da:long, db: ( dba: chararray, dbb: long), dc: { t: (dca: long) } ) } " +
+         ")";
 
     // with extra structs
     String tableSchema =

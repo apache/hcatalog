@@ -40,98 +40,102 @@ import org.apache.hcatalog.data.transfer.state.StateProvider;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 
-/** This reader reads via {@link HCatInputFormat}
+/**
+ * This reader reads via {@link HCatInputFormat}
  * 
  */
-public class HCatInputFormatReader extends HCatReader{
+public class HCatInputFormatReader extends HCatReader {
 
-	private InputSplit split;
-	
-	public HCatInputFormatReader(InputSplit split, Configuration config, StateProvider sp) {
-		super(config, sp);
-		this.split = split;
-	}
+  private InputSplit split;
 
-	public HCatInputFormatReader(ReadEntity info, Map<String, String> config) {
-		super(info,config);
-	}
+  public HCatInputFormatReader(InputSplit split, Configuration config,
+      StateProvider sp) {
+    super(config, sp);
+    this.split = split;
+  }
 
-	@Override
-	public ReaderContext prepareRead() throws HCatException {
+  public HCatInputFormatReader(ReadEntity info, Map<String, String> config) {
+    super(info, config);
+  }
 
-		try {
-			Job job = new Job(conf);
-			InputJobInfo jobInfo = InputJobInfo.create(re.getDbName(), re.getTableName(), re.getFilterString());
-			HCatInputFormat.setInput(job, jobInfo);
-			HCatInputFormat hcif = new HCatInputFormat();
-			ReaderContext cntxt = new ReaderContext();
-			cntxt.setInputSplits(hcif.getSplits(new JobContext(job.getConfiguration(), null)));
-			cntxt.setConf(job.getConfiguration());
-			return cntxt;
-		} catch (IOException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		} catch (InterruptedException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED,e);
-		}
-	}
+  @Override
+  public ReaderContext prepareRead() throws HCatException {
 
-	@Override
-	public Iterator<HCatRecord> read() throws HCatException {
+    try {
+      Job job = new Job(conf);
+      InputJobInfo jobInfo = InputJobInfo.create(re.getDbName(),
+          re.getTableName(), re.getFilterString());
+      HCatInputFormat.setInput(job, jobInfo);
+      HCatInputFormat hcif = new HCatInputFormat();
+      ReaderContext cntxt = new ReaderContext();
+      cntxt.setInputSplits(hcif.getSplits(new JobContext(
+          job.getConfiguration(), null)));
+      cntxt.setConf(job.getConfiguration());
+      return cntxt;
+    } catch (IOException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    } catch (InterruptedException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    }
+  }
 
-		HCatInputFormat inpFmt = new HCatInputFormat();
-		RecordReader<WritableComparable, HCatRecord> rr;
-		try {
-			TaskAttemptContext cntxt = new TaskAttemptContext(conf, new TaskAttemptID());
-			rr = inpFmt.createRecordReader(split, cntxt);
-			rr.initialize(split, cntxt);
-		} catch (IOException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		} catch (InterruptedException e) {
-			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-		}
-		return new HCatRecordItr(rr);
-	}
+  @Override
+  public Iterator<HCatRecord> read() throws HCatException {
 
+    HCatInputFormat inpFmt = new HCatInputFormat();
+    RecordReader<WritableComparable, HCatRecord> rr;
+    try {
+      TaskAttemptContext cntxt = new TaskAttemptContext(conf,
+          new TaskAttemptID());
+      rr = inpFmt.createRecordReader(split, cntxt);
+      rr.initialize(split, cntxt);
+    } catch (IOException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    } catch (InterruptedException e) {
+      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    }
+    return new HCatRecordItr(rr);
+  }
 
-	private static class HCatRecordItr implements Iterator<HCatRecord>{
+  private static class HCatRecordItr implements Iterator<HCatRecord> {
 
-		private RecordReader<WritableComparable, HCatRecord> curRecReader;
+    private RecordReader<WritableComparable, HCatRecord> curRecReader;
 
-		HCatRecordItr(RecordReader<WritableComparable, HCatRecord> rr) {
-			curRecReader = rr;
-		}
+    HCatRecordItr(RecordReader<WritableComparable, HCatRecord> rr) {
+      curRecReader = rr;
+    }
 
-		@Override
-		public boolean hasNext(){
-			try {
-				boolean retVal = curRecReader.nextKeyValue();
-				if (retVal) {
-					return true;
-				}
-				// if its false, we need to close recordReader.
-				curRecReader.close();
-				return false;
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		}
+    @Override
+    public boolean hasNext() {
+      try {
+        boolean retVal = curRecReader.nextKeyValue();
+        if (retVal) {
+          return true;
+        }
+        // if its false, we need to close recordReader.
+        curRecReader.close();
+        return false;
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
-		@Override
-		public HCatRecord next() {
-			try {
-				return curRecReader.getCurrentValue();
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-		}
+    @Override
+    public HCatRecord next() {
+      try {
+        return curRecReader.getCurrentValue();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Not allowed");
-		}
-	}
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Not allowed");
+    }
+  }
 }

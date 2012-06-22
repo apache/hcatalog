@@ -56,11 +56,11 @@ public class HCatCli {
   @SuppressWarnings("static-access")
   public static void main(String[] args) {
 
-	  try {
-		  LogUtils.initHiveLog4j();
-	  } catch (LogInitializationException e) {
+    try {
+      LogUtils.initHiveLog4j();
+    } catch (LogInitializationException e) {
 
-	  }
+    }
 
     CliSessionState ss = new CliSessionState(new HiveConf(SessionState.class));
     ss.in = System.in;
@@ -270,7 +270,7 @@ public class HCatCli {
         ss.err.println("Failed with exception " + e.getClass().getName() + ":"
                 + e.getMessage() + "\n" + org.apache.hadoop.util.StringUtils.stringifyException(e));
             ret = 1;
-	}
+    }
 
     int cret = driver.close();
     if (ret == 0) {

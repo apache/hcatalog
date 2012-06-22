@@ -132,7 +132,7 @@ public class TestHCatStorer extends TestCase {
 
     driver.run("drop table employee");
     String createTable = "CREATE TABLE employee (emp_id INT, emp_name STRING, emp_start_date STRING , emp_gender STRING ) " +
-    		" PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
+        " PARTITIONED BY (emp_country STRING , emp_state STRING ) STORED AS RCFILE";
 
     int retCode = driver.run(createTable).getResponseCode();
     if(retCode != 0) {
@@ -148,7 +148,7 @@ public class TestHCatStorer extends TestCase {
     PigServer pig = new PigServer(ExecType.LOCAL);
     pig.setBatchOn();
     pig.registerQuery("A = LOAD '"+INPUT_FILE_NAME+"' USING PigStorage() AS (emp_id:int,emp_name:chararray,emp_start_date:chararray," +
-    		"emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
+        "emp_gender:chararray,emp_country:chararray,emp_state:chararray);");
     pig.registerQuery("TN = FILTER A BY emp_state == 'TN';");
     pig.registerQuery("KA = FILTER A BY emp_state == 'KA';");
     pig.registerQuery("KL = FILTER A BY emp_state == 'KL';");
@@ -415,7 +415,7 @@ public class TestHCatStorer extends TestCase {
   public void testBagNStruct() throws IOException, CommandNeedRetryException{
   driver.run("drop table junit_unparted");
   String createTable = "create table junit_unparted(b string,a struct<a1:int>,  arr_of_struct array<string>, " +
-  		"arr_of_struct2 array<struct<s1:string,s2:string>>,  arr_of_struct3 array<struct<s3:string>>) stored as RCFILE";
+      "arr_of_struct2 array<struct<s1:string,s2:string>>,  arr_of_struct3 array<struct<s3:string>>) stored as RCFILE";
   int retCode = driver.run(createTable).getResponseCode();
   if(retCode != 0) {
     throw new IOException("Failed to create table.");
@@ -430,7 +430,7 @@ public class TestHCatStorer extends TestCase {
   server.setBatchOn();
   server.registerQuery("A = load '"+INPUT_FILE_NAME+"' as (b:chararray, a:tuple(a1:int), arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)});");
   server.registerQuery("store A into 'default.junit_unparted' using "+HCatStorer.class.getName()+"('','b:chararray, a:tuple(a1:int)," +
-  		" arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)}');");
+      " arr_of_struct:bag{mytup:tuple(s1:chararray)}, arr_of_struct2:bag{mytup:tuple(s1:chararray,s2:chararray)}, arr_of_struct3:bag{t3:tuple(s3:chararray)}');");
   server.executeBatch();
 
   driver.run("select * from junit_unparted");

@@ -91,7 +91,7 @@ public class StorageDelegationAuthorizationProvider extends HiveAuthorizationPro
         
         //else we do not have anything to delegate to
         throw new HiveException(String.format("Storage Handler for table:%s is not an instance " +
-        		"of HCatStorageHandler", table.getTableName()));
+            "of HCatStorageHandler", table.getTableName()));
       }
     } else {
       //return an authorizer for HDFS

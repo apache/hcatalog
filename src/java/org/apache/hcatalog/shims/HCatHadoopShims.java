@@ -25,38 +25,39 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 
 /**
- * Shim layer to abstract differences between Hadoop 0.20 and 0.23 (HCATALOG-179).
- * This mirrors Hive shims, but is kept separate for HCatalog dependencies.
+ * Shim layer to abstract differences between Hadoop 0.20 and 0.23
+ * (HCATALOG-179). This mirrors Hive shims, but is kept separate for HCatalog
+ * dependencies.
  **/
 public interface HCatHadoopShims {
 
-	public static abstract class Instance {
-		static HCatHadoopShims instance = selectShim();
-		public static HCatHadoopShims get() {
-			return instance;
-		}
+  public static abstract class Instance {
+    static HCatHadoopShims instance = selectShim();
 
-		private static HCatHadoopShims selectShim() {
-			// piggyback on Hive's detection logic
-			String major = ShimLoader.getMajorVersion();
-			String shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims20S";
-			if (major.startsWith("0.23")) {
-				shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims23";
-			}
-			try {
-				Class<? extends HCatHadoopShims> clasz =
-						Class.forName(shimFQN).asSubclass(HCatHadoopShims.class);
-				return clasz.newInstance();
-			} catch (Exception e) {
-				throw new RuntimeException("Failed to instantiate: " + shimFQN, e);
-			}
-		}
-	}
+    public static HCatHadoopShims get() {
+      return instance;
+    }
 
-    public TaskAttemptContext createTaskAttemptContext(Configuration conf,
-                                TaskAttemptID taskId);
+    private static HCatHadoopShims selectShim() {
+      // piggyback on Hive's detection logic
+      String major = ShimLoader.getMajorVersion();
+      String shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims20S";
+      if (major.startsWith("0.23")) {
+        shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims23";
+      }
+      try {
+        Class<? extends HCatHadoopShims> clasz = Class.forName(shimFQN)
+            .asSubclass(HCatHadoopShims.class);
+        return clasz.newInstance();
+      } catch (Exception e) {
+        throw new RuntimeException("Failed to instantiate: " + shimFQN, e);
+      }
+    }
+  }
 
-    public JobContext createJobContext(Configuration conf,
-            JobID jobId);
+  public TaskAttemptContext createTaskAttemptContext(Configuration conf,
+      TaskAttemptID taskId);
+
+  public JobContext createJobContext(Configuration conf, JobID jobId);
 
 }
