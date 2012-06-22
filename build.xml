@@ -392,6 +392,12 @@
     <!-- test storage handlers -->
     <antcall target="test-storage-handlers"/>
   </target>
+  
+  <!--
+  ================================================================================
+  Clover Section
+  ================================================================================
+  -->
 
   <target name="clover" depends="clover.setup, clover.info"
       description="Instrument the Unit tests using Clover.  To use, specify 
@@ -401,7 +407,7 @@
   <target name="clover.setup" if="clover.enabled">
     <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
     <mkdir dir="${clover.db.dir}"/>
-    <clover-setup initString="${clover.db.dir}/pig_coverage.db">
+    <clover-setup initString="${clover.db.dir}/hcat_coverage.db">
       <fileset dir="src" includes="**/*.java"/>
     </clover-setup>
   </target>
@@ -439,6 +445,44 @@
   <target name="generate-pdf-clover-reports" depends="clover.check, clover">
     <mkdir dir="${clover.pdf.report.dir}"/>
     <clover-pdf-report outfile="${clover.pdf.report.dir}/clover_coverage.pdf" />
+  </target>
+
+  <!--
+  ================================================================================
+  Findbugs Section
+  ================================================================================
+  -->
+
+  <property name="findbugs.home" value=""/>
+
+  <target name="findbugs" depends="check-for-findbugs, jar" if="findbugs.present" description="Run findbugs if present">
+    <property name="findbugs.out.dir" value="${test.build.dir}/findbugs"/>
+    <property name="findbugs.exclude.file" value="${test.src.dir}/findbugsExcludeFile.xml"/>
+    <property name="findbugs.report.htmlfile" value="${findbugs.out.dir}/hcat-findbugs-report.html"/>
+    <property name="findbugs.report.xmlfile" value="${findbugs.out.dir}/hcat-findbugs-report.xml"/>
+    <taskdef name="findbugs" classname="edu.umd.cs.findbugs.anttask.FindBugsTask" classpath="${findbugs.home}/lib/findbugs-ant.jar"/>
+    <mkdir dir="${findbugs.out.dir}"/>
+    <findbugs home="${findbugs.home}" output="xml:withMessages" outputFile="${findbugs.report.xmlfile}" effort="max" timeout="2400000" excludeFilter="${findbugs.exclude.file}" jvmargs="-Xmx1024M">
+      <auxClasspath>
+        <fileset dir="${build.ivy.lib.dir}">
+          <include name="**/*.jar"/>
+        </fileset>
+      </auxClasspath>
+      <sourcePath path="${src.dir}"/>
+      <fileset dir="${build.dir}/${ant.project.name}">
+        <include name="**/*.jar"/>
+      </fileset>
+    </findbugs>
+    <xslt style="${findbugs.home}/src/xsl/default.xsl" in="${findbugs.report.xmlfile}" out="${findbugs.report.htmlfile}"/>
+  </target>
+
+  <target name="check-for-findbugs">
+    <available property="findbugs.present" file="${findbugs.home}/lib/findbugs.jar"/>
+  </target>
+
+  <target name="findbugs.check" depends="check-for-findbugs" unless="findbugs.present">
+     <fail message="'findbugs.home' is not defined. Please pass -Dfindbugs.home=&lt;base of Findbugs installation&gt; 
+        to Ant on the command-line." />
   </target>
 
   <!--
