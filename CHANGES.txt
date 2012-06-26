@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-389 hcat_ping (script to check if HCatalog server is running/reachable) (mithun via khorgath)
+
   HCAT-432 Add findbugs to build (rohini via avandana)
 
   HCAT-424 Code cleanup of tabs (khorgath)
