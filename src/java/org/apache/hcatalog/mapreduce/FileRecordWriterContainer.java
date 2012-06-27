@@ -57,8 +57,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
 
     private boolean dynamicPartitioningUsed = false;
 
-//    static final private Log LOG = LogFactory.getLog(FileRecordWriterContainer.class);
-
     private final Map<String, org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable>> baseDynamicWriters;
     private final Map<String, SerDe> baseDynamicSerDe;
     private final Map<String, org.apache.hadoop.mapred.OutputCommitter> baseDynamicCommitters;

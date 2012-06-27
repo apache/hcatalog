@@ -48,10 +48,6 @@
           conf="common->master"/>
         <dependency org="commons-lang" name="commons-lang" rev="${commons-lang.version}"
           conf="common->master"/>
-        <dependency org="commons-logging" name="commons-logging"
-          rev="${commons-logging.version}" conf="common->master"/>
-        <dependency org="commons-logging" name="commons-logging-api"
-          rev="${commons-logging.version}" conf="common->master"/>
         <dependency org="org.apache.hadoop" name="hadoop-tools"
           rev="${hadoop-tools.version}" conf="common->master" />
         <dependency org="org.apache.hadoop" name="hadoop-core"

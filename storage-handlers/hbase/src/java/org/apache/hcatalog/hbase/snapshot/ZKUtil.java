@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hcatalog.hbase.snapshot.transaction.thrift.*;
 import org.apache.thrift.TBase;
@@ -39,6 +37,8 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooKeeper.States;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class ZKUtil {
 
@@ -46,7 +46,7 @@ class ZKUtil {
     private ZooKeeper        zkSession;
     private String           baseDir;
     private String           connectString;
-    private static final Log LOG = LogFactory.getLog(ZKUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
 
     static enum UpdateMode {
         APPEND, REMOVE, KEEP_ALIVE

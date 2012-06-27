@@ -19,15 +19,12 @@
  */
 package org.apache.hcatalog.hbase;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.PutSortReducer;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.hadoopbackport.TotalOrderPartitioner;
 
 import java.io.IOException;
@@ -49,6 +46,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.hadoop.hbase.mapreduce.hadoopbackport.TotalOrderPartitioner.*;
 
@@ -61,7 +60,7 @@ import static org.apache.hadoop.hbase.mapreduce.hadoopbackport.TotalOrderPartiti
  * and data needs to be bulk loaded onto HBase.
  */
 class ImportSequenceFile {
-    private final static Log LOG = LogFactory.getLog(ImportSequenceFile.class);
+    private final static Logger LOG = LoggerFactory.getLogger(ImportSequenceFile.class);
     private final static String NAME = "HCatImportSequenceFile";
     private final static String IMPORTER_WORK_DIR = "_IMPORTER_MR_WORK_DIR";
 

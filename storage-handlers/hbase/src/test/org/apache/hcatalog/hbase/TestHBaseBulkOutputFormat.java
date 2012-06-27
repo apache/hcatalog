@@ -18,8 +18,6 @@
 
 package org.apache.hcatalog.hbase;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -69,6 +67,8 @@ import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -84,7 +84,7 @@ import static org.junit.Assert.assertTrue;
  * Including ImprtSequenceFile and HBaseBulkOutputFormat
  */
 public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
-    private final static Log LOG = LogFactory.getLog(TestHBaseBulkOutputFormat.class);
+    private final static Logger LOG = LoggerFactory.getLogger(TestHBaseBulkOutputFormat.class);
 
     private final HiveConf allConf;
     private final HCatDriver hcatDriver;

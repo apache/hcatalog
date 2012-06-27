@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.HTable;
@@ -44,6 +42,8 @@ import org.apache.hcatalog.hbase.snapshot.FamilyRevision;
 import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Class HbaseSnapshotRecordReader implements logic for filtering records
@@ -51,7 +51,7 @@ import org.apache.hcatalog.mapreduce.InputJobInfo;
  */
 class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, Result> {
 
-    static final Log LOG = LogFactory.getLog(HbaseSnapshotRecordReader.class);
+    static final Logger LOG = LoggerFactory.getLogger(HbaseSnapshotRecordReader.class);
     private final InputJobInfo inpJobInfo;
     private final Configuration conf;
     private final int maxRevisions = 1;

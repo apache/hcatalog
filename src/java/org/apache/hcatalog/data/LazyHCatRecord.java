@@ -23,18 +23,16 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of HCatRecord that wraps an Object returned by a SerDe
@@ -42,8 +40,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
  */
 public class LazyHCatRecord extends HCatRecord {
 
-  public static final Log LOG = LogFactory
-      .getLog(LazyHCatRecord.class.getName());
+  public static final Logger LOG = LoggerFactory.getLogger(LazyHCatRecord.class.getName());
 
   private Object o;
   private StructObjectInspector soi;

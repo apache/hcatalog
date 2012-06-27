@@ -38,8 +38,6 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
@@ -62,6 +60,8 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hcatalog.common.HCatConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of
@@ -75,7 +75,7 @@ import org.apache.hcatalog.common.HCatConstants;
  */
 public class NotificationListener extends MetaStoreEventListener {
 
-  private static final Log LOG = LogFactory.getLog(NotificationListener.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NotificationListener.class);
   protected Session session;
   protected Connection conn;
 
@@ -318,7 +318,7 @@ public class NotificationListener extends MetaStoreEventListener {
       conn.setExceptionListener(new ExceptionListener() {
         @Override
         public void onException(JMSException jmse) {
-          LOG.error(jmse);
+          LOG.error(jmse.toString());
         }
       });
       // We want message to be sent when session commits, thus we run in

@@ -1,7 +1,5 @@
 package org.apache.hcatalog.mapreduce;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -12,6 +10,8 @@ import org.apache.pig.PigServer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.io.IOException;
  * Simplify writing HCatalog tests that require a HiveMetaStore.
  */
 public class HCatBaseTest {
-  protected static final Log LOG = LogFactory.getLog(HCatBaseTest.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(HCatBaseTest.class);
   protected static final String TEST_DATA_DIR = System.getProperty("user.dir") +
       "/build/test/data/" + HCatBaseTest.class.getCanonicalName();
   protected static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";

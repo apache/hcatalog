@@ -20,10 +20,7 @@ package org.apache.hcatalog.har;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.Constants;
@@ -33,12 +30,9 @@ import org.apache.hadoop.tools.HadoopArchives;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
-import org.apache.hcatalog.common.HCatUtil;
 
 public class HarOutputCommitterPostProcessor {
   
-//  static final private Log LOG = LogFactory.getLog(HarOutputCommitterPostProcessor.class);
-
   boolean isEnabled = false;
   
   public boolean isEnabled() {

@@ -21,10 +21,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hcatalog.hbase.snapshot.lock.LockListener;
@@ -32,13 +29,15 @@ import org.apache.hcatalog.hbase.snapshot.lock.WriteLock;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The service for providing revision management to Hbase tables.
  */
 public class ZKBasedRevisionManager implements RevisionManager{
 
-    private static final Log LOG = LogFactory.getLog(ZKBasedRevisionManager.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ZKBasedRevisionManager.class);
     private String zkHostList;
     private String baseDir;
     private ZKUtil zkUtil;

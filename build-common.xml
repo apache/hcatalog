@@ -36,8 +36,6 @@
         <!--
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="antlr-3.0.1.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-lang-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-logging-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-logging-api-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-enhancer-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-*.jar"/>
         <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-*.jar"/>

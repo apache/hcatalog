@@ -19,14 +19,14 @@ package org.apache.hcatalog.hbase.snapshot;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hcatalog.hbase.snapshot.lock.LockListener;
 import org.apache.hcatalog.hbase.snapshot.lock.WriteLock;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -38,7 +38,7 @@ class IDGenerator implements LockListener{
     private String zNodeDataLoc;
     private String zNodeLockBasePath;
     private long id;
-    private static final Log LOG = LogFactory.getLog(IDGenerator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(IDGenerator.class);
 
     IDGenerator(ZooKeeper zookeeper, String tableName, String idGenNode)
             throws IOException {

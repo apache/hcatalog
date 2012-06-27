@@ -26,8 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.hbase.HBaseSerDe;
 import org.apache.hcatalog.common.HCatConstants;
@@ -42,6 +40,8 @@ import org.apache.hcatalog.mapreduce.HCatTableInfo;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.apache.hcatalog.mapreduce.StorerInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -50,7 +50,7 @@ import org.apache.hcatalog.mapreduce.StorerInfo;
  */
 class HBaseRevisionManagerUtil {
 
-    private final static Log LOG = LogFactory.getLog(HBaseRevisionManagerUtil.class);
+    private final static Logger LOG = LoggerFactory.getLogger(HBaseRevisionManagerUtil.class);
 
     private HBaseRevisionManagerUtil() {
     }
