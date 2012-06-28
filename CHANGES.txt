@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-439 Unit test failures in trunk build - Jenkins build 1516 (avandana)
+
   HCAT-426 HCatalog should log with slf4j everywhere (traviscrawford via khorgath)
 
   HCAT-389 hcat_ping (script to check if HCatalog server is running/reachable) (mithun via khorgath)
