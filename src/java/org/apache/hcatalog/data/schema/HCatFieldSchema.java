@@ -241,4 +241,37 @@ public class HCatFieldSchema implements Serializable {
         }
         return (typeString = sb.toString().toLowerCase());
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof HCatFieldSchema)) {
+            return false;
+        }
+        HCatFieldSchema other = (HCatFieldSchema) obj;
+        if (category != other.category) {
+            return false;
+        }
+        if (fieldName == null) {
+            if (other.fieldName != null) {
+                return false;
+            }
+        } else if (!fieldName.equals(other.fieldName)) {
+            return false;
+        }
+        if (this.getTypeString() == null) {
+            if (other.getTypeString() != null) {
+                return false;
+            }
+        } else if (!this.getTypeString().equals(other.getTypeString())) {
+            return false;
+        }
+        return true;
+    }
+
 }
