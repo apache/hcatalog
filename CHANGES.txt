@@ -49,6 +49,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-437 HCatSchema's equals() implementation uses hashcode obtained from toString() method. (avandana)
+
   HCAT-438 HCatFieldSchema class does not have equals() method implementation (avandana)
 
   HCAT_416 MultiOutputFormat should handle merging of DistributedCache configurations (rohini via avandana)
