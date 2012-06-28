@@ -159,9 +159,21 @@ public class HCatSchema implements Serializable{
     }
 
     @Override
-    public boolean equals(Object other) {
-        return !((other == null) || !(other instanceof HCatSchema))
-            && this.hashCode() == other.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof HCatSchema)) {
+            return false;
+        }
+        HCatSchema other = (HCatSchema) obj;
+       if (!this.getFields().equals(other.getFields())) {
+            return false;
+        }
+        return true;
     }
 
     @Override
