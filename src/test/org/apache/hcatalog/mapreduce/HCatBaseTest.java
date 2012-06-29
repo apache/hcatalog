@@ -25,6 +25,7 @@ public class HCatBaseTest {
       "/build/test/data/" + HCatBaseTest.class.getCanonicalName();
   protected static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
 
+  protected HiveConf hiveConf = null;
   protected Driver driver = null;
   protected HiveMetaStoreClient client = null;
 
@@ -41,7 +42,7 @@ public class HCatBaseTest {
   @Before
   public void setUp() throws Exception {
     if (driver == null) {
-      HiveConf hiveConf = new HiveConf(this.getClass());
+      hiveConf = new HiveConf(this.getClass());
       hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
       hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
       hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");

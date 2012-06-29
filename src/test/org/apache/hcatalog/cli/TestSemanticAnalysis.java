@@ -17,16 +17,17 @@
  */
 package org.apache.hcatalog.cli;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.TestCase;
-
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -42,75 +43,70 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
-import org.apache.hcatalog.listener.NotificationListener;
+import org.apache.hcatalog.mapreduce.HCatBaseTest;
 import org.apache.thrift.TException;
+import org.junit.Before;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestSemanticAnalysis extends TestCase{
+public class TestSemanticAnalysis extends HCatBaseTest {
 
-  private Driver hcatDriver;
-  private Driver hiveDriver;
-  private HiveMetaStoreClient msc;
   private static final Logger LOG = LoggerFactory.getLogger(TestSemanticAnalysis.class);
+  private static final String TBL_NAME = "junit_sem_analysis";
 
-  @Override
-  protected void setUp() throws Exception {
+  private Driver hcatDriver = null;
+  private String query;
 
-  System.setProperty(ConfVars.METASTORE_EVENT_LISTENERS.varname, NotificationListener.class.getName());
-    HiveConf hcatConf = new HiveConf(this.getClass());
-    hcatConf.set(ConfVars.PREEXECHOOKS.varname, "");
-    hcatConf.set(ConfVars.POSTEXECHOOKS.varname, "");
-    hcatConf.set(ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-
-    HiveConf hiveConf = new HiveConf(hcatConf,this.getClass());
-    hiveDriver = new Driver(hiveConf);
-
-    hcatConf.set(ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
-    hcatDriver = new Driver(hcatConf);
-
-    msc = new HiveMetaStoreClient(hcatConf);
-    SessionState.start(new CliSessionState(hcatConf));
+  @Before
+  public void setUpHCatDriver() throws IOException {
+    if (hcatDriver == null) {
+      HiveConf hcatConf = new HiveConf(hiveConf);
+      hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
+          HCatSemanticAnalyzer.class.getName());
+      hcatDriver = new Driver(hcatConf);
+      SessionState.start(new CliSessionState(hcatConf));
+    }
   }
 
-  String query;
-  private final String tblName = "junit_sem_analysis";
-
+  @Test
   public void testDescDB() throws CommandNeedRetryException, IOException {
-  hcatDriver.run("drop database mydb cascade");
-  assertEquals(0, hcatDriver.run("create database mydb").getResponseCode());
-  CommandProcessorResponse resp = hcatDriver.run("describe database mydb");
-  assertEquals(0, resp.getResponseCode());
-  ArrayList<String> result = new ArrayList<String>();
-  hcatDriver.getResults(result);
-  assertTrue(result.get(0).contains("mydb.db"));
-  hcatDriver.run("drop database mydb cascade");
+    hcatDriver.run("drop database mydb cascade");
+    assertEquals(0, hcatDriver.run("create database mydb").getResponseCode());
+    CommandProcessorResponse resp = hcatDriver.run("describe database mydb");
+    assertEquals(0, resp.getResponseCode());
+    ArrayList<String> result = new ArrayList<String>();
+    hcatDriver.getResults(result);
+    assertTrue(result.get(0).contains("mydb.db"));
+    hcatDriver.run("drop database mydb cascade");
   }
 
+  @Test
   public void testCreateTblWithLowerCasePartNames() throws CommandNeedRetryException, MetaException, TException, NoSuchObjectException{
-    hiveDriver.run("drop table junit_sem_analysis");
-    CommandProcessorResponse resp = hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (B string) stored as TEXTFILE");
+    driver.run("drop table junit_sem_analysis");
+    CommandProcessorResponse resp = driver.run("create table junit_sem_analysis (a int) partitioned by (B string) stored as TEXTFILE");
     assertEquals(resp.getResponseCode(), 0);
     assertEquals(null, resp.getErrorMessage());
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     assertEquals("Partition key name case problem", "b" , tbl.getPartitionKeys().get(0).getName());
-    hiveDriver.run("drop table junit_sem_analysis");
+    driver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAlterTblFFpart() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException {
 
-    hiveDriver.run("drop table junit_sem_analysis");
-    hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as TEXTFILE");
-    hiveDriver.run("alter table junit_sem_analysis add partition (b='2010-10-10')");
+    driver.run("drop table junit_sem_analysis");
+    driver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as TEXTFILE");
+    driver.run("alter table junit_sem_analysis add partition (b='2010-10-10')");
     hcatDriver.run("alter table junit_sem_analysis partition (b='2010-10-10') set fileformat RCFILE");
 
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
-    assertEquals(TextInputFormat.class.getName(),tbl.getSd().getInputFormat());
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
+    assertEquals(TextInputFormat.class.getName(), tbl.getSd().getInputFormat());
     assertEquals(HiveIgnoreKeyTextOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
     List<String> partVals = new ArrayList<String>(1);
     partVals.add("2010-10-10");
-    Partition part = msc.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName, partVals);
+    Partition part = client.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME, partVals);
 
     assertEquals(RCFileInputFormat.class.getName(),part.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),part.getSd().getOutputFormat());
@@ -118,15 +114,16 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
-
+  @Test
   public void testUsNonExistentDB() throws CommandNeedRetryException {
       CommandProcessorResponse resp = hcatDriver.run("use no_such_db");
       assertEquals(1, resp.getResponseCode());
   }
 
+  @Test
   public void testDatabaseOperations() throws MetaException, CommandNeedRetryException {
 
-    List<String> dbs = msc.getAllDatabases();
+    List<String> dbs = client.getAllDatabases();
     String testDb1 = "testdatabaseoperatons1";
     String testDb2 = "testdatabaseoperatons2";
 
@@ -139,33 +136,34 @@ public class TestSemanticAnalysis extends TestCase{
     }
 
     assertEquals(0,hcatDriver.run("create database "+testDb1).getResponseCode());
-    assertTrue(msc.getAllDatabases().contains(testDb1));
-    assertEquals(0,hcatDriver.run("create database if not exists "+testDb1).getResponseCode());
-    assertTrue(msc.getAllDatabases().contains(testDb1));
+    assertTrue(client.getAllDatabases().contains(testDb1));
+    assertEquals(0, hcatDriver.run("create database if not exists " + testDb1).getResponseCode());
+    assertTrue(client.getAllDatabases().contains(testDb1));
     assertEquals(0,hcatDriver.run("create database if not exists "+testDb2).getResponseCode());
-    assertTrue(msc.getAllDatabases().contains(testDb2));
+    assertTrue(client.getAllDatabases().contains(testDb2));
 
     assertEquals(0,hcatDriver.run("drop database "+testDb1).getResponseCode());
     assertEquals(0,hcatDriver.run("drop database "+testDb2).getResponseCode());
-    assertFalse(msc.getAllDatabases().contains(testDb1));
-    assertFalse(msc.getAllDatabases().contains(testDb2));
+    assertFalse(client.getAllDatabases().contains(testDb1));
+    assertFalse(client.getAllDatabases().contains(testDb2));
   }
 
+  @Test
   public void testCreateTableIfNotExists() throws MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
-    hcatDriver.run("drop table "+tblName);
+    hcatDriver.run("drop table "+ TBL_NAME);
     hcatDriver.run("create table junit_sem_analysis (a int) stored as RCFILE");
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     List<FieldSchema> cols = tbl.getSd().getCols();
     assertEquals(1, cols.size());
     assertTrue(cols.get(0).equals(new FieldSchema("a", "int", null)));
-    assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
-    assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
+    assertEquals(RCFileInputFormat.class.getName(), tbl.getSd().getInputFormat());
+    assertEquals(RCFileOutputFormat.class.getName(), tbl.getSd().getOutputFormat());
 
     CommandProcessorResponse resp = hcatDriver.run("create table if not exists junit_sem_analysis (a int) stored as RCFILE");
     assertEquals(0, resp.getResponseCode());
     assertNull(resp.getErrorMessage());
-    tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     cols = tbl.getSd().getCols();
     assertEquals(1, cols.size());
     assertTrue(cols.get(0).equals(new FieldSchema("a", "int",null)));
@@ -175,6 +173,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAlterTblTouch() throws CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -188,6 +187,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testChangeColumns() throws CommandNeedRetryException{
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int, c string) partitioned by (b string) stored as RCFILE");
@@ -202,6 +202,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAddReplaceCols() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -215,7 +216,7 @@ public class TestSemanticAnalysis extends TestCase{
 
     response = hcatDriver.run("describe extended junit_sem_analysis");
     assertEquals(0, response.getResponseCode());
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     List<FieldSchema> cols = tbl.getSd().getCols();
     assertEquals(2, cols.size());
     assertTrue(cols.get(0).equals(new FieldSchema("a1", "tinyint", null)));
@@ -223,6 +224,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAlterTblClusteredBy() throws CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -232,45 +234,49 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAlterTableSetFF() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
 
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
-    assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
+    assertEquals(RCFileInputFormat.class.getName(), tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
     hcatDriver.run("alter table junit_sem_analysis set fileformat INPUTFORMAT 'org.apache.hadoop.hive.ql.io.RCFileInputFormat' OUTPUTFORMAT " +
         "'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver'");
     hcatDriver.run("desc extended junit_sem_analysis");
 
-    tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAddPartFail() throws CommandNeedRetryException{
 
-    hiveDriver.run("drop table junit_sem_analysis");
-    hiveDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
+    driver.run("drop table junit_sem_analysis");
+    driver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
     CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis add partition (b='2') location 'README.txt'");
     assertEquals(0, response.getResponseCode());
-    hiveDriver.run("drop table junit_sem_analysis");
+    driver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAddPartPass() throws IOException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
     hcatDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
-    CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis add partition (b='2') location '/tmp'");
+    CommandProcessorResponse response = hcatDriver.run("alter table junit_sem_analysis add partition (b='2') location '" + TEST_DATA_DIR + "'");
     assertEquals(0, response.getResponseCode());
     assertNull(response.getErrorMessage());
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testCTAS() throws CommandNeedRetryException{
     hcatDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int) as select * from tbl2";
@@ -280,6 +286,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testStoredAs() throws CommandNeedRetryException{
     hcatDriver.run("drop table junit_sem_analysis");
     query = "create table junit_sem_analysis (a int)";
@@ -288,6 +295,7 @@ public class TestSemanticAnalysis extends TestCase{
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testAddDriverInfo() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -296,13 +304,14 @@ public class TestSemanticAnalysis extends TestCase{
         "'org.apache.hadoop.hive.ql.io.RCFileOutputFormat' inputdriver 'mydriver' outputdriver 'yourdriver' ";
     assertEquals(0,hcatDriver.run(query).getResponseCode());
 
-    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName);
+    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME);
     assertEquals(RCFileInputFormat.class.getName(),tbl.getSd().getInputFormat());
     assertEquals(RCFileOutputFormat.class.getName(),tbl.getSd().getOutputFormat());
 
     hcatDriver.run("drop table junit_sem_analysis");
   }
 
+  @Test
   public void testInvalidateNonStringPartition() throws IOException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -315,6 +324,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
+  @Test
   public void testInvalidateSeqFileStoredAs() throws IOException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -325,6 +335,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
+  @Test
   public void testInvalidateTextFileStoredAs() throws IOException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -335,6 +346,7 @@ public class TestSemanticAnalysis extends TestCase{
 
   }
 
+  @Test
   public void testInvalidateClusteredBy() throws IOException, CommandNeedRetryException{
 
     hcatDriver.run("drop table junit_sem_analysis");
@@ -344,18 +356,20 @@ public class TestSemanticAnalysis extends TestCase{
     assertEquals(0,response.getResponseCode());
   }
 
+  @Test
   public void testCTLFail() throws IOException, CommandNeedRetryException{
 
-    hiveDriver.run("drop table junit_sem_analysis");
-    hiveDriver.run("drop table like_table");
+    driver.run("drop table junit_sem_analysis");
+    driver.run("drop table like_table");
     query =  "create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE";
 
-    hiveDriver.run(query);
+    driver.run(query);
     query = "create table like_table like junit_sem_analysis";
     CommandProcessorResponse response = hcatDriver.run(query);
     assertEquals(0,response.getResponseCode());
   }
 
+  @Test
   public void testCTLPass() throws IOException, MetaException, TException, NoSuchObjectException, CommandNeedRetryException{
 
     try{
@@ -372,7 +386,7 @@ public class TestSemanticAnalysis extends TestCase{
     query = "create table like_table like junit_sem_analysis";
     CommandProcessorResponse resp = hcatDriver.run(query);
     assertEquals(0, resp.getResponseCode());
-//    Table tbl = msc.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, likeTbl);
+//    Table tbl = client.getTable(MetaStoreUtils.DEFAULT_DATABASE_NAME, likeTbl);
 //    assertEquals(likeTbl,tbl.getTableName());
 //    List<FieldSchema> cols = tbl.getSd().getCols();
 //    assertEquals(1, cols.size());
@@ -391,14 +405,14 @@ public class TestSemanticAnalysis extends TestCase{
 
 //  public void testAddPartInheritDrivers() throws MetaException, TException, NoSuchObjectException{
 //
-//    hcatDriver.run("drop table "+tblName);
+//    hcatDriver.run("drop table "+TBL_NAME);
 //    hcatDriver.run("create table junit_sem_analysis (a int) partitioned by (b string) stored as RCFILE");
-//    hcatDriver.run("alter table "+tblName+" add partition (b='2010-10-10')");
+//    hcatDriver.run("alter table "+TBL_NAME+" add partition (b='2010-10-10')");
 //
 //    List<String> partVals = new ArrayList<String>(1);
 //    partVals.add("2010-10-10");
 //
-//    Map<String,String> map = msc.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, tblName, partVals).getParameters();
+//    Map<String,String> map = client.getPartition(MetaStoreUtils.DEFAULT_DATABASE_NAME, TBL_NAME, partVals).getParameters();
 //    assertEquals(map.get(InitializeInput.HOWL_ISD_CLASS), RCFileInputStorageDriver.class.getName());
 //    assertEquals(map.get(InitializeInput.HOWL_OSD_CLASS), RCFileOutputStorageDriver.class.getName());
 //  }

@@ -51,24 +51,39 @@ public class InitializeInput {
     private static final Logger LOG = LoggerFactory.getLogger(InitializeInput.class);
 
   /**
-   * Set the input to use for the Job. This queries the metadata server with the specified partition predicates,
-   * gets the matching partitions, puts the information in the configuration object.
+   * Set the input to use for the Job. This queries the metadata server with the specified
+   * partition predicates, gets the matching partitions, and puts the information in the job
+   * configuration object.
+   *
+   * To ensure a known InputJobInfo state, only the database name, table name, filter, and
+   * properties are preserved. All other modification from the given InputJobInfo are discarded.
+   *
+   * After calling setInput, InputJobInfo can be retrieved from the job configuration as follows:
+   * {code}
+   * InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(
+   *     job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO));
+   * {code}
+   *
    * @param job the job object
-   * @param inputJobInfo information on the Input to read
+   * @param theirInputJobInfo information on the Input to read
    * @throws Exception
    */
-  public static void setInput(Job job, InputJobInfo inputJobInfo) throws Exception {
-
-    //* Create and initialize an InputJobInfo object
-    //* Serialize the InputJobInfo and save in the Job's Configuration object
-
+  public static void setInput(Job job, InputJobInfo theirInputJobInfo) throws Exception {
+    InputJobInfo inputJobInfo = InputJobInfo.create(
+        theirInputJobInfo.getDatabaseName(),
+        theirInputJobInfo.getTableName(),
+        theirInputJobInfo.getFilter());
+    inputJobInfo.getProperties().putAll(theirInputJobInfo.getProperties());
     job.getConfiguration().set(
         HCatConstants.HCAT_KEY_JOB_INFO,
-        getSerializedHcatKeyJobInfo(job, inputJobInfo,null));
+        HCatUtil.serialize(getInputJobInfo(job, inputJobInfo, null)));
   }
 
-  public static String getSerializedHcatKeyJobInfo(Job job, InputJobInfo inputJobInfo, String locationFilter) throws Exception {
-    //* Create and initialize an InputJobInfo object
+  /**
+   * Returns the given InputJobInfo after populating with data queried from the metadata service.
+   */
+  private static InputJobInfo getInputJobInfo(
+      Job job, InputJobInfo inputJobInfo, String locationFilter) throws Exception {
 
     HiveMetaStoreClient client = null;
     HiveConf hiveConf = null;
@@ -117,7 +132,7 @@ public class InitializeInput {
       }
       inputJobInfo.setPartitions(partInfoList);
 
-      return HCatUtil.serialize(inputJobInfo);
+      return inputJobInfo;
     } finally {
       HCatUtil.closeHiveClientQuietly(client);
     }
