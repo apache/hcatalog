@@ -36,6 +36,13 @@
         <conf name="package" visibility="private" extends="master"/>
         <conf name="releaseaudit" visibility="private"/>
     </configurations>
+
+    <publications>
+      <artifact name="hcatalog"/>
+      <artifact name="hcatalog-core"/>
+      <artifact name="hcatalog-server-extensions"/>
+    </publications>
+
     <dependencies>
         <!-- needed to compile -->
         <dependency org="org.antlr" name="antlr" rev="${antlr.version}"

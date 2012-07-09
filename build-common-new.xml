@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!--
+   Licensed to the Apache Software Foundation (ASF) under one or more
+   contributor license agreements.  See the NOTICE file distributed with
+   this work for additional information regarding copyright ownership.
+   The ASF licenses this file to You under the Apache License, Version 2.0
+   (the "License"); you may not use this file except in compliance with
+   the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+<project name="build-common-new" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
+  <loadproperties srcfile="${basedir}/../ivy/libraries.properties"/>
+
+  <property name="hcatalog.version" value="0.5.0-dev"/>
+  <property name="jar.name" value="${ant.project.name}-${hcatalog.version}.jar"/>
+  <property name="build.dir" location="${basedir}/build"/>
+  <property name="build.classes" location="${build.dir}/classes"/>
+  <property name="test.dir" location="${build.dir}/test"/>
+  <property name="test.classes" location="${test.dir}/classes"/>
+  <property name="test.logs" location="${test.dir}/logs"/>
+  <property name="test.warehouse.dir" location="${test.dir}/hcat_junit_warehouse"/>
+  <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
+
+  <macrodef name="_javac">
+    <attribute name="srcDir"/>
+    <attribute name="destDir"/>
+    <attribute name="classPathRef"/>
+    <sequential>
+      <mkdir dir="@{destDir}"/>
+      <javac
+          fork="true"
+          deprecation="false"
+          sourcepath=""
+          includes="**/*.java"
+          encoding="utf-8"
+          srcdir="@{srcDir}"
+          destdir="@{destDir}"
+          classpathref="@{classPathRef}"
+          includeantruntime="false"/>
+    </sequential>
+  </macrodef>
+
+  <!-- By default all tests are run. To run one test define -Dtestcase=X on the command line -->
+  <macrodef name="_junit">
+    <sequential>
+      <mkdir dir="${test.logs}"/>
+      <junit printsummary="true"
+             fork="true"
+             forkmode="perBatch"
+             dir="${test.dir}"
+             failureProperty="tests.failed">
+        <sysproperty key="hive.metastore.warehouse.dir" value="${test.warehouse.dir}"/>
+        <classpath refid="test.class.path"/>
+        <formatter type="plain"/>
+        <batchtest todir="${test.logs}" unless="testcase">
+          <fileset dir="${basedir}/src/test/java" includes="**/Test*.java"/>
+        </batchtest>
+        <batchtest todir="${test.logs}" if="testcase">
+          <fileset dir="${basedir}/src/test/java" includes="**/${testcase}.java"/>
+        </batchtest>
+      </junit>
+      <fail if="tests.failed" message="Tests failed!"/>
+    </sequential>
+  </macrodef>
+
+  <target name="clean">
+    <echo message="${ant.project.name}"/>
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="ivy-init">
+    <echo message="${ant.project.name}"/>
+    <ivy:configure file="../ivy/ivysettings.xml"/>
+  </target>
+
+  <target name="ivy-retrieve" depends="ivy-init">
+    <echo message="${ant.project.name}"/>
+    <ivy:retrieve sync="true"
+      pattern="${build.dir}/ivy/[conf]/[organization]-[artifact]-[revision](-[classifier]).[ext]"/>
+  </target>
+
+  <target name="ivy-publish">
+    <ivy:publish
+        resolver="local"
+        organisation="org.apache.hcatalog"
+        module="${ant.project.name}"
+        revision="${hcatalog.version}"
+        overwrite="true">
+      <artifacts pattern="${build.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+    </ivy:publish>
+  </target>
+
+  <target name="compile" depends="ivy-retrieve">
+    <echo message="${ant.project.name}"/>
+    <_javac srcDir="${basedir}/src/main/java"
+            destDir="${build.classes}"
+            classPathRef="compile.class.path"/>
+  </target>
+
+  <target name="test" depends="jar">
+    <echo message="${ant.project.name}"/>
+    <_javac srcDir="${basedir}/src/test/java"
+            destDir="${test.classes}"
+            classPathRef="test.class.path"/>
+    <_junit/>
+  </target>
+
+  <target name="jar" depends="compile">
+    <echo message="${ant.project.name}"/>
+    <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}"/>
+    <antcall target="ivy-publish"/>
+  </target>
+</project>

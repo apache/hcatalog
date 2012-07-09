@@ -35,6 +35,7 @@
   <property name="_vtype" value="-dev"/> 
   <property name="hcatalog.version" value="${_version}${_vtype}"/>
   <property name="hcatalog.jar" value="${ant.project.name}-${hcatalog.version}.jar"/>
+  <property name="hcatalog.core.jar" value="${ant.project.name}-core-${hcatalog.version}.jar"/>
   <property name="final.name" value="${ant.project.name}-${hcatalog.version}" />
   <property name="package.release" value="1"/>
 
@@ -293,8 +294,8 @@
  
   <!-- Build the hcatalog client jar -->
   <target name="clientjar" depends="compile-src">
-     <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}" basedir="${build.classes}">
-     </jar>
+    <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
+         basedir="${build.classes}"/>
   </target>
 
   <!--
@@ -314,7 +315,14 @@
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers"/>
+  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers">
+    <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
+
+    <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}">
+      <zipfileset src="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"/>
+      <zipfileset src="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
+    </jar>
+  </target>
 
   <!--
   ================================================================================
@@ -339,7 +347,10 @@
         source="${javac.version}" deprecation="${javac.deprecation}"
         includeantruntime="false">
       <compilerarg line="${javac.args}"/>
-      <classpath refid="test.classpath" />
+      <classpath>
+        <path refid="test.classpath"/>
+        <pathelement path="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
+      </classpath>
     </javac>
   </target>
 
@@ -366,6 +377,7 @@
           <pathelement location="." />
           <pathelement path="${clover.jar}"/>
           <path refid="test.classpath"/>
+          <pathelement path="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
         </classpath>
         <formatter type="${test.junit.output.format}" />
         <!-- If the user has not defined a particular test to run, run them all -->
@@ -389,7 +401,7 @@
       </junit>
       <fail if="tests.failed">Tests failed!</fail>
     </sequential>
-    <!-- test storage handlers -->
+    <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <antcall target="test-storage-handlers"/>
   </target>
   
@@ -494,6 +506,7 @@
   <target name="clean" description="Cleanup all build artifacts">
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
+    <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
  
@@ -568,6 +581,9 @@
 
     <copy todir="${dist.dir}/share/${ant.project.name}" includeEmptyDirs="false">
       <fileset dir="${build.dir}/${ant.project.name}/">
+        <include name="hcatalog-*.jar"/>
+      </fileset>
+      <fileset dir="hcatalog-pig-adapter/build">
         <include name="hcatalog-*.jar"/>
       </fileset>
     </copy>
@@ -649,6 +665,7 @@
         <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
             <tarfileset dir="${basedir}" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="conf/**"/>
+                <include name="hcatalog-pig-adapter"/>
                 <include name="ivy/**"/>
                 <exclude name="ivy/*.jar"/>
                 <include name="license/**"/>

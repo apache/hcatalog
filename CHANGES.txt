@@ -26,6 +26,8 @@ Trunk (unreleased changes)
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
   IMPROVEMENTS
+  HCAT-434 Package HCatalog pig support as a separate jar (traviscrawford)
+
   HCAT-341 InitializeInput improvements (traviscrawford)
 
   HCAT-439 Unit test failures in trunk build - Jenkins build 1516 (avandana)
