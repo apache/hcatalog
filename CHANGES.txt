@@ -59,6 +59,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-447 findbugs target doesn't work in trunk (traviscrawford)
+
   HCAT-437 HCatSchema's equals() implementation uses hashcode obtained from toString() method. (avandana)
 
   HCAT-438 HCatFieldSchema class does not have equals() method implementation (avandana)
