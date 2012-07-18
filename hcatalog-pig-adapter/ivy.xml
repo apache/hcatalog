@@ -38,7 +38,11 @@
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}"/>
 
     <!-- Test dependencies -->
+    <dependency org="org.apache.hive" name="hive-builtins"
+      rev="${hive.version}" conf="test->default"/>
     <dependency org="org.apache.hive" name="hive-cli"
       rev="${hive.version}" conf="test->default"/>
+    <dependency org="org.apache.commons" name="commons-compress"
+      rev="${commons-compress.version}" conf="test->default"/>
   </dependencies>
 </ivy-module>

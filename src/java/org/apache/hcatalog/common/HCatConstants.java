@@ -38,6 +38,10 @@ public final class HCatConstants {
   public static final String HCAT_PIG_ARGS_DELIMIT = "hcat.pig.args.delimiter";
   public static final String HCAT_PIG_ARGS_DELIMIT_DEFAULT = ",";
   public static final String HCAT_PIG_STORER_LOCATION_SET = HCAT_PIG_STORER + ".location.set" ;
+  public static final String HCAT_PIG_INNER_TUPLE_NAME = "hcat.pig.inner.tuple.name";
+  public static final String HCAT_PIG_INNER_TUPLE_NAME_DEFAULT = "innertuple";
+  public static final String HCAT_PIG_INNER_FIELD_NAME = "hcat.pig.inner.field.name";
+  public static final String HCAT_PIG_INNER_FIELD_NAME_DEFAULT = "innerfield";
 
   //The keys used to store info into the job Configuration
   public static final String HCAT_KEY_BASE = "mapreduce.lib.hcat";
