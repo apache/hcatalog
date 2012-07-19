@@ -61,6 +61,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-445 Clover builds broken on trunk (aklochkov via traviscrawford)
+
   HCAT-448 HCatStorer performance is 4x slower in HCat 0.4 than HCat 0.2 (rajesh.balamohan via khorgath)
 
   HCAT-447 findbugs target doesn't work in trunk (traviscrawford)

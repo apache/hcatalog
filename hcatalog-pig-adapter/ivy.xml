@@ -33,6 +33,7 @@
     <dependency org="org.apache.hadoop" name="hadoop-core" rev="${hadoop-core.version}"/>
     <dependency org="org.apache.hive" name="hive-metastore" rev="${hive.version}"/>
     <dependency org="org.apache.hive" name="hive-exec" rev="${hive.version}"/>
+    <dependency org="org.apache.hive" name="hive-builtins" rev="${hive.version}"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}"/>
     <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"/>
     <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}"/>

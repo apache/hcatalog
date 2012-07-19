@@ -20,6 +20,8 @@
 <project name="hcatalog-pig-adapter">
   <import file="../build-common-new.xml"/>
 
+  <property name="clover.jar" location="${clover.home}/lib/clover.jar"/>
+
   <path id="compile.class.path">
     <fileset dir="${build.dir}/ivy/default"/>
     <dirset dir="../build/classes"/>
@@ -31,6 +33,7 @@
     <dirset dir="${basedir}/../build/test/classes"/>
     <dirset dir="${basedir}/build/classes"/>
     <dirset dir="${basedir}/build/test/classes"/>
+    <pathelement path="${clover.jar}"/>
   </path>
 
   <!-- Ideally we would simply use the "default" Ivy configuration jars; however,
