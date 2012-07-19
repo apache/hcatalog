@@ -49,6 +49,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-448 HCatStorer performance is 4x slower in HCat 0.4 than HCat 0.2 (rajesh.balamohan via khorgath)
+
   HCAT-437 HCatSchema's equals() implementation uses hashcode obtained from toString() method. (avandana)
 
   HCAT-438 HCatFieldSchema class does not have equals() method implementation (avandana)

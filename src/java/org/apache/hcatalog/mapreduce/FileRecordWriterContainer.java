@@ -64,6 +64,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
     private final Map<String, org.apache.hadoop.mapred.OutputCommitter> baseDynamicCommitters;
     private final Map<String, org.apache.hadoop.mapred.TaskAttemptContext> dynamicContexts;
     private final Map<String, ObjectInspector> dynamicObjectInspectors;
+    private Map<String, OutputJobInfo> dynamicOutputJobInfo;
 
 
     private final List<Integer> partColsToDel;
@@ -112,6 +113,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
             this.baseDynamicCommitters = null;
             this.dynamicContexts = null;
             this.dynamicObjectInspectors = null;
+            this.dynamicOutputJobInfo = null;
         }
         else {
             this.baseDynamicSerDe = new HashMap<String,SerDe>();
@@ -119,6 +121,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
             this.baseDynamicCommitters = new HashMap<String, org.apache.hadoop.mapred.OutputCommitter>();
             this.dynamicContexts = new HashMap<String, org.apache.hadoop.mapred.TaskAttemptContext>();
             this.dynamicObjectInspectors = new HashMap<String, ObjectInspector>();
+            this.dynamicOutputJobInfo = new HashMap<String, OutputJobInfo>();
         }
     }
 
@@ -155,11 +158,9 @@ class FileRecordWriterContainer extends RecordWriterContainer {
             InterruptedException {
 
         org.apache.hadoop.mapred.RecordWriter localWriter;
-        org.apache.hadoop.mapred.TaskAttemptContext localContext;
         ObjectInspector localObjectInspector;
         SerDe localSerDe;
         OutputJobInfo localJobInfo = null;
-
 
         if (dynamicPartitioningUsed){
             // calculate which writer to use from the remaining values - this needs to be done before we delete cols
@@ -225,18 +226,18 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 baseDynamicCommitters.put(dynKey,baseOutputCommitter);
                 dynamicContexts.put(dynKey,currTaskContext);
                 dynamicObjectInspectors.put(dynKey,InternalUtil.createStructObjectInspector(jobInfo.getOutputSchema()));
+                dynamicOutputJobInfo.put(dynKey, HCatOutputFormat.getJobInfo(dynamicContexts.get(dynKey)));
             }
-            localJobInfo = HCatOutputFormat.getJobInfo(dynamicContexts.get(dynKey));
+            
+            localJobInfo = dynamicOutputJobInfo.get(dynKey);
             localWriter = baseDynamicWriters.get(dynKey);
             localSerDe = baseDynamicSerDe.get(dynKey);
-            localContext = dynamicContexts.get(dynKey);
             localObjectInspector = dynamicObjectInspectors.get(dynKey);
         }
         else{
-            localJobInfo = HCatBaseOutputFormat.getJobInfo(context);
+            localJobInfo = jobInfo;
             localWriter = getBaseRecordWriter();
             localSerDe = serDe;
-            localContext = HCatMapRedUtil.createTaskAttemptContext(context);
             localObjectInspector = objectInspector;
         }
 
