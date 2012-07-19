@@ -124,7 +124,7 @@ class FileRecordWriterContainer extends RecordWriterContainer {
     }
 
     /**
-     * @return the storageDriver
+     * @return the storagehandler
      */
     public HCatStorageHandler getStorageHandler() {
         return storageHandler;
@@ -156,7 +156,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
             InterruptedException {
 
         org.apache.hadoop.mapred.RecordWriter localWriter;
-        org.apache.hadoop.mapred.TaskAttemptContext localContext;
         ObjectInspector localObjectInspector;
         SerDe localSerDe;
         OutputJobInfo localJobInfo = null;
@@ -231,7 +230,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
             localJobInfo = dynamicOutputJobInfo.get(dynKey);
             localWriter = baseDynamicWriters.get(dynKey);
             localSerDe = baseDynamicSerDe.get(dynKey);
-            localContext = dynamicContexts.get(dynKey);
             localObjectInspector = dynamicObjectInspectors.get(dynKey);
         }
         else{
