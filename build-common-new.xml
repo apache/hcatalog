@@ -18,7 +18,7 @@
 -->
 
 <project name="build-common-new" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant">
-  <loadproperties srcfile="${basedir}/../ivy/libraries.properties"/>
+  <loadproperties srcfile="${path.to.basedir}/ivy/libraries.properties"/>
 
   <property name="hcatalog.version" value="0.5.0-dev"/>
   <property name="jar.name" value="${ant.project.name}-${hcatalog.version}.jar"/>
@@ -86,7 +86,7 @@
 
   <target name="ivy-init">
     <echo message="${ant.project.name}"/>
-    <ivy:configure file="../ivy/ivysettings.xml"/>
+    <ivy:configure file="${path.to.basedir}/ivy/ivysettings.xml"/>
   </target>
 
   <target name="ivy-retrieve" depends="ivy-init">
@@ -139,5 +139,5 @@
                classPathRef="findbugs.class.path"/>
   </target>
 
-  <import file="${basedir}/../ant/findbugs.xml"/>
+  <import file="${path.to.basedir}/ant/findbugs.xml"/>
 </project>

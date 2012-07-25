@@ -45,6 +45,7 @@
         <sourcePath path="@{sourceDir}"/>
         <fileset dir="@{jarDir}">
           <include name="**/hcatalog-*.jar"/>
+          <include name="**/webhcat-*.jar"/>
         </fileset>
       </findbugs>
       <xslt style="${findbugs.home}/src/xsl/default.xsl"

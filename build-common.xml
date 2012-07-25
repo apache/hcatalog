@@ -33,14 +33,19 @@
         <fileset dir="${common.ivy.lib.dir}">
           <include name="**/*.jar" />
         </fileset>
-        <!--
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="antlr-3.0.1.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="commons-lang-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-enhancer-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="datanucleus-core-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="jdo2-api-*.jar"/>
-        <fileset dir="${hive.root}/build/ivy/lib/default" includes="libfb303-*.jar"/>
-        <fileset dir="${hive.root}/lib" includes="asm-3.1.jar"/>
-        -->
     </path>
+
+    <!-- Classpath that includes all sub packages, used for things like Java docs -->
+    <path id="uber.classpath">
+      <fileset dir="${common.ivy.lib.dir}">
+        <include name="**/*.jar" />
+      </fileset>
+      <fileset dir="webhcat/svr/build/ivy/default">
+        <include name="**/*.jar" />
+      </fileset>
+      <fileset dir="webhcat/svr/build/ivy/common">
+        <include name="**/*.jar" />
+      </fileset>
+    </path>
+
 </project>

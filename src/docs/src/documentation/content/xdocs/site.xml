@@ -47,6 +47,48 @@ See http://forrest.apache.org/docs/linking.html for more info
     <index label="Storage Formats" href="supportedformats.html" />
     <index label="Dynamic Partitioning" href="dynpartition.html" />
     <index label="Notification" href="notification.html" />    
+    <index label="WebHCat">
+      <index label="Overview" href="rest.html" />
+      <index label="Installation" href="rest_server_install.html" />
+      <index label="Configuration" href="configuration.html" />
+      <index label="Reference">
+        <index label="Resource List" href="resources.html" />
+        <index label=":version" href="responsetypes.html" />
+        <index label="status" href="status.html" />
+        <index label="version" href="versions.html" />
+        <index label="ddl">
+          <index label="ddl (summary)" href="ddlsummary.html" />
+          <index label="ddl" href="ddl.html" />
+          <index label="database" href="listdbs.html" />
+          <index label=":db (GET)" href="descdb.html" />
+          <index label=":db (PUT)" href="createdb.html" />
+          <index label=":db (DELETE)" href="deletedb.html" />
+          <index label="table" href="listtables.html" />
+          <index label=":table (GET)" href="desctable.html" />
+          <index label=":table (PUT)" href="createtable.html" />
+          <index label=":table (POST)" href="renametable.html" />
+          <index label=":table (DELETE)" href="deletetable.html" />
+          <index label="like/:table (PUT)" href="createtablelike.html" />
+          <index label="partition" href="listpartitions.html" />
+          <index label=":partition (GET)" href="descpartition.html" />
+          <index label=":partition (PUT)" href="createpartition.html" />
+          <index label=":partition (DELETE)" href="deletepartition.html" />
+          <index label="column" href="listcolumns.html" />
+          <index label=":column (GET)" href="desccolumn.html" />
+          <index label=":column (PUT)" href="createcolumn.html" />
+          <index label="property" href="listproperties.html" />
+          <index label=":property (GET)" href="descproperty.html" />
+          <index label=":property (PUT)" href="addproperty.html" />
+        </index>
+        <index label="mapreduce/streaming" href="mapreducestreaming.html" />
+        <index label="mapreduce/jar" href="mapreducejar.html" />
+        <index label="pig" href="pig.html" />
+        <index label="hive" href="hive.html" />
+        <index label="queue" href="queuelist.html" />
+        <index label=":jobid (GET)" href="queue.html" />
+        <index label=":jobid (DELETE)" href="queuedelete.html" />
+      </index>
+    </index>
 
     <api   label="API Docs" href="api/index.html"/>
   </docs>  

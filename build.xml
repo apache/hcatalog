@@ -250,6 +250,17 @@
     <ivy:cachepath pathid="releaseaudit.classpath" conf="releaseaudit"/>
   </target>
 
+  <target name="ivy-publish" depends="ivy-init">
+    <ivy:publish
+        resolver="local"
+        organisation="org.apache.hcatalog"
+        module="${ant.project.name}"
+        revision="${hcatalog.version}"
+        overwrite="true">
+      <artifacts pattern="${build.dir}/${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
+    </ivy:publish>
+  </target>
+
   <target name="ivy-report" depends="ivy-init" description="Generate Ivy dependency report">
     <ivy:report todir="${build.ivy.report.dir}"
       conf="common, default"
@@ -317,6 +328,7 @@
   -->
   <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers">
     <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
 
     <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}">
       <zipfileset src="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"/>
@@ -402,7 +414,13 @@
       <fail if="tests.failed">Tests failed!</fail>
     </sequential>
     <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
     <antcall target="test-storage-handlers"/>
+  </target>
+
+<!-- TMP REMOVE THIS -->
+  <target name="hack-test" depends="compile-test">
+    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
   </target>
   
   <!--
@@ -421,6 +439,9 @@
     <mkdir dir="${clover.db.dir}"/>
     <clover-setup initString="${clover.db.dir}/hcat_coverage.db">
       <fileset dir="src" includes="**/*.java" excludes="**/NoExitSecurityManager.java"/>
+      <fileset dir="webhcat/svr/src/main/java" includes="**/*.java"/>
+      <fileset dir="storage-handlers/hbase/src/java" includes="**/*.java"/>
+      <fileset dir="hcatalog-pig-adapter/src/main/java" includes="**/*.java"/>
     </clover-setup>
   </target>
 
@@ -487,6 +508,7 @@
                classPathRef="findbugs.class.path"/>
 
     <ant target="findbugs" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="findbugs" dir="webhcat/svr" inheritAll="false"/>
   </target>
 
   <!--
@@ -499,6 +521,7 @@
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
     <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="clean" dir="webhcat/svr" inheritAll="false"/>
     <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
  
@@ -508,7 +531,8 @@
   ================================================================================
   -->
   <target name="docs" depends="forrest, javadoc"
-          description="Generate Javadoc and Forrest documentation" />
+          description="Generate Javadoc and Forrest documentation">
+  </target>
 
   <target name="forrest" if="forrest.home"
           description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line.">
@@ -533,8 +557,15 @@
              doctitle="HCatalog ${hcatalog.version} API"
              failonerror="true">
       <packageset dir="${src.dir}" />
+      <packageset dir="hcatalog-pig-adapter/src/main/java" />
+      <packageset dir="webhcat/svr/src/main/java" />
+      <!--
         <classpath>
           <path refid="classpath" />
+        </classpath>
+        -->
+        <classpath>
+          <path refid="uber.classpath"/>
         </classpath>
         <group title="hcatalog" packages="org.apache.hcatalog.*" />
     </javadoc>
@@ -578,6 +609,9 @@
       <fileset dir="hcatalog-pig-adapter/build">
         <include name="hcatalog-*.jar"/>
       </fileset>
+      <fileset dir="webhcat/svr/build">
+        <include name="webhcat-*.jar"/>
+      </fileset>
     </copy>
 
     <copy todir="${dist.dir}/bin">
@@ -616,6 +650,9 @@
 
     <copy todir="${dist.dir}/sbin">
       <fileset dir="${package.dir}">
+        <include name="*.sh"/>
+      </fileset>
+      <fileset dir="webhcat/svr/src/main/bin">
         <include name="*.sh"/>
       </fileset>
       <fileset dir="bin">
@@ -657,7 +694,8 @@
         <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
             <tarfileset dir="${basedir}" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="conf/**"/>
-                <include name="hcatalog-pig-adapter"/>
+                <include name="hcatalog-pig-adapter/**"/>
+                <include name="webhcat/**"/>
                 <include name="ivy/**"/>
                 <exclude name="ivy/*.jar"/>
                 <include name="license/**"/>

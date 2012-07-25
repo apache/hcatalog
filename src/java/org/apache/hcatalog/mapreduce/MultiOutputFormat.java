@@ -160,7 +160,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
      * for multiple output formats.
      *
      * @param job the mapreduce job to be submitted
-     * @return
+     * @return JobConfigurer
      */
     public static JobConfigurer createConfigurer(Job job) {
         return JobConfigurer.create(job);
@@ -361,7 +361,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
          *
          * @param alias the name used for the OutputFormat during
          *            addOutputFormat
-         * @return
+         * @return Job
          */
         public Job getJob(String alias) {
             Job copy = outputConfigs.get(alias);
