@@ -63,6 +63,8 @@
           conf="common->master"/>
         <dependency org="commons-lang" name="commons-lang" rev="${commons-lang.version}"
           conf="common->master"/>
+        <dependency org="commons-io" name="commons-io" rev="${commons-io.version}"
+          conf="common->master"/>
 
         <!-- hbase test dependencies -->
         <dependency org="com.github.stephenc.high-scale-lib" name="high-scale-lib" rev="${high-scale-lib.version}" conf="common->master" />
