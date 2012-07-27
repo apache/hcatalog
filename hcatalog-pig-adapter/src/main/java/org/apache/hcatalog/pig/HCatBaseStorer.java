@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -42,7 +41,6 @@ import org.apache.pig.ResourceStatistics;
 import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreMetadata;
 import org.apache.pig.backend.BackendException;
-import org.apache.pig.backend.executionengine.ExecException;
 import org.apache.pig.data.DataBag;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
@@ -247,10 +245,10 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       switch(type){
 
       case BINARY:
-        ByteArrayRef ba = new ByteArrayRef();
-        byte[] bytes = (null == pigObj) ? new byte[0] : ((DataByteArray)pigObj).get();
-        ba.setData(bytes);
-        return ba;
+        if (pigObj == null) {
+          return null;
+        }          
+        return ((DataByteArray)pigObj).get();
 
       case STRUCT:
         if (pigObj == null) {

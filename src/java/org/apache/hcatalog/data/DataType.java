@@ -36,6 +36,7 @@ public abstract class DataType {
   public static final byte FLOAT     =  20;
   public static final byte DOUBLE    =  25;
   public static final byte STRING    =  55;
+  public static final byte BINARY    =  60;
 
   public static final byte MAP       = 100;
   public static final byte STRUCT    = 110;
@@ -75,6 +76,8 @@ public abstract class DataType {
       return LIST;
     } else if (o instanceof Map<?,?>) {
       return MAP;
+    }else if (o instanceof byte[]) {
+        return BINARY;
     } else {return ERROR;}
   }
 
@@ -112,6 +115,9 @@ public abstract class DataType {
 
       case SHORT:
         return ((Short)o1).compareTo((Short)o2);
+        
+      case BINARY:
+        return compareByteArray((byte[])o1, (byte[])o2);
 
       case LIST:
         List<?> l1 = (List<?>)o1;
@@ -170,4 +176,30 @@ public abstract class DataType {
       return dt1 < dt2 ? -1 : 1;
     }
   }
+
+  private static int compareByteArray(byte[] o1, byte[] o2) {
+    
+    for(int i = 0; i < o1.length; i++){
+      if(i == o2.length){
+        return 1;
+      }
+      if(o1[i] == o2[i]){
+        continue;
+      }
+      if(o1[i] > o1[i]){
+        return 1;
+      }
+      else{
+        return -1;
+      }
+    }
+
+    //bytes in o1 are same as o2
+    //in case o2 was longer
+    if(o2.length > o1.length){
+      return -1;
+    }
+    return 0; //equals
+  }
+
 }

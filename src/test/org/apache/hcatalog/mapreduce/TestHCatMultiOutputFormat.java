@@ -376,7 +376,7 @@ public class TestHCatMultiOutputFormat {
                 partLocs.add(part.getLocation());
                 partDesc.add(Utilities.getPartitionDesc(part));
             }
-            work = new FetchWork(partLocs, partDesc);
+            work = new FetchWork(partLocs, partDesc, Utilities.getTableDesc(tbl));
             work.setLimit(100);
         } else {
             work = new FetchWork(tbl.getDataLocation().toString(), Utilities.getTableDesc(tbl));

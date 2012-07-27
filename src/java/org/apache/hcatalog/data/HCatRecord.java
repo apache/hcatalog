@@ -50,6 +50,14 @@ public abstract class HCatRecord implements HCatRecordable {
     public void setBoolean(String fieldName, HCatSchema recordSchema, Boolean value) throws HCatException {
         set(fieldName,recordSchema,value);
     }
+    
+    public byte[] getByteArray(String fieldName, HCatSchema recordSchema) throws HCatException {
+        return (byte[]) get(fieldName, recordSchema, byte[].class);
+    }
+
+    public void setByteArray(String fieldName, HCatSchema recordSchema, byte[] value) throws HCatException {
+        set(fieldName,recordSchema,value);
+    }
 
     public Byte getByte(String fieldName, HCatSchema recordSchema) throws HCatException {
         //TINYINT

@@ -73,7 +73,13 @@ public abstract class ReaderWriter {
 
     case DataType.NULL:
       return null;
-
+      
+    case DataType.BINARY:
+      int len = in.readInt();
+      byte[] ba = new byte[len];
+      in.readFully(ba);
+      return ba;
+      
     case DataType.MAP:
       int size = in.readInt();
       Map<Object,Object> m = new HashMap<Object, Object>(size);
@@ -166,7 +172,13 @@ public abstract class ReaderWriter {
       out.write(utfBytes);
       return;
 
-
+    case DataType.BINARY:
+      byte[] ba = (byte[])val;
+      out.writeByte(DataType.BINARY);
+      out.writeInt(ba.length);
+      out.write(ba);
+      return;
+      
     case DataType.NULL:
       out.writeByte(DataType.NULL);
       return;

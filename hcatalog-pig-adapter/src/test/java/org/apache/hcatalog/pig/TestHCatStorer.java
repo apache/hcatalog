@@ -473,7 +473,7 @@ public class TestHCatStorer extends TestCase {
     driver.getResults(res);
 
     Iterator<String> itr = res.iterator();
-    assertEquals( "0\tNULL\tNULL\tNULL\tNULL\t\tnull" ,itr.next());
+    assertEquals( "0\tNULL\tNULL\tNULL\tNULL\tnull\tnull" ,itr.next());
     assertEquals( "NULL\t4.2\t2.2\t4\tlets hcat\tbinary-data\tnull" ,itr.next());
     assertEquals( "3\t6.2999997\t3.3000000000000003\t6\tlets hcat\tbinary-data\tnull",itr.next());
     assertFalse(itr.hasNext());
@@ -481,13 +481,19 @@ public class TestHCatStorer extends TestCase {
     server.registerQuery("B = load 'junit_unparted' using "+HCatLoader.class.getName()+";");
     Iterator<Tuple> iter = server.openIterator("B");
     int count = 0;
+    int num5nulls = 0;
     while(iter.hasNext()){
         Tuple t = iter.next();
-        assertTrue(t.get(5) instanceof DataByteArray);
+        if(t.get(5) == null){
+            num5nulls++;
+        }else {
+            assertTrue(t.get(5) instanceof DataByteArray);
+        }
         assertNull(t.get(6));
         count++;
     }
     assertEquals(3, count);
+    assertEquals(1, num5nulls);
     driver.run("drop table junit_unparted");
   }
 
