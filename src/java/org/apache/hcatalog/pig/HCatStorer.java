@@ -136,7 +136,7 @@ public class HCatStorer extends HCatBaseStorer {
       // udf context, so the the HCatOutputFormat.setOutput and setSchema
       // methods need not be called many times.
       for ( Entry<String,String> keyValue : job.getConfiguration()) {
-        String oldValue = clone.getConfiguration().get(keyValue.getKey());
+        String oldValue = clone.getConfiguration().getRaw(keyValue.getKey());
         if ((oldValue == null) || (keyValue.getValue().equals(oldValue) == false)) {
           udfProps.put(keyValue.getKey(), keyValue.getValue());
         }
