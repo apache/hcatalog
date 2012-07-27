@@ -63,6 +63,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-449 HCatLoader is mistakenly identifying Configuration parameters to store (cdrome via traviscrawford)
+
   HCAT-456 storage-handlers tests failing due to missing commons-io (traviscrawford)
 
   HCAT-452 HCat_Drop_Table_3 does not get initialized properly (cdrome via toffer)  

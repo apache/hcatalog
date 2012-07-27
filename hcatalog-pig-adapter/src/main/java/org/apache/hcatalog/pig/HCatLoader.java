@@ -120,7 +120,7 @@ public class HCatLoader extends HCatBaseLoader {
             // udf context, so the the HCatInputFormat.setInput method need not
             //be called many times.
             for (Entry<String,String> keyValue : job.getConfiguration()) {
-                String oldValue = clone.getConfiguration().get(keyValue.getKey());
+                String oldValue = clone.getConfiguration().getRaw(keyValue.getKey());
                 if ((oldValue == null) || (keyValue.getValue().equals(oldValue) == false)) {
                     udfProps.put(keyValue.getKey(), keyValue.getValue());
                 }
