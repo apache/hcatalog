@@ -26,8 +26,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -167,10 +170,42 @@ public class JsonSerDe implements SerDe {
       throw new IOException("Field name expected");
     }
     String fieldName = p.getText();
-    int fpos = s.getPosition(fieldName);
+    int fpos;
+    try {
+      fpos = s.getPosition(fieldName);
+    } catch (NullPointerException npe){
+      fpos = getPositionFromHiveInternalColumnName(fieldName);
+      LOG.debug("NPE finding position for field [{}] in schema [{}]",fieldName,s);
+      if (!fieldName.equalsIgnoreCase(getHiveInternalColumnName(fpos))){
+        LOG.error("Hive internal column name {} and position "
+            +"encoding {} for the column name are at odds",fieldName,fpos);
+        throw npe;
+      }
+      if (fpos == -1){
+        return; // unknown field, we return.
+      }
+    }
     HCatFieldSchema hcatFieldSchema = s.getFields().get(fpos);
+    Object currField = extractCurrentField(p, null, hcatFieldSchema,false);
+    r.set(fpos,currField);
+  }
 
-    r.set(fpos,extractCurrentField(p, null, hcatFieldSchema,false));
+  public String getHiveInternalColumnName(int fpos) {
+    return HiveConf.getColumnInternalName(fpos);
+  }
+
+  public int getPositionFromHiveInternalColumnName(String internalName) {
+//    return HiveConf.getPositionFromInternalName(fieldName);
+    // The above line should have been all the implementation that
+    // we need, but due to a bug in that impl which recognizes
+    // only single-digit columns, we need another impl here.
+    Pattern internalPattern = Pattern.compile("_col([0-9]+)");
+    Matcher m = internalPattern.matcher(internalName);
+    if (!m.matches()){
+      return -1;
+    } else {
+      return Integer.parseInt(m.group(1));
+    }
   }
 
   /**

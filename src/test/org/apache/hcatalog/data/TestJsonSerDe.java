@@ -26,6 +26,7 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
@@ -146,4 +147,67 @@ public class TestJsonSerDe extends TestCase{
 
   }
 
+  public void testRobustRead() throws Exception {
+    /**
+     *  This test has been added to account for HCATALOG-436
+     *  We write out columns with "internal column names" such
+     *  as "_col0", but try to read with retular column names.
+     */
+    
+    Configuration conf = new Configuration();
+
+    for (Pair<Properties,HCatRecord> e : getData()){
+      Properties tblProps = e.first;
+      HCatRecord r = e.second;
+      
+      Properties internalTblProps = new Properties();
+      for (Map.Entry pe : tblProps.entrySet()){
+        if (!pe.getKey().equals(Constants.LIST_COLUMNS)){
+          internalTblProps.put(pe.getKey(), pe.getValue());
+        } else {
+          internalTblProps.put(pe.getKey(),getInternalNames((String) pe.getValue()));
+        }
+      }
+      
+      LOG.info("orig tbl props:{}",tblProps);
+      LOG.info("modif tbl props:{}",internalTblProps);
+
+      JsonSerDe wjsd = new JsonSerDe();
+      wjsd.initialize(conf, internalTblProps);
+
+      JsonSerDe rjsd = new JsonSerDe();
+      rjsd.initialize(conf, tblProps);
+
+      LOG.info("ORIG:{}",r);
+
+      Writable s = wjsd.serialize(r,wjsd.getObjectInspector());
+      LOG.info("ONE:{}",s);
+
+      Object o1 = wjsd.deserialize(s);
+      LOG.info("deserialized ONE : {} ", o1);
+
+      Object o2 = rjsd.deserialize(s);
+      LOG.info("deserialized TWO : {} ", o2);
+      assertTrue(HCatDataCheckUtil.recordsEqual(r, (HCatRecord) o2));
+    }
+    
+  }
+  
+  String getInternalNames(String columnNames){
+    if (columnNames == null) { 
+      return null; 
+    }
+    if (columnNames.isEmpty()) { 
+      return ""; 
+    }
+    
+    StringBuffer sb = new StringBuffer();
+    int numStrings = columnNames.split(",").length;
+    sb.append("_col0");
+    for (int i = 1; i < numStrings ; i++ ){
+      sb.append(",");
+      sb.append(HiveConf.getColumnInternalName(i));
+    }
+    return sb.toString();
+  }
 }

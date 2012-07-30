@@ -65,6 +65,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-436 JSON SerDe column misnaming on CTAS (khorgath via gates)
+
   HCAT-449 HCatLoader is mistakenly identifying Configuration parameters to store (cdrome via traviscrawford)
 
   HCAT-456 storage-handlers tests failing due to missing commons-io (traviscrawford)
