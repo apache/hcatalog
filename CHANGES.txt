@@ -51,6 +51,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-436 JSON SerDe column misnaming on CTAS (khorgath via gates)
+
   HCAT-449 HCatLoader is mistakenly identifying Configuration parameters to store (cdrome via traviscrawford)
 
   HCAT-452 HCat_Drop_Table_3 does not get initialized properly (cdrome via toffer)  
