@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0"?>
 
 <!--
    Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,23 +17,14 @@
    limitations under the License.
 -->
 
-<project name="hcatalog-pig-adapter">
-  <property name="path.to.basedir" value="${basedir}/.."/>
-  <import file="../build-common.xml"/>
+<project xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
-  <path id="compile.class.path">
-    <fileset dir="${build.dir}/ivy/lib/default" includes="*.jar"/>
-  </path>
-
-  <path id="test.class.path">
-    <fileset dir="${build.dir}/ivy/lib/test" includes="*.jar"/>
-    <dirset dir="${basedir}/../build/test/classes"/>
-    <dirset dir="${basedir}/build/classes"/>
-    <dirset dir="${basedir}/build/test/classes"/>
-  </path>
-
-  <path id="findbugs.class.path">
-    <fileset dir="${build.dir}/ivy/lib/default" includes="*.jar"/>
-  </path>
+  <target name="mvn-init" unless="mvn-init.complete">
+    <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
+             uri="artifact:org.apache.maven.artifact.ant"
+             classpath="build/ivy/lib/test/org.apache.maven-maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+    <property name="mvn-init.complete" value="true"/>
+  </target>
 
 </project>

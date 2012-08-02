@@ -24,101 +24,23 @@
   </info>
 
   <configurations defaultconfmapping="default">
-  <!--these match the Maven configurations-->
-      <conf name="default" extends="master,runtime"/>
-      <conf name="master" description="contains the artifact but no dependencies"/>
-      <conf name="runtime" description="runtime but not the artifact" />
-      <conf name="common" visibility="private" 
-          extends="runtime"
-          description="artifacts needed to compile/test the application"/>
-      <conf name="test" visibility="private" extends="runtime"/>
-      <conf name="package" visibility="private" extends="master"/>
-      <conf name="releaseaudit" visibility="private"/>
+    <conf name="default"/>
+    <conf name="test" extends="default"/>
   </configurations>
 
   <dependencies>
+    <dependency org="org.apache.hcatalog" name="hcatalog-core" rev="${hcatalog.version}"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}"/>
-    <dependency org="junit" name="junit" rev="${junit.version}"
-        conf="common->default"/>
-    <dependency org="org.apache.commons" name="commons-exec"
-        rev="${commons-exec.version}" conf="common->master"/>
-
-    <dependency org="org.apache.hive" name="hive-metastore"
-		rev="${hive.version}" conf="common->master"/>
-    <dependency org="org.apache.hive" name="hive-common"
-		rev="${hive.version}" conf="common->master"/>
-    <dependency org="org.apache.hive" name="hive-exec"
-		rev="${hive.version}" conf="common->master"/>
-    <dependency org="org.apache.hive" name="hive-cli"
-		rev="${hive.version}" conf="common->master"/>
-    <dependency org="org.apache.hive" name="hive-hbase-handler"
-		rev="${hive.version}" conf="common->master"/>
-    <dependency org="org.apache.hadoop" name="hadoop-core"
-        rev="${hadoop.jars.version}" conf="common->master"/>
-    <dependency org="org.apache.hadoop" name="hadoop-streaming"
-        rev="${hadoop.jars.version}" conf="common->master"/>
-    <dependency org="commons-configuration" name="commons-configuration"
-        rev="${commons-configuration.version}" conf="common->master"/>
-    <dependency org="commons-lang" name="commons-lang"
-        rev="${commons-lang.version}" conf="common->master"/>
-    <dependency org="commons-cli" name="commons-cli"
-        rev="${commons-cli.version}" conf="common->master"/>
-    <dependency org="commons-codec" name="commons-codec"
-        rev="${commons-codec.version}" conf="common->master"/>
-    <dependency org="org.apache.zookeeper" name="zookeeper"
-        rev="${zookeeper.version}" conf="common->master"/>
-
-    <dependency org="commons-logging" name="commons-logging"
-        rev="${commons-logging.version}" conf="common->master"/>
-    <dependency org="log4j" name="log4j" rev="${log4j.version}"
-        conf="common->master"/>
-    <dependency org="org.slf4j" name="slf4j-log4j12" rev="${slf4j.version}"
-        conf="common->master"/>
-    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
-        conf="common->master"/>
-    <dependency org="org.slf4j" name="jul-to-slf4j" rev="${slf4j.version}"
-        conf="common->master"/>
-
+    <dependency org="org.apache.commons" name="commons-exec" rev="${commons-exec.version}"/>
     <dependency org="org.eclipse.jetty.aggregate" name="jetty-all-server"
-        rev="${jetty.webhcat.version}" conf="common->master"/>
-    <dependency org="javax.servlet" name="servlet-api"
-        rev="${servlet-api.version}" conf="common->master"/>
+      rev="${jetty.webhcat.version}"/>
+    <dependency org="org.slf4j" name="jul-to-slf4j" rev="${slf4j.version}"/>
 
-    <dependency org="com.sun.jersey" name="jersey-core"
-        rev="${jersey.version}" conf="common->master"/>
-    <dependency org="com.sun.jersey" name="jersey-server"
-        rev="${jersey.version}" conf="common->master"/>
-    <dependency org="com.sun.jersey" name="jersey-json"
-        rev="${jersey.version}" conf="common->master"/>
-    <dependency org="com.sun.jersey" name="jersey-json"
-        rev="${jersey.version}" conf="common->master"/>
-
-    <dependency org="org.codehaus.jackson" name="jackson-core-asl"
-        rev="${jackson.version}" conf="common->master"/>
-    <dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
-        rev="${jackson.version}" conf="common->master"/>
-    <dependency org="org.codehaus.jackson" name="jackson-jaxrs"
-        rev="${jackson.version}" conf="common->master"/>
-    <dependency org="org.codehaus.jackson" name="jackson-xc"
-        rev="${jackson.version}" conf="common->master"/>
-    <dependency org="org.codehaus.jettison" name="jettison"
-        rev="${jettison.version}" conf="common->master"/>
-    <dependency org="com.sun.xml.bind" name="jaxb-impl"
-        rev="${jaxb-impl.version}" conf="common->master"/>
-    <dependency org="javax.xml.bind" name="jaxb-api"
-        rev="${jaxb-api.version}" conf="common->master"/>
-    <dependency org="javax.activation" name="activation"
-        rev="${activation.version}" conf="common->master"/>
-    <dependency org="javax.xml.stream" name="stax-api"
-        rev="${stax-api.version}" conf="common->master"/>
-    <dependency org="asm" name="asm-all"
-        rev="${asm-all.version}" conf="common->master"/>
-    <dependency org="oro" name="oro"
-        rev="${oro.version}" conf="common->master"/>
-    <dependency org="com.sun.jersey.contribs" name="wadl-resourcedoc-doclet"
-        rev="${wadl-resourcedoc-doclet.version}" conf="common->master"/>
-    <dependency org="xerces" name="xercesImpl"
-        rev="${xerces.version}" conf="common->master"/>
-
+    <!-- test dependencies -->
+    <dependency org="org.apache.hcatalog" name="hcatalog-pig-adapter" rev="${hcatalog.version}"
+      conf="test->default"/>
+    <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
+    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop.jars.version}"
+      conf="test->default"/>
   </dependencies>
 </ivy-module>

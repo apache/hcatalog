@@ -17,74 +17,25 @@
    limitations under the License.
 -->
 
+<project name="hcatalog" default="jar"
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
-<project name="hcatalog" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+  <property name="path.to.basedir" location="${basedir}"/>
+
+  <loadproperties srcfile="${basedir}/build.properties"/>
+
   <!--  
   ================================================================================
   Imports
   ================================================================================ -->
-  <import file="build-common.xml"/>
 
   <!--
   ================================================================================
   Properties and Classpaths Section
   ================================================================================
   -->
-  <!-- name and version -->
-  <property name="_version" value="0.5.0"/>
-  <property name="_vtype" value="-dev"/> 
-  <property name="hcatalog.version" value="${_version}${_vtype}"/>
-  <property name="hcatalog.jar" value="${ant.project.name}-${hcatalog.version}.jar"/>
-  <property name="hcatalog.core.jar" value="${ant.project.name}-core-${hcatalog.version}.jar"/>
-  <property name="final.name" value="${ant.project.name}-${hcatalog.version}" />
-  <property name="package.release" value="1"/>
 
-  <!-- build properties -->
-  <property name="lib.dir" value="${basedir}/lib/" />
-  <property name="src.dir"  location="${basedir}/src/java"/>
-  <property name="package.dir"  location="${basedir}/src/packages"/>
-  <property name="docs.src" value="${basedir}/src/docs"/>
-  <property name="build.dir" value="${basedir}/build"/>
-  <property name="build.classes" value="${build.dir}/classes" />
-  <property name="build.docs" value="${build.dir}/docs" />
-  <property name="build.javadoc" value="${build.docs}/api" />
-  <property name="dist.dir" value="${build.dir}/${final.name}" />
-
-  <!-- javac properties -->
-  <property name="build.encoding" value="UTF8" />
-  <property name="excludes" value=""/>
-  <property name="javac.debug" value="on" />
-  <property name="javac.optimize" value="on" />
-  <property name="javac.deprecation" value="off" />
-  <property name="javac.version" value="1.6" />
-  <property name="javac.args" value="" />
-
-  <!-- test properties -->
-  <property name="test.src.dir" value="${basedir}/src/test" />
-  <property name="test.build.dir" value="${build.dir}/test" />
-  <property name="test.build.classes" value="${test.build.dir}/classes" />
-  <property name="test.log.dir" value="${test.build.dir}/logs" />
-  <property name="test.timeout" value="2700000" />
-  <property name="test.junit.output.format" value="plain" />
-  <property name="test.all.file" value="${test.src.dir}/all-tests"/>
-  <property name="test.exclude.file" value="${test.src.dir}/excluded-tests"/>
-  <property name="test.output" value="no"/>
-  <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>
-  <property name="test.excludes" value="e2e/**"/>
-
-  <property name="clover.db.dir" location="${build.dir}/test/clover/db"/>
-  <property name="clover.report.dir" location="${build.dir}/test/clover/reports"/>
-  <property name="clover.pdf.report.dir" location="${build.dir}/test/clover/pdf/reports"/>
-  <property name="clover.jar" location="${clover.home}/lib/clover.jar"/>
-  <available property="clover.present" file="${clover.jar}" />
-
-  <!-- check if clover reports should be generated -->
-  <condition property="clover.enabled">
-    <and>
-      <isset property="run.clover"/>
-      <isset property="clover.present"/>
-    </and>
-  </condition>
   <condition property="staging">
     <equals arg1="${repo}" arg2="staging"/>
   </condition>
@@ -123,156 +74,71 @@
   <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
   <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
 
-  <condition property="os-arch" value="x86_64">
-      <and>
-	<os arch="amd64" />
-      </and>
-    </condition>
-    <condition property="os-arch" value="i386">
-      <or>
-	<os arch="i386" />
-	<os arch="i486" />
-	<os arch="i586" />
-	<os arch="i686" />
-      </or>
-    </condition>
-
   <!-- rats properties -->
   <property name="rat.reporting.classname" value="rat.Report"/>
 
-  <!--this is the naming policy for artifacts we want pulled down-->
-  <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
-
-  <!-- Classpaths for various builds -->
-  <path id="classpath">
-    <path refid="common.classpath"/>
-  </path>
-
-  <condition property="os-arch" value="x86_64">
-    <and>
-      <os arch="amd64" />
-    </and>
-  </condition>
-  <condition property="os-arch" value="i386">
-    <or>
-      <os arch="i386" />
-      <os arch="i486" />
-      <os arch="i586" />
-      <os arch="i686" />
-    </or>
-  </condition>
-
-  <path id="test.classpath">
-    <pathelement location="${test.build.classes}" />
-    <pathelement location="${build.classes}" />
-    <pathelement location="conf"/>
-    <fileset dir="${ivy.lib.dir}">
-      <include name="**/*.jar" />
+  <path id="compile.classpath">
+    <fileset dir="${build.dir}/ivy/lib/default">
+      <include name="**/*.jar"/>
     </fileset>
-    <pathelement location="${hcatalog.jar}"/>
   </path>
 
-  <!--
-  ================================================================================
-  Ivy Section
-  ================================================================================
-  -->
-  <!-- Ivy goop stolen directly from Pig's build.xml -->
-  <target name="ivy-init-dirs">
-    <mkdir dir="${build.ivy.dir}" />
-    <mkdir dir="${build.ivy.lib.dir}" />
-    <mkdir dir="${build.ivy.report.dir}" />
-  </target>
+  <path id="test.class.path">
+    <pathelement location="${test.classes}"/>
+    <pathelement location="${build.classes}"/>
+    <pathelement location="conf"/>
+    <fileset dir="${build.dir}/ivy/lib/test">
+      <include name="**/*.jar"/>
+    </fileset>
+    <pathelement location="${basedir}/hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
+  </path>
 
-  <target name="ivy-probe-antlib" >
-    <condition property="ivy.found">
-      <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-    </condition>
+  <!-- Classpath that includes all sub packages, used for things like Java docs -->
+  <path id="uber.classpath">
+    <fileset dir="${basedir}">
+      <include name="**/build/ivy/lib/default/*.jar"/>
+    </fileset>
+  </path>
+
+  <!-- This is a little janky because hcatalog-core.jar is not yet a submodule. -->
+  <target name="ivy-report" depends="ivy-retrieve">
+    <antcall target="_ivy-report"/>
+    <ant target="_ivy-report" dir="hcatalog-pig-adapter" inheritAll="false" useNativeBasedir="true"/>
+    <ant target="ivy-report" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
   <target name="ivy-download" description="To download ivy" unless="offline">
-    <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true"/>
-  </target>
-
-  <!--
-     To avoid Ivy leaking things across big projects, always load Ivy in the same classloader.
-     Also note how we skip loading Ivy if it is already there, just to make sure all is well.
-  -->
-  <target name="ivy-init-antlib" depends="ivy-download,ivy-init-dirs,ivy-probe-antlib" unless="ivy.found">
+    <echo message="${ant.project.name}"/>
+    <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true" skipexisting="true"/>
     <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
       <classpath>
         <pathelement location="${ivy.jar}"/>
       </classpath>
     </typedef>
-    <fail>
-      <condition >
-        <not>
-          <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-        </not>
-      </condition>
-         You need Apache Ivy 2.0 or later from http://ant.apache.org/
-         It could not be loaded from ${ivy_repo_url}
-    </fail>
   </target>
 
-  <target name="ivy-init" depends="ivy-init-antlib" >
-    <!--Configure Ivy by reading in the settings file
-        If anyone has already read in a settings file into this settings ID, it gets priority
-    -->
-    <ivy:configure settingsid="${ant.project.name}.ivy.settings"
-      file="${ivysettings.xml}" override='false'/>
-    <ivy:makepom ivyfile="${ivy.xml}" pomfile="${pom.file}"/>
+  <target name="ivy-init" depends="ivy-download,_ivy-init">
+    <!-- HCatalog started as a single source tree that produced multiple artifacts.
+    Currently its going through a transition to subprojects. During this transition
+    we jank together pom files for artifacts produced in the existing source tree until
+    they are correctly generated from per-subproject ivy.xml files. -->
+    <copy file="${pom.file}" tofile="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
+          overwrite="true"/>
+    <replace file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
+             token="artifactId>hcatalog"
+             value="artifactId>hcatalog-core"/>
+
+    <copy file="${pom.file}" overwrite="true"
+          tofile="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
+    <replace file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"
+             token="artifactId>hcatalog"
+             value="artifactId>hcatalog-server-extensions"/>
   </target>
 
-  <target name="ivy-compile" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for compile configuration">
-    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="common"/>
-    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
-    <ivy:cachepath pathid="compile.classpath" conf="common"/>     
-    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="default"/>
-    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="default"/>
-    <ivy:cachepath pathid="compile.classpath" conf="default"/>     
-  </target>
-
-  <target name="ivy-package" depends="ivy-init"
-    description="Retrieve Ivy-managed artifacts for the package configurations">
-    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="package"/>
-    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="package"/>
-    <ivy:cachepath pathid="package.classpath" conf="package"/>
-  </target>
-
-  <target name="ivy-releaseaudit" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for releaseaudit configuration">
-    <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="releaseaudit"/>
-    <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="releaseaudit"/>
-    <ivy:cachepath pathid="releaseaudit.classpath" conf="releaseaudit"/>
-  </target>
-
-  <target name="ivy-publish" depends="ivy-init">
-    <ivy:publish
-        resolver="local"
-        organisation="org.apache.hcatalog"
-        module="${ant.project.name}"
-        revision="${hcatalog.version}"
-        overwrite="true">
-      <artifacts pattern="${build.dir}/${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
-    </ivy:publish>
-  </target>
-
-  <target name="ivy-report" depends="ivy-init" description="Generate Ivy dependency report">
-    <ivy:report todir="${build.ivy.report.dir}"
-      conf="common, default"
-      organisation="org.apache.hcatalog"
-      module="hcatalog"
-      graph="false"/>
-  </target>
-
-  <target name="init" depends="ivy-compile, ivy-package" >
+  <target name="init" depends="ivy-retrieve,mvn-init">
     <mkdir dir="${dist.dir}" />
     <mkdir dir="${build.classes}" />
-    <mkdir dir="${test.build.classes}" />
+    <mkdir dir="${test.classes}" />
   </target>
 
   <!--
@@ -288,7 +154,7 @@
         source="${javac.version}" deprecation="${javac.deprecation}"
         includeantruntime="false">
       <compilerarg line="${javac.args}"/>
-      <classpath refid="classpath" />
+      <classpath refid="compile.classpath"/>
     </javac>
     <!-- compile shim for selected hadoop version -->
     <!--property name="debugclasspath" refid="classpath"/>
@@ -299,7 +165,7 @@
         source="${javac.version}" deprecation="${javac.deprecation}"
         includeantruntime="false">
       <compilerarg line="${javac.args}"/>
-      <classpath refid="classpath" />
+      <classpath refid="compile.classpath"/>
     </javac>
   </target>
  
@@ -307,6 +173,9 @@
   <target name="clientjar" depends="compile-src">
     <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
          basedir="${build.classes}"/>
+    <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
+      <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
+    </artifact:install>
   </target>
 
   <!--
@@ -314,11 +183,13 @@
   Build server side code, mainly listener.
   ================================================================================
   -->
-  <!-- Build the server side jar -->
   <target name="server-extensions" depends="compile-src">
-     <jar jarfile="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar" basedir="${build.classes}"
- 	  includes="org/apache/hcatalog/listener/**,org/apache/hcatalog/metadata/**">
-  </jar>
+    <jar jarfile="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar"
+         basedir="${build.classes}"
+         includes="org/apache/hcatalog/listener/**,org/apache/hcatalog/metadata/**"/>
+    <artifact:install file="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar">
+      <artifact:pom file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
+    </artifact:install>
   </target>
 
   <!--
@@ -330,6 +201,8 @@
     <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
 
+    <!-- Build hcatalog.jar, bundling the pig adapter. Our intention is to stop producing this
+         fat jar after some migration period. -->
     <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}">
       <zipfileset src="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"/>
       <zipfileset src="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
@@ -353,132 +226,40 @@
   -->
   <!-- Build HCatalog test files -->
   <target name="compile-test" depends="jar">
-    <javac encoding="${build.encoding}" srcdir="${test.src.dir}" excludes="${test.excludes}"
-        includes="**/*.java" destdir="${test.build.classes}" debug="${javac.debug}"
-        optimize="${javac.optimize}" target="${javac.version}"
-        source="${javac.version}" deprecation="${javac.deprecation}"
+    <javac
+        encoding="${build.encoding}"
+        srcdir="${test.src.dir}"
+        excludes="${test.excludes}"
+        includes="**/*.java"
+        destdir="${test.classes}"
+        debug="${javac.debug}"
+        optimize="${javac.optimize}"
+        target="${javac.version}"
+        source="${javac.version}"
+        deprecation="${javac.deprecation}"
         includeantruntime="false">
       <compilerarg line="${javac.args}"/>
-      <classpath>
-        <path refid="test.classpath"/>
-        <pathelement path="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
-      </classpath>
+      <classpath refid="test.class.path"/>
     </javac>
   </target>
 
-  <!-- Run the unit tests -->
-  <target name="test-storage-handlers">
+  <target name="test" depends="compile-test" description="run unit tests">
+    <_junit srcDir="${basedir}/src/test"/>
+    <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
     <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
-  <target name="test" depends="compile-test">
-    <sequential>
-      <!-- If anyone knows how to set umask inside ant please do so -->
-      <exec executable="bin/umaskcheck.sh" failonerror="true"/>
-      <delete dir="${test.log.dir}"/>
-      <delete dir="${test.warehouse.dir}"/>
-      <mkdir dir="${test.log.dir}"/>
-      <mkdir dir="${test.warehouse.dir}"/>
-      <junit showoutput="${test.output}" printsummary="yes" haltonfailure="no"
-          fork="yes" maxmemory="512m" dir="${basedir}" timeout="${test.timeout}"
-          errorProperty="tests.failed" failureProperty="tests.failed">
-        <sysproperty key="hadoop.log.dir" value="${test.log.dir}"/>
-        <sysproperty key="hive.metastore.warehouse.dir" value="${test.warehouse.dir}"/>
-        <classpath>
-          <pathelement location="${test.build.classes}" />
-          <pathelement location="." />
-          <pathelement path="${clover.jar}"/>
-          <path refid="test.classpath"/>
-          <pathelement path="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
-        </classpath>
-        <formatter type="${test.junit.output.format}" />
-        <!-- If the user has not defined a particular test to run, run them all -->
-        <batchtest fork="yes" todir="${test.log.dir}" unless="testcase">
-          <fileset dir="src/test">
-            <patternset>
-              <includesfile name="${test.all.file}"/>
-              <excludesfile name="${test.exclude.file}"/>
-            </patternset>
-          </fileset>
-        </batchtest>
-        <!-- Run one test case.  To use this define -Dtestcase=X on the command line -->
-        <batchtest fork="yes" todir="${test.log.dir}" if="testcase">
-          <fileset dir="src/test" includes="**/${testcase}.java"/>
-        </batchtest>
-
-        <assertions>
-          <enable />
-        </assertions>
-
-      </junit>
-      <fail if="tests.failed">Tests failed!</fail>
-    </sequential>
-    <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
-    <antcall target="test-storage-handlers"/>
+  <target name="test-with-clover" depends="clover-init, compile-test"
+          description="run unit tests and generate code coverage reports">
+    <_junit srcDir="${basedir}/src/test"/>
+    <ant target="_test-with-clover" dir="hcatalog-pig-adapter" inheritAll="false"/>
+    <ant target="_test-with-clover" dir="webhcat/svr" inheritAll="false"/>
+    <!-- storage-handlers do not have coverage as they have not
+         yet been migrated to the new build files. -->
+    <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
-<!-- TMP REMOVE THIS -->
-  <target name="hack-test" depends="compile-test">
-    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
-  </target>
-  
-  <!--
-  ================================================================================
-  Clover Section
-  ================================================================================
-  -->
-
-  <target name="clover" depends="clover.setup, clover.info"
-      description="Instrument the Unit tests using Clover.  To use, specify 
-      -Dclover.home=&lt;base of clover installation&gt; -Drun.clover=true on
-      the command line."/>
-
-  <target name="clover.setup" if="clover.enabled">
-    <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
-    <mkdir dir="${clover.db.dir}"/>
-    <clover-setup initString="${clover.db.dir}/hcat_coverage.db">
-      <fileset dir="src" includes="**/*.java" excludes="**/NoExitSecurityManager.java"/>
-      <fileset dir="webhcat/svr/src/main/java" includes="**/*.java"/>
-      <fileset dir="storage-handlers/hbase/src/java" includes="**/*.java"/>
-      <fileset dir="hcatalog-pig-adapter/src/main/java" includes="**/*.java"/>
-    </clover-setup>
-  </target>
-
-  <target name="clover.info" unless="clover.present">
-    <echo>
-      Clover not found. Code coverage reports disabled.
-    </echo>
-  </target>
-
-  <target name="clover.check">
-    <fail unless="clover.present">
-      ##################################################################
-        Clover not found.
-        Please specify -Dclover.home=&lt;base of clover installation&gt;
-        on the command line.
-       ##################################################################
-    </fail>
-  </target>
-
-  <target name="generate-clover-reports" depends="clover.check, clover">
-    <mkdir dir="${clover.report.dir}"/>
-      <clover-report>
-      <current outfile="${clover.report.dir}" title="${final.name}">
-        <format type="html"/>
-      </current>
-      </clover-report>
-    <clover-report>
-      <current outfile="${clover.report.dir}/clover.xml" title="${final.name}">
-        <format type="xml"/>
-      </current>
-    </clover-report>
-  </target>
-
-  <target name="generate-pdf-clover-reports" depends="clover.check, clover">
-    <mkdir dir="${clover.pdf.report.dir}"/>
-    <clover-pdf-report outfile="${clover.pdf.report.dir}/clover_coverage.pdf" />
-  </target>
 
   <!--
   ================================================================================
@@ -487,16 +268,12 @@
   -->
 
   <target name="findbugs" depends="init-findbugs,jar">
-    <property name="findbugs.out.dir" value="${test.build.dir}/findbugs"/>
+    <property name="findbugs.out.dir" value="${test.dir}/findbugs"/>
     <property name="findbugs.exclude.file" value="${test.src.dir}/findbugsExcludeFile.xml"/>
     <property name="findbugs.report.htmlfile"
       value="${findbugs.out.dir}/hcat-findbugs-report.html"/>
     <property name="findbugs.report.xmlfile"
       value="${findbugs.out.dir}/hcat-findbugs-report.xml"/>
-
-    <path id="findbugs.class.path">
-      <fileset dir="${ivy.lib.dir}"/>
-    </path>
 
     <_findbugs outputDir="${findbugs.out.dir}"
                outputFile="${findbugs.report.xmlfile}"
@@ -505,7 +282,7 @@
                findbugsReportHtmlFile="${findbugs.report.htmlfile}"
                sourceDir="${src.dir}"
                jarDir="${build.dir}/${ant.project.name}"
-               classPathRef="findbugs.class.path"/>
+               classPathRef="compile.classpath"/>
 
     <ant target="findbugs" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="findbugs" dir="webhcat/svr" inheritAll="false"/>
@@ -518,6 +295,7 @@
   -->
   <!-- Clean up children -->
   <target name="clean" description="Cleanup all build artifacts">
+    <echo message="${ant.project.name}"/>
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
     <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
@@ -559,15 +337,10 @@
       <packageset dir="${src.dir}" />
       <packageset dir="hcatalog-pig-adapter/src/main/java" />
       <packageset dir="webhcat/svr/src/main/java" />
-      <!--
-        <classpath>
-          <path refid="classpath" />
-        </classpath>
-        -->
-        <classpath>
-          <path refid="uber.classpath"/>
-        </classpath>
-        <group title="hcatalog" packages="org.apache.hcatalog.*" />
+      <classpath>
+        <path refid="uber.classpath"/>
+      </classpath>
+      <group title="hcatalog" packages="org.apache.hcatalog.*"/>
     </javadoc>
   </target>
 
@@ -679,7 +452,7 @@
       <antcall target="package-storage-handlers"/>
     </target>
 
-    <target name="releaseaudit" depends="ivy-releaseaudit" description="Release Audit activities">
+    <target name="releaseaudit" depends="ivy-retrieve" description="Release Audit activities">
       <java classname="${rat.reporting.classname}" fork="true">
         <classpath refid="releaseaudit.classpath"/>
         <arg value="${basedir}/src"/>
@@ -748,6 +521,9 @@
         <ant dir="${test.e2e.dir}" target="deploy"/>
     </target>
 
+  <import file="ant/dependencies.xml"/>
+  <import file="ant/deploy.xml"/>
   <import file="ant/findbugs.xml"/>
+  <import file="ant/test.xml"/>
 
 </project>

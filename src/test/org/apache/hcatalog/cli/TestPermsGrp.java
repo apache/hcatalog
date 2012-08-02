@@ -81,7 +81,7 @@ public class TestPermsGrp extends TestCase {
 
     hcatConf = new HiveConf(this.getClass());
     hcatConf.set("hive.metastore.local", "false");
-    hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + msPort);
+    hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://127.0.0.1:" + msPort);
     hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
 
     hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());

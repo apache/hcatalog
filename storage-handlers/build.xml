@@ -28,6 +28,11 @@
         <ant target="${target}" dir="hbase" inheritAll="false" useNativeBasedir="true"/>
     </target>
 
+    <target name="ivy-report">
+        <antcall target="template">
+            <param name="target" value="_ivy-report"/>
+        </antcall>
+    </target>
 
     <target name="jar">
         <echo>Generating all handlers</echo>

@@ -19,12 +19,9 @@
 
 
 <project name="hbase-storage-handler" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
-    <!--
-    ================================================================================
-    Import File
-    ================================================================================
-    -->
-    <import file="../../build-common.xml"/>
+
+    <property name="path.to.basedir" location="${basedir}/../.."/>
+    <loadproperties srcfile="${path.to.basedir}/build.properties"/>
 
     <!--
     ================================================================================
@@ -74,8 +71,6 @@
     <property name="test.output" value="no"/>
     <property name="hive.conf.dir" value="${hive.root}/conf"/>
 
-    <property name="clover.jar" location="${clover.home}/lib/clover.jar"/>
-
     <!-- ivy properteis set here -->
     <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
     <property name="ivy.dir" location="../../ivy" />
@@ -90,10 +85,10 @@
               value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
     <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
     <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
+    <property name="ivy.xml" location="${basedir}/ivy.xml"/>
     <property name="build.ivy.dir" location="${build.dir}/ivy" />
-    <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
-    <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
     <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
+    <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
 
     <!-- rats properties -->
     <property name="rat.reporting.classname" value="rat.Report"/>
@@ -101,92 +96,22 @@
     <!--this is the naming policy for artifacts we want pulled down-->
     <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
 
-    <!-- Classpaths for various builds -->
-    <path id="classpath">
-        <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
-        <fileset dir="${hcatalog.dir}/build/hcatalog" includes=" *.jar"/>
-        <path refid="common.classpath"/>
+    <path id="compile.classpath">
+      <fileset dir="${build.dir}/ivy/lib/default">
+        <include name="**/*.jar"/>
+      </fileset>
     </path>
 
     <path id="test.classpath">
         <pathelement location="${test.build.classes}" />
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
-        <fileset dir="${ivy.lib.dir}" includes="*.jar"/>
-        <fileset dir="${hcatalog.dir}/build/hcatalog" includes=" *.jar"/>
+        <fileset dir="${build.dir}/ivy/lib/test">
+          <include name="**/*.jar"/>
+        </fileset>
     </path>
 
-    <!--
-    ================================================================================
-    Ivy Section
-    ================================================================================
-    -->
-    <!-- Ivy goop stolen directly from Pig's build.xml -->
-    <target name="ivy-init-dirs">
-        <mkdir dir="${build.ivy.dir}" />
-        <mkdir dir="${build.ivy.lib.dir}" />
-        <mkdir dir="${build.ivy.report.dir}" />
-    </target>
-
-    <target name="ivy-probe-antlib">
-        <condition property="ivy.found">
-            <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-        </condition>
-    </target>
-
-    <target name="ivy-download" description="To download ivy" unless="offline">
-        <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true"/>
-    </target>
-
-    <!--
-       To avoid Ivy leaking things across big projects, always load Ivy in the same classloader.
-       Also note how we skip loading Ivy if it is already there, just to make sure all is well.
-    -->
-    <target name="ivy-init-antlib" depends="ivy-download,ivy-init-dirs,ivy-probe-antlib" unless="ivy.found">
-        <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
-            <classpath>
-                <pathelement location="${ivy.jar}"/>
-            </classpath>
-        </typedef>
-        <fail>
-            <condition >
-                <not>
-                    <typefound uri="antlib:org.apache.ivy.ant" name="cleancache"/>
-                </not>
-            </condition>
-            You need Apache Ivy 2.0 or later from http://ant.apache.org/
-            It could not be loaded from ${ivy_repo_url}
-        </fail>
-    </target>
-
-    <target name="ivy-init" depends="ivy-init-antlib" >
-        <!--Configure Ivy by reading in the settings file
-            If anyone has already read in a settings file into this settings ID, it gets priority
-        -->
-        <ivy:configure settingsid="${ant.project.name}.ivy.settings"
-                       file="${ivysettings.xml}" override='false'/>
-    </target>
-
-    <target name="ivy-compile" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for compile configuration">
-        <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="common"/>
-        <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-                      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="common"/>
-        <ivy:cachepath pathid="compile.classpath" conf="common"/>
-        <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="default"/>
-        <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-                      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}"
-                      conf="default"/>
-        <ivy:cachepath pathid="compile.classpath" conf="default"/>
-    </target>
-
-    <target name="ivy-releaseaudit" depends="ivy-init" description="Resolve, Retrieve Ivy-managed artifacts for releaseaudit configuration">
-        <ivy:resolve settingsRef="${ant.project.name}.ivy.settings" conf="releaseaudit"/>
-        <ivy:retrieve settingsRef="${ant.project.name}.ivy.settings"
-                      pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" conf="releaseaudit"/>
-        <ivy:cachepath pathid="releaseaudit.classpath" conf="releaseaudit"/>
-    </target>
-
-    <target name="init" depends="ivy-compile" >
+    <target name="init" depends="ivy-retrieve">
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.classes}" />
         <mkdir dir="${test.build.classes}" />
@@ -204,7 +129,7 @@
                source="${javac.version}" deprecation="${javac.deprecation}"
                includeantruntime="false">
             <compilerarg line="${javac.args}"/>
-            <classpath refid="classpath" />
+            <classpath refid="compile.classpath"/>
         </javac>
     </target>
 
@@ -296,15 +221,21 @@
     </target>
 
     <target name="javadoc" depends="jar" description="Create documentation">
-        <mkdir dir="${build.javadoc}" />
-        <javadoc packagenames="org.apache.hcatalog.*" destdir="${build.javadoc}" author="true" version="true" use="true"
-        windowtitle="HCatalog ${hcatalog.version} API" doctitle="HCatalog ${hcatalog.version} API" sourcepath="${src.dir}:${basedir}/src/gen-java">
-            <!--<packageset dir="${src.dir}" /> -->
-            <classpath>
-                <path refid="classpath" />
-            </classpath>
-            <group title="hcatalog" packages="org.apache.hcatalog.*" />
-        </javadoc>
+        <mkdir dir="${build.javadoc}"/>
+        <javadoc
+          packagenames="org.apache.hcatalog.*"
+          destdir="${build.javadoc}"
+          author="true"
+          version="true"
+          use="true"
+          windowtitle="HCatalog ${hcatalog.version} API"
+          doctitle="HCatalog ${hcatalog.version} API"
+          sourcepath="${src.dir}:${basedir}/src/gen-java">
+        <classpath>
+          <path refid="compile.classpath"/>
+        </classpath>
+        <group title="hcatalog" packages="org.apache.hcatalog.*"/>
+      </javadoc>
     </target>
 
 
@@ -346,4 +277,7 @@
             </fileset>
         </copy>
     </target>
+
+    <import file="../../ant/dependencies.xml"/>
+
 </project>
