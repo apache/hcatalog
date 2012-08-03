@@ -167,7 +167,7 @@ public class TestSequenceFileReadWrite {
         HCatOutputFormat.setSchema(job, getSchema());
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
-        new FileOutputCommitterContainer(job, null).cleanupJob(job);
+        new FileOutputCommitterContainer(job, null).commitJob(job);
         assertTrue(job.isSuccessful());
 
         server.setBatchOn();
@@ -211,7 +211,7 @@ public class TestSequenceFileReadWrite {
         job.setOutputFormatClass(HCatOutputFormat.class);
         HCatOutputFormat.setSchema(job, getSchema());
         assertTrue(job.waitForCompletion(true));
-        new FileOutputCommitterContainer(job, null).cleanupJob(job);
+        new FileOutputCommitterContainer(job, null).commitJob(job);
         assertTrue(job.isSuccessful());
 
         server.setBatchOn();

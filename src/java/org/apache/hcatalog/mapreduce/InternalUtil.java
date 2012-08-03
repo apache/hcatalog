@@ -21,7 +21,9 @@ package org.apache.hcatalog.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -45,6 +47,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -56,7 +59,7 @@ class InternalUtil {
         for (String key : properties.keySet()){
             hcatProperties.put(key, properties.get(key));
         }
-        
+
         // also populate with StorageDescriptor->SerDe.Parameters
         for (Map.Entry<String, String>param :
             sd.getSerdeInfo().getParameters().entrySet()) {
@@ -132,20 +135,20 @@ class InternalUtil {
 
   //TODO this has to find a better home, it's also hardcoded as default in hive would be nice
   // if the default was decided by the serde
-  static void initializeOutputSerDe(SerDe serDe, Configuration conf, 
-                                    OutputJobInfo jobInfo) 
+  static void initializeOutputSerDe(SerDe serDe, Configuration conf,
+                                    OutputJobInfo jobInfo)
   throws SerDeException {
-    initializeSerDe(serDe, conf, jobInfo.getTableInfo(), 
-                    jobInfo.getOutputSchema()); 
+    initializeSerDe(serDe, conf, jobInfo.getTableInfo(),
+                    jobInfo.getOutputSchema());
   }
 
-  static void initializeInputSerDe(SerDe serDe, Configuration conf, 
+  static void initializeInputSerDe(SerDe serDe, Configuration conf,
                                    HCatTableInfo info, HCatSchema s)
   throws SerDeException {
-    initializeSerDe(serDe, conf, info, s); 
+    initializeSerDe(serDe, conf, info, s);
   }
 
-  static void initializeSerDe(SerDe serDe, Configuration conf, 
+  static void initializeSerDe(SerDe serDe, Configuration conf,
                               HCatTableInfo info, HCatSchema s)
   throws SerDeException {
      Properties props = new Properties();
@@ -183,4 +186,25 @@ static Reporter createReporter(TaskAttemptContext context) {
           + " but found " + split.getClass().getName());
     }
   }
+
+  static Map<String, String> createPtnKeyValueMap(Table table, Partition ptn) throws IOException{
+      List<String> values = ptn.getValues();
+      if( values.size() != table.getPartitionKeys().size() ) {
+        throw new IOException("Partition values in partition inconsistent with table definition, table "
+            + table.getTableName() + " has "
+            + table.getPartitionKeys().size()
+            + " partition keys, partition has " + values.size() + "partition values" );
+      }
+
+      Map<String,String> ptnKeyValues = new HashMap<String,String>();
+
+      int i = 0;
+      for(FieldSchema schema : table.getPartitionKeys()) {
+        // CONCERN : the way this mapping goes, the order *needs* to be preserved for table.getPartitionKeys() and ptn.getValues()
+        ptnKeyValues.put(schema.getName().toLowerCase(), values.get(i));
+        i++;
+      }
+
+      return ptnKeyValues;
+    }
 }

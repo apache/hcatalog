@@ -27,6 +27,7 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.security.Credentials;
@@ -156,7 +157,7 @@ public class HCatStorer extends HCatBaseStorer {
       //Calling it from here so that the partition publish happens.
       //This call needs to be removed after MAPREDUCE-1447 is fixed.
         getOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext(
-        		job.getConfiguration(), new TaskAttemptID())).cleanupJob(job);
+        		job.getConfiguration(), new TaskAttemptID())).commitJob(job);
       } catch (IOException e) {
         throw new IOException("Failed to cleanup job",e);
       } catch (InterruptedException e) {
@@ -164,4 +165,23 @@ public class HCatStorer extends HCatBaseStorer {
       }
     }
   }
+
+   @Override
+    public void cleanupOnFailure(String location, Job job) throws IOException {
+        if (job.getConfiguration().get("mapred.job.tracker", "")
+                .equalsIgnoreCase("local")) {
+            try {
+                // This call needs to be removed after MAPREDUCE-1447 is fixed.
+                getOutputFormat().getOutputCommitter(
+                        HCatHadoopShims.Instance.get()
+                                .createTaskAttemptContext(
+                                        job.getConfiguration(),
+                                        new TaskAttemptID())).abortJob(job, State.FAILED);
+            } catch (IOException e) {
+                throw new IOException("Failed to abort job", e);
+            } catch (InterruptedException e) {
+                throw new IOException("Failed to abort job", e);
+            }
+        }
+    }
 }

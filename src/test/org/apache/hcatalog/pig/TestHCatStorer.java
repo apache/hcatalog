@@ -17,6 +17,7 @@
  */
 package org.apache.hcatalog.pig;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.HcatTestUtils;
+import org.apache.pig.EvalFunc;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigException;
 import org.apache.pig.PigServer;
@@ -37,6 +39,7 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.LogUtils;
+import org.junit.Assert;
 
 public class TestHCatStorer extends TestCase {
   private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
@@ -639,4 +642,57 @@ public class TestHCatStorer extends TestCase {
       assertEquals(0, results.size());
       driver.run("drop table employee");
     }
+
+    public void testPartitionPublish() throws IOException, CommandNeedRetryException{
+
+        driver.run("drop table ptn_fail");
+        String createTable = "create table ptn_fail(a int, c string) partitioned by (b string) stored as RCFILE";
+        int retCode = driver.run(createTable).getResponseCode();
+        if(retCode != 0) {
+          throw new IOException("Failed to create table.");
+        }
+        int LOOP_SIZE = 11;
+        String[] input = new String[LOOP_SIZE];
+
+        for(int i = 0; i < LOOP_SIZE; i++) {
+            input[i] = i + "\tmath";
+        }
+        HcatTestUtils.createTestDataFile(INPUT_FILE_NAME, input);
+        PigServer server = new PigServer(ExecType.LOCAL);
+        server.setBatchOn();
+        server.registerQuery("A = load '"+ INPUT_FILE_NAME+"' as (a:int, c:chararray);");
+        server.registerQuery("B = filter A by " + FailEvalFunc.class.getName() + "($0);");
+        server.registerQuery("store B into 'ptn_fail' using "+HCatStorer.class.getName()+"('b=math');");
+        server.executeBatch();
+
+        String query = "show partitions ptn_fail";
+        retCode = driver.run(query).getResponseCode();
+
+        if( retCode != 0 ) {
+          throw new IOException("Error " + retCode + " running query " + query);
+        }
+
+        ArrayList<String> res = new ArrayList<String>();
+        driver.getResults(res);
+        assertEquals(0, res.size());
+
+        //Make sure the partitions directory is not in hdfs.
+        Assert.assertTrue((new File(TEST_WAREHOUSE_DIR + "/ptn_fail")).exists());
+        Assert.assertFalse((new File(TEST_WAREHOUSE_DIR + "/ptn_fail/b=math")).exists());
+      }
+
+    static public class FailEvalFunc extends EvalFunc<Boolean> {
+
+        /* @param Tuple
+        /* @return null
+        /* @throws IOException
+         * @see org.apache.pig.EvalFunc#exec(org.apache.pig.data.Tuple)
+         */
+        @Override
+        public Boolean exec(Tuple tuple) throws IOException {
+            throw new IOException("Eval Func to mimic Failure.");
+        }
+
+    }
+
 }

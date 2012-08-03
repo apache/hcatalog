@@ -136,61 +136,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     @Override
     public void abortJob(JobContext jobContext, State state) throws IOException {
-        org.apache.hadoop.mapred.JobContext
-                mapRedJobContext = HCatMapRedUtil.createJobContext(jobContext);
-        if (dynamicPartitioningUsed){
-            discoverPartitions(jobContext);
-        }
-
-        if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-            getBaseOutputCommitter().abortJob(mapRedJobContext, state);
-        }
-        else if (dynamicPartitioningUsed){
-            for(JobContext currContext : contextDiscoveredByPath.values()){
-                try {
-                    new JobConf(currContext.getConfiguration()).getOutputCommitter().abortJob(currContext, state);
-                } catch (Exception e) {
-                    throw new IOException(e);
-                }
-            }
-        }
-
-        HiveMetaStoreClient client = null;
-        try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(jobContext.getConfiguration());
-            client = HCatUtil.createHiveClient(hiveConf);
-            // cancel the deleg. tokens that were acquired for this job now that
-            // we are done - we should cancel if the tokens were acquired by
-            // HCatOutputFormat and not if they were supplied by Oozie.
-            // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in
-            // the conf will not be set
-            String tokenStrForm = client.getTokenStrForm();
-            if(tokenStrForm != null && jobContext.getConfiguration().get
-                    (HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-                client.cancelDelegationToken(tokenStrForm);
-            }
-        } catch(Exception e) {
-            if( e instanceof HCatException ) {
-                throw (HCatException) e;
-            } else {
-                throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
-            }
-        } finally {
-            HCatUtil.closeHiveClientQuietly(client);
-        }
-
-        Path src;
-        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
-        if (dynamicPartitioningUsed){
-            src = new Path(getPartitionRootLocation(
-                    jobInfo.getLocation().toString(),jobInfo.getTableInfo().getTable().getPartitionKeysSize()
-            ));
-        }else{
-            src = new Path(jobInfo.getLocation());
-        }
-        FileSystem fs = src.getFileSystem(jobContext.getConfiguration());
-//      LOG.warn("abortJob about to delete ["+src.toString() +"]");
-        fs.delete(src, true);
+        internalAbortJob(jobContext, state);
     }
 
     public static final String SUCCEEDED_FILE_NAME = "_SUCCESS";
@@ -204,185 +150,42 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     @Override
     public void commitJob(JobContext jobContext) throws IOException {
-        if (dynamicPartitioningUsed){
-            discoverPartitions(jobContext);
-        }
-        if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-            getBaseOutputCommitter().commitJob(HCatMapRedUtil.createJobContext(jobContext));
-        }
-        // create _SUCCESS FILE if so requested.
-        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
-        if(getOutputDirMarking(jobContext.getConfiguration())) {
-            Path outputPath = new Path(jobInfo.getLocation());
-            if (outputPath != null) {
-                FileSystem fileSys = outputPath.getFileSystem(jobContext.getConfiguration());
-                // create a file in the folder to mark it
-                if (fileSys.exists(outputPath)) {
-                    Path filePath = new Path(outputPath, SUCCEEDED_FILE_NAME);
-                    if(!fileSys.exists(filePath)) { // may have been created by baseCommitter.commitJob()
-                        fileSys.create(filePath).close();
+        try {
+            if (dynamicPartitioningUsed) {
+                discoverPartitions(jobContext);
+            }
+            if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+                getBaseOutputCommitter().commitJob(
+                        HCatMapRedUtil.createJobContext(jobContext));
+            }
+            registerPartitions(jobContext);
+            // create _SUCCESS FILE if so requested.
+            OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
+            if (getOutputDirMarking(jobContext.getConfiguration())) {
+                Path outputPath = new Path(jobInfo.getLocation());
+                if (outputPath != null) {
+                    FileSystem fileSys = outputPath.getFileSystem(jobContext
+                            .getConfiguration());
+                    // create a file in the folder to mark it
+                    if (fileSys.exists(outputPath)) {
+                        Path filePath = new Path(outputPath,
+                                SUCCEEDED_FILE_NAME);
+                        if (!fileSys.exists(filePath)) { // may have been
+                                                         // created by
+                                                         // baseCommitter.commitJob()
+                            fileSys.create(filePath).close();
+                        }
                     }
                 }
             }
+        } finally {
+            cancelDelegationTokens(jobContext);
         }
-        cleanupJob(jobContext);
     }
 
     @Override
     public void cleanupJob(JobContext context) throws IOException {
-
-        if (dynamicPartitioningUsed){
-            discoverPartitions(context);
-        }
-
-
-        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
-        Configuration conf = context.getConfiguration();
-        Table table = jobInfo.getTableInfo().getTable();
-        Path tblPath = new Path(table.getSd().getLocation());
-        FileSystem fs = tblPath.getFileSystem(conf);
-
-        if( table.getPartitionKeys().size() == 0 ) {
-            //non partitioned table
-            if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-               getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
-            }
-            else if (dynamicPartitioningUsed){
-                for(JobContext currContext : contextDiscoveredByPath.values()){
-                    try {
-                        JobConf jobConf = new JobConf(currContext.getConfiguration());
-                        jobConf.getOutputCommitter().cleanupJob(currContext);
-                    } catch (Exception e) {
-                        throw new IOException(e);
-                    }
-                }
-            }
-
-            //Move data from temp directory the actual table directory
-            //No metastore operation required.
-            Path src = new Path(jobInfo.getLocation());
-            moveTaskOutputs(fs, src, src, tblPath, false);
-            fs.delete(src, true);
-            return;
-        }
-
-        HiveMetaStoreClient client = null;
-        HCatTableInfo tableInfo = jobInfo.getTableInfo();
-
-        List<Partition> partitionsAdded = new ArrayList<Partition>();
-
-        try {
-            HiveConf hiveConf = HCatUtil.getHiveConf(conf);
-            client = HCatUtil.createHiveClient(hiveConf);
-
-            StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());
-
-            updateTableSchema(client, table, jobInfo.getOutputSchema());
-
-            FileStatus tblStat = fs.getFileStatus(tblPath);
-            String grpName = tblStat.getGroup();
-            FsPermission perms = tblStat.getPermission();
-
-            List<Partition> partitionsToAdd = new ArrayList<Partition>();
-            if (!dynamicPartitioningUsed){
-                partitionsToAdd.add(
-                        constructPartition(
-                                context,
-                                tblPath.toString(), jobInfo.getPartitionValues()
-                                ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
-                                ,table, fs
-                                ,grpName,perms));
-            }else{
-                for (Entry<String,Map<String,String>> entry : partitionsDiscoveredByPath.entrySet()){
-                    partitionsToAdd.add(
-                            constructPartition(
-                                    context,
-                                    getPartitionRootLocation(entry.getKey(),entry.getValue().size()), entry.getValue()
-                                    ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
-                                    ,table, fs
-                                    ,grpName,perms));
-                }
-            }
-
-            //Publish the new partition(s)
-            if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())){
-
-                Path src = new Path(ptnRootLocation);
-
-                // check here for each dir we're copying out, to see if it already exists, error out if so
-                moveTaskOutputs(fs, src, src, tblPath,true);
-
-                moveTaskOutputs(fs, src, src, tblPath,false);
-                fs.delete(src, true);
-
-
-//          for (Partition partition : partitionsToAdd){
-//            partitionsAdded.add(client.add_partition(partition));
-//            // currently following add_partition instead of add_partitions because latter isn't
-//            // all-or-nothing and we want to be able to roll back partitions we added if need be.
-//          }
-
-                try {
-                    client.add_partitions(partitionsToAdd);
-                    partitionsAdded = partitionsToAdd;
-                } catch (Exception e){
-                    // There was an error adding partitions : rollback fs copy and rethrow
-                    for (Partition p : partitionsToAdd){
-                        Path ptnPath = new Path(harProcessor.getParentFSPath(new Path(p.getSd().getLocation())));
-                        if (fs.exists(ptnPath)){
-                            fs.delete(ptnPath,true);
-                        }
-                    }
-                    throw e;
-                }
-
-            }else{
-                // no harProcessor, regular operation
-
-                // No duplicate partition publish case to worry about because we'll
-                // get a AlreadyExistsException here if so, and appropriately rollback
-
-                client.add_partitions(partitionsToAdd);
-                partitionsAdded = partitionsToAdd;
-
-                if (dynamicPartitioningUsed && (partitionsAdded.size()>0)){
-                    Path src = new Path(ptnRootLocation);
-                    moveTaskOutputs(fs, src, src, tblPath,false);
-                    fs.delete(src, true);
-                }
-
-            }
-
-            if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-                getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
-            }
-
-            if(Security.getInstance().isSecurityEnabled()) {
-                Security.getInstance().cancelToken(client, context);
-            }
-        } catch (Exception e) {
-
-            if( partitionsAdded.size() > 0 ) {
-                try {
-                    //baseCommitter.cleanupJob failed, try to clean up the metastore
-                    for (Partition p : partitionsAdded){
-                        client.dropPartition(tableInfo.getDatabaseName(),
-                                tableInfo.getTableName(), p.getValues());
-                    }
-                } catch(Exception te) {
-                    //Keep cause as the original exception
-                    throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
-                }
-            }
-
-            if( e instanceof HCatException ) {
-                throw (HCatException) e;
-            } else {
-                throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
-            }
-        } finally {
-            HCatUtil.closeHiveClientQuietly(client);
-        }
+        internalAbortJob(context, State.FAILED);
     }
 
     private String getPartitionRootLocation(String ptnLocn,int numPtnKeys) {
@@ -542,6 +345,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             //Update table schema to add the newly added columns
             table.getSd().setCols(tableColumns);
             client.alter_table(table.getDbName(), table.getTableName(), table);
+            LOG.info("The columns {} have been added to the table {}.", newColumns, table.getTableName());
         }
     }
 
@@ -681,4 +485,194 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         }
     }
 
+    private void registerPartitions(JobContext context) throws IOException{
+        if (dynamicPartitioningUsed){
+            discoverPartitions(context);
+        }
+        OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
+        Configuration conf = context.getConfiguration();
+        Table table = jobInfo.getTableInfo().getTable();
+        Path tblPath = new Path(table.getSd().getLocation());
+        FileSystem fs = tblPath.getFileSystem(conf);
+
+        if( table.getPartitionKeys().size() == 0 ) {
+            //Move data from temp directory the actual table directory
+            //No metastore operation required.
+            Path src = new Path(jobInfo.getLocation());
+            moveTaskOutputs(fs, src, src, tblPath, false);
+            fs.delete(src, true);
+            return;
+        }
+
+        HiveMetaStoreClient client = null;
+        HCatTableInfo tableInfo = jobInfo.getTableInfo();
+        List<Partition> partitionsAdded = new ArrayList<Partition>();
+        try {
+            HiveConf hiveConf = HCatUtil.getHiveConf(conf);
+            client = HCatUtil.createHiveClient(hiveConf);
+            StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());
+
+            FileStatus tblStat = fs.getFileStatus(tblPath);
+            String grpName = tblStat.getGroup();
+            FsPermission perms = tblStat.getPermission();
+
+            List<Partition> partitionsToAdd = new ArrayList<Partition>();
+            if (!dynamicPartitioningUsed){
+                partitionsToAdd.add(
+                        constructPartition(
+                                context,
+                                tblPath.toString(), jobInfo.getPartitionValues()
+                                ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
+                                ,table, fs
+                                ,grpName,perms));
+            }else{
+                for (Entry<String,Map<String,String>> entry : partitionsDiscoveredByPath.entrySet()){
+                    partitionsToAdd.add(
+                            constructPartition(
+                                    context,
+                                    getPartitionRootLocation(entry.getKey(),entry.getValue().size()), entry.getValue()
+                                    ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
+                                    ,table, fs
+                                    ,grpName,perms));
+                }
+            }
+
+            ArrayList<Map<String,String>> ptnInfos = new ArrayList<Map<String,String>>();
+            for(Partition ptn : partitionsToAdd){
+               ptnInfos.add(InternalUtil.createPtnKeyValueMap(tableInfo.getTable(), ptn));
+            }
+
+            //Publish the new partition(s)
+            if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())){
+
+                Path src = new Path(ptnRootLocation);
+                // check here for each dir we're copying out, to see if it
+                // already exists, error out if so
+                moveTaskOutputs(fs, src, src, tblPath,true);
+                moveTaskOutputs(fs, src, src, tblPath,false);
+                fs.delete(src, true);
+                try {
+                    updateTableSchema(client, table, jobInfo.getOutputSchema());
+                    LOG.info("The table {} has new partitions {}.", table.getTableName(),ptnInfos);
+                    client.add_partitions(partitionsToAdd);
+                    partitionsAdded = partitionsToAdd;
+                } catch (Exception e){
+                    // There was an error adding partitions : rollback fs copy and rethrow
+                    for (Partition p : partitionsToAdd){
+                        Path ptnPath = new Path(harProcessor.getParentFSPath(new Path(p.getSd().getLocation())));
+                        if (fs.exists(ptnPath)){
+                            fs.delete(ptnPath,true);
+                        }
+                    }
+                    throw e;
+                }
+
+            }else{
+                // no harProcessor, regular operation
+                // No duplicate partition publish case to worry about because we'll
+                // get a AlreadyExistsException here if so, and appropriately rollback
+                updateTableSchema(client, table, jobInfo.getOutputSchema());
+                LOG.info("The table {} has new partitions {}.", table.getTableName(),ptnInfos);
+                client.add_partitions(partitionsToAdd);
+                partitionsAdded = partitionsToAdd;
+                if (dynamicPartitioningUsed && (partitionsAdded.size()>0)){
+                    Path src = new Path(ptnRootLocation);
+                    moveTaskOutputs(fs, src, src, tblPath,false);
+                    fs.delete(src, true);
+                }
+            }
+        } catch (Exception e) {
+          if( partitionsAdded.size() > 0 ) {
+                try {
+                    //baseCommitter.cleanupJob failed, try to clean up the metastore
+                    for (Partition p : partitionsAdded){
+                        client.dropPartition(tableInfo.getDatabaseName(),
+                                tableInfo.getTableName(), p.getValues());
+                    }
+                } catch(Exception te) {
+                    //Keep cause as the original exception
+                    throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
+                }
+            }
+            if( e instanceof HCatException ) {
+                throw (HCatException) e;
+            } else {
+                throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
+            }
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
+        }
+    }
+
+    /**
+     * This method exists to ensure unit tests run with Pig 0.8 and
+     * 0.9 versions. The cleanupJob method is deprecated but, Pig 0.8 and
+     * 0.9 call cleanupJob method. Hence this method is used by both abortJob
+     * and cleanupJob methods.
+     * @param JobContext The job context.
+     * @throws java.io.IOException
+     */
+    private void internalAbortJob(JobContext context, State state) throws IOException{
+        try {
+            if (dynamicPartitioningUsed) {
+                discoverPartitions(context);
+            }
+            org.apache.hadoop.mapred.JobContext mapRedJobContext = HCatMapRedUtil
+                    .createJobContext(context);
+            if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+                getBaseOutputCommitter().abortJob(mapRedJobContext, state);
+            } else if (dynamicPartitioningUsed) {
+                for (JobContext currContext : contextDiscoveredByPath.values()) {
+                    try {
+                        new JobConf(currContext.getConfiguration())
+                                .getOutputCommitter().abortJob(currContext,
+                                        state);
+                    } catch (Exception e) {
+                        throw new IOException(e);
+                    }
+                }
+            }
+            Path src;
+            OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
+            if (dynamicPartitioningUsed) {
+                src = new Path(getPartitionRootLocation(jobInfo.getLocation()
+                        .toString(), jobInfo.getTableInfo().getTable()
+                        .getPartitionKeysSize()));
+            } else {
+                src = new Path(jobInfo.getLocation());
+            }
+            FileSystem fs = src.getFileSystem(context.getConfiguration());
+            LOG.info("Job failed. Cleaning up temporary directory [{}].", src);
+            fs.delete(src, true);
+        } finally {
+            cancelDelegationTokens(context);
+        }
+    }
+
+    private void cancelDelegationTokens(JobContext context) throws IOException{
+        LOG.info("Cancelling deletgation token for the job.");
+        HiveMetaStoreClient client = null;
+        try {
+            HiveConf hiveConf = HCatUtil
+                    .getHiveConf(context.getConfiguration());
+            client = HCatUtil.createHiveClient(hiveConf);
+            // cancel the deleg. tokens that were acquired for this job now that
+            // we are done - we should cancel if the tokens were acquired by
+            // HCatOutputFormat and not if they were supplied by Oozie.
+            // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in
+            // the conf will not be set
+            String tokenStrForm = client.getTokenStrForm();
+            if (tokenStrForm != null
+                    && context.getConfiguration().get(
+                            HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+                client.cancelDelegationToken(tokenStrForm);
+            }
+        } catch (MetaException e) {
+            LOG.warn("MetaException while cancelling delegation token.",e );
+        } catch (TException e) {
+            LOG.warn("TException while cancelling delegation token.", e);
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
+        }
+    }
 }
