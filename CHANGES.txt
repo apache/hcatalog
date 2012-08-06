@@ -24,6 +24,8 @@ Trunk (unreleased changes)
 
   NEW FEATURES
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
+  
+  HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
   HCAT-389 hcat_ping (script to check if HCatalog server is running/reachable) (mithun via khorgath)

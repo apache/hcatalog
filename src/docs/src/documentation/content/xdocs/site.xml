@@ -47,6 +47,7 @@ See http://forrest.apache.org/docs/linking.html for more info
     <index label="Storage Formats" href="supportedformats.html" />
     <index label="Dynamic Partitioning" href="dynpartition.html" />
     <index label="Notification" href="notification.html" />    
+    <index label="Authorization" href="authorization.html" />
 
     <api   label="API Docs" href="api/index.html"/>
   </docs>  
