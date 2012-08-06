@@ -27,6 +27,8 @@ Trunk (unreleased changes)
 
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
 
+  HCAT-427 Document storage-based authorization (lefty via gates)
+
   IMPROVEMENTS
   HCAT-450 HCatalog should use transitive ivy dependencies (traviscrawford)
 

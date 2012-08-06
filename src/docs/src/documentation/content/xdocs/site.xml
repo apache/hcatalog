@@ -42,11 +42,12 @@ See http://forrest.apache.org/docs/linking.html for more info
     <index label="Overview" href="index.html" />
     <index label="Installation From Tarball" href="install.html" />
     <index label="Load &amp; Store Interfaces" href="loadstore.html" />
-    <index label="Input &amp; Output Interfaces " href="inputoutput.html" />
-    <index label="Command Line Interface " href="cli.html" />
+    <index label="Input &amp; Output Interfaces" href="inputoutput.html" />
+    <index label="Command Line Interface" href="cli.html" />
     <index label="Storage Formats" href="supportedformats.html" />
     <index label="Dynamic Partitioning" href="dynpartition.html" />
-    <index label="Notification" href="notification.html" />    
+    <index label="Notification" href="notification.html" />
+    <index label="Authorization" href="authorization.html" />
     <index label="WebHCat">
       <index label="Overview" href="rest.html" />
       <index label="Installation" href="rest_server_install.html" />

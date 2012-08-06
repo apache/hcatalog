@@ -92,7 +92,7 @@ which will be used to configure the chosen Forrest skin.
   <disable-copyright-footer>false</disable-copyright-footer>
 
 <!-- @inception enable automatic generation of a date-range to current date -->
-  <year inception="true">2011</year>
+  <year inception="true">2012</year>
   <vendor>The Apache Software Foundation</vendor>
  
     
@@ -191,6 +191,14 @@ which will be used to configure the chosen Forrest skin.
       padding: .5em;
       background-color: #f0f0f0;
       font-family: monospace;
+    }
+    p.cell {
+      margin-left: .5em;
+      padding: .25em;
+    }
+    p.center {
+      text-align: center;
+      padding: .25em;
     }
     <!--Example:
         To override the colours of links only in the footer.
