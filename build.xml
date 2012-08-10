@@ -306,7 +306,7 @@
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers"/>
+  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers,jar-webhcat-java-client"/>
 
   <!--
   ================================================================================
@@ -316,6 +316,16 @@
 
   <target name="jar-storage-handlers">        
     <ant target="jar" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+  </target>
+
+  <!--
+  ================================================================================
+  Build WebHCatalog java client.
+  ================================================================================
+  -->
+
+  <target name="jar-webhcat-java-client">    
+    <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
   </target>
 
   <!--
@@ -383,6 +393,8 @@
     </sequential>
     <!-- test storage handlers -->
     <antcall target="test-storage-handlers"/>
+    <!-- Test web hcatalog java client -->
+   <ant target="test" dir="webhcat/java-client" inheritAll="false"/>
   </target>
   
   <!--
@@ -487,6 +499,7 @@
     <delete dir="${build.dir}" />
     <delete dir="${test.warehouse.dir}"/>
     <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+    <ant target="clean" dir="webhcat/java-client" inheritAll="false"/>
   </target>
  
   <!--
@@ -520,6 +533,7 @@
              doctitle="HCatalog ${hcatalog.version} API"
              failonerror="true">
       <packageset dir="${src.dir}" />
+      <packageset dir="webhcat/java-client/src/main/java" />
         <classpath>
           <path refid="classpath" />
         </classpath>
@@ -540,6 +554,19 @@
     </ant>
     <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
       <fileset dir="${dist.dir}/share/${ant.project.name}/storage-handlers">
+        <include name="*/lib/*"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="package-webhcat-java-client">
+    <property name="javaclient.dir" value="${dist.dir}/share/hcatalog/webhcat/java-client"/>
+    <mkdir dir="${javaclient.dir}"/>
+    <ant target="package" dir="webhcat/java-client" inheritAll="false">
+        <property name="dist.javaclient.dir" value="${javaclient.dir}"/>
+    </ant>
+    <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
+      <fileset dir="${dist.dir}/share/${ant.project.name}/webhcat/java-client">
         <include name="*/lib/*"/>
       </fileset>
     </copy>
@@ -624,6 +651,7 @@
     </chmod>
        <!--package storage-handlers -->
       <antcall target="package-storage-handlers"/>
+      <antcall target="package-webhcat-java-client"/>
     </target>
 
     <target name="releaseaudit" depends="ivy-releaseaudit" description="Release Audit activities">
@@ -647,6 +675,7 @@
                 <include name="shims/**"/>
                 <include name="src/**"/>
                 <include name="storage-handlers/**"/>
+                <include name="webhcat/**"/>
                 <include name="*.txt"/>
                 <include name="*.xml"/>
                 <include name="KEYS"/>
