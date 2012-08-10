@@ -200,6 +200,7 @@
   <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers">
     <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
+    <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
 
     <!-- Build hcatalog.jar, bundling the pig adapter. Our intention is to stop producing this
          fat jar after some migration period. -->
@@ -247,6 +248,7 @@
     <_junit srcDir="${basedir}/src/test"/>
     <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="test" dir="webhcat/svr" inheritAll="false"/>
+    <ant target="test" dir="webhcat/java-client" inheritAll="false"/>
     <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
 
@@ -255,6 +257,7 @@
     <_junit srcDir="${basedir}/src/test"/>
     <ant target="_test-with-clover" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="_test-with-clover" dir="webhcat/svr" inheritAll="false"/>
+    <ant target="_test-with-clover" dir="webhcat/java-client" inheritAll="false"/>
     <!-- storage-handlers do not have coverage as they have not
          yet been migrated to the new build files. -->
     <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
@@ -286,6 +289,7 @@
 
     <ant target="findbugs" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="findbugs" dir="webhcat/svr" inheritAll="false"/>
+    <ant target="findbugs" dir="webhcat/java-client" inheritAll="false"/>
   </target>
 
   <!--
@@ -300,6 +304,7 @@
     <delete dir="${test.warehouse.dir}"/>
     <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="clean" dir="webhcat/svr" inheritAll="false"/>
+    <ant target="clean" dir="webhcat/java-client" inheritAll="false"/>
     <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
   </target>
  
@@ -337,6 +342,7 @@
       <packageset dir="${src.dir}" />
       <packageset dir="hcatalog-pig-adapter/src/main/java" />
       <packageset dir="webhcat/svr/src/main/java" />
+      <packageset dir="webhcat/java-client/src/main/java" />
       <classpath>
         <path refid="uber.classpath"/>
       </classpath>
@@ -384,6 +390,9 @@
       </fileset>
       <fileset dir="webhcat/svr/build">
         <include name="webhcat-*.jar"/>
+      </fileset>
+      <fileset dir="webhcat/java-client/build">
+        <include name="webhcat-java-client*.jar"/>
       </fileset>
     </copy>
 

@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-419 Java APIs for HCatalog DDL commands (avandana via fcliu)
+
   HCAT-182 Web services interface for HCatalog access and Pig, Hive, and MR job execution (ctdean, Rachel Gollub, and thejas via gates)
 
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
