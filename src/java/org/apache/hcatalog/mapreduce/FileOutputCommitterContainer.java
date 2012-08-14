@@ -158,7 +158,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(jobContext.getConfiguration());
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
             // HCatOutputFormat and not if they were supplied by Oozie.
@@ -273,7 +273,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(conf);
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
 
             StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());
 

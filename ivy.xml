@@ -59,6 +59,7 @@
       <exclude module="commons-pool"/>
       <exclude org="org.apache.geronimo.specs" module="geronimo-jta_1.1_spec"/>
     </dependency>
+    <dependency org="com.google.guava" name="guava" rev="${guava.version}"/>
 
     <!-- test dependencies -->
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>

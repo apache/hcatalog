@@ -68,9 +68,13 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.security.auth.login.LoginException;
+
 public class HCatUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(HCatUtil.class);
+    private static volatile HiveClientCache hiveClientCache;
+    private final static int DEFAULT_HIVE_CACHE_EXPIRY_TIME_SECONDS = 2*60;
 
     public static boolean checkJobContextIfRunningFromBackend(JobContext j) {
         if (j.getConfiguration().get("mapred.task.id", "").equals("")) {
@@ -514,9 +518,32 @@ public class HCatUtil {
         }
     }
 
-    public static HiveMetaStoreClient createHiveClient(HiveConf hiveConf)
-            throws MetaException {
-        return new HiveMetaStoreClient(hiveConf);
+    /**
+     * Get or create a hive client depending on whether it exits in cache or not
+     * @param hiveConf The hive configuration
+     * @return the client
+     * @throws MetaException When HiveMetaStoreClient couldn't be created
+     * @throws IOException
+     */
+    public static HiveMetaStoreClient getHiveClient(HiveConf hiveConf)
+            throws MetaException, IOException {
+
+        // Singleton behaviour: create the cache instance if required. The cache needs to be created lazily and
+        // using the expiry time available in hiveConf.
+
+        if(hiveClientCache == null ) {
+            synchronized (HiveMetaStoreClient.class) {
+                if(hiveClientCache == null) {
+                    hiveClientCache = new HiveClientCache(hiveConf.getInt(HCatConstants.HCAT_HIVE_CLIENT_EXPIRY_TIME,
+                            DEFAULT_HIVE_CACHE_EXPIRY_TIME_SECONDS));
+                }
+            }
+        }
+        try {
+            return hiveClientCache.get(hiveConf);
+        } catch (LoginException e) {
+            throw new IOException("Couldn't create hiveMetaStoreClient, Error getting UGI for user", e);
+        }
     }
 
     public static void closeHiveClientQuietly(HiveMetaStoreClient client) {
@@ -524,10 +551,9 @@ public class HCatUtil {
             if (client != null)
                 client.close();
         } catch (Exception e) {
-            LOG.debug("Error closing metastore client", e);
+            LOG.debug("Error closing metastore client. Ignored the error.", e);
         }
     }
-
 
     public static HiveConf getHiveConf(Configuration conf)
       throws IOException {

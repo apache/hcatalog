@@ -50,7 +50,10 @@ public final class HCatConstants {
 
   public static final String HCAT_KEY_JOB_INFO =  HCAT_KEY_BASE + ".job.info";
 
-  private HCatConstants() { // restrict instantiation
+  // hcatalog specific configurations, that can be put in hive-site.xml
+  public static final String HCAT_HIVE_CLIENT_EXPIRY_TIME = "hcatalog.hive.client.cache.expiry.time";
+
+    private HCatConstants() { // restrict instantiation
   }
 
   public static final String HCAT_TABLE_SCHEMA = "hcat.table.schema";
