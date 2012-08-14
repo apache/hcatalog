@@ -116,7 +116,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
         HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
             handleDuplicatePublish(context,
                     jobInfo,
                     client,

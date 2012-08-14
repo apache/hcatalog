@@ -509,7 +509,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         List<Partition> partitionsAdded = new ArrayList<Partition>();
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(conf);
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
             StorerInfo storer = InternalUtil.extractStorerInfo(table.getSd(),table.getParameters());
 
             FileStatus tblStat = fs.getFileStatus(tblPath);
@@ -655,7 +655,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         try {
             HiveConf hiveConf = HCatUtil
                     .getHiveConf(context.getConfiguration());
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
             // cancel the deleg. tokens that were acquired for this job now that
             // we are done - we should cancel if the tokens were acquired by
             // HCatOutputFormat and not if they were supplied by Oozie.

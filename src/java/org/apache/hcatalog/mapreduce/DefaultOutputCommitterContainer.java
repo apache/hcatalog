@@ -93,7 +93,7 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
         HiveMetaStoreClient client = null;
         try {
             HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
-            client = HCatUtil.createHiveClient(hiveConf);
+            client = HCatUtil.getHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
             if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
               client.cancelDelegationToken(tokenStrForm);

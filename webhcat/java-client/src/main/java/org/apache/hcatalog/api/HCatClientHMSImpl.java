@@ -546,7 +546,7 @@ public class HCatClientHMSImpl extends HCatClient {
         this.config = conf;
         try {
             hiveConfig = HCatUtil.getHiveConf(config);
-            hmsClient = HCatUtil.createHiveClient(hiveConfig);
+            hmsClient = HCatUtil.getHiveClient(hiveConfig);
         } catch (MetaException exp) {
             throw new HCatException("MetaException while creating HMS client",
                     exp);

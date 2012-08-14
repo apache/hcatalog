@@ -31,11 +31,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Index;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.io.WritableComparable;
@@ -76,7 +74,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
         Configuration conf = job.getConfiguration();
         HiveConf hiveConf = HCatUtil.getHiveConf(conf);
-        client = HCatUtil.createHiveClient(hiveConf);
+        client = HCatUtil.getHiveClient(hiveConf);
         Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
 
         List<String> indexList = client.listIndexNames(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), Short.MAX_VALUE);

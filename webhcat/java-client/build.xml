@@ -115,6 +115,7 @@
     <!-- Build test files -->
     <path id="test.class.path">
      <fileset dir="${build.dir}/ivy/lib" includes="**/*.jar"/>
+     <fileset dir="../../build/ivy/lib/hcatalog/" includes="**/*.jar"/>
      <dirset dir="${path.to.basedir}/build/test/classes"/>
      <dirset dir="${basedir}/build/classes"/>
      <dirset dir="${basedir}/build/test/classes"/>

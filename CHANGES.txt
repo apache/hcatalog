@@ -23,7 +23,9 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
-  HCAT-419 Java APIs for HCatalog DDL commands (avandana via fcliu)
+  HCAT-370 Create a HiveMetaStoreClient cache in hcatalog (amalakar via toffer)
+
+  HCAT-419 Java APIs for HCatalog DDL commands (avandana via toffer)
 
   HCAT-328 HCatLoader should report its input size so pig can estimate the number of reducers (traviscrawford via gates)
   

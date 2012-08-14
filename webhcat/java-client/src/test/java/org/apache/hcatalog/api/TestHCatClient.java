@@ -17,6 +17,7 @@
  */
 package org.apache.hcatalog.api;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,17 +43,20 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
 import org.apache.hcatalog.ExitException;
 import org.apache.hcatalog.NoExitSecurityManager;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestHCatClient extends TestCase {
+import static org.junit.Assert.assertTrue;
+
+public class TestHCatClient {
     private static final Logger LOG = LoggerFactory.getLogger(TestHCatClient.class);
-    private boolean  isServerRunning = false;
     private static final String msPort  = "20101";
-    private HiveConf  hcatConf;
-    private Thread  t;
-    private SecurityManager securityManager;
+    private static HiveConf  hcatConf;
+    private static SecurityManager securityManager;
 
     private static class RunMS implements Runnable {
 
@@ -66,28 +70,22 @@ public class TestHCatClient extends TestCase {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         LOG.info("Shutting down metastore.");
         System.setSecurityManager(securityManager);
     }
 
-    @Override
-    protected void setUp() throws Exception {
+    @BeforeClass
+    public static void setUp() throws Exception {
 
-        if (isServerRunning) {
-            return;
-        }
-
-        t = new Thread(new RunMS());
+        Thread t = new Thread(new RunMS());
         t.start();
         Thread.sleep(40000);
 
-        isServerRunning = true;
-
         securityManager = System.getSecurityManager();
         System.setSecurityManager(new NoExitSecurityManager());
-        hcatConf = new HiveConf(this.getClass());
+        hcatConf = new HiveConf(TestHCatClient.class);
         hcatConf.set("hive.metastore.local", "false");
         hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:"
                 + msPort);
@@ -102,6 +100,7 @@ public class TestHCatClient extends TestCase {
         System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
     }
 
+    @Test
     public void testBasicDDLCommands() throws Exception {
         String db = "testdb";
         String tableOne = "testTable1";
@@ -161,6 +160,7 @@ public class TestHCatClient extends TestCase {
         client.close();
     }
 
+    @Test
     public void testPartitionsHCatClientImpl() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String dbName = "ptnDB";
@@ -232,6 +232,7 @@ public class TestHCatClient extends TestCase {
         client.close();
     }
 
+    @Test
     public void testDatabaseLocation() throws Exception{
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String dbName = "locationDB";
@@ -245,6 +246,7 @@ public class TestHCatClient extends TestCase {
         client.close();
     }
 
+    @Test
     public void testCreateTableLike() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String tableName = "tableone";
@@ -265,6 +267,7 @@ public class TestHCatClient extends TestCase {
         client.close();
     }
 
+    @Test
     public void testRenameTable() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String tableName = "temptable";
@@ -289,14 +292,13 @@ public class TestHCatClient extends TestCase {
         client.close();
     }
 
+    @Test
     public void testTransportFailure() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
-        String tableName = "Temptable";
         boolean isExceptionCaught = false;
-        Random random = new Random();
-        for (int i = 0; i < 80; i++) {
-            tableName = tableName + random.nextInt(100);
-        }
+        // Table creation with a long table name causes ConnectionFailureException
+        final String tableName = "Temptable" + new BigInteger(200, new Random()).toString(2);
+
         ArrayList<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
         cols.add(new HCatFieldSchema("id", Type.INT, "id columns"));
         cols.add(new HCatFieldSchema("value", Type.STRING, "id columns"));
@@ -320,12 +322,11 @@ public class TestHCatClient extends TestCase {
 
         } finally {
             client.close();
-            if(isExceptionCaught == false){
-                Assert.fail("The expection exception was never thrown.");
-            }
+            assertTrue("The expected exception was never thrown.", isExceptionCaught);
         }
     }
 
+    @Test
     public void testOtherFailure() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String tableName = "Temptable";
@@ -353,9 +354,7 @@ public class TestHCatClient extends TestCase {
             assertTrue(newTable.getTableName().equalsIgnoreCase(newName));
         } finally {
             client.close();
-            if (isExceptionCaught == false) {
-                Assert.fail("The expection exception was never thrown.");
-            }
+            assertTrue("The expected exception was never thrown.", isExceptionCaught);
         }
     }
 }

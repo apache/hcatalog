@@ -90,8 +90,8 @@ public class PigHCatUtil {
     return job.getConfiguration().get(HCatConstants.HCAT_METASTORE_PRINCIPAL);
   }
 
-  private static HiveMetaStoreClient createHiveMetaClient(String serverUri,
-      String serverKerberosPrincipal, Class<?> clazz) throws Exception {
+  private static HiveMetaStoreClient getHiveMetaClient(String serverUri,
+                                                       String serverKerberosPrincipal, Class<?> clazz) throws Exception {
     HiveConf hiveConf = new HiveConf(clazz);
 
     if (serverUri != null){
@@ -105,7 +105,7 @@ public class PigHCatUtil {
     }
 
     try {
-      return new HiveMetaStoreClient(hiveConf,null);
+        return HCatUtil.getHiveClient(hiveConf);
     } catch (Exception e){
       throw new Exception("Could not instantiate a HiveMetaStoreClient connecting to server uri:["+serverUri+"]",e);
     }
@@ -141,14 +141,14 @@ public class PigHCatUtil {
     Table table = null;
     HiveMetaStoreClient client = null;
     try {
-      client = createHiveMetaClient(hcatServerUri, hcatServerPrincipal, PigHCatUtil.class);
+      client = getHiveMetaClient(hcatServerUri, hcatServerPrincipal, PigHCatUtil.class);
       table = client.getTable(dbName, tableName);
     } catch (NoSuchObjectException nsoe){
       throw new PigException("Table not found : " + nsoe.getMessage(), PIG_EXCEPTION_CODE); // prettier error messages to frontend
     } catch (Exception e) {
       throw new IOException(e);
     } finally {
-      HCatUtil.closeHiveClientQuietly(client);
+        HCatUtil.closeHiveClientQuietly(client);
     }
     hcatTableCache.put(loc_server, table);
     return table;
