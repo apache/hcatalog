@@ -58,7 +58,7 @@ function log() {
 
 # Find the templeton jar
 function find_jar_path() {
-        for dir in "." "build/templeton" "share/templeton/"; do
+        for dir in "." "build" "share/hcatalog/"; do
                 local jar="$base_dir/$dir/$TEMPLETON_JAR"
                 if [[ -f $jar ]]; then
                         echo $jar
@@ -70,7 +70,7 @@ function find_jar_path() {
 # Find the templeton classpath
 function find_classpath() {
         local classpath=""
-        for dir in  "share/templeton/lib" "build/ivy/lib/templeton" "conf" ; do
+        for dir in  "share/hcatalog" "build/ivy/lib/templeton" "conf" ; do
                 local path="$base_dir/$dir"
 
                 if [[ -d $path ]]; then

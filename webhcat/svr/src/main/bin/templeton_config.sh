@@ -32,7 +32,7 @@ ERROR_LOG=${TEMPLETON_LOG_DIR}/templeton-console-error.log
 CONSOLE_LOG=${TEMPLETON_LOG_DIR}/templeton-console.log
 
 # The name of the templeton jar file
-TEMPLETON_JAR=templeton-0.1.0-dev.jar
+TEMPLETON_JAR=webhcat-0.5.0-SNAPSHOT.jar
 
 # How long to wait before testing that the process started correctly
 SLEEP_TIME_AFTER_START=10
@@ -61,7 +61,7 @@ fi
 if [ -e "${TEMPLETON_PREFIX}/conf/templeton-env.sh" ]; then
   DEFAULT_CONF_DIR=${TEMPLETON_PREFIX}/"conf"
 else
-  DEFAULT_CONF_DIR="/etc/templeton"
+  DEFAULT_CONF_DIR="/etc/hcatalog"
 fi
 TEMPLETON_CONF_DIR="${TEMPLETON_CONF_DIR:-$DEFAULT_CONF_DIR}"
 
