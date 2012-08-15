@@ -34,6 +34,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-460 Enable boolean to integer conversions (traviscrawford)
+
   HCAT-450 HCatalog should use transitive ivy dependencies (traviscrawford)
 
   HCAT-350 Writing BINARY data to HCatRecord depends on a Hive class (thejas via traviscrawford)

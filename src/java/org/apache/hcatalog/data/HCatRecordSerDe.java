@@ -41,6 +41,8 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Writable;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatContext;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +187,15 @@ public class HCatRecordSerDe implements SerDe {
       ObjectInspector fieldObjectInspector) throws SerDeException {
     Object res = null;
     if (fieldObjectInspector.getCategory() == Category.PRIMITIVE){
-      res = ((PrimitiveObjectInspector)fieldObjectInspector).getPrimitiveJavaObject(field);
+      if (field != null &&
+          HCatContext.getInstance().getConf().getBoolean(
+              HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER,
+              HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT) &&
+          field instanceof Boolean) {
+        res = ((Boolean) field) ? 1 : 0;
+      } else {
+        res = ((PrimitiveObjectInspector) fieldObjectInspector).getPrimitiveJavaObject(field);
+      }
     } else if (fieldObjectInspector.getCategory() == Category.STRUCT){
       res = serializeStruct(field,(StructObjectInspector)fieldObjectInspector);
     } else if (fieldObjectInspector.getCategory() == Category.LIST){

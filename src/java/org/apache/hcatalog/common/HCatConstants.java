@@ -116,4 +116,17 @@ public final class HCatConstants {
   // Hadoop Conf Var Names
   public static final String CONF_MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
 
+  //***************************************************************************
+  // Data-related configuration properties.
+  //***************************************************************************
+
+  /**
+   * {@value} (default: {@value #HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT}).
+   * Pig < 0.10.0 does not have boolean support, and scripts written for pre-boolean Pig versions
+   * will not expect boolean values when upgrading Pig. For integration the option is offered to
+   * convert boolean fields to integers by setting this Hadoop configuration key.
+   */
+  public static final String HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER =
+      "hcat.data.convert.boolean.to.integer";
+  public static final boolean HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT = false;
 }

@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import junit.framework.TestCase;
 
@@ -37,6 +38,7 @@ import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.HcatTestUtils;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.data.Pair;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigServer;
@@ -395,5 +397,45 @@ public class TestHCatLoader extends TestCase {
     hCatLoader.setLocation(SPECIFIC_SIZE_TABLE, job);
     ResourceStatistics statistics = hCatLoader.getStatistics(file.getAbsolutePath(), job);
     assertEquals(2048, (long) statistics.getmBytes());
+  }
+
+  public void testConvertBooleanToInt() throws Exception {
+    String tbl = "test_convert_boolean_to_int";
+    String inputFileName = TEST_DATA_DIR + "/testConvertBooleanToInt/data.txt";
+    File inputDataDir = new File(inputFileName).getParentFile();
+    inputDataDir.mkdir();
+
+    String[] lines = new String[] {"llama\t1", "alpaca\t0"};
+    HcatTestUtils.createTestDataFile(inputFileName, lines);
+
+    assertEquals(0, driver.run("drop table if exists " + tbl).getResponseCode());
+    assertEquals(0, driver.run("create external table " + tbl +
+        " (a string, b boolean) row format delimited fields terminated by '\t'" +
+        " stored as textfile location 'file://" +
+        inputDataDir.getAbsolutePath() + "'").getResponseCode());
+
+    Properties properties = new Properties();
+    properties.setProperty(HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER, "true");
+    PigServer server = new PigServer(ExecType.LOCAL, properties);
+    server.registerQuery(
+        "data = load 'test_convert_boolean_to_int' using org.apache.hcatalog.pig.HCatLoader();");
+    Schema schema = server.dumpSchema("data");
+    assertEquals(2, schema.getFields().size());
+
+    assertEquals("a", schema.getField(0).alias);
+    assertEquals(DataType.CHARARRAY, schema.getField(0).type);
+    assertEquals("b", schema.getField(1).alias);
+    assertEquals(DataType.INTEGER, schema.getField(1).type);
+
+    Iterator<Tuple> iterator = server.openIterator("data");
+    Tuple t = iterator.next();
+    assertEquals("llama", t.get(0));
+    // TODO: Figure out how to load a text file into Hive with boolean columns. This next assert
+    // passes because data was loaded as integers, not because it was converted.
+    assertEquals(1, t.get(1));
+    t = iterator.next();
+    assertEquals("alpaca", t.get(0));
+    assertEquals(0, t.get(1));
+    assertFalse(iterator.hasNext());
   }
 }
