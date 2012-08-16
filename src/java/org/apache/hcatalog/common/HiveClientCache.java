@@ -48,6 +48,8 @@ class HiveClientCache {
     final private Cache<HiveClientCacheKey, CacheableHiveMetaStoreClient> hiveCache;
     private static final Logger LOG = LoggerFactory.getLogger(HiveClientCache.class);
     private final int timeout;
+    // This lock is used to make sure removalListener won't close a client that is being contemplated for returning by get()
+    private final Object CACHE_TEARDOWN_LOCK = new Object();
 
     private static final AtomicInteger nextId = new AtomicInteger(0);
 
@@ -75,8 +77,10 @@ class HiveClientCache {
                  public void onRemoval(RemovalNotification<HiveClientCacheKey, CacheableHiveMetaStoreClient> notification) {
                      CacheableHiveMetaStoreClient hiveMetaStoreClient = notification.getValue();
                      if (hiveMetaStoreClient != null) {
-                         hiveMetaStoreClient.setExpiredFromCache();
-                         hiveMetaStoreClient.tearDownIfUnused();
+                         synchronized (CACHE_TEARDOWN_LOCK) {
+                            hiveMetaStoreClient.setExpiredFromCache();
+                            hiveMetaStoreClient.tearDownIfUnused();
+                         }
                      }
                  }
              };
@@ -130,12 +134,21 @@ class HiveClientCache {
      */
     public HiveMetaStoreClient get(final HiveConf hiveConf) throws MetaException, IOException, LoginException {
         final HiveClientCacheKey cacheKey = HiveClientCacheKey.fromHiveConf(hiveConf, getThreadId());
-        CacheableHiveMetaStoreClient hiveMetaStoreClient = getOrCreate(cacheKey);
-        if (!hiveMetaStoreClient.isOpen()) {
-            hiveCache.invalidate(cacheKey);
+        CacheableHiveMetaStoreClient hiveMetaStoreClient = null;
+        // the hmsc is not shared across threads. So the only way it could get closed while we are doing healthcheck
+        // is if removalListener closes it. The synchronization takes care that removalListener won't do it
+        synchronized (CACHE_TEARDOWN_LOCK) {
             hiveMetaStoreClient = getOrCreate(cacheKey);
+            hiveMetaStoreClient.acquire();
         }
-        hiveMetaStoreClient.acquire();
+        if (!hiveMetaStoreClient.isOpen()) {
+            synchronized (CACHE_TEARDOWN_LOCK) {
+                hiveCache.invalidate(cacheKey);
+                hiveMetaStoreClient.close();
+                hiveMetaStoreClient = getOrCreate(cacheKey);
+                hiveMetaStoreClient.acquire();
+            }
+        }
         return hiveMetaStoreClient;
     }
 

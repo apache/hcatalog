@@ -23,7 +23,9 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
-  HCAT-370 Create a HiveMetaStoreClient cache in hcatalog (amalakar via toffer)
+  HCAT-469 HiveClientCache may return a closed client (amalakar via toffer)
+
+  HCAT-370 Create a HiveMetaStoreClient cache in hcatalog (amalakar via toffer) 
 
   HCAT-419 Java APIs for HCatalog DDL commands (avandana via toffer)
 
