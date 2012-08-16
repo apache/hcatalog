@@ -187,6 +187,8 @@ public class HCatLoader extends HCatBaseLoader {
   @Override
   public ResourceSchema getSchema(String location, Job job) throws IOException {
     HCatContext.getInstance().mergeConf(job.getConfiguration());
+    HCatContext.getInstance().getConf().setBoolean(
+        HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION, true);
 
     Table table = phutil.getTable(location,
         hcatServerUri!=null?hcatServerUri:PigHCatUtil.getHCatServerUri(job),

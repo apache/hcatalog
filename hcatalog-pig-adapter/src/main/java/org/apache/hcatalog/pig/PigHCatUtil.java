@@ -405,9 +405,6 @@ public class PigHCatUtil {
     try {
       Type hType = hcatField.getType();
       switch(hType){
-      // We don't do type promotion/demotion.
-      case SMALLINT:
-      case TINYINT:
       case BOOLEAN:
         throw new PigException("Incompatible type found in hcat table schema: "+hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
       case ARRAY:

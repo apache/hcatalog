@@ -183,16 +183,26 @@ public class HCatRecordSerDe implements SerDe {
    * Return underlying Java Object from an object-representation
    * that is readable by a provided ObjectInspector.
    */
-  public static Object serializeField(Object field,
-      ObjectInspector fieldObjectInspector) throws SerDeException {
-    Object res = null;
+  public static Object serializeField(Object field, ObjectInspector fieldObjectInspector)
+      throws SerDeException {
+
+    Object res;
     if (fieldObjectInspector.getCategory() == Category.PRIMITIVE){
-      if (field != null &&
+      if (field != null && field instanceof Boolean &&
           HCatContext.getInstance().getConf().getBoolean(
               HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER,
-              HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT) &&
-          field instanceof Boolean) {
+              HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT)) {
         res = ((Boolean) field) ? 1 : 0;
+      } else if (field != null && field instanceof Short &&
+          HCatContext.getInstance().getConf().getBoolean(
+              HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
+              HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT)) {
+        res = new Integer((Short) field);
+      } else if (field != null && field instanceof Byte &&
+          HCatContext.getInstance().getConf().getBoolean(
+              HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
+              HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT)) {
+        res = new Integer((Byte) field);
       } else {
         res = ((PrimitiveObjectInspector) fieldObjectInspector).getPrimitiveJavaObject(field);
       }

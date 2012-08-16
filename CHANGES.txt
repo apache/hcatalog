@@ -36,6 +36,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-425 Pig cannot read/write SMALLINT/TINYINT columns (traviscrawford)
+
   HCAT-460 Enable boolean to integer conversions (traviscrawford)
 
   HCAT-450 HCatalog should use transitive ivy dependencies (traviscrawford)

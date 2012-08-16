@@ -19,6 +19,7 @@ package org.apache.hcatalog.data.schema;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.hcatalog.common.HCatException;
 
 public class HCatFieldSchema implements Serializable {
@@ -209,11 +210,12 @@ public class HCatFieldSchema implements Serializable {
 
     @Override
     public String toString() {
-        return "HCatFieldSchema ["
-                + (fieldName != null ? "fieldName=" + fieldName + ", " : "fieldName=null")
-                + (comment != null ? "comment=" + comment + ", " : "comment=null")
-                + (type != null ? "type=" + getTypeString() + ", " : "type=null")
-                + (category != null ? "category=" + category : "category=null") + "]";
+      return new ToStringBuilder(this)
+          .append("fieldName", fieldName)
+          .append("comment", comment)
+          .append("type", getTypeString())
+          .append("category", category)
+          .toString();
     }
 
     public String getTypeString(){

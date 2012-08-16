@@ -129,4 +129,16 @@ public final class HCatConstants {
   public static final String HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER =
       "hcat.data.convert.boolean.to.integer";
   public static final boolean HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT = false;
+
+  /**
+   * {@value} (default: {@value #HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT}).
+   * Hive tables support tinyint and smallint columns, while not all processing frameworks support
+   * these types (Pig only has integer for example). Enable this property to promote tinyint and
+   * smallint columns to integer at runtime. Note that writes to tinyint and smallint columns
+   * enforce bounds checking and jobs will fail if attempting to write values outside the column
+   * bounds.
+   */
+  public static final String HCAT_DATA_TINY_SMALL_INT_PROMOTION =
+      "hcat.data.tiny.small.int.promotion";
+  public static final boolean HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT = false;
 }

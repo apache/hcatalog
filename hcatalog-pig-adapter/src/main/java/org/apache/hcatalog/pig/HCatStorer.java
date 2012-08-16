@@ -31,6 +31,7 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatContext;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
@@ -77,6 +78,9 @@ public class HCatStorer extends HCatBaseStorer {
 
   @Override
   public void setStoreLocation(String location, Job job) throws IOException {
+    HCatContext.getInstance().mergeConf(job.getConfiguration());
+    HCatContext.getInstance().getConf().setBoolean(
+        HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION, false);
 
     Configuration config = job.getConfiguration();
     config.set(INNER_SIGNATURE, INNER_SIGNATURE_PREFIX + "_" + sign);

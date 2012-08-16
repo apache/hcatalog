@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
@@ -59,9 +60,8 @@ import org.apache.pig.impl.util.Utils;
 
 public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata {
 
-  /**
-   *
-   */
+  private static final List<Type> SUPPORTED_INTEGER_CONVERSIONS =
+      Lists.newArrayList(Type.TINYINT, Type.SMALLINT, Type.INT);
   protected static final String COMPUTED_OUTPUT_SCHEMA = "hcat.output.schema";
   protected final List<String> partitionKeys;
   protected final Map<String,String> partitions;
@@ -152,7 +152,11 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       return new HCatFieldSchema(fSchema.alias, Type.STRING, null);
 
     case DataType.INTEGER:
-      return new HCatFieldSchema(fSchema.alias, Type.INT, null);
+      if (!SUPPORTED_INTEGER_CONVERSIONS.contains(hcatFieldSchema.getType())) {
+        throw new FrontendException("Unsupported type: " + type + "  in Pig's schema",
+            PigHCatUtil.PIG_EXCEPTION_CODE);
+      }
+      return new HCatFieldSchema(fSchema.alias, hcatFieldSchema.getType(), null);
 
     case DataType.LONG:
       return new HCatFieldSchema(fSchema.alias, Type.BIGINT, null);
@@ -301,7 +305,23 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       case DOUBLE:
         return pigObj;
       case SMALLINT:
+        if (pigObj == null) {
+          return null;
+        }
+        if ((Integer) pigObj < Short.MIN_VALUE || (Integer) pigObj > Short.MAX_VALUE) {
+          throw new BackendException("Value " + pigObj + " is outside the bounds of column " +
+              hcatFS.getName() + " with type " + hcatFS.getType(), PigHCatUtil.PIG_EXCEPTION_CODE);
+        }
+        return ((Integer) pigObj).shortValue();
       case TINYINT:
+        if (pigObj == null) {
+          return null;
+        }
+        if ((Integer) pigObj < Byte.MIN_VALUE || (Integer) pigObj > Byte.MAX_VALUE) {
+          throw new BackendException("Value " + pigObj + " is outside the bounds of column " +
+              hcatFS.getName() + " with type " + hcatFS.getType(), PigHCatUtil.PIG_EXCEPTION_CODE);
+        }
+        return ((Integer) pigObj).byteValue();
       case BOOLEAN:
         // would not pass schema validation anyway
         throw new BackendException("Incompatible type "+type+" found in hcat table schema: "+hcatFS, PigHCatUtil.PIG_EXCEPTION_CODE);
@@ -337,7 +357,6 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
 
     for(FieldSchema pigField : pigSchema.getFields()){
       HCatFieldSchema hcatField = getColFromSchema(pigField.alias, tblSchema);
-
       validateSchema(pigField, hcatField);
     }
 
