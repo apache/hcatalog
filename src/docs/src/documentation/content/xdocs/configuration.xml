@@ -142,13 +142,13 @@ ${env.PIG_HOME}/bin/pig
 
  <tr>
     <td><strong>templeton.hive.archive</strong></td>
-    <td><code>hdfs:///user/templeton/hcatalog-0.3.0.tar.gz</code></td>
+    <td><code>hdfs:///user/templeton/hcatalog-0.4.0.tar.gz</code></td>
     <td>The path to the Hive archive.</td>
   </tr>
 
   <tr>
     <td><strong>templeton.hive.path</strong></td>
-    <td><code>hcatalog-0.3.0.tar.gz/hcatalog-0.3.0/bin/hive</code></td>
+    <td><code>hcatalog-0.4.0.tar.gz/hcatalog-0.4.0/bin/hive</code></td>
     <td>The path to the Hive executable.</td>
   </tr>
 

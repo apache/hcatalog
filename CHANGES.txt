@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-470 Update HCat version numbers in Templeton doc set (lefty via gates)
+
   HCAT-472 HCatalog should use Deserializer in the read path instead of SerDe (traviscrawford)
 
   HCAT-467 Templeton scripts point to wrong jar name (jghoman via traviscrawford)
