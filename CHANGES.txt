@@ -79,6 +79,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-472 HCatalog should use Deserializer in the read path instead of SerDe (traviscrawford)
+
   HCAT-467 Templeton scripts point to wrong jar name (jghoman via traviscrawford)
 
   HCAT-436 JSON SerDe column misnaming on CTAS (khorgath via gates)

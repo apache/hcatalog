@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
@@ -42,6 +43,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,13 +53,14 @@ import java.util.Map;
 import java.util.Properties;
 
 class InternalUtil {
+    private static final Logger LOG = LoggerFactory.getLogger(InternalUtil.class);
 
     static StorerInfo extractStorerInfo(StorageDescriptor sd, Map<String, String> properties) throws IOException {
         Properties hcatProperties = new Properties();
         for (String key : properties.keySet()){
             hcatProperties.put(key, properties.get(key));
         }
-        
+
         // also populate with StorageDescriptor->SerDe.Parameters
         for (Map.Entry<String, String>param :
             sd.getSerdeInfo().getParameters().entrySet()) {
@@ -132,28 +136,26 @@ class InternalUtil {
 
   //TODO this has to find a better home, it's also hardcoded as default in hive would be nice
   // if the default was decided by the serde
-  static void initializeOutputSerDe(SerDe serDe, Configuration conf, 
-                                    OutputJobInfo jobInfo) 
-  throws SerDeException {
-    initializeSerDe(serDe, conf, jobInfo.getTableInfo(), 
-                    jobInfo.getOutputSchema()); 
+  static void initializeOutputSerDe(SerDe serDe, Configuration conf, OutputJobInfo jobInfo)
+      throws SerDeException {
+    serDe.initialize(conf, getSerdeProperties(jobInfo.getTableInfo(), jobInfo.getOutputSchema()));
   }
 
-  static void initializeInputSerDe(SerDe serDe, Configuration conf, 
-                                   HCatTableInfo info, HCatSchema s)
-  throws SerDeException {
-    initializeSerDe(serDe, conf, info, s); 
+  static void initializeDeserializer(Deserializer deserializer, Configuration conf,
+      HCatTableInfo info, HCatSchema schema) throws SerDeException {
+    Properties props = getSerdeProperties(info, schema);
+    LOG.info("Initializing " + deserializer.getClass().getName() + " with properties " + props);
+    deserializer.initialize(conf, props);
   }
 
-  static void initializeSerDe(SerDe serDe, Configuration conf, 
-                              HCatTableInfo info, HCatSchema s)
-  throws SerDeException {
-     Properties props = new Properties();
+  private static Properties getSerdeProperties(HCatTableInfo info, HCatSchema s)
+      throws SerDeException {
+    Properties props = new Properties();
     List<FieldSchema> fields = HCatUtil.getFieldSchemaList(s.getFields());
     props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMNS,
-          MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
+        MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
     props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMN_TYPES,
-          MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
+        MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
 
     // setting these props to match LazySimpleSerde
     props.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_NULL_FORMAT, "\\N");
@@ -162,7 +164,7 @@ class InternalUtil {
     //add props from params set in table schema
     props.putAll(info.getStorerInfo().getProperties());
 
-    serDe.initialize(conf,props);
+    return props;
   }
 
 static Reporter createReporter(TaskAttemptContext context) {

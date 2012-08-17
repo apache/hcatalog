@@ -20,7 +20,7 @@ package org.apache.hcatalog.mapreduce;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.hadoop.hive.serde2.SerDe;
+import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -54,7 +54,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
     /** The storage handler used */
     private final HCatStorageHandler storageHandler;
 
-    private SerDe serde;
+    private Deserializer deserializer;
 
     private Map<String,String> valuesNotInDataCols;
 
@@ -82,7 +82,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
       HCatSplit hcatSplit = InternalUtil.castToHCatSplit(split);
 
       baseRecordReader = createBaseRecordReader(hcatSplit, storageHandler, taskContext);
-      serde = createSerDe(hcatSplit, storageHandler, taskContext);
+      createDeserializer(hcatSplit, storageHandler, taskContext);
 
       // Pull the output schema out of the TaskAttemptContext
       outputSchema = (HCatSchema) HCatUtil.deserialize(
@@ -108,22 +108,20 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
           InternalUtil.createReporter(taskContext));
     }
 
-    private SerDe createSerDe(HCatSplit hcatSplit, HCatStorageHandler storageHandler,
+    private void createDeserializer(HCatSplit hcatSplit, HCatStorageHandler storageHandler,
         TaskAttemptContext taskContext) throws IOException {
 
-      SerDe serde = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),
+      deserializer = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),
           taskContext.getConfiguration());
 
       try {
-        InternalUtil.initializeInputSerDe(serde, storageHandler.getConf(),
+        InternalUtil.initializeDeserializer(deserializer, storageHandler.getConf(),
             hcatSplit.getPartitionInfo().getTableInfo(),
             hcatSplit.getPartitionInfo().getPartitionSchema());
       } catch (SerDeException e) {
-        throw new IOException("Failed initializing SerDe "
+        throw new IOException("Failed initializing deserializer "
             + storageHandler.getSerDeClass().getName(), e);
       }
-
-      return serde;
     }
 
   /* (non-Javadoc)
@@ -145,7 +143,7 @@ class HCatRecordReader extends RecordReader<WritableComparable, HCatRecord> {
 
       try {
 
-        r = new LazyHCatRecord(serde.deserialize(currentValue),serde.getObjectInspector());
+        r = new LazyHCatRecord(deserializer.deserialize(currentValue), deserializer.getObjectInspector());
         DefaultHCatRecord dr = new DefaultHCatRecord(outputSchema.size());
         int i = 0;
         for (String fieldName : outputSchema.getFieldNames()){
