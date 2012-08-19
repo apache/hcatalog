@@ -74,6 +74,12 @@ class ProgressReporter extends StatusReporter implements Reporter {
     return null;
   }
 
+  public float getProgress() {
+      /* Required to build against 0.23 Reporter and StatusReporter. */
+      /* TODO: determine the progress. */
+      return 0.0f;
+  }
+
   @Override
   public void progress() {
     if (context != null) {

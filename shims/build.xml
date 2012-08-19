@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="shims" default="jar">
+  <property name="path.to.basedir" value="${basedir}/.."/>
+  <import file="../build-common.xml"/>
+
+  <property name="ivy.dir" location="${path.to.basedir}/ivy" />
+  <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
+
+  <property name="parent.build.dir" location="${path.to.basedir}/build/classes"/>
+  <property name="build.ivy.dir" location="${build.dir}/ivy" />
+  <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
+
+  <!-- sources and hadoop version for each shim -->
+  <property name="shims.include" value="20,23"/>
+  <property name="shims.0.20.sources" value="${basedir}/src/20/java" />
+  <property name="shims.0.23.sources" value="${basedir}/src/23/java" />
+  <path id="shims.0.20.hadoop.ivy.dir">
+    <fileset dir="${build.ivy.lib.dir}/hadoop20" includes="*.jar"/>
+    <fileset dir="${parent.build.dir}" includes="**/*"/>
+  </path>
+  <path id="shims.0.23.hadoop.ivy.dir">
+    <fileset dir="${build.ivy.lib.dir}/hadoop23" includes="*.jar"/>
+    <fileset dir="${parent.build.dir}" includes="**/*"/>
+  </path>
+
+  <target name="jar" depends="compile">
+    <!-- Classes are added to hcatalog jar -->
+  </target>
+
+  <target name="compile" depends="ivy-retrieve">
+    <echo message="Project: ${ant.project.name}"/>
+    <!-- TODO use for loop -->
+    <_javac srcDir="${shims.0.20.sources}"
+            destDir="${parent.build.dir}"
+            classPathRef="shims.0.20.hadoop.ivy.dir"/>
+    <_javac srcDir="${shims.0.23.sources}"
+            destDir="${parent.build.dir}"
+            classPathRef="shims.0.23.hadoop.ivy.dir"/>
+  </target>
+</project>

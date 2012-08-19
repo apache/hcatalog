@@ -66,7 +66,6 @@ public class SimpleRead extends Configured implements Tool {
           Text,IntWritable>.Context context) 
     throws IOException ,InterruptedException {
         name = (String) value.get(0);
-System.out.println(name);
         age = (Integer) value.get(1);
         gpa = (Double) value.get(2);
         context.write(new Text(name), new IntWritable(age));

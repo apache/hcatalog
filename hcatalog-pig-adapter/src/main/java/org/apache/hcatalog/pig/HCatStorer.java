@@ -154,18 +154,11 @@ public class HCatStorer extends HCatBaseStorer {
 
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
-    if( job.getConfiguration().get("mapred.job.tracker", "").equalsIgnoreCase("local") ) {
-      try {
-      //In local mode, mapreduce will not call OutputCommitter.cleanupJob.
-      //Calling it from here so that the partition publish happens.
-      //This call needs to be removed after MAPREDUCE-1447 is fixed.
-        getOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext(
-            job.getConfiguration(), new TaskAttemptID())).cleanupJob(job);
-      } catch (IOException e) {
-        throw new IOException("Failed to cleanup job",e);
-      } catch (InterruptedException e) {
-        throw new IOException("Failed to cleanup job",e);
-      }
-    }
+    HCatHadoopShims.Instance.get().commitJob(getOutputFormat(), schema, arg1, job);
+  }
+
+  @Override
+  public void cleanupOnFailure(String location, Job job) throws IOException {
+      HCatHadoopShims.Instance.get().abortJob(getOutputFormat(), job);
   }
 }

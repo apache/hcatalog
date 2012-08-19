@@ -21,7 +21,7 @@
 
     <path id="udf-classpath">
        <fileset file="../../../../../../build/hcatalog/*.jar" />
-       <fileset file="../../../../../../build/ivy/lib/hcatalog/*.jar" />
+       <fileset file="../../../../../../build/ivy/lib/default/*.jar" />
     </path>
 
     <target name="init">

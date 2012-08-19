@@ -14,7 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License. -->
 
-<ivy-module version="2.0">
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
   <info organisation="org.apache.hcatalog"
         module="${ant.project.name}"
         revision="${hcatalog.version}">
@@ -29,7 +29,7 @@
   </configurations>
 
   <dependencies>
-    <dependency org="org.apache.hcatalog" name="hcatalog-core" rev="${hcatalog.version}"/>
+   <dependency org="org.apache.hcatalog" name="hcatalog-core" rev="${hcatalog.version}"/>
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}"/>
     <dependency org="org.apache.commons" name="commons-exec" rev="${commons-exec.version}"/>
     <dependency org="org.eclipse.jetty.aggregate" name="jetty-all-server"
@@ -40,7 +40,6 @@
     <dependency org="org.apache.hcatalog" name="hcatalog-pig-adapter" rev="${hcatalog.version}"
       conf="test->default"/>
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
-    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop.jars.version}"
-      conf="test->default"/>
+    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop20.version}" conf="test->default"/>
   </dependencies>
 </ivy-module>

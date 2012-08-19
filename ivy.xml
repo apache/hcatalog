@@ -14,7 +14,7 @@
   See the License for the specific language governing permissions and
   limitations under the License. -->
 
-<ivy-module version="2.0">
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
   <info organisation="org.apache.hcatalog"
         module="${ant.project.name}"
         revision="${hcatalog.version}">
@@ -35,8 +35,15 @@
   </publications>
 
   <dependencies>
-    <dependency org="org.apache.pig" name="pig" rev="${pig.version}"/>
-    <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop.jars.version}" conf="default->*"/>
+    <!-- hadoop20 dependencies -->
+    <dependency org="org.apache.pig" name="pig" rev="${pig.version}" conf="default->*"/>
+    <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop20.version}" conf="default->*">
+      <exclude org="commons-daemon" module="commons-daemon"/>
+    </dependency>
+    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop20.version}" conf="test->*">
+      <exclude org="commons-daemon" module="commons-daemon"/>
+    </dependency>
+
     <dependency org="javax.jms" name="jms" rev="${jms.version}"/>
     <dependency org="org.apache.activemq" name="activemq-core" rev="${activemq.version}">
       <exclude org="org.springframework"/>
@@ -65,7 +72,6 @@
     <dependency org="junit" name="junit" rev="${junit.version}" conf="test->default"/>
     <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="test->default"/>
     <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="test->default"/>
-    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop.jars.version}" conf="test->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}" conf="test->*"/>
   </dependencies>
 </ivy-module>

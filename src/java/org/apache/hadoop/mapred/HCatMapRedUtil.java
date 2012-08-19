@@ -19,6 +19,8 @@
 package org.apache.hadoop.mapred;
 
 import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
 public class HCatMapRedUtil {
 
@@ -28,8 +30,12 @@ public class HCatMapRedUtil {
                                                              Reporter.NULL);
     }
 
+    public static org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf, org.apache.hadoop.mapreduce.TaskAttemptID id) {
+        return  HCatHadoopShims.Instance.get().createTaskAttemptContext(conf,id);
+    }
+
     public static TaskAttemptContext createTaskAttemptContext(JobConf conf, TaskAttemptID id, Progressable progressable) {
-        return  new TaskAttemptContext(conf,id,progressable);
+        return HCatHadoopShims.Instance.get ().createTaskAttemptContext(conf, id, (Reporter) progressable);
     }
 
     public static org.apache.hadoop.mapred.JobContext createJobContext(org.apache.hadoop.mapreduce.JobContext context) {
@@ -39,6 +45,6 @@ public class HCatMapRedUtil {
     }
 
     public static JobContext createJobContext(JobConf conf, org.apache.hadoop.mapreduce.JobID id, Progressable progressable) {
-        return  new JobContext(conf,id,progressable);
+        return HCatHadoopShims.Instance.get ().createJobContext(conf, id, (Reporter) progressable);
     }
 }

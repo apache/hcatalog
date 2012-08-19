@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-375 Make HCat work for Hadoop 0.23 (cdrome via toffer)
+
   HCAT-469 HiveClientCache may return a closed client (amalakar via toffer)
 
   HCAT-370 Create a HiveMetaStoreClient cache in hcatalog (amalakar via toffer) 

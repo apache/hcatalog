@@ -17,12 +17,21 @@
  */
 package org.apache.hcatalog.shims;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.shims.ShimLoader;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.util.Progressable;
+import org.apache.pig.ResourceSchema;
 
 /**
  * Shim layer to abstract differences between Hadoop 0.20 and 0.23
@@ -30,6 +39,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptID;
  * dependencies.
  **/
 public interface HCatHadoopShims {
+
+  enum PropertyName { CACHE_ARCHIVES, CACHE_FILES, CACHE_SYMLINK };
 
   public static abstract class Instance {
     static HCatHadoopShims instance = selectShim();
@@ -55,9 +66,27 @@ public interface HCatHadoopShims {
     }
   }
 
-  public TaskAttemptContext createTaskAttemptContext(Configuration conf,
-      TaskAttemptID taskId);
+  public TaskID createTaskID();
+
+  public TaskAttemptID createTaskAttemptID();
+
+  public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
+          TaskAttemptID taskId);
+
+  public org.apache.hadoop.mapred.TaskAttemptContext createTaskAttemptContext(JobConf conf,
+          org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable);
 
   public JobContext createJobContext(Configuration conf, JobID jobId);
 
+  public org.apache.hadoop.mapred.JobContext createJobContext(JobConf conf, JobID jobId, Progressable progressable);
+
+  public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
+          String arg1, Job job) throws IOException;
+
+  public void abortJob(OutputFormat outputFormat, Job job) throws IOException;
+
+  /* Referring to job tracker in 0.20 and resource manager in 0.23 */
+  public InetSocketAddress getResourceManagerAddress(Configuration conf);
+
+  public String getPropertyName(PropertyName name);
 }

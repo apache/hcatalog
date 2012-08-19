@@ -18,9 +18,6 @@
 
 package org.apache.hcatalog.data.transfer.state;
 
-import org.apache.hadoop.mapred.JobTracker;
-import org.apache.hadoop.mapred.TaskTracker;
-
 /**
  * If external system wants to communicate any state to slaves, they can do so
  * via this interface. One example of this in case of Map-Reduce is ids assigned

@@ -236,7 +236,9 @@ class ImportSequenceFile {
             fs.delete(workDir, true);
             //We only cleanup on success because failure might've been caused by existence of target directory
             if(localMode && success)
-                new ImporterOutputFormat().getOutputCommitter(new TaskAttemptContext(conf,new TaskAttemptID())).commitJob(job);
+            {
+                new ImporterOutputFormat().getOutputCommitter(org.apache.hadoop.mapred.HCatMapRedUtil.createTaskAttemptContext(conf,new TaskAttemptID())).commitJob(job);
+            }
         } catch (InterruptedException e) {
             LOG.error("ImportSequenceFile Failed", e);
         } catch (ClassNotFoundException e) {

@@ -32,7 +32,7 @@
     <property name="handler.version" value="0.1.0"/>
     <property name="handler.jar" value="${ant.project.name}-${handler.version}.jar"/>
     <property name="final.name" value="${ant.project.name}-${handler.version}" />
-    <property name="hcatalog.dir" value="${basedir}/../../" />
+    <property name="hcatalog.dir" value="${basedir}/../.." />
 
     <!-- hive properties -->
     <property name="hive.root" value="${hcatalog.dir}/hive/external"/>

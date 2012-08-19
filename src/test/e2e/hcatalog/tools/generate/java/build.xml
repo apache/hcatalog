@@ -17,7 +17,7 @@
 
     <property name="generator.jarfile" value="hive-gen.jar" />
     <property name="generator.build.dir" value="${basedir}/build" />
-    <property name="generator.src.dir" value="${basedir}/org/" />
+    <property name="generator.src.dir" value="${basedir}/org" />
 
 
     <path id="generator-classpath">
@@ -38,7 +38,7 @@
     <target name="generator-compile"
             depends="init, serde.jar.check, ql.jar.check, hadoop.jar.check">
         <echo>*** Compiling UDFs ***</echo>
-        <javac srcdir="${generator.src.dir}" destdir="${generator.build.dir}" debug="on">
+        <javac srcdir="${generator.src.dir}" destdir="${generator.build.dir}" debug="on" includeantruntime="false" includes="**/*.java">
             <classpath refid="generator-classpath" />
         </javac>
     </target>
