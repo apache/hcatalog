@@ -55,6 +55,7 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -235,7 +236,7 @@ public abstract class HCatMapReduceTest extends TestCase {
     }
   }
 
-  void runMRCreate(Map<String, String> partitionValues,
+  Job runMRCreate(Map<String, String> partitionValues,
         List<HCatFieldSchema> partitionColumns, List<HCatRecord> records,
         int writeCount, boolean assertWrite) throws Exception {
 
@@ -275,15 +276,20 @@ public abstract class HCatMapReduceTest extends TestCase {
           .findCounter("FILE_BYTES_READ").getValue() > 0);
     }
 
-    if (success) {
-      new FileOutputCommitterContainer(job,null).commitJob(job);
-    } else {
-      new FileOutputCommitterContainer(job,null).abortJob(job, JobStatus.State.FAILED);
+    if (!HcatTestUtils.isHadoop23()) {
+        // Local mode outputcommitter hook is not invoked in Hadoop 1.x
+        if (success) {
+            new FileOutputCommitterContainer(job,null).commitJob(job);
+        } else {
+            new FileOutputCommitterContainer(job,null).abortJob(job, JobStatus.State.FAILED);
+        }
     }
     if (assertWrite){
       // we assert only if we expected to assert with this call.
       Assert.assertEquals(writeCount, MapCreate.writeCount);
     }
+
+    return job;
   }
 
   List<HCatRecord> runMRRead(int readCount) throws Exception {

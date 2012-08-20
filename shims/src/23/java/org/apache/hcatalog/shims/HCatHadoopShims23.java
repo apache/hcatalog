@@ -17,27 +17,105 @@
  */
 package org.apache.hcatalog.shims;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobID;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.hadoop.util.Progressable;
+import org.apache.pig.ResourceSchema;
+
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.net.NetUtils;
 
 public class HCatHadoopShims23 implements HCatHadoopShims {
+    @Override
+    public TaskID createTaskID() {
+        return new TaskID("", 0, TaskType.MAP, 0);
+    }
 
-	@Override
-	public TaskAttemptContext createTaskAttemptContext(Configuration conf,
-			TaskAttemptID taskId) {
-        return new TaskAttemptContextImpl(conf, taskId);
-	}
+    @Override
+    public TaskAttemptID createTaskAttemptID() {
+        return new TaskAttemptID("", 0, TaskType.MAP, 0, 0);
+    }
 
-	@Override
-    public JobContext createJobContext(Configuration conf,
-            JobID jobId) {
-        JobContext newContext = new JobContextImpl(conf, jobId);
+    @Override
+    public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
+            org.apache.hadoop.mapreduce.TaskAttemptID taskId) {
+        return new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl(conf, taskId);
+    }
+
+    @Override
+    public org.apache.hadoop.mapred.TaskAttemptContext createTaskAttemptContext(org.apache.hadoop.mapred.JobConf conf,
+            org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable) {
+        org.apache.hadoop.mapred.TaskAttemptContext newContext = null;
+        try {
+            java.lang.reflect.Constructor construct = org.apache.hadoop.mapred.TaskAttemptContextImpl.class.getDeclaredConstructor(
+                    org.apache.hadoop.mapred.JobConf.class, org.apache.hadoop.mapred.TaskAttemptID.class,
+                    Reporter.class);
+            construct.setAccessible(true);
+            newContext = (org.apache.hadoop.mapred.TaskAttemptContext)construct.newInstance(conf, taskId, (Reporter)progressable);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         return newContext;
     }
 
+    @Override
+    public JobContext createJobContext(Configuration conf,
+            JobID jobId) {
+        JobContext ctxt = new JobContextImpl(conf, jobId);
+
+        return ctxt;
+    }
+
+    @Override
+    public org.apache.hadoop.mapred.JobContext createJobContext(org.apache.hadoop.mapred.JobConf conf,
+            org.apache.hadoop.mapreduce.JobID jobId, Progressable progressable) {
+        org.apache.hadoop.mapred.JobContext newContext = 
+            new org.apache.hadoop.mapred.JobContextImpl(conf, jobId, (org.apache.hadoop.mapred.Reporter)progressable);
+        return newContext;
+    }
+
+    @Override
+    public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
+            String arg1, Job job) throws IOException {
+        // Do nothing as this was fixed by MAPREDUCE-1447.
+    }
+
+    @Override
+    public void abortJob(OutputFormat outputFormat, Job job) throws IOException {
+        // Do nothing as this was fixed by MAPREDUCE-1447.
+    }
+
+    @Override
+    public InetSocketAddress getResourceManagerAddress(Configuration conf) {
+        String addr = conf.get("yarn.resourcemanager.address", "localhost:8032");
+
+        return NetUtils.createSocketAddr(addr);
+    }
+
+    @Override
+    public String getPropertyName(PropertyName name) {
+        switch (name) {
+            case CACHE_ARCHIVES:
+                return MRJobConfig.CACHE_ARCHIVES;
+            case CACHE_FILES:
+                return MRJobConfig.CACHE_FILES;
+            case CACHE_SYMLINK:
+                return MRJobConfig.CACHE_SYMLINK;
+        }
+
+        return "";
+    }
 }

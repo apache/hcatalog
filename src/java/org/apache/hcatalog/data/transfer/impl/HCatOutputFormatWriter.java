@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskID;
+import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.HCatRecord;
@@ -41,6 +42,7 @@ import org.apache.hcatalog.data.transfer.WriterContext;
 import org.apache.hcatalog.data.transfer.state.StateProvider;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
 /** This writer writes via {@link HCatOutputFormat}
  * 
@@ -65,7 +67,8 @@ public class HCatOutputFormatWriter extends HCatWriter {
 			HCatOutputFormat.setSchema(job, HCatOutputFormat.getTableSchema(job));
 			HCatOutputFormat outFormat = new HCatOutputFormat();
 			outFormat.checkOutputSpecs(job);
-			outFormat.getOutputCommitter(new TaskAttemptContext(job.getConfiguration(), new TaskAttemptID())).setupJob(job);
+            outFormat.getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext
+                    (job.getConfiguration(), HCatHadoopShims.Instance.get().createTaskAttemptID())).setupJob(job);
 		} catch (IOException e) {
 			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
 		} catch (InterruptedException e) {
@@ -82,7 +85,8 @@ public class HCatOutputFormatWriter extends HCatWriter {
 		int id = sp.getId();
 		setVarsInConf(id);
 		HCatOutputFormat outFormat = new HCatOutputFormat();
-		TaskAttemptContext cntxt = new TaskAttemptContext(conf, new TaskAttemptID(new TaskID(), id));
+        TaskAttemptContext cntxt = HCatHadoopShims.Instance.get().createTaskAttemptContext
+            (conf, new TaskAttemptID(HCatHadoopShims.Instance.get().createTaskID(), id));
 		OutputCommitter committer = null;
 		RecordWriter<WritableComparable<?>, HCatRecord> writer;
 		try {
@@ -121,8 +125,9 @@ public class HCatOutputFormatWriter extends HCatWriter {
 	@Override
 	public void commit(WriterContext context) throws HCatException {
 		try {
-			new HCatOutputFormat().getOutputCommitter(new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
-			.commitJob(new JobContext(context.getConf(), null));
+            new HCatOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext
+                (context.getConf(), HCatHadoopShims.Instance.get().createTaskAttemptID()))
+                .commitJob(HCatHadoopShims.Instance.get().createJobContext(context.getConf(), null));
 		} catch (IOException e) {
 			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
 		} catch (InterruptedException e) {
@@ -133,8 +138,9 @@ public class HCatOutputFormatWriter extends HCatWriter {
 	@Override
 	public void abort(WriterContext context) throws HCatException {
 		try {
-			new HCatOutputFormat().getOutputCommitter(new TaskAttemptContext(context.getConf(), new TaskAttemptID()))
-			.abortJob(new JobContext(context.getConf(), null),State.FAILED);
+            new HCatOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext
+                (context.getConf(), HCatHadoopShims.Instance.get().createTaskAttemptID()))
+                .abortJob(HCatHadoopShims.Instance.get().createJobContext(context.getConf(), null),State.FAILED);
 		} catch (IOException e) {
 			throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
 		} catch (InterruptedException e) {

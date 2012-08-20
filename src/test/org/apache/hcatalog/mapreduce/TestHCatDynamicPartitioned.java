@@ -25,6 +25,8 @@ import java.util.List;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -115,7 +117,10 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     IOException exc = null;
     try {
       generateWriteRecords(20,5,0);
-      runMRCreate(null, dataColumns, writeRecords, 20,false);
+      Job job = runMRCreate(null, dataColumns, writeRecords, 20,false);
+      if (HcatTestUtils.isHadoop23()) {
+          new FileOutputCommitterContainer(job,null).cleanupJob(job);
+      }
     } catch(IOException e) {
       exc = e;
     }

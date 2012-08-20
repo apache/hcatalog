@@ -47,11 +47,16 @@ import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hcatalog.har.HarOutputCommitterPostProcessor;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -468,7 +473,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                     LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>();
                     Warehouse.makeSpecFromName(fullPartSpec, st.getPath());
                     partitionsDiscoveredByPath.put(st.getPath().toString(),fullPartSpec);
-                    JobContext currContext = new JobContext(context.getConfiguration(),context.getJobID());
+                    JobContext currContext = HCatHadoopShims.Instance.get().createJobContext(context.getConfiguration(),context.getJobID());
                     HCatOutputFormat.configureOutputStorageHandler(context, jobInfo, fullPartSpec);
                     contextDiscoveredByPath.put(st.getPath().toString(),currContext);
                 }

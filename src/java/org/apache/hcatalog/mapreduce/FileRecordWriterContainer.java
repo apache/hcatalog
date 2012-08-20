@@ -147,6 +147,8 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 if (baseOutputCommitter.needsTaskCommit(currContext)){
                     baseOutputCommitter.commitTask(currContext);
                 }
+                org.apache.hadoop.mapred.JobContext currJobContext = HCatMapRedUtil.createJobContext(currContext);
+                baseOutputCommitter.commitJob(currJobContext);
             }
         } else {
             getBaseRecordWriter().close(reporter);
@@ -156,7 +158,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
     @Override
     public void write(WritableComparable<?> key, HCatRecord value) throws IOException,
             InterruptedException {
-
         org.apache.hadoop.mapred.RecordWriter localWriter;
         ObjectInspector localObjectInspector;
         SerDe localSerDe;

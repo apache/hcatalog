@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import junit.framework.TestCase;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -50,7 +52,7 @@ import org.apache.pig.PigServer;
 import org.apache.pig.data.Tuple;
 import org.junit.Test;
 
-public class TestSequenceFileReadWrite {
+public class TestSequenceFileReadWrite extends TestCase {
   private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
       "/build/test/data/" + TestSequenceFileReadWrite.class.getCanonicalName();
   private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
@@ -167,7 +169,9 @@ public class TestSequenceFileReadWrite {
         HCatOutputFormat.setSchema(job, getSchema());
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
-        new FileOutputCommitterContainer(job, null).commitJob(job);
+        if (!HcatTestUtils.isHadoop23()) {
+            new FileOutputCommitterContainer(job, null).commitJob(job);
+        }
         assertTrue(job.isSuccessful());
 
         server.setBatchOn();
@@ -204,6 +208,7 @@ public class TestSequenceFileReadWrite {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setInputFormatClass(TextInputFormat.class);
+        job.setNumReduceTasks(0);
         TextInputFormat.setInputPaths(job, INPUT_FILE_NAME);
 
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(
@@ -211,7 +216,9 @@ public class TestSequenceFileReadWrite {
         job.setOutputFormatClass(HCatOutputFormat.class);
         HCatOutputFormat.setSchema(job, getSchema());
         assertTrue(job.waitForCompletion(true));
-        new FileOutputCommitterContainer(job, null).commitJob(job);
+        if (!HcatTestUtils.isHadoop23()) {
+            new FileOutputCommitterContainer(job, null).commitJob(job);
+        }
         assertTrue(job.isSuccessful());
 
         server.setBatchOn();

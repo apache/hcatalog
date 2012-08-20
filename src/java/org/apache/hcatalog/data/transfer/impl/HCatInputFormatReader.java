@@ -39,6 +39,7 @@ import org.apache.hcatalog.data.transfer.ReaderContext;
 import org.apache.hcatalog.data.transfer.state.StateProvider;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
+import org.apache.hcatalog.shims.HCatHadoopShims;
 
 /** This reader reads via {@link HCatInputFormat}
  * 
@@ -65,7 +66,8 @@ public class HCatInputFormatReader extends HCatReader{
 			HCatInputFormat.setInput(job, jobInfo);
 			HCatInputFormat hcif = new HCatInputFormat();
 			ReaderContext cntxt = new ReaderContext();
-			cntxt.setInputSplits(hcif.getSplits(new JobContext(job.getConfiguration(), null)));
+            cntxt.setInputSplits(hcif.getSplits(
+                        HCatHadoopShims.Instance.get().createJobContext(job.getConfiguration(), null)));
 			cntxt.setConf(job.getConfiguration());
 			return cntxt;
 		} catch (IOException e) {
@@ -81,7 +83,7 @@ public class HCatInputFormatReader extends HCatReader{
 		HCatInputFormat inpFmt = new HCatInputFormat();
 		RecordReader<WritableComparable, HCatRecord> rr;
 		try {
-			TaskAttemptContext cntxt = new TaskAttemptContext(conf, new TaskAttemptID());
+            TaskAttemptContext cntxt = HCatHadoopShims.Instance.get().createTaskAttemptContext(conf, new TaskAttemptID());
 			rr = inpFmt.createRecordReader(split, cntxt);
 			rr.initialize(split, cntxt);
 		} catch (IOException e) {

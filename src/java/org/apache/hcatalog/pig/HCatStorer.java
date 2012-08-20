@@ -30,6 +30,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.TaskType;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -151,37 +153,11 @@ public class HCatStorer extends HCatBaseStorer {
 
   @Override
   public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
-    if( job.getConfiguration().get("mapred.job.tracker", "").equalsIgnoreCase("local") ) {
-      try {
-      //In local mode, mapreduce will not call OutputCommitter.cleanupJob.
-      //Calling it from here so that the partition publish happens.
-      //This call needs to be removed after MAPREDUCE-1447 is fixed.
-        getOutputFormat().getOutputCommitter(HCatHadoopShims.Instance.get().createTaskAttemptContext(
-        		job.getConfiguration(), new TaskAttemptID())).commitJob(job);
-      } catch (IOException e) {
-        throw new IOException("Failed to cleanup job",e);
-      } catch (InterruptedException e) {
-        throw new IOException("Failed to cleanup job",e);
-      }
-    }
+    HCatHadoopShims.Instance.get().commitJob(getOutputFormat(), schema, arg1, job);
   }
 
-   @Override
-    public void cleanupOnFailure(String location, Job job) throws IOException {
-        if (job.getConfiguration().get("mapred.job.tracker", "")
-                .equalsIgnoreCase("local")) {
-            try {
-                // This call needs to be removed after MAPREDUCE-1447 is fixed.
-                getOutputFormat().getOutputCommitter(
-                        HCatHadoopShims.Instance.get()
-                                .createTaskAttemptContext(
-                                        job.getConfiguration(),
-                                        new TaskAttemptID())).abortJob(job, State.FAILED);
-            } catch (IOException e) {
-                throw new IOException("Failed to abort job", e);
-            } catch (InterruptedException e) {
-                throw new IOException("Failed to abort job", e);
-            }
-        }
-    }
+  @Override
+  public void cleanupOnFailure(String location, Job job) throws IOException {
+      HCatHadoopShims.Instance.get().abortJob(getOutputFormat(), job);
+  }
 }

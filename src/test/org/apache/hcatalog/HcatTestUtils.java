@@ -98,4 +98,11 @@ public class HcatTestUtils {
     }
 
   }
+
+  public static boolean isHadoop23() {
+      String version = org.apache.hadoop.util.VersionInfo.getVersion();
+      if (version.matches("\\b0\\.23\\..+\\b"))
+          return true;
+      return false;
+  }
 }

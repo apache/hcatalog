@@ -19,6 +19,9 @@
 
 
 <project name="hcatalog" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+  <property name="hcatalog.home" value="${basedir}" />
+  <property file="${hcatalog.home}/build.properties" />
+
   <!--  
   ================================================================================
   Imports
@@ -43,20 +46,10 @@
   <property name="src.dir"  location="${basedir}/src/java"/>
   <property name="package.dir"  location="${basedir}/src/packages"/>
   <property name="docs.src" value="${basedir}/src/docs"/>
-  <property name="build.dir" value="${basedir}/build"/>
-  <property name="build.classes" value="${build.dir}/classes" />
-  <property name="build.docs" value="${build.dir}/docs" />
-  <property name="build.javadoc" value="${build.docs}/api" />
   <property name="dist.dir" value="${build.dir}/${final.name}" />
 
   <!-- javac properties -->
-  <property name="build.encoding" value="UTF8" />
   <property name="excludes" value=""/>
-  <property name="javac.debug" value="on" />
-  <property name="javac.optimize" value="on" />
-  <property name="javac.deprecation" value="off" />
-  <property name="javac.version" value="1.6" />
-  <property name="javac.args" value="" />
 
   <!-- test properties -->
   <property name="test.src.dir" value="${basedir}/src/test" />
@@ -91,24 +84,19 @@
   <!-- e2e test properties -->
   <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
 
-  <!-- ivy properteis set here -->
+  <!-- ivy properties set here -->
   <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
-  <property name="ivy.dir" location="ivy" />
-  <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
+  <loadproperties srcfile="${ivy.conf.dir}/libraries.properties"/>
   <property name="asfrepo" value="https://repository.apache.org"/>
   <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
-  <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
   <property name="asfstagingrepo" value="${asfrepo}/service/local/staging/deploy/maven2"/>
-  <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
-  <property name="ant_task.jar" location="${ivy.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
+  <property name="ivy.jar" location="${ivy.conf.dir}/ivy-${ivy.version}.jar"/>
+  <property name="ant_task.jar" location="${ivy.conf.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
   <property name="ant_task_repo_url"
     value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
   <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
   <property name="ivy.xml" location="${basedir}/ivy.xml"/>
-  <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
-  <property name="build.ivy.dir" location="${build.dir}/ivy" />
   <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
-  <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
   <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
   <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
 
@@ -270,17 +258,6 @@
       <compilerarg line="${javac.args}"/>
       <classpath refid="classpath" />
     </javac>
-    <!-- compile shim for selected hadoop version -->
-    <!--property name="debugclasspath" refid="classpath"/>
-    <echo message="classpath = ${debugclasspath}"/-->
-    <javac encoding="${build.encoding}" srcdir="${basedir}/shims/src/${shims.name}/java" excludes="${excludes}"
-        includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
-        optimize="${javac.optimize}" target="${javac.version}"
-        source="${javac.version}" deprecation="${javac.deprecation}"
-        includeantruntime="false">
-      <compilerarg line="${javac.args}"/>
-      <classpath refid="classpath" />
-    </javac>
   </target>
  
   <!-- Build the hcatalog client jar -->
@@ -301,12 +278,16 @@
   </jar>
   </target>
 
+  <target name="shims" depends="compile-src">
+    <ant antfile="shims/build.xml" target="jar" inheritAll="true" useNativeBasedir="true" />
+  </target>
+
   <!--
   ================================================================================
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="clientjar,server-extensions,jar-storage-handlers,jar-webhcat-java-client"/>
+  <target name="jar" depends="shims,clientjar,server-extensions,jar-storage-handlers,jar-webhcat-java-client"/>
 
   <!--
   ================================================================================

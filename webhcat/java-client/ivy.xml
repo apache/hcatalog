@@ -37,9 +37,9 @@
     </configurations>
     <dependencies>
         <dependency org="org.apache.hadoop" name="hadoop-core"
-          rev="${hadoop-core.version}" conf="common->master" />
+          rev="${hadoop20.version}" conf="common->master" />
         <dependency org="org.apache.hadoop" name="hadoop-test"
-          rev="${hadoop-test.version}" conf="common->master" />
+          rev="${hadoop20.version}" conf="common->master" />
         <dependency org="org.apache.hive" name="hive-metastore"
           rev="${hive.version}" conf="common->master"/>
         <dependency org="org.apache.hive" name="hive-common"

@@ -326,46 +326,16 @@ location '$location'
     }
 }
 
-our $hadoopCoreJar = undef;
-
-sub findHadoopJars()
+sub findAllJars()
 {
-    my $hadoopClassRoot=$ENV{'HADOOP_HOME'};
-    my $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
-    #if you do not find hadoop core jar under hadoop home change the path for rpm's
-    if (! $coreJar) {
-      $hadoopClassRoot="$hadoopClassRoot/share/hadoop";
-      $coreJar = `ls $hadoopClassRoot/hadoop-core-*.jar`;
+    my @files = <../../../../../build/ivy/lib/hcatalog/*.jar>;
+    my $classpath = "";
+    my $file = undef;
+    foreach $file (@files) {
+        $classpath = $classpath . ":" . $file;
     }
 
-    my $loggingJar = `ls $hadoopClassRoot/lib/commons-logging-*.jar | grep -v api`;
-    my $cfgJar = `ls $hadoopClassRoot/lib/commons-configuration-*.jar`;
-    my $langJar = `ls $hadoopClassRoot/lib/commons-lang-*.jar`;
-    my $cliJar = `ls $hadoopClassRoot/lib/commons-cli-*.jar`;
-
-    if (! $coreJar) {
-        die 'Please set $HADOOP_HOME\n';
-    }
-
-    chomp $coreJar;
-    chomp $loggingJar;
-    chomp $cfgJar;
-    chomp $langJar;
-    chomp $cliJar;
-    return ($coreJar, $loggingJar, $cfgJar, $langJar, $cliJar);
-}
-
-sub findHiveJars()
-{
-    if (not defined $ENV{'HIVE_HOME'}) {
-        die 'Please set $HIVE_HOME\n';
-    }
-
-    my $execJar = `ls $ENV{HIVE_HOME}/lib/hive-exec-*.jar`;
-    my $cliJar = `ls $ENV{HIVE_HOME}/lib/hive-cli-*.jar`;
-    chomp $execJar;
-    chomp $cliJar;
-    return ($execJar, $cliJar);
+    return $classpath;
 }
 
 sub getJavaCmd() 
@@ -430,13 +400,9 @@ sub getJavaCmd()
             }
         } elsif ($format eq "rc") {
             print MYSQL &getBulkCopyCmd($tableName, "\t", "$tableName.plain");
-            my ($hadoopCoreJar, $commonsLoggingJar, $commonsConfigJar,
-                $commonsLangJar, $commonsCliJar) = findHadoopJars();
-            my ($hiveExecJar, $hiveCliJar) = findHiveJars();
+            my $allJars = findAllJars();
             my @cmd = (getJavaCmd(), '-cp',
-                "../tools/generate/java/hive-gen.jar:$hadoopCoreJar:" .
-                "$commonsLoggingJar:$commonsConfigJar:$commonsLangJar:" .
-                "$hiveExecJar",
+                "../tools/generate/java/hive-gen.jar:$allJars",
                 'org.apache.hadoop.hive.tools.generate.RCFileGenerator',
                 'student', $numRows, "$tableName", "$tableName.plain");
             run(\@cmd) or die "Unable to run command [" . join(" ", @cmd) 
