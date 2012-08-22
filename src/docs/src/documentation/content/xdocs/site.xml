@@ -43,6 +43,7 @@ See http://forrest.apache.org/docs/linking.html for more info
     <index label="Installation From Tarball" href="install.html" />
     <index label="Load &amp; Store Interfaces" href="loadstore.html" />
     <index label="Input &amp; Output Interfaces" href="inputoutput.html" />
+    <index label="Reader &amp; Writer Interfaces" href="readerwriter.html" />
     <index label="Command Line Interface" href="cli.html" />
     <index label="Storage Formats" href="supportedformats.html" />
     <index label="Dynamic Partitioning" href="dynpartition.html" />
