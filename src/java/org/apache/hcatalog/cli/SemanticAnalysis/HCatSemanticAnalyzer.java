@@ -243,6 +243,19 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
     }
   }
 
+  private String extractTableName (String compoundName) {
+    /* 
+     * the table name can potentially be a dot-format one with column names
+     * specified as part of the table name. e.g. a.b.c where b is a column in
+     * a and c is a field of the object/column b etc. For authorization 
+     * purposes, we should use only the first part of the dotted name format.
+     *
+     */
+
+   String [] words = compoundName.split("\\.");
+   return words[0];
+  }
+
   @Override
   protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext cntxt, Hive hive, DDLWork work)
       throws HiveException {
@@ -344,14 +357,19 @@ public class HCatSemanticAnalyzer extends HCatSemanticAnalyzerBase {
       //other alter operations are already supported by Hive
     }
 
+    // we should be careful when authorizing table based on just the 
+    // table name. If columns have separate authorization domain, it 
+    // must be honored
     DescTableDesc descTable = work.getDescTblDesc();
     if (descTable != null) {
-      authorizeTable(cntxt.getHive(), descTable.getTableName(), Privilege.SELECT);
+      String tableName = extractTableName(descTable.getTableName());
+      authorizeTable(cntxt.getHive(), tableName, Privilege.SELECT);
     }
 
     ShowPartitionsDesc showParts = work.getShowPartsDesc();
     if (showParts != null) {
-      authorizeTable(cntxt.getHive(), showParts.getTabName(), Privilege.SELECT);
+      String tableName = extractTableName(showParts.getTabName());
+      authorizeTable(cntxt.getHive(), tableName, Privilege.SELECT);
     }
   }
 }

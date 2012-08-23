@@ -61,6 +61,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-471 Test HCat_ShowDes_1[1-3] fails (vikram.dixit via gates)
+
   HCAT-451 Partitions are created even when Jobs are aborted (avandana)
 
   HCAT-436 JSON SerDe column misnaming on CTAS (khorgath via gates)
