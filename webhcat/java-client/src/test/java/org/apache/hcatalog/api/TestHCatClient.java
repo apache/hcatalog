@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import junit.framework.TestCase;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
@@ -36,15 +34,12 @@ import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
-import org.apache.hcatalog.ExitException;
 import org.apache.hcatalog.NoExitSecurityManager;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -77,7 +72,7 @@ public class TestHCatClient {
     }
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void startMetaStoreServer() throws Exception {
 
         Thread t = new Thread(new RunMS());
         t.start();
@@ -352,6 +347,24 @@ public class TestHCatClient {
             HCatTable newTable = client.getTable(null, newName);
             assertTrue(newTable != null);
             assertTrue(newTable.getTableName().equalsIgnoreCase(newName));
+        } finally {
+            client.close();
+            assertTrue("The expected exception was never thrown.", isExceptionCaught);
+        }
+    }
+
+    @Test
+    public void testDropTableException() throws Exception {
+        HCatClient client = HCatClient.create(new Configuration(hcatConf));
+        String tableName = "tableToBeDropped";
+        boolean isExceptionCaught = false;
+        client.dropTable(null, tableName, true);
+        try {
+            client.dropTable(null, tableName, false);
+        } catch (Exception exp) {
+            isExceptionCaught = true;
+            assertTrue(exp instanceof HCatException);
+            LOG.info("Drop Table Exception: " + exp.getCause());
         } finally {
             client.close();
             assertTrue("The expected exception was never thrown.", isExceptionCaught);

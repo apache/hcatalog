@@ -61,6 +61,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-477 Drop table API in webhcat client does not respect the "ifExists" parameter.
+
   HCAT-471 Test HCat_ShowDes_1[1-3] fails (vikram.dixit via gates)
 
   HCAT-451 Partitions are created even when Jobs are aborted (avandana)
