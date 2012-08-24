@@ -238,7 +238,7 @@ public class HCatClientHMSImpl extends HCatClient {
     public void dropTable(String dbName, String tableName, boolean ifExists)
             throws HCatException, ConnectionFailureException {
         try {
-            hmsClient.dropTable(checkDB(dbName), tableName);
+            hmsClient.dropTable(checkDB(dbName), tableName,true, ifExists);
         } catch (NoSuchObjectException e) {
             if (!ifExists) {
                 throw new HCatException(

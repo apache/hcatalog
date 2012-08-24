@@ -352,4 +352,22 @@ public class TestHCatClient {
             assertTrue("The expected exception was never thrown.", isExceptionCaught);
         }
     }
+
+    @Test
+    public void testDropTableException() throws Exception {
+        HCatClient client = HCatClient.create(new Configuration(hcatConf));
+        String tableName = "tableToBeDropped";
+        boolean isExceptionCaught = false;
+        client.dropTable(null, tableName, true);
+        try {
+            client.dropTable(null, tableName, false);
+        } catch (Exception exp) {
+            isExceptionCaught = true;
+            assertTrue(exp instanceof HCatException);
+            LOG.info("Drop Table Exception: " + exp.getCause());
+        } finally {
+            client.close();
+            assertTrue("The expected exception was never thrown.", isExceptionCaught);
+        }
+    }
 }
