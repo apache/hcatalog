@@ -19,7 +19,7 @@
 
 <document>
   <header>
-    <title>Source Installation</title>
+    <title>Installation from Tarball</title>
   </header>
   <body>
 
@@ -28,11 +28,11 @@
 
     <p><strong>Prerequisites</strong></p>
     <ul>
-        <li>Machine to build the installation tar on</li>
-        <li>Machine on which the server can be installed - this should have
+        <li>machine to build the installation tar on</li>
+        <li>machine on which the server can be installed &#8212; this should have
         access to the Hadoop cluster in question, and be accessible from
         the machines you launch jobs from</li>
-        <li>an RDBMS - we recommend MySQL and provide instructions for it</li>
+        <li>an RDBMS &#8212; we recommend MySQL and provide instructions for it</li>
         <li>Hadoop cluster</li>
         <li>Unix user that the server will run as, and, if you are running your
           cluster in secure mode, an associated Kerberos service principal and keytabs.</li>
@@ -227,7 +227,7 @@
         </tr>
         <tr>
             <td>hive.metastore.sasl.enabled</td>
-            <td>Set to true if you are using kerberos security with your Hadoop
+            <td>Set to true if you are using Kerberos security with your Hadoop
             cluster, false otherwise.</td>
         </tr>
         <tr>
@@ -245,7 +245,7 @@
         </tr>
     </table>
 
-    <p>You can now procede to starting the server.</p>
+    <p>You can now proceed to starting the server.</p>
   </section>
 
   <section>
@@ -254,7 +254,8 @@
     <p>To start your server, HCatalog needs to know where Hive is installed.
     This is communicated by setting the environment variable <code>HIVE_HOME</code>
     to the location you installed Hive.  Start the HCatalog server by switching directories to
-    <em>root</em> and invoking <code>HIVE_HOME=</code><em>hive_home</em><code> sbin/hcat_server.sh start</code></p>
+    <em>root</em> and invoking
+    "<code>HIVE_HOME=</code><em>hive_home</em><code> sbin/hcat_server.sh start</code>".</p>
 
   </section>
 
@@ -273,7 +274,8 @@
     <title>Stopping the Server</title>
 
     <p>To stop the HCatalog server, change directories to the <em>root</em>
-    directory and invoking <code>HIVE_HOME=</code><em>hive_home</em><code> sbin/hcat_server.sh stop</code></p>
+    directory and invoke 
+    "<code>HIVE_HOME=</code><em>hive_home</em><code> sbin/hcat_server.sh stop</code>".</p>
 
   </section>
 

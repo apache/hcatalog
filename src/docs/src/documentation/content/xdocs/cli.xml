@@ -41,31 +41,62 @@ where <em>hive_home</em> is the directory where Hive has been installed and
 <title>HCatalog CLI</title>
 
 <p>The HCatalog CLI supports these command line options:</p>
-<ul>
-<li><strong>-g</strong>: Usage is -g mygroup .... This indicates to HCatalog that table that needs to be created must have group "mygroup" </li>
-<li><strong>-p</strong>: Usage is -p rwxr-xr-x .... This indicates to HCatalog that table that needs to be created must have permissions "rwxr-xr-x" </li>
-<li><strong>-f</strong>: Usage is -f myscript.hcatalog .... This indicates to HCatalog that myscript.hcatalog is a file which contains DDL commands it needs to execute. </li>
-<li><strong>-e</strong>: Usage is -e 'create table mytable(a int);' .... This indicates to HCatalog to treat the following string as a DDL command and execute it. </li>
-<li><strong>-D</strong>: Usage is -Dkey=value .... The key value pair is passed to HCatalog as a Java System Property.</li>
-</ul>
-<p></p>	
+
+<table>
+  <tr>
+    <th><p class="center">Option</p></th>
+    <th><p class="center">Usage</p></th>
+    <th><p class="center">Description</p></th>
+  </tr>
+  <tr>
+    <td><p class="cell"><strong>-g</strong></p></td>
+    <td><p class="cell"><code>hcat -g mygroup ...</code></p></td>
+    <td><p class="cell">Tells HCatalog that the table which needs to be created must have group "mygroup".</p></td>
+  </tr>
+  <tr>
+    <td><p class="cell"><strong>-p</strong></p></td>
+    <td><p class="cell"><code>hcat -p rwxr-xr-x ...</code></p></td>
+    <td><p class="cell">Tells HCatalog that the table which needs to be created must have permissions "rwxr-xr-x".</p></td>
+  </tr>
+  <tr>
+    <td><p class="cell"><strong>-f</strong></p></td>
+    <td><p class="cell"><code>hcat -f myscript.hcatalog ...</code></p></td>
+    <td><p class="cell">Tells HCatalog that myscript.hcatalog is a file containing DDL commands to execute.</p></td>
+  </tr>
+  <tr>
+    <td><p class="cell"><strong>-e</strong></p></td>
+    <td><p class="cell"><code>hcat -e 'create table mytable(a int);' ...</code></p></td>
+    <td><p class="cell">Tells HCatalog to treat the following string as a DDL command and execute it.</p></td>
+  </tr>
+  <tr>
+    <td><p class="cell"><strong>-D</strong></p></td>
+    <td><p class="cell"><code>hcat -D</code><em>key</em>=<em>value</em><code> ...</code></p></td>
+    <td><p class="cell">Passes the key-value pair to HCatalog as a Java System Property.</p></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td><p class="cell"><code>hcat</code></p></td>
+    <td><p class="cell">Prints a usage message.</p></td>
+  </tr>
+</table>
+
 <p>Note the following:</p>
 <ul>
 <li>The <strong>-g</strong> and <strong>-p</strong> options are not mandatory. 
 </li>
-<li>Only one of the <strong>-e</strong> or <strong>-f</strong> option can be provided, not both. 
+<li>Only one <strong>-e</strong> or <strong>-f</strong> option can be provided, not both. 
 </li>
 <li>The order of options is immaterial; you can specify the options in any order. 
 </li>
-<li>If no option is provided, then a usage message is printed: 
-<source>
-Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" ] [-p "&lt;perms&gt;"] [-D "&lt;name&gt;=&lt;value&gt;"]
-</source>
-</li>
 </ul>
+<p>If no option is provided, then a usage message is printed:</p>
+<source>
+Usage:  hcat  { -e "&lt;query&gt;" | -f &lt;filepath&gt; }  [-g &lt;group&gt;] [-p &lt;perms&gt;] [-D&lt;name&gt;=&lt;value&gt;]
+</source>
 <p></p>
-<p><strong>Assumptions</strong></p>
-<p>When using the HCatalog CLI, you cannot specify a permission string without read permissions for owner, such as -wxrwxr-x. If such a permission setting is desired, you can use the octal version instead, which in this case would be 375. Also, any other kind of permission string where the owner has read permissions (for example r-x------ or r--r--r--) will work fine.</p>
+
+<p><strong>Owner Permissions</strong></p>
+<p>When using the HCatalog CLI, you cannot specify a permission string without read permissions for owner, such as -wxrwxr-x, because the string begins with "-". If such a permission setting is desired, you can use the octal version instead, which in this case would be 375. Also, any other kind of permission string where the owner has read permissions (for example r-x------ or r--r--r--) will work fine.</p>
 	
 </section>
 
@@ -113,7 +144,7 @@ Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" 
 <!-- ==================================================================== -->
 <section>
 	<title>Create/Drop/Alter View</title>
-<p>Note: Pig and MapReduce coannot read from or write to views.</p>
+<p>Note: Pig and MapReduce cannot read from or write to views.</p>
 
 <p><strong>CREATE VIEW</strong></p>	
 <p>Supported. Behavior same as Hive.</p>		
@@ -162,7 +193,7 @@ Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" 
 	
 	<!-- ==================================================================== -->
 <section>
-	<title>"dfs" command and "set" command</title>
+	<title>"dfs" Command and "set" Command</title>
 	<p>Supported. Behavior same as Hive.</p>
 </section>
 <section>
@@ -172,15 +203,20 @@ Usage: hcat  { -e "&lt;query&gt;" | -f "&lt;filepath&gt;" } [-g "&lt;group&gt;" 
 
 </section>
 
+<section>
+    <title>CLI Errors</title>
 <p><strong>Authentication</strong></p>
 <table>
 	<tr>
 	<td><p>If a failure results in a message like "2010-11-03 16:17:28,225 WARN hive.metastore ... - Unable to connect metastore with URI thrift://..." in /tmp/&lt;username&gt;/hive.log, then make sure you have run "kinit &lt;username&gt;@FOO.COM" to get a Kerberos ticket and to be able to authenticate to the HCatalog server. </p></td>
 	</tr>
 </table>
+
+<p><strong>Error Log</strong></p>
+
 <p>If other errors occur while using the HCatalog CLI, more detailed messages are written to /tmp/&lt;username&gt;/hive.log. </p>
 
-
+</section>
 
   </body>
 </document>

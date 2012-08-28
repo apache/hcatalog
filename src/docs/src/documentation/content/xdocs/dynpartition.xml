@@ -49,7 +49,8 @@ store Z into 'processed' using HCatStorer();
 </source> 
 
 <p>The way dynamic partitioning works is that HCatalog locates partition columns in the data passed to it and uses the data in these columns to split the rows across multiple partitions. (The data passed to HCatalog <strong>must</strong> have a schema that matches the schema of the destination table and hence should always contain partition columns.)  It is important to note that partition columns can’t contain null values or the whole process will fail.</p>
-<p>It is also important to note that all partitions created during a single run are part of a transaction and if any part of the process fails none of the partitions will be added to the table.</p>
+<p>It is also important to note that all partitions created during a single run are part of one transaction;
+therefore if any part of the process fails, none of the partitions will be added to the table.</p>
 </section>
   
 <!-- ==================================================================== -->  
@@ -101,7 +102,7 @@ store A2 into 'mytable' using HCatStorer("a=1, b=2");
 <title>Usage from MapReduce</title>
 <p>As with Pig, the only change in dynamic partitioning that a MapReduce programmer sees is that they don't have to specify all the partition key/value combinations.</p>   
 
-<p>A current code example for writing out a specific partition for (a=1,b=1) would go something like this: </p>  
+<p>A current code example for writing out a specific partition for (a=1, b=1) would go something like this: </p> 
    
 <source>
 Map&lt;String, String&gt; partitionValues = new HashMap&lt;String, String&gt;();
