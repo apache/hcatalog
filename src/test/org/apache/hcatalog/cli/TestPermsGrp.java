@@ -25,7 +25,6 @@ import junit.framework.TestCase;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -42,7 +41,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.serde.Constants;
-import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hcatalog.ExitException;
 import org.apache.hcatalog.NoExitSecurityManager;
 import org.apache.hcatalog.cli.HCatCli;
@@ -55,25 +54,11 @@ import org.slf4j.LoggerFactory;
 public class TestPermsGrp extends TestCase {
 
   private boolean isServerRunning = false;
-  private static final String msPort = "20101";
+  private static final int msPort = 20101;
   private HiveConf hcatConf;
   private Warehouse clientWH;
-  private Thread t;
   private HiveMetaStoreClient msc;
   private static final Logger LOG = LoggerFactory.getLogger(TestPermsGrp.class);
-
-  private static class RunMS implements Runnable {
-
-    @Override
-    public void run() {
-      try {
-        HiveMetaStore.main(new String[]{"-v","-p",msPort});
-      } catch(Throwable t) {
-          LOG.error("Exiting. Got exception from metastore: ", t);
-      }
-    }
-
-  }
 
   @Override
   protected void tearDown() throws Exception {
@@ -87,9 +72,7 @@ public class TestPermsGrp extends TestCase {
       return;
     }
 
-    t = new Thread(new RunMS());
-    t.start();
-    Thread.sleep(40000);
+    MetaStoreUtils.startMetaStore(msPort, ShimLoader.getHadoopThriftAuthBridge());
 
     isServerRunning = true;
 

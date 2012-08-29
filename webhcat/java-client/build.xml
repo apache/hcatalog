@@ -47,6 +47,7 @@
   <property name="test.junit.output.format" value="plain" />
   <property name="test.output" value="no"/>
   <property name="test.warehouse.dir" value="/tmp/hcat_junit_warehouse"/>  
+  <property name="clover.jar" location="${clover.home}/lib/clover.jar"/>
  
   <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
   <property name="ivy.dir" location="${path.to.basedir}/ivy" />
@@ -160,6 +161,7 @@
                    <!-- <pathelement location="${test.build.classes}" />
                     <pathelement location="." /> i-->
                     <path refid="test.class.path"/>
+                    <pathelement path="${clover.jar}"/>
                 </classpath>
                 <formatter type="${test.junit.output.format}" />
                 <!-- If the user has not defined a particular test to run, run them all -->

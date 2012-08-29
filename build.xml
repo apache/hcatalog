@@ -393,7 +393,7 @@
     <taskdef resource="cloverlib.xml" classpath="${clover.jar}"/>
     <mkdir dir="${clover.db.dir}"/>
     <clover-setup initString="${clover.db.dir}/hcat_coverage.db">
-      <fileset dir="src" includes="**/*.java"/>
+      <fileset dir="src" includes="**/*.java" excludes="**/NoExitSecurityManager.java"/>
     </clover-setup>
   </target>
 

@@ -74,6 +74,8 @@
     <property name="test.output" value="no"/>
     <property name="hive.conf.dir" value="${hive.root}/conf"/>
 
+    <property name="clover.jar" location="${clover.home}/lib/clover.jar"/>
+
     <!-- ivy properteis set here -->
     <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
     <property name="ivy.dir" location="../../ivy" />
@@ -249,6 +251,7 @@
                     <pathelement location="${test.build.classes}" />
                     <pathelement location="." />
                     <path refid="test.classpath"/>
+                    <pathelement path="${clover.jar}"/>
                 </classpath>
                 <formatter type="${test.junit.output.format}" />
                 <!-- If the user has not defined a particular test to run, run them all -->
