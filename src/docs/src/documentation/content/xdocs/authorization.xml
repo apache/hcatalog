@@ -28,7 +28,7 @@
   <section>
   <title>Default Authorization Model of Hive</title>
   
-<p>The default authorization model of Hive supports a traditional RDBMS style of authorization based on users, groups and roles and granting them permissions to do operations on database or table. It is descibed in more detail in <a href="http://wiki.apache.org/hadoop/Hive/LanguageManual+Authorization">https://cwiki.apache.org/Hive/languagemanual-auth.html</a>.</p>
+<p>The default authorization model of Hive supports a traditional RDBMS style of authorization based on users, groups and roles and granting them permissions to do operations on database or table. It is described in more detail in <a href="http://wiki.apache.org/hadoop/Hive/LanguageManual+Authorization">Hive Authorization</a>.</p>
 
 <p>This RDBMS style of authorization is not very suitable for the typical use cases in Hadoop because of the following differences in implementation:</p>
 
@@ -65,6 +65,11 @@
 
 <p>Details of HDFS permissions are given here: 
 <a href="http://hadoop.apache.org/common/docs/r1.0.2/hdfs_permissions_guide.html">HDFS Permissions Guide</a>.</p>
+
+  <!-- ============================================= -->
+
+  <section>
+  <title>Minimum Permissions</title>
 
 <p>The following table shows the <strong>minimum</strong> permissions required for Hive operations under this authorization model:</p>
 <p>&nbsp;</p>
@@ -147,6 +152,18 @@
 
   </section>
 
+  <!-- ============================================= -->
+
+  <section>
+  <title>Unused DDL for Permissions</title>
+
+<p>DDL statements that manage permissions for Hive's default authorization model do not have any effect on permissions in the storage-based model.</p>
+
+<p>All GRANT and REVOKE statements for users, groups, and roles are ignored. See the <a href="authorization.html#Known+Issues">Known Issues</a> section below.</p>
+
+  </section>
+  </section>
+
   <!-- ==================================================================== -->
 
   <section>
@@ -201,6 +218,7 @@
   <li>The current implementation of Hive performs the authorization checks in the client. This means that malicious users can circumvent these checks.</li>
   <li>A different authorization provider (StorageDelegationAuthorizationProvider) needs to be used for working with HBase tables as well. But that is not well tested.</li>
   <li>Partition files and directories added by a Hive query don’t inherit permissions from the table. This means that even if you grant permissions for a group to access a table, new partitions will have read permissions only for the owner, if the default umask for the cluster is configured as such. See <a href="https://issues.apache.org/jira/browse/HIVE-3094">https://issues.apache.org/jira/browse/HIVE-3094</a>. A separate "<code>hdfs chmod</code>" command will be necessary to modify the permissions.</li>
+  <li>Although DDL statements for managing permissions have no effect in storage-based authorization, currently they do not return error messages. See <a href="https://issues.apache.org/jira/browse/HIVE-3010">https://issues.apache.org/jira/browse/HIVE-3010</a>.</li>
 </ol>
 
   </section>

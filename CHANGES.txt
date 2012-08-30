@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-485 Document that storage-based security ignores GRANT/REVOKE statements (lefty via khorgath)
+
   HCAT-442 Documentation needs update for using HCatalog with pig (lefty via gates)
 
   HCAT-482 Document -libjars from HDFS for HCat with MapReduce (lefty via gates)
