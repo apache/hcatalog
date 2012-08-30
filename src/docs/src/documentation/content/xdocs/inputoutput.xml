@@ -33,21 +33,27 @@
 <!-- ==================================================================== -->
 <section>
 	<title>HCatInputFormat</title>
-	<p>The HCatInputFormat is used with MapReduce jobs to read data from HCatalog managed tables.</p> 
+	<p>The HCatInputFormat is used with MapReduce jobs to read data from HCatalog-managed tables.</p> 
 	<p>HCatInputFormat exposes a Hadoop 0.20 MapReduce API for reading data as if it had been published to a table.</p> 
 	
 <section>
 	<title>API</title>
-	<p>The API exposed by HCatInputFormat is shown below.</p>
-	
-	<p>To use HCatInputFormat to read data, first instantiate as <code>InputJobInfo</code> with the necessary information from the table being read 
+	<p>The API exposed by HCatInputFormat is shown below. It includes:</p>
+	<ul>
+	    <li><code>setInput</code></li>
+	    <li><code>setOutputSchema</code></li>
+	    <li><code>getTableSchema</code></li>
+	</ul>
+
+	<p>To use HCatInputFormat to read data, first instantiate an <code>InputJobInfo</code>
+	with the necessary information from the table being read
 	and then call setInput with the <code>InputJobInfo</code>.</p>
 
 <p>You can use the <code>setOutputSchema</code> method to include a projection schema, to
-specify specific output fields. If a schema is not specified all the columns in the table
+specify the output fields. If a schema is not specified, all the columns in the table
 will be returned.</p>
 
-<p>You can use the <code>getTableSchema</code> methods to determine the table schema for a specified input table.</p>
+<p>You can use the <code>getTableSchema</code> method to determine the table schema for a specified input table.</p>
 	
 <source>
   /**
@@ -71,9 +77,9 @@ will be returned.</p>
     throws IOException;
 
   /**
-   * Gets the HCatTable schema for the table specified in the HCatInputFormat.setInput call
-   * on the specified job context. This information is available only after HCatInputFormat.setInput
-   * has been called for a JobContext.
+   * Get the HCatTable schema for the table specified in the HCatInputFormat.setInput
+   * call on the specified job context. This information is available only after
+   * HCatInputFormat.setInput has been called for a JobContext.
    * @param context the context
    * @return the table schema
    * @throws IOException if HCatInputFormat.setInput has not been called 
@@ -91,41 +97,50 @@ will be returned.</p>
 <!-- ==================================================================== -->      
 <section>
 	<title>HCatOutputFormat</title>
-	<p>HCatOutputFormat is used with MapReduce jobs to write data to HCatalog managed tables.</p> 
+	<p>HCatOutputFormat is used with MapReduce jobs to write data to HCatalog-managed tables.</p> 
 	
-	<p>HCatOutputFormat exposes a Hadoop 20 MapReduce API for writing data to a table.
+	<p>HCatOutputFormat exposes a Hadoop 0.20 MapReduce API for writing data to a table.
     When a MapReduce job uses HCatOutputFormat to write output, the default OutputFormat configured for the table is used and the new partition is published to the table after the job completes. </p>
 	
 <section>
 	<title>API</title>
-	<p>The API exposed by HCatOutputFormat is shown below.</p>
-	<p>The first call on the HCatOutputFormat must be <code>setOutput</code>; any other call will throw an exception saying the output format is not initialized. The schema for the data being written out is specified by the <code>setSchema </code> method. You must call this method, providing the schema of data you are writing. If your data has same schema as table schema, you can use HCatOutputFormat.getTableSchema() to get the table schema and then pass that along to setSchema(). </p>
+	<p>The API exposed by HCatOutputFormat is shown below. It includes:</p>
+	<ul>
+	    <li><code>setOutput</code></li>
+	    <li><code>setSchema</code></li>
+	    <li><code>getTableSchema</code></li>
+	</ul>
+
+	<p>The first call on the HCatOutputFormat must be <code>setOutput</code>; any other call will throw an exception saying the output format is not initialized. The schema for the data being written out is specified by the <code>setSchema</code> method. You must call this method, providing the schema of data you are writing. If your data has the same schema as the table schema, you can use HCatOutputFormat.getTableSchema() to get the table schema and then pass that along to setSchema().</p>
 	
 <source>
-    /**
-     * Set the info about the output to write for the Job. This queries the metadata server
-     * to find the StorageDriver to use for the table.  Throws error if partition is already published.
-     * @param job the job object
-     * @param outputJobInfo the table output info
-     * @throws IOException the exception in communicating with the metadata server
-     */
-    @SuppressWarnings("unchecked")
-    public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException;
-
-    /**
-     * Set the schema for the data being written out to the partition. The
-     * table schema is used by default for the partition if this is not called.
-     * @param job the job object
-     * @param schema the schema for the data
-     */
-    public static void setSchema(final Job job, final HCatSchema schema) throws IOException;
+  /**
+   * Set the information about the output to write for the job. This queries the metadata
+   * server to find the StorageHandler to use for the table. It throws an error if the
+   * partition is already published.
+   * @param job the job object
+   * @param outputJobInfo the table output information for the job
+   * @throws IOException the exception in communicating with the metadata server
+   */
+  @SuppressWarnings("unchecked")
+  public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException;
 
   /**
-   * Gets the table schema for the table specified in the HCatOutputFormat.setOutput call
+   * Set the schema for the data being written out to the partition. The
+   * table schema is used by default for the partition if this is not called.
+   * @param job the job object
+   * @param schema the schema for the data
+   * @throws IOException
+   */
+  public static void setSchema(final Job job, final HCatSchema schema) throws IOException;
+
+  /**
+   * Get the table schema for the table specified in the HCatOutputFormat.setOutput call
    * on the specified job context.
    * @param context the context
    * @return the table schema
-   * @throws IOException if HCatOutputFromat.setOutput has not been called for the passed context
+   * @throws IOException if HCatOutputFormat.setOutput has not been called
+   *                     for the passed context
    */
   public static HCatSchema getTableSchema(JobContext context) throws IOException;
 
@@ -135,19 +150,18 @@ will be returned.</p>
 </section>
 
 <section>
-<title>Examples</title>
-
-
-<p><strong>Running MapReduce with HCatalog</strong></p>
+    <title>Running MapReduce with HCatalog</title>
 <p>
-Your MapReduce program will need to know where the thrift server to connect to is.  The
-easiest way to do this is pass it as an argument to your Java program. You will need to
-pass the Hive and HCatalog jars MapReduce as well, via the -libjars argument.</p>
+Your MapReduce program needs to be told where the Thrift server is.
+The easiest way to do this is to pass the location as an argument to your Java program.
+You need to
+pass the Hive and HCatalog jars to MapReduce as well, via the -libjars argument.</p>
 
 
 <source>
 export HADOOP_HOME=&lt;path_to_hadoop_install&gt;
 export HCAT_HOME=&lt;path_to_hcat_install&gt;
+export HIVE_HOME=&lt;path_to_hive_install&gt;
 export LIB_JARS=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar,
 $HIVE_HOME/lib/hive-metastore-0.9.0.jar,
 $HIVE_HOME/lib/libthrift-0.7.0.jar,
@@ -169,6 +183,29 @@ $HADOOP_HOME/bin/hadoop --config $HADOOP_HOME/conf jar &lt;path_to_jar&gt;
 &lt;main_class&gt; -libjars $LIB_JARS &lt;program_arguments&gt;
 </source>
 
+<p>This works but Hadoop will ship libjars every time you run the MapReduce program, treating the files as different cache entries, which is not efficient and may deplete the Hadoop distributed cache.</p>
+<p>Instead, you can optimize to ship libjars using HDFS locations. By doing this, Hadoop will reuse the entries in the distributed cache.</p>
+
+<source>
+bin/hadoop fs -copyFromLocal $HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-metastore-0.9.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/libthrift-0.7.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-exec-0.9.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/libfb303-0.7.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/jdo2-api-2.3-ec.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/slf4j-api-1.6.1.jar /tmp
+
+export LIB_JARS=hdfs:///tmp/hcatalog-0.4.0.jar,
+hdfs:///tmp/hive-metastore-0.9.0.jar,
+hdfs:///tmp/libthrift-0.7.0.jar,
+hdfs:///tmp/hive-exec-0.9.0.jar,
+hdfs:///tmp/libfb303-0.7.0.jar,
+hdfs:///tmp/jdo2-api-2.3-ec.jar,
+hdfs:///tmp/slf4j-api-1.6.1.jar
+
+# (Other statements remain the same.)
+</source>
+
 <p><strong>Authentication</strong></p>
 <table>
 	<tr>
@@ -176,12 +213,13 @@ $HADOOP_HOME/bin/hadoop --config $HADOOP_HOME/conf jar &lt;path_to_jar&gt;
 	</tr>
 </table>
 
-<p><strong>Read Example</strong></p>
+<section>
+    <title>Read Example</title>
 
 <p>
 The following very simple MapReduce program reads data from one table which it assumes to have an integer in the
-second column, and counts how many different values it sees.   That is, is does the
-equivalent of <code>select col1, count(*) from $table group by col1;</code>.
+second column, and counts how many different values it sees.  That is, it does the
+equivalent of "<code>select col1, count(*) from $table group by col1;</code>".
 </p>
 
 <source>
@@ -281,22 +319,28 @@ In this example it is assumed the table is unpartitioned, so this Map is null.</
 </ol>
 
 <p>To scan just selected partitions of a table, a filter describing the desired partitions can be passed to
-InputJobInfo.create.  To scan a single filter, the filter string should look like: "datestamp=20120401" where
-datestamp is the partition column name and 20120401 is the value you want to read.</p>
+InputJobInfo.create.  To scan a single partition, the filter string should look like: "<code>ds=20120401</code>"
+where the datestamp "<code>ds</code>" is the partition column name and "<code>20120401</code>" is the value
+you want to read (year, month, and day).</p>
+</section>
 
-<p><strong>Filter Operators</strong></p>
+<section>
+    <title>Filter Operators</title>
 
-<p>A filter can contain the operators 'and', 'or', 'like', '()', '=', '&lt;&gt;' (not equal), '&lt;', '&gt;', '&lt;='
-and '&gt;='.  For example: </p>
+<p>A filter can contain the operators 'and', 'or', 'like', '()', '=', '&lt;&gt;' <em>(not equal)</em>, '&lt;', '&gt;', '&lt;=' and '&gt;='.</p>
+<p>For example: </p>
+
 <ul>
-<li><code>datestamp &gt; "20110924"</code></li>
-<li><code>datestamp &lt; "20110925</code></li>
-<li><code>datestamp &lt;= "20110925" and datestamp &gt;= "20110924"</code></li>
+<li><code>ds &gt; "20110924"</code></li>
+<li><code>ds &lt; "20110925"</code></li>
+<li><code>ds &lt;= "20110925" and ds &gt;= "20110924"</code></li>
 </ul>
+</section>
 
-<p><strong>Scan Filter</strong></p>
+<section>
+    <title>Scan Filter</title>
 
-<p>Assume for example you have a web_logs table that is partitioned by the column datestamp.  You could select one partition of the table by changing</p>
+<p>Assume for example you have a web_logs table that is partitioned by the column "<code>ds</code>".  You could select one partition of the table by changing</p>
 <source>
 HCatInputFormat.setInput(job, InputJobInfo.create(dbName, inputTableName, null));
 </source>
@@ -305,29 +349,32 @@ to
 </p>
 <source>
 HCatInputFormat.setInput(job,
-    InputJobInfo.create(dbName, inputTableName, "datestamp=\"20110924\""));
-  </source>
+                         InputJobInfo.create(dbName, inputTableName, "ds=\"20110924\""));
+</source>
 <p>
 This filter must reference only partition columns.  Values from other columns will cause the job to fail.</p>
+</section>
 
-<p><strong>Write Filter</strong></p>
+<section>
+    <title>Write Filter</title>
 <p>
 To write to a single partition you can change the above example to have a Map of key value pairs that describe all
 of the partition keys and values for that partition.  In our example web_logs table, there is only one partition
-column (datestamp), so our Map will have only one entry.  Change </p>
+column (<code>ds</code>), so our Map will have only one entry.  Change </p>
 <source>
 HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName, outputTableName, null));
 </source>
 <p>to </p>
 <source>
 Map partitions = new HashMap&lt;String, String&gt;(1);
-partitions.put("datestamp", "20110924");
+partitions.put("ds", "20110924");
 HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName, outputTableName, partitions));
 </source>
 
 <p>To write multiple partitions simultaneously you can leave the Map null, but all of the partitioning columns must be present in the data you are writing.
 </p>
 
+</section>
 </section>
 
 
