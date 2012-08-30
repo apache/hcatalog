@@ -89,6 +89,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-483 HCatBaseStorer.getHCatFSFromPigFS fails when Table schema is not provided (pengfeng via traviscrawford)
+
   HCAT-477 Drop table API in webhcat client does not respect the "ifExists" parameter.
 
   HCAT-471 Test HCat_ShowDes_1[1-3] fails (vikram.dixit via gates)

@@ -152,11 +152,15 @@ public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata 
       return new HCatFieldSchema(fSchema.alias, Type.STRING, null);
 
     case DataType.INTEGER:
-      if (!SUPPORTED_INTEGER_CONVERSIONS.contains(hcatFieldSchema.getType())) {
-        throw new FrontendException("Unsupported type: " + type + "  in Pig's schema",
+      if (hcatFieldSchema != null) {
+        if (!SUPPORTED_INTEGER_CONVERSIONS.contains(hcatFieldSchema.getType())) {
+          throw new FrontendException("Unsupported type: " + type + "  in Pig's schema",
             PigHCatUtil.PIG_EXCEPTION_CODE);
+        }
+        return new HCatFieldSchema(fSchema.alias, hcatFieldSchema.getType(), null);
+      } else {
+        return new HCatFieldSchema(fSchema.alias, Type.INT, null);
       }
-      return new HCatFieldSchema(fSchema.alias, hcatFieldSchema.getType(), null);
 
     case DataType.LONG:
       return new HCatFieldSchema(fSchema.alias, Type.BIGINT, null);
