@@ -27,34 +27,47 @@
   <section>
   <title>Set Up</title>
   
-<p>The HCatLoader and HCatStorer interfaces are used with Pig scripts to read and write data in HCatalog managed tables.</p>
+<p>The HCatLoader and HCatStorer interfaces are used with Pig scripts to read
+and write data in HCatalog-managed tables. No HCatalog-specific setup is
+required for these interfaces.</p>
 
 </section>
-  
-      
+
 <!-- ==================================================================== -->
-     <section>
-		<title>HCatLoader</title>
-		<p>HCatLoader is used with Pig scripts to read data from HCatalog managed tables.</p>  
-<section> 
-<title>Usage</title>
-<p>HCatLoader is accessed via a Pig load statement.</p>	
+<section>
+  <title>HCatLoader</title>
+
+<p>HCatLoader is used with Pig scripts to read data from HCatalog-managed tables.</p>
+
+<section>
+  <title>Usage</title>
+
+<p>HCatLoader is accessed via a Pig load statement.</p>
 <source>
 A = LOAD 'tablename' USING org.apache.hcatalog.pig.HCatLoader(); 
 </source>
 
-    <p><strong>Assumptions</strong></p>	  
-    <p>You must specify the table name in single quotes: LOAD 'tablename'. If you are using a non-default database you must specify your input as 'dbname.tablename'. If you are using Pig 0.9.2 or earlier, you must create your database and table prior to running the Pig script. Beginning with Pig 0.10 you can issue these create commands in Pig using the SQL command.</p>
-    <p>The Hive metastore lets you create tables without specifying a database; if you
-    created tables this way, then the database name is 'default' and is not required when
-    specifying the table for HCatLoader. </p>
-    <p>If the table is partitioned, you can indicate which partitions to scan by immediately following the load statement with a partition filter statement 
-    (see <strong>Examples</strong>). </p>
- </section> 
+<p><strong>Assumptions</strong></p>
+
+<p>You must specify the table name in single quotes: LOAD 'tablename'.
+If you are using a non-default database you must specify your input as
+'dbname.tablename'. If you are using Pig 0.9.2 or earlier, you must create
+your database and table prior to running the Pig script. Beginning with
+Pig 0.10 you can issue these create commands in Pig using the SQL command.</p>
+
+<p>The Hive metastore lets you create tables without specifying a database;
+if you created tables this way, then the database name is 'default' and is not
+required when specifying the table for HCatLoader.</p>
+
+<p>If the table is partitioned, you can indicate which partitions to scan by
+immediately following the load statement with a partition filter statement
+(see <strong>Load Examples</strong> below).</p>
+</section>
 
  <!-- ==================================================================== --> 
 <section> 
-<title>HCatalog Data Types</title>
+  <title>HCatalog Data Types</title>
+
 <p>Restrictions apply to the types of columns HCatLoader can read.</p>
 <p>HCatLoader  can read <strong>only</strong> the data types listed in the table. 
 The table shows how Pig will interpret the HCatalog data type.</p>
@@ -104,33 +117,84 @@ The table shows how Pig will interpret the HCatalog data type.</p>
 
  <!-- ==================================================================== --> 
 <section> 
-<title>Running Pig with HCatalog</title>
+  <title>Running Pig with HCatalog</title>
 
-<p>Pig does not automatically pick up HCatalog jars. You will need tell Pig where your HCatalog jars are.
-These include the Hive jars used by the HCatalog client. To do this, you must define the environment
-variable PIG_CLASSPATH with the appropriate jars. HCat can tell you the jars it needs. In order to do this it
-needs to know where Hadoop is installed. Also, you need to tell Pig the URI for your metastore, in the PIG_OPTS
-variable. In the case where you have installed Hadoop and HCatalog via tar, you can do:</p>
+<p>Pig does not automatically pick up HCatalog jars. To bring in the necessary
+jars, you can either use a flag in the <code>pig</code> command or set the
+environment variables PIG_CLASSPATH and PIG_OPTS as described below.</p>
+
+<p><strong>The -useHCatalog Flag</strong></p>
+<p>To bring in the appropriate jars for working with HCatalog,
+simply include the following flag:</p>
+
+<source>
+pig -useHCatalog
+</source>
+
+<p><strong>Jars and Configuration Files</strong></p>
+
+<p>For Pig commands that omit <code>-useHCatalog</code>, you need to
+tell Pig where to find your HCatalog jars and the Hive jars used by the
+HCatalog client. To do this, you must define the environment variable
+PIG_CLASSPATH with the appropriate jars.</p>
+
+<p>HCatalog can tell you the jars it needs. In order to do this
+it needs to know where Hadoop and Hive are installed.
+Also, you need to tell Pig the URI
+for your metastore, in the PIG_OPTS variable.</p>
+
+<p>In the case where you have installed Hadoop and HCatalog via tar,
+you can do this:</p>
 
 <source>
 export HADOOP_HOME=&lt;path_to_hadoop_install&gt;
+
 export HCAT_HOME=&lt;path_to_hcat_install&gt;
-export PIG_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:$HIVE_HOME/lib/hive-metastore-0.9.0.jar:
-$HIVE_HOME/lib/libthrift-0.7.0.jar:$HIVE_HOME/lib/hive-exec-0.9.0.jar:$HIVE_HOME/lib/libfb303-0.7.0.jar:
-$HIVE_HOME/lib/jdo2-api-2.3-ec.jar:$HIVE_HOME/conf:$HADOOP_HOME/conf:$HIVE_HOME/lib/slf4j-api-1.6.1.jar
+
+export HIVE_HOME=&lt;path_to_hive_install&gt;
+
+export PIG_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-*.jar:\
+$HIVE_HOME/lib/hive-metastore-*.jar:$HIVE_HOME/lib/libthrift-*.jar:\
+$HIVE_HOME/lib/hive-exec-*.jar:$HIVE_HOME/lib/libfb303-*.jar:\
+$HIVE_HOME/lib/jdo2-api-*-ec.jar:$HIVE_HOME/conf:$HADOOP_HOME/conf:\
+$HIVE_HOME/lib/slf4j-api-*.jar
 
 export PIG_OPTS=-Dhive.metastore.uris=thrift://&lt;hostname&gt;:&lt;port&gt;
-
-&lt;path_to_pig_install&gt;/bin/pig -Dpig.additional.jars=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:
-$HIVE_HOME/lib/hive-metastore-0.9.0.jar:$HIVE_HOME/lib/libthrift-0.7.0.jar:$HIVE_HOME/lib/hive-exec-0.9.0.jar:
-$HIVE_HOME/lib/libfb303-0.7.0.jar:$HIVE_HOME/lib/jdo2-api-2.3-ec.jar:$HIVE_HOME/lib/slf4j-api-1.6.1.jar &lt;script.pig&gt;
 </source>
+
+<p>Or you can pass the jars in your command line:</p>
+
+<source>
+&lt;path_to_pig_install&gt;/bin/pig -Dpig.additional.jars=\
+$HCAT_HOME/share/hcatalog/hcatalog-*.jar:\
+$HIVE_HOME/lib/hive-metastore-*.jar:$HIVE_HOME/lib/libthrift-*.jar:\
+$HIVE_HOME/lib/hive-exec-*.jar:$HIVE_HOME/lib/libfb303-*.jar:\
+$HIVE_HOME/lib/jdo2-api-*-ec.jar:$HIVE_HOME/lib/slf4j-api-*.jar  &lt;script.pig&gt;
+</source>
+
+<p>The version number found in each filepath will be substituted for <code>*</code>. For example, HCatalog release 0.4.0 uses these jars and conf files:</p>
+
+<ul>
+    <li><code>$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/hive-metastore-0.9.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/libthrift-0.7.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/hive-exec-0.9.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/libfb303-0.7.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/jdo2-api-2.3-ec.jar</code></li>
+    <li><code>$HIVE_HOME/conf</code></li>
+    <li><code>$HADOOP_HOME/conf</code></li>
+    <li><code>$HIVE_HOME/lib/slf4j-api-1.6.1.jar</code></li>
+</ul>
 
 <p><strong>Authentication</strong></p>
 <table>
-	<tr>
-	<td><p>If you are using a secure cluster and a failure results in a message like "2010-11-03 16:17:28,225 WARN hive.metastore ... - Unable to connect metastore with URI thrift://..." in /tmp/&lt;username&gt;/hive.log, then make sure you have run "kinit &lt;username&gt;@FOO.COM" to get a Kerberos ticket and to be able to authenticate to the HCatalog server. </p></td>
-	</tr>
+    <tr>
+    <td><p>If you are using a secure cluster and a failure results in a message
+like "2010-11-03 16:17:28,225 WARN hive.metastore ... - Unable to connect
+metastore with URI thrift://..." in /tmp/&lt;username&gt;/hive.log, then make
+sure you have run "kinit &lt;username&gt;@FOO.COM" to get a Kerberos ticket
+and to be able to authenticate to the HCatalog server.</p></td>
+    </tr>
 </table>
 
 
@@ -138,8 +202,7 @@ $HIVE_HOME/lib/libfb303-0.7.0.jar:$HIVE_HOME/lib/jdo2-api-2.3-ec.jar:$HIVE_HOME/
 
  <!-- ==================================================================== --> 
 <section> 
-<title>Load Examples</title>
-
+  <title>Load Examples</title>
 
 <p>This load statement will load all partitions of the specified table.</p>
 <source>
@@ -148,7 +211,11 @@ A = LOAD 'tablename' USING org.apache.hcatalog.pig.HCatLoader();
 ...
 ...
 </source>
-<p>If only some partitions of the specified table are needed, include a partition filter statement <strong>immediately</strong> following the load statement in the data flow. (In the script, however, a filter statement might not immediately follow its load statement.) The filter statement can include conditions on partition as well as non-partition columns.</p>
+<p>If only some partitions of the specified table are needed, include a
+partition filter statement <strong><em>immediately</em></strong> following the
+load statement in the data flow. (In the script, however, a filter statement
+might not immediately follow its load statement.) The filter statement can
+include conditions on partition as well as non-partition columns.</p>
 <source>
 /* myscript.pig */
 A = LOAD 'tablename' USING  org.apache.hcatalog.pig.HCatLoader();
@@ -169,11 +236,11 @@ a = load 'student_data' using org.apache.hcatalog.pig.HCatLoader();
 b = foreach a generate name, age;
 </source>
 
+<p>Notice that the schema is automatically provided to Pig; there's no need to
+declare name and age as fields, as if you were loading from a file.</p>
 
-<p>Notice that the schema is automatically provided to Pig, there's no need to declare name and age as fields, as if
-you were loading from a file.</p>
-
-<p>To scan a single partition of the table web_logs, for example, partitioned by the column datestamp:</p>
+<p>To scan a single partition of the table web_logs partitioned by the column
+datestamp, for example:</p>
 
 <source>
 a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
@@ -188,8 +255,9 @@ a = load 'web_logs' using org.apache.hcatalog.pig.HCatLoader();
 b = filter a by datestamp == '20110924' and user is not null;
 </source>
 
-<p>Pig will split the above filter, pushing the datestamp portion to HCatalog and retaining the <code>user is not null</code> part
-to apply itself. You can also give a more complex filter to retrieve a set of partitions.</p>
+<p>Pig will split the above filter, pushing the datestamp portion to HCatalog
+and retaining the '<code>user is not null</code>' part to apply itself.
+You can also give a more complex filter to retrieve a set of partitions.</p>
 
 <p><strong>Filter Operators</strong></p>
 
@@ -225,17 +293,17 @@ b = filter a by datestamp &lt;= '20110925' and datestamp &gt;= '20110924';
 </section> 
  
 </section> 
-	
-<!-- ==================================================================== -->	
-	<section>
-		<title>HCatStorer</title>
-		<p>HCatStorer is used with Pig scripts to write data to HCatalog managed tables.</p>	
 
-	
-	<section>
-	<title>Usage</title>
-	
-<p>HCatStorer is accessed via a Pig store statement.</p>	
+<!-- ==================================================================== -->
+<section>
+  <title>HCatStorer</title>
+
+<p>HCatStorer is used with Pig scripts to write data to HCatalog-managed tables.</p>
+
+<section>
+  <title>Usage</title>
+
+<p>HCatStorer is accessed via a Pig store statement.</p>
 
 <source>
 A = LOAD ...
@@ -244,8 +312,8 @@ B = FOREACH A ...
 ...
 my_processed_data = ...
 
-STORE my_processed_data INTO 'tablename' USING
- org.apache.hcatalog.pig.HCatStorer();
+STORE my_processed_data INTO 'tablename'
+   USING org.apache.hcatalog.pig.HCatStorer();
 </source>
 
 <p><strong>Assumptions</strong></p>
@@ -256,37 +324,38 @@ tables this way, then the database name is 'default' and you do not need to spec
 database name in the store statement. </p>
 <p>For the USING clause, you can have a string argument that represents key/value pairs
 for partition. This is a mandatory argument when you are writing to a partitioned table
-and the partition column is not in the output column.  The values for partition keys
-should NOT be quoted.</p>
+and the partition column is not in the output column. The values for partition keys
+should <em>NOT</em> be quoted.</p>
 <p>If partition columns are present in data they need not be specified as a STORE argument. Instead HCatalog will use these values to place records in the appropriate partition(s). It is valid to specify some partition keys in the STORE statement and have other partition keys in the data.</p>
 <p></p>
 <p></p>
 
 </section> 
 <section> 
-<title>Store Examples</title>
-<p>You can write to non-partitioned table simply by using HCatStorer.  The contents of the table will be overwritten:</p>
+  <title>Store Examples</title>
 
-<source>store z into 'student_data' using org.apache.hcatalog.pig.HCatStorer();</source>
+<p>You can write to a non-partitioned table simply by using HCatStorer.  The contents of the table will be overwritten:</p>
 
-<p>To add one new partition to a partitioned table, specify the partition value in store function.  Pay careful
+<source>store z into 'web_data' using org.apache.hcatalog.pig.HCatStorer();</source>
+
+<p>To add one new partition to a partitioned table, specify the partition value in the store function. Pay careful
 attention to the quoting, as the whole string must be single quoted and separated with an equals sign:</p>
 
 <source>store z into 'web_data' using org.apache.hcatalog.pig.HCatStorer('datestamp=20110924');</source>
 
-<p>To write into multiple partitions at one, make sure that the partition column is present in your data, then call
+<p>To write into multiple partitions at once, make sure that the partition column is present in your data, then call
 HCatStorer with no argument:</p>
 
 <source>store z into 'web_data' using org.apache.hcatalog.pig.HCatStorer(); 
   -- datestamp must be a field in the relation z</source>
 
-
-	</section>
+</section>
 
  <!-- ==================================================================== --> 
-    <section>
-	<title>HCatalog Data Types</title>
-	<p>Restrictions apply to the types of columns HCatStorer can write.</p>
+<section>
+  <title>HCatalog Data Types</title>
+
+<p>Restrictions apply to the types of columns HCatStorer can write.</p>
 <p>HCatStorer can write <strong>only</strong> the data types listed in the table. 
 The table shows how Pig will interpret the HCatalog data type.</p>
    <table>
@@ -331,9 +400,9 @@ The table shows how Pig will interpret the HCatalog data type.</p>
             </td>
     </tr>
  </table>
-	</section>
-	
-		</section>
-	
+</section>
+
+</section>
+
   </body>
 </document>

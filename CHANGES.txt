@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-442 Documentation needs update for using HCatalog with pig (lefty via gates)
+
   HCAT-482 Document -libjars from HDFS for HCat with MapReduce (lefty via gates)
 
   HCAT-481 Fix CLI usage syntax in doc & revise HCat docset (lefty via khorgath)
