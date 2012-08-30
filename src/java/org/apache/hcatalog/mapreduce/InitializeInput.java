@@ -30,7 +30,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
@@ -94,12 +94,12 @@ public class InitializeInput {
         hiveConf = new HiveConf(HCatInputFormat.class);
       }
       client = HCatUtil.getHiveClient(hiveConf);
-      Table table = client.getTable(inputJobInfo.getDatabaseName(),
-                                    inputJobInfo.getTableName());
+      Table table = HCatUtil.getTable(client, inputJobInfo.getDatabaseName(),
+          inputJobInfo.getTableName());
 
       List<PartInfo> partInfoList = new ArrayList<PartInfo>();
 
-      inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
+      inputJobInfo.setTableInfo(HCatTableInfo.valueOf(table.getTTable()));
       if( table.getPartitionKeys().size() != 0 ) {
         //Partitioned table
         List<Partition> parts = client.listPartitionsByFilter(inputJobInfo.getDatabaseName(),
@@ -115,18 +115,19 @@ public class InitializeInput {
 
         // populate partition info
         for (Partition ptn : parts){
-          PartInfo partInfo = extractPartInfo(ptn.getSd(),ptn.getParameters(),
-                                              job.getConfiguration(),
-                                              inputJobInfo);
+          HCatSchema schema = HCatUtil.extractSchema(
+              new org.apache.hadoop.hive.ql.metadata.Partition(table, ptn));
+          PartInfo partInfo = extractPartInfo(schema, ptn.getSd(),
+              ptn.getParameters(), job.getConfiguration(), inputJobInfo);
           partInfo.setPartitionValues(createPtnKeyValueMap(table, ptn));
           partInfoList.add(partInfo);
         }
 
       }else{
         //Non partitioned table
-        PartInfo partInfo = extractPartInfo(table.getSd(),table.getParameters(),
-                                            job.getConfiguration(),
-                                            inputJobInfo);
+        HCatSchema schema = HCatUtil.extractSchema(table);
+        PartInfo partInfo = extractPartInfo(schema, table.getTTable().getSd(),
+            table.getParameters(), job.getConfiguration(), inputJobInfo);
         partInfo.setPartitionValues(new HashMap<String,String>());
         partInfoList.add(partInfo);
       }
@@ -160,29 +161,25 @@ public class InitializeInput {
     return ptnKeyValues;
   }
 
-  static PartInfo extractPartInfo(StorageDescriptor sd,
+  private static PartInfo extractPartInfo(HCatSchema schema, StorageDescriptor sd,
       Map<String,String> parameters, Configuration conf,
       InputJobInfo inputJobInfo) throws IOException{
-    HCatSchema schema = HCatUtil.extractSchemaFromStorageDescriptor(sd);
+
     StorerInfo storerInfo = InternalUtil.extractStorerInfo(sd,parameters);
 
     Properties hcatProperties = new Properties();
-    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf,
-                                                                   storerInfo);
+    HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf, storerInfo);
 
     // copy the properties from storageHandler to jobProperties
-    Map<String, String>jobProperties = HCatUtil.getInputJobProperties(
-                                                            storageHandler,
-                                                            inputJobInfo);
+    Map<String, String>jobProperties = HCatUtil.getInputJobProperties(storageHandler, inputJobInfo);
 
     for (String key : parameters.keySet()){
         hcatProperties.put(key, parameters.get(key));
     }
     // FIXME
     // Bloating partinfo with inputJobInfo is not good
-    return new PartInfo(schema, storageHandler,
-                        sd.getLocation(), hcatProperties,
-                        jobProperties, inputJobInfo.getTableInfo());
+    return new PartInfo(schema, storageHandler, sd.getLocation(),
+        hcatProperties, jobProperties, inputJobInfo.getTableInfo());
   }
 
 }

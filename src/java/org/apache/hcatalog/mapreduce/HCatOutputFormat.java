@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Index;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -73,7 +73,8 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
         Configuration conf = job.getConfiguration();
         HiveConf hiveConf = HCatUtil.getHiveConf(conf);
         client = HCatUtil.getHiveClient(hiveConf);
-        Table table = client.getTable(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName());
+        Table table = HCatUtil.getTable(client, outputJobInfo.getDatabaseName(),
+            outputJobInfo.getTableName());
 
         List<String> indexList = client.listIndexNames(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), Short.MAX_VALUE);
 
@@ -83,7 +84,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
                 throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a table with an automatic index from Pig/Mapreduce is not supported");
             }
         }
-        StorageDescriptor sd = table.getSd();
+        StorageDescriptor sd = table.getTTable().getSd();
 
         if (sd.isCompressed()) {
             throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a compressed partition from Pig/Mapreduce is not supported");
@@ -97,7 +98,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with sorted column definition from Pig/Mapreduce is not supported");
         }
 
-        if (table.getPartitionKeysSize() == 0 ){
+        if (table.getTTable().getPartitionKeysSize() == 0 ){
           if ((outputJobInfo.getPartitionValues() != null) && (!outputJobInfo.getPartitionValues().isEmpty())){
             // attempt made to save partition values in non-partitioned table - throw error.
             throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,
@@ -117,7 +118,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           }
 
           if ((outputJobInfo.getPartitionValues() == null)
-              || (outputJobInfo.getPartitionValues().size() < table.getPartitionKeysSize())){
+              || (outputJobInfo.getPartitionValues().size() < table.getTTable().getPartitionKeysSize())){
             // dynamic partition usecase - partition values were null, or not all were specified
             // need to figure out which keys are not specified.
             List<String> dynamicPartitioningKeys = new ArrayList<String>();
@@ -128,7 +129,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
               }
             }
 
-            if (valueMap.size() + dynamicPartitioningKeys.size() != table.getPartitionKeysSize()){
+            if (valueMap.size() + dynamicPartitioningKeys.size() != table.getTTable().getPartitionKeysSize()){
               // If this isn't equal, then bogus key values have been inserted, error out.
               throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,"Invalid partition keys specified");
             }
@@ -148,9 +149,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
           outputJobInfo.setPartitionValues(valueMap);
         }
 
-        StorageDescriptor tblSD = table.getSd();
-        HCatSchema tableSchema = HCatUtil.extractSchemaFromStorageDescriptor(tblSD);
-        StorerInfo storerInfo = InternalUtil.extractStorerInfo(tblSD,table.getParameters());
+        HCatSchema tableSchema = HCatUtil.extractSchema(table);
+        StorerInfo storerInfo =
+            InternalUtil.extractStorerInfo(table.getTTable().getSd(), table.getParameters());
 
         List<String> partitionCols = new ArrayList<String>();
         for(FieldSchema schema : table.getPartitionKeys()) {
@@ -160,7 +161,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
        HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(job.getConfiguration(), storerInfo);
 
         //Serialize the output info into the configuration
-        outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table));
+        outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table.getTTable()));
         outputJobInfo.setOutputSchema(tableSchema);
         harRequested = getHarRequested(hiveConf);
         outputJobInfo.setHarRequested(harRequested);
@@ -169,7 +170,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
 
         HCatUtil.configureOutputStorageHandler(storageHandler,job,outputJobInfo);
 
-        Path tblPath = new Path(table.getSd().getLocation());
+        Path tblPath = new Path(table.getTTable().getSd().getLocation());
 
         /*  Set the umask in conf such that files/dirs get created with table-dir
          * permissions. Following three assumptions are made:

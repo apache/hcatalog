@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -141,7 +141,7 @@ public class PigHCatUtil {
     HiveMetaStoreClient client = null;
     try {
       client = getHiveMetaClient(hcatServerUri, hcatServerPrincipal, PigHCatUtil.class);
-      table = client.getTable(dbName, tableName);
+      table = HCatUtil.getTable(client, dbName, tableName);
     } catch (NoSuchObjectException nsoe){
       throw new PigException("Table not found : " + nsoe.getMessage(), PIG_EXCEPTION_CODE); // prettier error messages to frontend
     } catch (Exception e) {

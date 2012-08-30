@@ -32,7 +32,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
@@ -120,9 +120,11 @@ public class TestHCatUtil {
         "location", "org.apache.hadoop.mapred.TextInputFormat",
         "org.apache.hadoop.mapred.TextOutputFormat", false, -1, new SerDeInfo(),
         new ArrayList<String>(), new ArrayList<Order>(), new HashMap<String, String>());
-    Table table = new Table("test_tblname", "test_dbname", "test_owner", 0, 0, 0,
-        sd, new ArrayList<FieldSchema>(), new HashMap<String, String>(),
-        "viewOriginalText", "viewExpandedText", TableType.EXTERNAL_TABLE.name());
+    org.apache.hadoop.hive.metastore.api.Table apiTable =
+        new org.apache.hadoop.hive.metastore.api.Table("test_tblname", "test_dbname", "test_owner",
+            0, 0, 0, sd, new ArrayList<FieldSchema>(), new HashMap<String, String>(),
+            "viewOriginalText", "viewExpandedText", TableType.EXTERNAL_TABLE.name());
+    Table table = new Table(apiTable);
 
     List<HCatFieldSchema> expectedHCatSchema =
         Lists.newArrayList(new HCatFieldSchema("username", HCatFieldSchema.Type.STRING, null));
@@ -133,7 +135,7 @@ public class TestHCatUtil {
     // Add a partition key & ensure its reflected in the schema.
     List<FieldSchema> partitionKeys =
         Lists.newArrayList(new FieldSchema("dt", Constants.STRING_TYPE_NAME, null));
-    table.setPartitionKeys(partitionKeys);
+    table.getTTable().setPartitionKeys(partitionKeys);
     expectedHCatSchema.add(new HCatFieldSchema("dt", HCatFieldSchema.Type.STRING, null));
     Assert.assertEquals(new HCatSchema(expectedHCatSchema),
         HCatUtil.getTableSchemaWithPtnCols(table));
@@ -163,9 +165,11 @@ public class TestHCatUtil {
         false, -1, serDeInfo, new ArrayList<String>(), new ArrayList<Order>(),
         new HashMap<String, String>());
 
-    Table table = new Table("test_tblname", "test_dbname", "test_owner", 0, 0, 0,
-        sd, new ArrayList<FieldSchema>(), new HashMap<String, String>(),
-        "viewOriginalText", "viewExpandedText", TableType.EXTERNAL_TABLE.name());
+    org.apache.hadoop.hive.metastore.api.Table apiTable =
+        new org.apache.hadoop.hive.metastore.api.Table("test_tblname", "test_dbname", "test_owner",
+            0, 0, 0, sd, new ArrayList<FieldSchema>(), new HashMap<String, String>(),
+            "viewOriginalText", "viewExpandedText", TableType.EXTERNAL_TABLE.name());
+    Table table = new Table(apiTable);
 
     List<HCatFieldSchema> expectedHCatSchema = Lists.newArrayList(
         new HCatFieldSchema("myint", HCatFieldSchema.Type.INT, null),

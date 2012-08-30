@@ -39,9 +39,11 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
-import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat;
+import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
@@ -159,15 +161,12 @@ public class HCatUtil {
         }
     }
 
-    public static HCatSchema extractSchemaFromStorageDescriptor(
-            StorageDescriptor sd) throws HCatException {
-        if (sd == null) {
-            throw new HCatException(
-                    "Cannot construct partition info from an empty storage descriptor.");
-        }
-        HCatSchema schema = new HCatSchema(HCatUtil.getHCatFieldSchemaList(sd
-                .getCols()));
-        return schema;
+    public static HCatSchema extractSchema(Table table) throws HCatException {
+        return new HCatSchema(HCatUtil.getHCatFieldSchemaList(table.getCols()));
+    }
+
+    public static HCatSchema extractSchema(Partition partition) throws HCatException {
+        return new HCatSchema(HCatUtil.getHCatFieldSchemaList(partition.getCols()));
     }
 
     public static List<FieldSchema> getFieldSchemaList(
@@ -183,14 +182,13 @@ public class HCatUtil {
         }
     }
 
-    public static Table getTable(HiveMetaStoreClient client, String dbName,
-            String tableName) throws Exception {
-        return client.getTable(dbName, tableName);
+    public static Table getTable(HiveMetaStoreClient client, String dbName, String tableName)
+        throws NoSuchObjectException, TException, MetaException {
+      return new Table(client.getTable(dbName, tableName));
     }
 
     public static HCatSchema getTableSchemaWithPtnCols(Table table) throws IOException {
-        HCatSchema tableSchema = new HCatSchema(HCatUtil.getHCatFieldSchemaList(
-                new org.apache.hadoop.hive.ql.metadata.Table(table).getCols()));
+        HCatSchema tableSchema = new HCatSchema(HCatUtil.getHCatFieldSchemaList(table.getCols()));
 
         if (table.getPartitionKeys().size() != 0) {
 
@@ -240,7 +238,7 @@ public class HCatUtil {
             partitionKeyMap.put(field.getName().toLowerCase(), field);
         }
 
-        List<FieldSchema> tableCols = table.getSd().getCols();
+        List<FieldSchema> tableCols = table.getCols();
         List<FieldSchema> newFields = new ArrayList<FieldSchema>();
 
         for (int i = 0; i < partitionSchema.getFields().size(); i++) {

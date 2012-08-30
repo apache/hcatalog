@@ -27,7 +27,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
-import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
@@ -120,7 +120,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
             handleDuplicatePublish(context,
                     jobInfo,
                     client,
-                    jobInfo.getTableInfo().getTable());
+                    new Table(jobInfo.getTableInfo().getTable()));
         } catch (MetaException e) {
             throw new IOException(e);
         } catch (TException e) {
@@ -190,7 +190,7 @@ class FileOutputFormatContainer extends OutputFormatContainer {
                     table, outputInfo.getPartitionValues());
             // non-partitioned table
 
-            Path tablePath = new Path(table.getSd().getLocation());
+            Path tablePath = new Path(table.getTTable().getSd().getLocation());
             FileSystem fs = tablePath.getFileSystem(context.getConfiguration());
 
             if ( fs.exists(tablePath) ) {
