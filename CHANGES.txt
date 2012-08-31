@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-487 HCatalog should tolerate a user-defined amount of bad records (traviscrawford)
+
   HCAT-488 TestHCatStorer should extend HCatBaseTest so it uses junit4 and runs inside an IDE (traviscrawford)
 
   HCAT-486 HCatalog should use checkstyle to enforce coding style (traviscrawford)

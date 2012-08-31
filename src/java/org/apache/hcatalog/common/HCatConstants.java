@@ -141,4 +141,22 @@ public final class HCatConstants {
   public static final String HCAT_DATA_TINY_SMALL_INT_PROMOTION =
       "hcat.data.tiny.small.int.promotion";
   public static final boolean HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT = false;
+
+  /**
+   * {@value} (default: {@value #HCAT_INPUT_BAD_RECORD_THRESHOLD_DEFAULT}).
+   * Threshold for the ratio of bad records that will be silently skipped without causing a task
+   * failure. This is useful when processing large data sets with corrupt records, when its
+   * acceptable to skip some bad records.
+   */
+  public static final String HCAT_INPUT_BAD_RECORD_THRESHOLD_KEY = "hcat.input.bad.record.threshold";
+  public static final float HCAT_INPUT_BAD_RECORD_THRESHOLD_DEFAULT = 0.0001f;
+
+  /**
+   * {@value} (default: {@value #HCAT_INPUT_BAD_RECORD_MIN_DEFAULT}).
+   * Number of bad records that will be accepted before applying
+   * {@value #HCAT_INPUT_BAD_RECORD_THRESHOLD_KEY}. This is necessary to prevent an initial bad
+   * record from causing a task failure.
+   */
+  public static final String HCAT_INPUT_BAD_RECORD_MIN_KEY = "hcat.input.bad.record.min";
+  public static final int HCAT_INPUT_BAD_RECORD_MIN_DEFAULT = 2;
 }
