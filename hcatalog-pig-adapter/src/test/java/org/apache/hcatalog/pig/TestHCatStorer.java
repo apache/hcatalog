@@ -22,14 +22,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
-import junit.framework.TestCase;
-
-import org.apache.hadoop.hive.cli.CliSessionState;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
-import org.apache.hadoop.hive.ql.Driver;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.HcatTestUtils;
+import org.apache.hcatalog.mapreduce.HCatBaseTest;
 import org.apache.pig.ExecType;
 import org.apache.pig.PigException;
 import org.apache.pig.PigServer;
@@ -37,63 +32,14 @@ import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.FrontendException;
 import org.apache.pig.impl.util.LogUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class TestHCatStorer extends TestCase {
-  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
-      "/build/test/data/" + TestHCatStorer.class.getCanonicalName();
-  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+public class TestHCatStorer extends HCatBaseTest {
+
   private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
-  private Driver driver;
-
-  @Override
-  protected void setUp() throws Exception {
-    if (driver == null) {
-      HiveConf hiveConf = new HiveConf(this.getClass());
-      hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-      hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-      hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-      hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
-      driver = new Driver(hiveConf);
-      SessionState.start(new CliSessionState(hiveConf));
-    }
-  }
-
-//  public void testStoreFuncMap() throws IOException{
-//
-//    driver.run("drop table junit_unparted");
-//    String createTable = "create table junit_unparted(b string,arr_of_maps array<map<string,string>>) stored as RCFILE " +
-//        "tblproperties('hcat.isd'='org.apache.hadoop.hive.hCatalog.rcfile.RCFileInputStorageDriver'," +
-//        "'hcat.osd'='org.apache.hadoop.hive.hCatalog.rcfile.RCFileOutputStorageDriver') ";
-//    int retCode = driver.run(createTable).getResponseCode();
-//    if(retCode != 0) {
-//      throw new IOException("Failed to create table.");
-//    }
-//
-//    MiniCluster.deleteFile(cluster, fileName);
-//    MiniCluster.createInputFile(cluster, fileName, new String[]{"test\t{([a#haddop,b#pig])}","data\t{([b#hive,a#hcat])}"});
-//
-//    PigServer server = new PigServer(ExecType.LOCAL);
-//    server.setBatchOn();
-//    server.registerQuery("A = load '"+ fullFileName +"' as (b:chararray,arr_of_maps:bag{mytup:tuple ( mymap:map[ ])});");
-//    server.registerQuery("store A into 'default.junit_unparted' using org.apache.hadoop.hive.hCatalog.pig.HCatStorer('','b:chararray,arr_of_maps:bag{mytup:tuple ( mymap:map[ ])}');");
-//    server.executeBatch();
-//
-//
-//
-//    MiniCluster.deleteFile(cluster, fileName);
-//
-//    driver.run("select * from junit_unparted");
-//    ArrayList<String> res = new ArrayList<String>();
-//    driver.getResults(res);
-//    driver.run("drop table junit_unparted");
-//    Iterator<String> itr = res.iterator();
-//    System.out.println(itr.next());
-//    System.out.println(itr.next());
-//   assertFalse(itr.hasNext());
-//
-//  }
-
+  @Test
   public void testPartColsInData() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -118,16 +64,17 @@ public class TestHCatStorer extends TestCase {
 
     while(itr.hasNext()){
       Tuple t = itr.next();
-      assertEquals(2, t.size());
-      assertEquals(t.get(0), i);
-      assertEquals(t.get(1), "1");
+      Assert.assertEquals(2, t.size());
+      Assert.assertEquals(t.get(0), i);
+      Assert.assertEquals(t.get(1), "1");
       i++;
     }
 
-    assertFalse(itr.hasNext());
-    assertEquals(11, i);
+    Assert.assertFalse(itr.hasNext());
+    Assert.assertEquals(11, i);
   }
 
+  @Test
   public void testMultiPartColsInData() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table employee");
@@ -161,15 +108,16 @@ public class TestHCatStorer extends TestCase {
     driver.run("select * from employee");
     ArrayList<String> results = new ArrayList<String>();
     driver.getResults(results);
-    assertEquals(4, results.size());
+    Assert.assertEquals(4, results.size());
     Collections.sort(results);
-    assertEquals(inputData[0], results.get(0));
-    assertEquals(inputData[1], results.get(1));
-    assertEquals(inputData[2], results.get(2));
-    assertEquals(inputData[3], results.get(3));
+    Assert.assertEquals(inputData[0], results.get(0));
+    Assert.assertEquals(inputData[1], results.get(1));
+    Assert.assertEquals(inputData[2], results.get(2));
+    Assert.assertEquals(inputData[3], results.get(3));
     driver.run("drop table employee");
   }
 
+  @Test
   public void testStoreInPartiitonedTbl() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -194,16 +142,17 @@ public class TestHCatStorer extends TestCase {
 
     while(itr.hasNext()){
       Tuple t = itr.next();
-      assertEquals(2, t.size());
-      assertEquals(t.get(0), i);
-      assertEquals(t.get(1), "1");
+      Assert.assertEquals(2, t.size());
+      Assert.assertEquals(t.get(0), i);
+      Assert.assertEquals(t.get(1), "1");
       i++;
     }
 
-    assertFalse(itr.hasNext());
-    assertEquals(11, i);
+    Assert.assertFalse(itr.hasNext());
+    Assert.assertEquals(11, i);
   }
 
+  @Test
   public void testNoAlias() throws IOException, CommandNeedRetryException{
     driver.run("drop table junit_parted");
     String createTable = "create table junit_parted(a int, b string) partitioned by (ds string) stored as RCFILE";
@@ -222,12 +171,12 @@ public class TestHCatStorer extends TestCase {
     }
     catch(PigException fe){
       PigException pe = LogUtils.getPigException(fe);
-      assertTrue(pe instanceof FrontendException);
-      assertEquals(PigHCatUtil.PIG_EXCEPTION_CODE, pe.getErrorCode());
-      assertTrue(pe.getMessage().contains("Column name for a field is not specified. Please provide the full schema as an argument to HCatStorer."));
+      Assert.assertTrue(pe instanceof FrontendException);
+      Assert.assertEquals(PigHCatUtil.PIG_EXCEPTION_CODE, pe.getErrorCode());
+      Assert.assertTrue(pe.getMessage().contains("Column name for a field is not specified. Please provide the full schema as an argument to HCatStorer."));
       errCaught = true;
     }
-    assertTrue(errCaught);
+    Assert.assertTrue(errCaught);
     errCaught = false;
     try{
       server.setBatchOn();
@@ -238,15 +187,16 @@ public class TestHCatStorer extends TestCase {
     }
     catch(PigException fe){
       PigException pe = LogUtils.getPigException(fe);
-      assertTrue(pe instanceof FrontendException);
-      assertEquals(PigHCatUtil.PIG_EXCEPTION_CODE, pe.getErrorCode());
-      assertTrue(pe.getMessage().contains("Column names should all be in lowercase. Invalid name found: B"));
+      Assert.assertTrue(pe instanceof FrontendException);
+      Assert.assertEquals(PigHCatUtil.PIG_EXCEPTION_CODE, pe.getErrorCode());
+      Assert.assertTrue(pe.getMessage().contains("Column names should all be in lowercase. Invalid name found: B"));
       errCaught = true;
     }
     driver.run("drop table junit_parted");
-    assertTrue(errCaught);
+    Assert.assertTrue(errCaught);
   }
 
+  @Test
   public void testStoreMultiTables() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -294,13 +244,14 @@ public class TestHCatStorer extends TestCase {
 
     Iterator<String> itr = res.iterator();
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      assertEquals( input[i] ,itr.next());
+      Assert.assertEquals( input[i] ,itr.next());
     }
 
-    assertFalse(itr.hasNext());
+    Assert.assertFalse(itr.hasNext());
 
   }
 
+  @Test
   public void testStoreWithNoSchema() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -332,13 +283,14 @@ public class TestHCatStorer extends TestCase {
     driver.run("drop table junit_unparted");
     Iterator<String> itr = res.iterator();
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      assertEquals( input[i] ,itr.next());
+      Assert.assertEquals( input[i] ,itr.next());
     }
 
-    assertFalse(itr.hasNext());
+    Assert.assertFalse(itr.hasNext());
 
   }
 
+  @Test
   public void testStoreWithNoCtorArgs() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -370,13 +322,14 @@ public class TestHCatStorer extends TestCase {
     driver.run("drop table junit_unparted");
     Iterator<String> itr = res.iterator();
     for(int i = 0; i < LOOP_SIZE*LOOP_SIZE; i++) {
-      assertEquals( input[i] ,itr.next());
+      Assert.assertEquals( input[i] ,itr.next());
     }
 
-    assertFalse(itr.hasNext());
+    Assert.assertFalse(itr.hasNext());
 
   }
 
+  @Test
   public void testEmptyStore() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -408,10 +361,11 @@ public class TestHCatStorer extends TestCase {
     driver.getResults(res);
     driver.run("drop table junit_unparted");
     Iterator<String> itr = res.iterator();
-    assertFalse(itr.hasNext());
+    Assert.assertFalse(itr.hasNext());
 
   }
 
+  @Test
   public void testBagNStruct() throws IOException, CommandNeedRetryException{
   driver.run("drop table junit_unparted");
   String createTable = "create table junit_unparted(b string,a struct<a1:int>,  arr_of_struct array<string>, " +
@@ -438,12 +392,13 @@ public class TestHCatStorer extends TestCase {
   driver.getResults(res);
   driver.run("drop table junit_unparted");
   Iterator<String> itr = res.iterator();
-  assertEquals("zookeeper\t{\"a1\":2}\t[\"pig\"]\t[{\"s1\":\"pnuts\",\"s2\":\"hdfs\"}]\t[{\"s3\":\"hadoop\"},{\"s3\":\"hcat\"}]", itr.next());
-  assertEquals("chubby\t{\"a1\":2}\t[\"sawzall\"]\t[{\"s1\":\"bigtable\",\"s2\":\"gfs\"}]\t[{\"s3\":\"mapreduce\"},{\"s3\":\"hcat\"}]",itr.next());
- assertFalse(itr.hasNext());
+  Assert.assertEquals("zookeeper\t{\"a1\":2}\t[\"pig\"]\t[{\"s1\":\"pnuts\",\"s2\":\"hdfs\"}]\t[{\"s3\":\"hadoop\"},{\"s3\":\"hcat\"}]", itr.next());
+  Assert.assertEquals("chubby\t{\"a1\":2}\t[\"sawzall\"]\t[{\"s1\":\"bigtable\",\"s2\":\"gfs\"}]\t[{\"s3\":\"mapreduce\"},{\"s3\":\"hcat\"}]",itr.next());
+ Assert.assertFalse(itr.hasNext());
 
   }
 
+  @Test
   public void testStoreFuncAllSimpleTypes() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -473,10 +428,10 @@ public class TestHCatStorer extends TestCase {
     driver.getResults(res);
 
     Iterator<String> itr = res.iterator();
-    assertEquals( "0\tNULL\tNULL\tNULL\tNULL\tnull\tnull" ,itr.next());
-    assertEquals( "NULL\t4.2\t2.2\t4\tlets hcat\tbinary-data\tnull" ,itr.next());
-    assertEquals( "3\t6.2999997\t3.3000000000000003\t6\tlets hcat\tbinary-data\tnull",itr.next());
-    assertFalse(itr.hasNext());
+    Assert.assertEquals( "0\tNULL\tNULL\tNULL\tNULL\tnull\tnull" ,itr.next());
+    Assert.assertEquals( "NULL\t4.2\t2.2\t4\tlets hcat\tbinary-data\tnull" ,itr.next());
+    Assert.assertEquals( "3\t6.2999997\t3.3000000000000003\t6\tlets hcat\tbinary-data\tnull",itr.next());
+    Assert.assertFalse(itr.hasNext());
 
     server.registerQuery("B = load 'junit_unparted' using "+HCatLoader.class.getName()+";");
     Iterator<Tuple> iter = server.openIterator("B");
@@ -487,24 +442,17 @@ public class TestHCatStorer extends TestCase {
         if(t.get(5) == null){
             num5nulls++;
         }else {
-            assertTrue(t.get(5) instanceof DataByteArray);
+          Assert.assertTrue(t.get(5) instanceof DataByteArray);
         }
-        assertNull(t.get(6));
+      Assert.assertNull(t.get(6));
         count++;
     }
-    assertEquals(3, count);
-    assertEquals(1, num5nulls);
+    Assert.assertEquals(3, count);
+    Assert.assertEquals(1, num5nulls);
     driver.run("drop table junit_unparted");
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-  }
-
-
-
-
+  @Test
   public void testStoreFuncSimple() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table junit_unparted");
@@ -538,14 +486,14 @@ public class TestHCatStorer extends TestCase {
     for(int i = 1; i <= LOOP_SIZE; i++) {
       String si = i + "";
       for(int j=1;j<=LOOP_SIZE;j++) {
-        assertEquals( si + "\t"+j,itr.next());
+        Assert.assertEquals( si + "\t"+j,itr.next());
       }
     }
-   assertFalse(itr.hasNext());
+   Assert.assertFalse(itr.hasNext());
 
   }
 
-
+  @Test
   public void testDynamicPartitioningMultiPartColsInDataPartialSpec() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table if exists employee");
@@ -573,15 +521,16 @@ public class TestHCatStorer extends TestCase {
     driver.run("select * from employee");
     ArrayList<String> results = new ArrayList<String>();
     driver.getResults(results);
-    assertEquals(4, results.size());
+    Assert.assertEquals(4, results.size());
     Collections.sort(results);
-    assertEquals(inputData[0], results.get(0));
-    assertEquals(inputData[1], results.get(1));
-    assertEquals(inputData[2], results.get(2));
-    assertEquals(inputData[3], results.get(3));
+    Assert.assertEquals(inputData[0], results.get(0));
+    Assert.assertEquals(inputData[1], results.get(1));
+    Assert.assertEquals(inputData[2], results.get(2));
+    Assert.assertEquals(inputData[3], results.get(3));
     driver.run("drop table employee");
   }
 
+  @Test
   public void testDynamicPartitioningMultiPartColsInDataNoSpec() throws IOException, CommandNeedRetryException{
 
     driver.run("drop table if exists employee");
@@ -609,15 +558,16 @@ public class TestHCatStorer extends TestCase {
     driver.run("select * from employee");
     ArrayList<String> results = new ArrayList<String>();
     driver.getResults(results);
-    assertEquals(4, results.size());
+    Assert.assertEquals(4, results.size());
     Collections.sort(results);
-    assertEquals(inputData[0], results.get(0));
-    assertEquals(inputData[1], results.get(1));
-    assertEquals(inputData[2], results.get(2));
-    assertEquals(inputData[3], results.get(3));
+    Assert.assertEquals(inputData[0], results.get(0));
+    Assert.assertEquals(inputData[1], results.get(1));
+    Assert.assertEquals(inputData[2], results.get(2));
+    Assert.assertEquals(inputData[3], results.get(3));
     driver.run("drop table employee");
   }
 
+    @Test
     public void testDynamicPartitioningMultiPartColsNoDataInDataNoSpec() throws IOException, CommandNeedRetryException{
 
       driver.run("drop table if exists employee");
@@ -642,7 +592,7 @@ public class TestHCatStorer extends TestCase {
       driver.run("select * from employee");
       ArrayList<String> results = new ArrayList<String>();
       driver.getResults(results);
-      assertEquals(0, results.size());
+      Assert.assertEquals(0, results.size());
       driver.run("drop table employee");
     }
 }
