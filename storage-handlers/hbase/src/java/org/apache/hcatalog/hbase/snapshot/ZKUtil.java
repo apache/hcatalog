@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,7 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hcatalog.hbase.snapshot.transaction.thrift.*;
+import org.apache.hcatalog.hbase.snapshot.transaction.thrift.StoreFamilyRevision;
+import org.apache.hcatalog.hbase.snapshot.transaction.thrift.StoreFamilyRevisionList;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TSerializer;
@@ -312,9 +313,9 @@ class ZKUtil {
     /**
      * This method updates the transaction data related to a znode.
      *
-     * @param String The path to the transaction data.
-     * @param FamilyRevision The FamilyRevision to be updated.
-     * @param UpdateMode The mode to update like append, update, remove.
+     * @param path The path to the transaction data.
+     * @param updateTx The FamilyRevision to be updated.
+     * @param mode The mode to update like append, update, remove.
      * @throws IOException
      */
     void updateData(String path, FamilyRevision updateTx, UpdateMode mode)

@@ -21,7 +21,7 @@ package org.apache.hcatalog.data.transfer.state;
 /**
  * If external system wants to communicate any state to slaves, they can do so
  * via this interface. One example of this in case of Map-Reduce is ids assigned
- * by {@link JobTracker} to {@link TaskTracker}
+ * by JobTracker to TaskTracker.
  */
 public interface StateProvider {
 

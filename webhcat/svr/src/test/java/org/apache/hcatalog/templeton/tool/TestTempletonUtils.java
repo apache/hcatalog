@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,15 +17,12 @@
  */
 package org.apache.hcatalog.templeton.tool;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
-import org.apache.hcatalog.templeton.tool.TempletonUtils;
 import org.junit.Test;
 
 public class TestTempletonUtils {
@@ -36,17 +33,17 @@ public class TestTempletonUtils {
 
     @Test
     public void testIssetString() {
-        assertFalse(TempletonUtils.isset((String)null));
-        assertFalse(TempletonUtils.isset(""));
-        assertTrue(TempletonUtils.isset("hello"));
+        Assert.assertFalse(TempletonUtils.isset((String)null));
+        Assert.assertFalse(TempletonUtils.isset(""));
+        Assert.assertTrue(TempletonUtils.isset("hello"));
     }
 
     @Test
     public void testIssetTArray() {
-        assertFalse(TempletonUtils.isset((Long[]) null));
-        assertFalse(TempletonUtils.isset(new String[0]));
+        Assert.assertFalse(TempletonUtils.isset((Long[]) null));
+        Assert.assertFalse(TempletonUtils.isset(new String[0]));
         String[] parts = new String("hello.world").split("\\.");
-        assertTrue(TempletonUtils.isset(parts));
+        Assert.assertTrue(TempletonUtils.isset(parts));
     }
 
     @Test
@@ -58,24 +55,24 @@ public class TestTempletonUtils {
 
     @Test
     public void testExtractPercentComplete() {
-        assertNull(TempletonUtils.extractPercentComplete("fred"));
+        Assert.assertNull(TempletonUtils.extractPercentComplete("fred"));
         for (String line : CONTROLLER_LINES)
-            assertNull(TempletonUtils.extractPercentComplete(line));
+            Assert.assertNull(TempletonUtils.extractPercentComplete(line));
 
         String fifty = "2011-12-15 18:12:36,333 [main] INFO  org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceLauncher - 50% complete";
-        assertEquals("50% complete", TempletonUtils.extractPercentComplete(fifty));
+        Assert.assertEquals("50% complete", TempletonUtils.extractPercentComplete(fifty));
     }
 
     @Test
     public void testEncodeArray() {
-        assertEquals(null, TempletonUtils.encodeArray((String []) null));
+        Assert.assertEquals(null, TempletonUtils.encodeArray((String []) null));
         String[] tmp = new String[0];
-        assertTrue(TempletonUtils.encodeArray(new String[0]).length() == 0);
+        Assert.assertTrue(TempletonUtils.encodeArray(new String[0]).length() == 0);
         tmp = new String[3];
         tmp[0] = "fred";
         tmp[1] = null;
         tmp[2] = "peter,lisa,, barney";
-        assertEquals("fred,,peter" +
+        Assert.assertEquals("fred,,peter" +
                      StringUtils.ESCAPE_CHAR + ",lisa" + StringUtils.ESCAPE_CHAR + "," +
                      StringUtils.ESCAPE_CHAR + ", barney",
                      TempletonUtils.encodeArray(tmp));
@@ -83,7 +80,7 @@ public class TestTempletonUtils {
 
     @Test
     public void testDecodeArray() {
-        assertTrue(TempletonUtils.encodeArray((String[]) null) == null);
+        Assert.assertTrue(TempletonUtils.encodeArray((String[]) null) == null);
         String[] tmp = new String[3];
         tmp[0] = "fred";
         tmp[1] = null;
@@ -91,10 +88,10 @@ public class TestTempletonUtils {
         String[] tmp2 = TempletonUtils.decodeArray(TempletonUtils.encodeArray(tmp));
         try {
             for (int i=0; i< tmp.length; i++) {
-                assertEquals((String) tmp[i], (String)tmp2[i]);
+                Assert.assertEquals((String) tmp[i], (String)tmp2[i]);
             }
         } catch (Exception e) {
-            fail("Arrays were not equal" + e.getMessage());
+            Assert.fail("Arrays were not equal" + e.getMessage());
         }
     }
 
@@ -105,7 +102,7 @@ public class TestTempletonUtils {
             TempletonUtils.hadoopFsPath("/tmp", null, null);
             TempletonUtils.hadoopFsPath("/tmp", new Configuration(), null);
         } catch (FileNotFoundException e) {
-            fail("Couldn't find /tmp");
+            Assert.fail("Couldn't find /tmp");
         } catch (Exception e) {
             // This is our problem -- it means the configuration was wrong.
             e.printStackTrace();
@@ -113,7 +110,7 @@ public class TestTempletonUtils {
         try {
             TempletonUtils.hadoopFsPath("/scoobydoo/teddybear",
                                         new Configuration(), null);
-            fail("Should not have found /scoobydoo/teddybear");
+            Assert.fail("Should not have found /scoobydoo/teddybear");
         } catch (FileNotFoundException e) {
             // Should go here.
         } catch (Exception e) {
@@ -125,14 +122,14 @@ public class TestTempletonUtils {
     @Test
     public void testHadoopFsFilename() {
         try {
-            assertEquals(null, TempletonUtils.hadoopFsFilename(null, null, null));
-            assertEquals(null, TempletonUtils.hadoopFsFilename("/tmp", null, null));
-            assertEquals("file:/tmp",
+            Assert.assertEquals(null, TempletonUtils.hadoopFsFilename(null, null, null));
+            Assert.assertEquals(null, TempletonUtils.hadoopFsFilename("/tmp", null, null));
+            Assert.assertEquals("file:/tmp",
                          TempletonUtils.hadoopFsFilename("/tmp",
                                                          new Configuration(),
                                                          null));
         } catch (FileNotFoundException e) {
-            fail("Couldn't find name for /tmp");
+            Assert.fail("Couldn't find name for /tmp");
         } catch (Exception e) {
             // Something else is wrong
             e.printStackTrace();
@@ -140,7 +137,7 @@ public class TestTempletonUtils {
         try {
             TempletonUtils.hadoopFsFilename("/scoobydoo/teddybear",
                                             new Configuration(), null);
-            fail("Should not have found /scoobydoo/teddybear");
+            Assert.fail("Should not have found /scoobydoo/teddybear");
         } catch (FileNotFoundException e) {
             // Should go here.
         } catch (Exception e) {
@@ -152,16 +149,16 @@ public class TestTempletonUtils {
     @Test
     public void testHadoopFsListAsArray() {
         try {
-            assertTrue(TempletonUtils.hadoopFsListAsArray(null, null, null) == null);
-            assertTrue(TempletonUtils.hadoopFsListAsArray("/tmp, /usr",
+            Assert.assertTrue(TempletonUtils.hadoopFsListAsArray(null, null, null) == null);
+            Assert.assertTrue(TempletonUtils.hadoopFsListAsArray("/tmp, /usr",
                                                           null, null) == null);
             String[] tmp2
                 = TempletonUtils.hadoopFsListAsArray("/tmp,/usr",
                                                      new Configuration(), null);
-            assertEquals("file:/tmp", tmp2[0]);
-            assertEquals("file:/usr", tmp2[1]);
+            Assert.assertEquals("file:/tmp", tmp2[0]);
+            Assert.assertEquals("file:/usr", tmp2[1]);
         } catch (FileNotFoundException e) {
-            fail("Couldn't find name for /tmp");
+            Assert.fail("Couldn't find name for /tmp");
         } catch (Exception e) {
             // Something else is wrong
             e.printStackTrace();
@@ -170,7 +167,7 @@ public class TestTempletonUtils {
             TempletonUtils.hadoopFsListAsArray("/scoobydoo/teddybear,joe",
                                                new Configuration(),
                                                null);
-            fail("Should not have found /scoobydoo/teddybear");
+            Assert.fail("Should not have found /scoobydoo/teddybear");
         } catch (FileNotFoundException e) {
             // Should go here.
         } catch (Exception e) {
@@ -182,13 +179,13 @@ public class TestTempletonUtils {
     @Test
     public void testHadoopFsListAsString() {
         try {
-            assertTrue(TempletonUtils.hadoopFsListAsString(null, null, null) == null);
-            assertTrue(TempletonUtils.hadoopFsListAsString("/tmp,/usr",
+            Assert.assertTrue(TempletonUtils.hadoopFsListAsString(null, null, null) == null);
+            Assert.assertTrue(TempletonUtils.hadoopFsListAsString("/tmp,/usr",
                                                            null, null) == null);
-            assertEquals("file:/tmp,file:/usr", TempletonUtils.hadoopFsListAsString
+            Assert.assertEquals("file:/tmp,file:/usr", TempletonUtils.hadoopFsListAsString
                          ("/tmp,/usr", new Configuration(), null));
         } catch (FileNotFoundException e) {
-            fail("Couldn't find name for /tmp");
+            Assert.fail("Couldn't find name for /tmp");
         } catch (Exception e) {
             // Something else is wrong
             e.printStackTrace();
@@ -197,7 +194,7 @@ public class TestTempletonUtils {
             TempletonUtils.hadoopFsListAsString("/scoobydoo/teddybear,joe",
                                                 new Configuration(),
                                                 null);
-            fail("Should not have found /scoobydoo/teddybear");
+            Assert.fail("Should not have found /scoobydoo/teddybear");
         } catch (FileNotFoundException e) {
             // Should go here.
         } catch (Exception e) {

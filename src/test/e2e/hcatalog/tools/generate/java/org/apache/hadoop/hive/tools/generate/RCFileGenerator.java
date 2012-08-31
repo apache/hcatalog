@@ -20,14 +20,11 @@ package org.apache.hadoop.hive.tools.generate;
 
 import java.util.Properties;
 import java.util.Random;
-import java.io.DataOutputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.DefaultCodec;
 

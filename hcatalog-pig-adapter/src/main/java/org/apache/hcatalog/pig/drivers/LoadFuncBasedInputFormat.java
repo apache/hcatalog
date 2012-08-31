@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -33,12 +33,12 @@ import org.apache.pig.LoadFunc;
 import org.apache.pig.LoadMetadata;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceSchema.ResourceFieldSchema;
-import org.apache.pig.builtin.PigStorage;
 import org.apache.pig.data.DataByteArray;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
+
 /**
- * based on {@link PigStorage}
+ * based on {@link org.apache.pig.builtin.PigStorage}
  */
 public class LoadFuncBasedInputFormat extends InputFormat<BytesWritable,Tuple> {
 

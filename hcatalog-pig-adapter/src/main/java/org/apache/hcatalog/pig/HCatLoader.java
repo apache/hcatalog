@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -40,14 +40,13 @@ import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.pig.Expression;
 import org.apache.pig.Expression.BinaryExpression;
-import org.apache.pig.LoadFunc;
 import org.apache.pig.PigException;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.ResourceStatistics;
 import org.apache.pig.impl.util.UDFContext;
 
 /**
- * Pig {@link LoadFunc} to read data from HCat
+ * Pig {@link org.apache.pig.LoadFunc} to read data from HCat
  */
 
 public class HCatLoader extends HCatBaseLoader {

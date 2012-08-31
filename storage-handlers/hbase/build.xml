@@ -18,7 +18,9 @@
 -->
 
 
-<project name="hbase-storage-handler" default="jar" xmlns:ivy="antlib:org.apache.ivy.ant" >
+<project name="hbase-storage-handler" default="jar"
+         xmlns:ivy="antlib:org.apache.ivy.ant"
+         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
     <property name="path.to.basedir" location="${basedir}/../.."/>
     <loadproperties srcfile="${path.to.basedir}/build.properties"/>
@@ -97,21 +99,26 @@
     <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
 
     <path id="compile.classpath">
-      <fileset dir="${build.dir}/ivy/lib/default">
-        <include name="**/*.jar"/>
-      </fileset>
+      <path refid="mvn.compile.classpath"/>
     </path>
 
     <path id="test.classpath">
         <pathelement location="${test.build.classes}" />
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
-        <fileset dir="${build.dir}/ivy/lib/test">
-          <include name="**/*.jar"/>
-        </fileset>
+        <path refid="mvn.test.classpath"/>
     </path>
 
-    <target name="init" depends="ivy-retrieve">
+    <target name="mvn-dependencies" depends="mvn-init">
+      <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
+        <pom file="pom.xml"/>
+      </artifact:dependencies>
+      <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
+        <pom file="pom.xml"/>
+      </artifact:dependencies>
+    </target>
+
+    <target name="init" depends="mvn-dependencies">
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.classes}" />
         <mkdir dir="${test.build.classes}" />
@@ -279,5 +286,6 @@
     </target>
 
     <import file="../../ant/dependencies.xml"/>
+    <import file="../../ant/deploy.xml"/>
 
 </project>

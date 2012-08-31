@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-486 HCatalog should use checkstyle to enforce coding style (traviscrawford)
+
   HCAT-484 HCatalog should use ql.metadata Table and Partition classes (traviscrawford)
 
   HCAT-485 Document that storage-based security ignores GRANT/REVOKE statements (lefty via khorgath)

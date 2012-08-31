@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,11 +23,6 @@ import java.net.MalformedURLException;
 import java.util.Date;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.JobProfile;
-import org.apache.hadoop.mapred.JobStatus;
-import org.apache.hadoop.mapred.JobTracker;
-import org.apache.hadoop.mapred.TempletonJobTracker;
 import org.apache.hcatalog.templeton.tool.JobState;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 

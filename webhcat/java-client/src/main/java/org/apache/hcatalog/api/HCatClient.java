@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -17,7 +17,6 @@
  */
 package org.apache.hcatalog.api;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +71,7 @@ public abstract class HCatClient {
      * Get all existing databases that match the given
      * pattern. The matching occurs as per Java regular expressions
      *
-     * @param databasePattern  java re pattern
+     * @param pattern  java re pattern
      * @return list of database names
      * @throws HCatException,ConnectionFailureException
      */

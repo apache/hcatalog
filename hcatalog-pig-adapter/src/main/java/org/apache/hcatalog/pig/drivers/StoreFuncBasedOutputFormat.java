@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@
 package org.apache.hcatalog.pig.drivers;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -34,11 +33,9 @@ import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.apache.hcatalog.pig.PigHCatUtil;
 import org.apache.pig.ResourceSchema;
-import org.apache.pig.StoreFunc;
 import org.apache.pig.StoreFuncInterface;
 import org.apache.pig.StoreMetadata;
 import org.apache.pig.data.Tuple;
-import org.apache.pig.impl.logicalLayer.schema.Schema;
 
 public class StoreFuncBasedOutputFormat extends
         OutputFormat<BytesWritable, Tuple> {

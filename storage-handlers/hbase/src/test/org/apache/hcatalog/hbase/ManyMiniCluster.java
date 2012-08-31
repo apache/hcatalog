@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,7 +18,6 @@
 
 package org.apache.hcatalog.hbase;
 
-import com.sun.java.util.jar.pack.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -37,7 +36,6 @@ import org.apache.hadoop.mapred.MiniMRCluster;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Map;
 
 /**
  * MiniCluster class composed of a number of Hadoop Minicluster implementations

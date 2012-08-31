@@ -73,5 +73,7 @@
     <dependency org="org.vafer" name="jdeb" rev="${jdeb.version}" conf="test->default"/>
     <dependency org="com.google.code.p.arat" name="rat-lib" rev="${rats-lib.version}" conf="test->default"/>
     <dependency org="org.apache.maven" name="maven-ant-tasks" rev="${maven-ant-tasks.version}" conf="test->*"/>
+    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop20.version}" conf="test->default"/>
+    <dependency org="com.puppycrawl.tools" name="checkstyle" rev="${checkstyle.version}" conf="test->default"/>
   </dependencies>
 </ivy-module>

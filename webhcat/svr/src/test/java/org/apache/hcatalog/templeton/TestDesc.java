@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,8 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
-import org.apache.hcatalog.templeton.ColumnDesc;
-import org.apache.hcatalog.templeton.TableDesc;
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**

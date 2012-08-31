@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Map.Entry;
 
-import javax.imageio.stream.FileImageInputStream;
-
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.transfer.DataTransferFactory;
 import org.apache.hcatalog.data.transfer.HCatWriter;

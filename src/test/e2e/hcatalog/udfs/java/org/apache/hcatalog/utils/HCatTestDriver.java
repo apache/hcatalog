@@ -18,7 +18,6 @@
 
 package org.apache.hcatalog.utils;
 
-import org.apache.hcatalog.utils.TypeDataCheck;
 import org.apache.hadoop.util.ProgramDriver;
 
 /**

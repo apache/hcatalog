@@ -21,9 +21,11 @@
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
   <target name="mvn-init" unless="mvn-init.complete">
+    <get src="${mvnrepo}/org/apache/maven/maven-ant-tasks/${maven-ant-tasks.version}/maven-ant-tasks-${maven-ant-tasks.version}.jar"
+         dest="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar" usetimestamp="true" skipexisting="true"/>
     <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
              uri="artifact:org.apache.maven.artifact.ant"
-             classpath="build/ivy/lib/test/org.apache.maven-maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+             classpath="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
     <property name="mvn-init.complete" value="true"/>
   </target>
 

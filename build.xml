@@ -186,7 +186,7 @@
   Build both clientjar and server-extensions
   ================================================================================
   -->
-  <target name="jar" depends="shims,clientjar,server-extensions,jar-storage-handlers">
+  <target name="jar" depends="checkstyle,shims,clientjar,server-extensions,jar-storage-handlers">
     <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
     <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
     <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
@@ -530,6 +530,7 @@
         <ant dir="${test.e2e.dir}" target="deploy"/>
     </target>
 
+  <import file="ant/checkstyle.xml"/>
   <import file="ant/dependencies.xml"/>
   <import file="ant/deploy.xml"/>
   <import file="ant/findbugs.xml"/>

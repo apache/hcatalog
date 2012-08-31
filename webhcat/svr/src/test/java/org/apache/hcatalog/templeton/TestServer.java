@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,7 +19,6 @@ package org.apache.hcatalog.templeton;
 
 import junit.framework.TestCase;
 
-import org.apache.hcatalog.templeton.Main;
 import org.apache.hcatalog.templeton.mock.MockServer;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-/*
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -23,7 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.hcatalog.hbase.snapshot.transaction.thrift.*;
+import org.apache.hcatalog.hbase.snapshot.transaction.thrift.StoreFamilyRevision;
+import org.apache.hcatalog.hbase.snapshot.transaction.thrift.StoreFamilyRevisionList;
 import org.junit.Test;
 
 public class TestThriftSerialization {
