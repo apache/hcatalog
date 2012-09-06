@@ -204,10 +204,6 @@
             <td>org.apache.hcatalog.cli.HCatSemanticAnalyzerFactory</td>
         </tr>
         <tr>
-            <td>hadoop.clientside.fs.operations</td>
-            <td>true</td>
-        </tr>
-        <tr>
             <td>hive.metastore.warehouse.dir</td>
             <td>The directory can be a URI or an absolute file path. If it is an absolute file path, it will be resolved to a URI by the metastore:
             <p>-- If default hdfs was specified in core-site.xml, path resolves to HDFS location. </p>

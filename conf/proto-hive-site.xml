@@ -98,12 +98,6 @@
 </property>
 
 <property>
-  <name>hadoop.clientside.fs.operations</name>
-  <value>true</value>
-  <description>FS operations are owned by client</description>
-</property>
-
-<property>
   <name>hive.metastore.client.socket.timeout</name>
   <value>60</value>
   <description>MetaStore Client socket timeout in seconds</description>

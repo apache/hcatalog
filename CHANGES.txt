@@ -103,6 +103,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-397 Removal of unused parameter hadoop.clientside.fs.operations (khorgath via traviscrawford)
+
   HCAT-483 HCatBaseStorer.getHCatFSFromPigFS fails when Table schema is not provided (pengfeng via traviscrawford)
 
   HCAT-477 Drop table API in webhcat client does not respect the "ifExists" parameter.
