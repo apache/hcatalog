@@ -36,6 +36,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-492 Document CTAS workaround for Hive with JSON serde (lefty via khorgath)
+
   HCAT-389 hcat_ping (script to check if HCatalog server is running/reachable) (mithun via khorgath)
 
   HCAT-432 Add findbugs to build (rohini via avandana)
