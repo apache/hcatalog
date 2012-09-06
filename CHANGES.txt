@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-431 document hcat type to java class/pig type mapping (lefty via khorgath)
+
   HCAT-492 Document CTAS workaround for Hive with JSON serde (lefty via khorgath)
 
   HCAT-487 HCatalog should tolerate a user-defined amount of bad records (traviscrawford)

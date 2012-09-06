@@ -68,51 +68,131 @@ immediately following the load statement with a partition filter statement
 <section> 
   <title>HCatalog Data Types</title>
 
-<p>Restrictions apply to the types of columns HCatLoader can read.</p>
-<p>HCatLoader  can read <strong>only</strong> the data types listed in the table. 
+<p>Restrictions apply to the types of columns HCatLoader can read from HCatalog-managed tables.</p>
+<p>HCatLoader can read <em><strong>only</strong></em> the data types listed in the table below.
 The table shows how Pig will interpret the HCatalog data type.</p>
-   <table>
-        <tr>
-            <td>
-               <p><strong>HCatalog Data Type</strong></p>
-            </td>
-            <td>
-               <p><strong>Pig Data Type</strong></p>
-            </td>
+  <table>
+    <tr>
+        <th>
+           <p class="center">Primitives</p>
+        </th>
+        <th>
+           <p class="center"> </p>
+        </th>
     </tr>
     <tr>
-            <td>
-               <p>primitives (int, long, float, double, string) </p>
-            </td>
-            <td>
-               <p>int, long, float, double, string to chararray </p>
-            </td>
+        <td>
+           <p class="cell"><strong>HCatalog Data Type</strong></p>
+        </td>
+        <td>
+           <p class="cell"><strong>Pig Data Type</strong></p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>map (key type should be string, valuetype must be string)</p>
-            </td>
-            <td>
-               <p>map </p>
-            </td>
+        <td>
+           <p class="cell">int</p>
+        </td>
+        <td>
+           <p class="cell">int</p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>List&lt;any type&gt; </p>
-            </td>
-            <td>
-               <p>bag </p>
-            </td>
+        <td>
+           <p class="cell">long</p>
+        </td>
+        <td>
+           <p class="cell">long</p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>struct&lt;any type fields&gt; </p>
-            </td>
-            <td>
-               <p>tuple </p>
-            </td>
+        <td>
+           <p class="cell">float</p>
+        </td>
+        <td>
+           <p class="cell">float</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">double</p>
+        </td>
+        <td>
+           <p class="cell">double</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">string</p>
+        </td>
+        <td>
+           <p class="cell">chararray</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">boolean</p>
+        </td>
+        <td>
+           <p class="cell">boolean</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">binary</p>
+        </td>
+        <td>
+           <p class="cell">bytearray</p>
+        </td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th>
+           <p class="center">Complex Types</p>
+        </th>
+        <th>
+           <p class="center"></p>
+        </th>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell"><strong>HCatalog Data Type</strong></p>
+        </td>
+        <td>
+           <p class="cell"><strong>Pig Data Type</strong></p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">map<br/>(key type should be string)</p>
+        </td>
+        <td>
+           <p class="cell">map </p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">List<em>&lt;any type&gt;</em> </p>
+        </td>
+        <td>
+           <p class="cell">bag </p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">struct<em>&lt;any type fields&gt;</em> </p>
+        </td>
+        <td>
+           <p class="cell">tuple </p>
+        </td>
     </tr>
  </table>
+
+<p><br/></p>
+<p>Currently HCatLoader cannot map the smallint and tinyint datatypes to Pig data types.
+This issue exists in HCatalog version 0.4.0;
+the fix for Jira issue <a href="https://issues.apache.org/jira/browse/HCATALOG-425">HCATALOG-425</a> should be available in HCatalog version 0.5.0.</p>
+
 </section> 
 
  <!-- ==================================================================== --> 
@@ -355,51 +435,132 @@ HCatStorer with no argument:</p>
 <section>
   <title>HCatalog Data Types</title>
 
-<p>Restrictions apply to the types of columns HCatStorer can write.</p>
-<p>HCatStorer can write <strong>only</strong> the data types listed in the table. 
+<p>Restrictions apply to the types of columns HCatStorer can write to HCatalog-managed tables.</p>
+<p>HCatStorer can write <em><strong>only</strong></em> the data types listed in the table.
 The table shows how Pig will interpret the HCatalog data type.</p>
-   <table>
-        <tr>
-            <td>
-               <p><strong>HCatalog Data Type</strong></p>
-            </td>
-            <td>
-               <p><strong>Pig Data Type</strong></p>
-            </td>
+
+  <table>
+    <tr>
+        <th>
+           <p class="center">Primitives</p>
+        </th>
+        <th>
+           <p class="center"> </p>
+        </th>
     </tr>
     <tr>
-            <td>
-               <p>primitives (int, long, float, double, string) </p>
-            </td>
-            <td>
-               <p>int, long, float, double, string to chararray </p>
-            </td>
+        <td>
+           <p class="cell"><strong>Pig Data Type</strong></p>
+        </td>
+        <td>
+           <p class="cell"><strong>HCatalog Data Type</strong></p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>map (key type should be string, valuetype must be string)</p>
-            </td>
-            <td>
-               <p>map </p>
-            </td>
+        <td>
+           <p class="cell">int</p>
+        </td>
+        <td>
+           <p class="cell">int</p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>List&lt;any type&gt; </p>
-            </td>
-            <td>
-               <p>bag </p>
-            </td>
+        <td>
+           <p class="cell">long</p>
+        </td>
+        <td>
+           <p class="cell">long</p>
+        </td>
     </tr>
     <tr>
-            <td>
-               <p>struct&lt;any type fields&gt; </p>
-            </td>
-            <td>
-               <p>tuple </p>
-            </td>
+        <td>
+           <p class="cell">float</p>
+        </td>
+        <td>
+           <p class="cell">float</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">double</p>
+        </td>
+        <td>
+           <p class="cell">double</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">chararray</p>
+        </td>
+        <td>
+           <p class="cell">string</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">boolean</p>
+        </td>
+        <td>
+           <p class="cell">boolean</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">bytearray</p>
+        </td>
+        <td>
+           <p class="cell">binary</p>
+        </td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th>
+           <p class="center">Complex Types</p>
+        </th>
+        <th>
+           <p class="center"> </p>
+        </th>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell"><strong>Pig Data Type</strong></p>
+        </td>
+        <td>
+           <p class="cell"><strong>HCatalog Data Type</strong></p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">map</p>
+        </td>
+        <td>
+           <p class="cell">map<br/>(key type should be string)</p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">bag </p>
+        </td>
+        <td>
+           <p class="cell">List<em>&lt;any type&gt;</em> </p>
+        </td>
+    </tr>
+    <tr>
+        <td>
+           <p class="cell">tuple </p>
+        </td>
+        <td>
+           <p class="cell">struct<em>&lt;any type fields&gt;</em> </p>
+        </td>
     </tr>
  </table>
+
+<p><br/></p>
+<p>Currently HCatLoader cannot map the smallint and tinyint datatypes to Pig data types.
+This issue exists in HCatalog version 0.4.0;
+the fix for Jira issue <a href="https://issues.apache.org/jira/browse/HCATALOG-425">HCATALOG-425</a> should be available in HCatalog version 0.5.0.</p>
+
 </section>
 
 </section>

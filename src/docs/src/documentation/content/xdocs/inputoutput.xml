@@ -149,6 +149,84 @@ will be returned.</p>
 
 </section>
 
+<!-- ==================================================================== --> 
+<section>
+    <title>HCatRecord</title>
+
+<p>HCatRecord is the type supported for storing values in HCatalog tables.</p>
+<p>The types in an HCatalog table schema determine the types of objects returned for different fields in HCatRecord. This table shows the mappings between Java classes for MapReduce programs and HCatalog data types:</p>
+
+<table>
+  <tr>
+    <th><p class="center">HCatalog Data Type</p></th>
+    <th><p class="center">Java Class in MapReduce</p></th>
+    <th><p class="cell">Values</p></th>
+  </tr>
+  <tr>
+    <td><p class="center">TINYINT</p></td>
+    <td><p class="center">java.lang.Byte</p></td>
+    <td><p class="cell">-128 to 127</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">SMALLINT</p></td>
+    <td><p class="center">java.lang.Short</p></td>
+    <td><p class="cell">-2<sup>15</sup> to 2<sup>15</sup>-1 (-32,768 to 32,767)</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">INT</p></td>
+    <td><p class="center">java.lang.Integer</p></td>
+    <td><p class="cell">-2<sup>31</sup> to 2<sup>31</sup>-1 (-2,147,483,648 to 2,147,483,647)</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">BIGINT</p></td>
+    <td><p class="center">java.lang.Long</p></td>
+    <td><p class="cell">-2<sup>63</sup> to 2<sup>63</sup>-1 (-9,223,372,036,854,775,808 to      9,223,372,036,854,775,807)</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">BOOLEAN</p></td>
+    <td><p class="center">java.lang.Boolean</p></td>
+    <td><p class="cell">true or false</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">FLOAT</p></td>
+    <td><p class="center">java.lang.Float</p></td>
+    <td><p class="cell">single-precision floating-point value</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">DOUBLE</p></td>
+    <td><p class="center">java.lang.Double</p></td>
+    <td><p class="cell">double-precision floating-point value</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">BINARY</p></td>
+    <td><p class="center">byte[]</p></td>
+    <td><p class="cell">binary data</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">STRING</p></td>
+    <td><p class="center">java.lang.String</p></td>
+    <td><p class="cell">character string</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">STRUCT</p></td>
+    <td><p class="center">java.util.List</p></td>
+    <td><p class="cell">structured data</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">ARRAY</p></td>
+    <td><p class="center">java.util.List</p></td>
+    <td><p class="cell">values of one data type</p></td>
+  </tr>
+  <tr>
+    <td><p class="center">MAP</p></td>
+    <td><p class="center">java.util.Map</p></td>
+    <td><p class="cell">key-value pairs</p></td>
+  </tr>
+</table>
+
+</section>
+
+<!-- ==================================================================== --> 
 <section>
     <title>Running MapReduce with HCatalog</title>
 <p>
