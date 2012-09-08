@@ -24,48 +24,50 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
-
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.junit.Assert;
+import org.junit.Test;
 
-import junit.framework.TestCase;
-
-public class TestLazyHCatRecord extends TestCase{
+public class TestLazyHCatRecord {
 
   private final int INT_CONST = 789;
   private final long LONG_CONST = 5000000000L;
   private final double DOUBLE_CONST = 3.141592654;
   private final String STRING_CONST = "hello world";
 
-
+  @Test
   public void testGet() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
-    assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get(3));
+    Assert.assertEquals(INT_CONST, ((Integer) r.get(0)).intValue());
+    Assert.assertEquals(LONG_CONST, ((Long) r.get(1)).longValue());
+    Assert.assertEquals(DOUBLE_CONST, ((Double) r.get(2)).doubleValue(), 0);
+    Assert.assertEquals(STRING_CONST, (String) r.get(3));
   }
 
+  @Test
   public void testGetWithName() throws Exception {
     TypeInfo ti = getTypeInfo();
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector(ti));
     HCatSchema schema = HCatSchemaUtils.getHCatSchema(ti)
                                           .get(0).getStructSubSchema();
-    assertEquals(INT_CONST, ((Integer)r.get("an_int", schema)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get("a_long", schema)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get("a_double", schema)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get("a_string", schema));
+    Assert.assertEquals(INT_CONST, ((Integer) r.get("an_int", schema)).intValue());
+    Assert.assertEquals(LONG_CONST, ((Long) r.get("a_long", schema)).longValue());
+    Assert.assertEquals(DOUBLE_CONST, ((Double) r.get("a_double", schema)).doubleValue(), 0);
+    Assert.assertEquals(STRING_CONST, (String) r.get("a_string", schema));
   }
 
+  @Test
   public void testGetAll() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     List<Object> list = r.getAll();
-    assertEquals(INT_CONST, ((Integer)list.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)list.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)list.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)list.get(3));
+    Assert.assertEquals(INT_CONST, ((Integer) list.get(0)).intValue());
+    Assert.assertEquals(LONG_CONST, ((Long) list.get(1)).longValue());
+    Assert.assertEquals(DOUBLE_CONST, ((Double) list.get(2)).doubleValue(), 0);
+    Assert.assertEquals(STRING_CONST, (String) list.get(3));
   }
 
+  @Test
   public void testSet() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -74,14 +76,16 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testSize() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
-    assertEquals(4, r.size());
+    Assert.assertEquals(4, r.size());
   }
 
+  @Test
   public void testReadFields() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -90,9 +94,10 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testWrite() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -101,9 +106,10 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testSetWithName() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -112,9 +118,10 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testRemove() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -123,9 +130,10 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testCopy() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector());
     boolean sawException = false;
@@ -134,18 +142,18 @@ public class TestLazyHCatRecord extends TestCase{
     } catch (UnsupportedOperationException uoe) {
       sawException = true;
     }
-    assertTrue(sawException);
+    Assert.assertTrue(sawException);
   }
 
+  @Test
   public void testGetWritable() throws Exception {
     HCatRecord r = new LazyHCatRecord(getHCatRecord(), getObjectInspector()).getWritable();
-    assertEquals(INT_CONST, ((Integer)r.get(0)).intValue());
-    assertEquals(LONG_CONST, ((Long)r.get(1)).longValue());
-    assertEquals(DOUBLE_CONST, ((Double)r.get(2)).doubleValue());
-    assertEquals(STRING_CONST, (String)r.get(3));
-    assertEquals("org.apache.hcatalog.data.DefaultHCatRecord", r.getClass().getName());
+    Assert.assertEquals(INT_CONST, ((Integer) r.get(0)).intValue());
+    Assert.assertEquals(LONG_CONST, ((Long) r.get(1)).longValue());
+    Assert.assertEquals(DOUBLE_CONST, ((Double) r.get(2)).doubleValue(), 0);
+    Assert.assertEquals(STRING_CONST, (String) r.get(3));
+    Assert.assertEquals("org.apache.hcatalog.data.DefaultHCatRecord", r.getClass().getName());
   }
-
 
   private HCatRecord getHCatRecord() throws Exception {
 

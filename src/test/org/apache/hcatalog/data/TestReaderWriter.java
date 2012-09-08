@@ -32,12 +32,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.cli.CliSessionState;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
-import org.apache.hadoop.hive.ql.Driver;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.transfer.DataTransferFactory;
@@ -47,21 +43,19 @@ import org.apache.hcatalog.data.transfer.ReadEntity;
 import org.apache.hcatalog.data.transfer.ReaderContext;
 import org.apache.hcatalog.data.transfer.WriteEntity;
 import org.apache.hcatalog.data.transfer.WriterContext;
+import org.apache.hcatalog.mapreduce.HCatBaseTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestReaderWriter {
+public class TestReaderWriter extends HCatBaseTest {
 
   @Test
   public void test() throws MetaException, CommandNeedRetryException,
       IOException, ClassNotFoundException {
 
-    HiveConf conf = new HiveConf(getClass());
-    Driver driver = new Driver(conf);
-    SessionState.start(new CliSessionState(conf));
     driver.run("drop table mytbl");
     driver.run("create table mytbl (a string, b int)");
-    Iterator<Entry<String, String>> itr = conf.iterator();
+    Iterator<Entry<String, String>> itr = hiveConf.iterator();
     Map<String, String> map = new HashMap<String, String>();
     while (itr.hasNext()) {
       Entry<String, String> kv = itr.next();

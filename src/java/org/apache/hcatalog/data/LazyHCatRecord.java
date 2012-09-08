@@ -42,7 +42,7 @@ public class LazyHCatRecord extends HCatRecord {
 
   public static final Logger LOG = LoggerFactory.getLogger(LazyHCatRecord.class.getName());
 
-  private Object o;
+  private Object wrappedObject;
   private StructObjectInspector soi;
   
   @Override
@@ -50,7 +50,7 @@ public class LazyHCatRecord extends HCatRecord {
     try {
       StructField fref = soi.getAllStructFieldRefs().get(fieldNum);
       return HCatRecordSerDe.serializeField(
-          soi.getStructFieldData(o, fref),
+          soi.getStructFieldData(wrappedObject, fref),
           fref.getFieldObjectInspector());
     } catch (SerDeException e) {
       throw new IllegalStateException("SerDe Exception deserializing",e);
@@ -115,18 +115,14 @@ public class LazyHCatRecord extends HCatRecord {
     throw new UnsupportedOperationException("not allowed to run copy() on LazyHCatRecord");
   }
   
-  public LazyHCatRecord(Object o, ObjectInspector oi)
-  throws Exception {
-
+  public LazyHCatRecord(Object wrappedObject, ObjectInspector oi) throws Exception {
     if (oi.getCategory() != Category.STRUCT) {
-      throw new SerDeException(getClass().toString()
-          + " can only make a lazy hcat record from objects of " + 
-          "struct types, but we got: "
-          + oi.getTypeName());
+      throw new SerDeException(getClass().toString() + " can only make a lazy hcat record from " +
+          "objects of struct types, but we got: " + oi.getTypeName());
     }
 
     this.soi = (StructObjectInspector)oi;
-    this.o = o;
+    this.wrappedObject = wrappedObject;
   }
 
   @Override

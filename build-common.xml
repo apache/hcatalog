@@ -40,6 +40,7 @@
           deprecation="false"
           sourcepath=""
           includes="**/*.java"
+          debug="${javac.debug}"
           encoding="utf-8"
           srcdir="@{srcDir}"
           destdir="@{destDir}"

@@ -208,8 +208,7 @@ public class HCatUtil {
      * @return HCatSchema instance which contains the partition columns
      * @throws IOException
      */
-    public static HCatSchema getPartitionColumns(Table table)
-            throws IOException {
+    public static HCatSchema getPartitionColumns(Table table) throws IOException {
         HCatSchema cols = new HCatSchema(new LinkedList<HCatFieldSchema>());
         if (table.getPartitionKeys().size() != 0) {
             for (FieldSchema fs : table.getPartitionKeys()) {
