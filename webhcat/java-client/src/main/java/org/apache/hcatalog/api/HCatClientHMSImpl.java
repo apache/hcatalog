@@ -53,12 +53,12 @@ import org.apache.thrift.TException;
 public class HCatClientHMSImpl extends HCatClient {
 
     private HiveMetaStoreClient hmsClient;
-    private Configuration  config;
+    private Configuration config;
     private HiveConf hiveConfig;
 
     @Override
     public List<String> listDatabaseNamesByPattern(String pattern)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         List<String> dbNames = null;
         try {
             dbNames = hmsClient.getDatabases(pattern);
@@ -70,7 +70,7 @@ public class HCatClientHMSImpl extends HCatClient {
 
     @Override
     public HCatDatabase getDatabase(String dbName) throws HCatException,
-            ConnectionFailureException {
+        ConnectionFailureException {
         HCatDatabase db = null;
         try {
             Database hiveDB = hmsClient.getDatabase(checkDB(dbName));
@@ -79,42 +79,42 @@ public class HCatClientHMSImpl extends HCatClient {
             }
         } catch (NoSuchObjectException exp) {
             throw new HCatException(
-                    "NoSuchObjectException while fetching database", exp);
+                "NoSuchObjectException while fetching database", exp);
         } catch (MetaException exp) {
             throw new HCatException("MetaException while fetching database",
-                    exp);
+                exp);
         } catch (TException exp) {
             throw new ConnectionFailureException(
-                    "TException while fetching database", exp);
+                "TException while fetching database", exp);
         }
         return db;
     }
 
     @Override
     public void createDatabase(HCatCreateDBDesc dbInfo) throws HCatException,
-            ConnectionFailureException {
+        ConnectionFailureException {
         try {
             hmsClient.createDatabase(dbInfo.toHiveDb());
         } catch (AlreadyExistsException exp) {
             if (!dbInfo.getIfNotExists()) {
                 throw new HCatException(
-                        "AlreadyExistsException while creating database", exp);
+                    "AlreadyExistsException while creating database", exp);
             }
         } catch (InvalidObjectException exp) {
             throw new HCatException(
-                    "InvalidObjectException while creating database", exp);
+                "InvalidObjectException while creating database", exp);
         } catch (MetaException exp) {
             throw new HCatException("MetaException while creating database",
-                    exp);
+                exp);
         } catch (TException exp) {
             throw new ConnectionFailureException(
-                    "TException while creating database", exp);
+                "TException while creating database", exp);
         }
     }
 
     @Override
     public void dropDatabase(String dbName, boolean ifExists, DROP_DB_MODE mode)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         boolean isCascade;
         if (mode.toString().equalsIgnoreCase("cascade")) {
             isCascade = true;
@@ -126,35 +126,35 @@ public class HCatClientHMSImpl extends HCatClient {
         } catch (NoSuchObjectException e) {
             if (!ifExists) {
                 throw new HCatException(
-                        "NoSuchObjectException while dropping db.", e);
+                    "NoSuchObjectException while dropping db.", e);
             }
         } catch (InvalidOperationException e) {
             throw new HCatException(
-                    "InvalidOperationException while dropping db.", e);
+                "InvalidOperationException while dropping db.", e);
         } catch (MetaException e) {
             throw new HCatException("MetaException while dropping db.", e);
         } catch (TException e) {
             throw new ConnectionFailureException("TException while dropping db.",
-                    e);
+                e);
         }
     }
 
     @Override
     public List<String> listTableNamesByPattern(String dbName,
-            String tablePattern) throws HCatException, ConnectionFailureException {
+                                                String tablePattern) throws HCatException, ConnectionFailureException {
         List<String> tableNames = null;
         try {
             tableNames = hmsClient.getTables(checkDB(dbName), tablePattern);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while fetching table names.", e);
+                "MetaException while fetching table names.", e);
         }
         return tableNames;
     }
 
     @Override
     public HCatTable getTable(String dbName, String tableName)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         HCatTable table = null;
         try {
             Table hiveTable = hmsClient.getTable(checkDB(dbName), tableName);
@@ -165,35 +165,35 @@ public class HCatClientHMSImpl extends HCatClient {
             throw new HCatException("MetaException while fetching table.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while fetching table.", e);
+                "TException while fetching table.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while fetching table.", e);
+                "NoSuchObjectException while fetching table.", e);
         }
         return table;
     }
 
     @Override
     public void createTable(HCatCreateTableDesc createTableDesc)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         try {
             hmsClient.createTable(createTableDesc.toHiveTable(hiveConfig));
         } catch (AlreadyExistsException e) {
             if (createTableDesc.getIfNotExists() == false) {
                 throw new HCatException(
-                        "AlreadyExistsException while creating table.", e);
+                    "AlreadyExistsException while creating table.", e);
             }
         } catch (InvalidObjectException e) {
             throw new HCatException(
-                    "InvalidObjectException while creating table.", e);
+                "InvalidObjectException while creating table.", e);
         } catch (MetaException e) {
             throw new HCatException("MetaException while creating table.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while creating table.", e);
+                "NoSuchObjectException while creating table.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while creating table.", e);
+                "TException while creating table.", e);
         } catch (IOException e) {
             throw new HCatException("IOException while creating hive conf.", e);
         }
@@ -202,69 +202,69 @@ public class HCatClientHMSImpl extends HCatClient {
 
     @Override
     public void createTableLike(String dbName, String existingTblName,
-            String newTableName, boolean ifNotExists, boolean isExternal,
-            String location) throws HCatException, ConnectionFailureException {
+                                String newTableName, boolean ifNotExists, boolean isExternal,
+                                String location) throws HCatException, ConnectionFailureException {
 
         Table hiveTable = getHiveTableLike(checkDB(dbName), existingTblName,
-                newTableName, ifNotExists, location);
+            newTableName, ifNotExists, location);
         if (hiveTable != null) {
             try {
                 hmsClient.createTable(hiveTable);
             } catch (AlreadyExistsException e) {
                 if (!ifNotExists) {
                     throw new HCatException(
-                            "A table already exists with the name "
-                                    + newTableName, e);
+                        "A table already exists with the name "
+                            + newTableName, e);
                 }
             } catch (InvalidObjectException e) {
                 throw new HCatException(
-                        "InvalidObjectException in create table like command.",
-                        e);
+                    "InvalidObjectException in create table like command.",
+                    e);
             } catch (MetaException e) {
                 throw new HCatException(
-                        "MetaException in create table like command.", e);
+                    "MetaException in create table like command.", e);
             } catch (NoSuchObjectException e) {
                 throw new HCatException(
-                        "NoSuchObjectException in create table like command.",
-                        e);
+                    "NoSuchObjectException in create table like command.",
+                    e);
             } catch (TException e) {
                 throw new ConnectionFailureException(
-                        "TException in create table like command.", e);
+                    "TException in create table like command.", e);
             }
         }
     }
 
     @Override
     public void dropTable(String dbName, String tableName, boolean ifExists)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         try {
-            hmsClient.dropTable(checkDB(dbName), tableName,true, ifExists);
+            hmsClient.dropTable(checkDB(dbName), tableName, true, ifExists);
         } catch (NoSuchObjectException e) {
             if (!ifExists) {
                 throw new HCatException(
-                        "NoSuchObjectException while dropping table.", e);
+                    "NoSuchObjectException while dropping table.", e);
             }
         } catch (MetaException e) {
             throw new HCatException("MetaException while dropping table.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while dropping table.", e);
+                "TException while dropping table.", e);
         }
     }
 
     @Override
     public void renameTable(String dbName, String oldName, String newName)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         Table tbl;
         try {
             Table oldtbl = hmsClient.getTable(checkDB(dbName), oldName);
             if (oldtbl != null) {
                 // TODO : Should be moved out.
                 if (oldtbl
-                        .getParameters()
-                        .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE) != null) {
+                    .getParameters()
+                    .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE) != null) {
                     throw new HCatException(
-                            "Cannot use rename command on a non-native table");
+                        "Cannot use rename command on a non-native table");
                 }
                 tbl = new Table(oldtbl);
                 tbl.setTableName(newName);
@@ -274,229 +274,229 @@ public class HCatClientHMSImpl extends HCatClient {
             throw new HCatException("MetaException while renaming table", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while renaming table", e);
+                "TException while renaming table", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while renaming table", e);
+                "NoSuchObjectException while renaming table", e);
         } catch (InvalidOperationException e) {
             throw new HCatException(
-                    "InvalidOperationException while renaming table", e);
+                "InvalidOperationException while renaming table", e);
         }
     }
 
     @Override
     public List<HCatPartition> getPartitions(String dbName, String tblName)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         List<HCatPartition> hcatPtns = new ArrayList<HCatPartition>();
         try {
             List<Partition> hivePtns = hmsClient.listPartitions(
-                    checkDB(dbName), tblName, (short) -1);
+                checkDB(dbName), tblName, (short) -1);
             for (Partition ptn : hivePtns) {
                 hcatPtns.add(new HCatPartition(ptn));
             }
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while retrieving partition.", e);
+                "NoSuchObjectException while retrieving partition.", e);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while retrieving partition.", e);
+                "MetaException while retrieving partition.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while retrieving partition.", e);
+                "TException while retrieving partition.", e);
         }
         return hcatPtns;
     }
 
     @Override
     public HCatPartition getPartition(String dbName, String tableName,
-            Map<String, String> partitionSpec) throws HCatException,
-            ConnectionFailureException {
+                                      Map<String, String> partitionSpec) throws HCatException,
+        ConnectionFailureException {
         HCatPartition partition = null;
         try {
             ArrayList<String> ptnValues = new ArrayList<String>();
             ptnValues.addAll(partitionSpec.values());
             Partition hivePartition = hmsClient.getPartition(checkDB(dbName),
-                    tableName, ptnValues);
+                tableName, ptnValues);
             if (hivePartition != null) {
                 partition = new HCatPartition(hivePartition);
             }
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while retrieving partition.", e);
+                "MetaException while retrieving partition.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while retrieving partition.", e);
+                "TException while retrieving partition.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while retrieving partition.", e);
+                "NoSuchObjectException while retrieving partition.", e);
         }
         return partition;
     }
 
     @Override
     public void addPartition(HCatAddPartitionDesc partInfo)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         Table tbl = null;
         try {
             tbl = hmsClient.getTable(partInfo.getDatabaseName(),
-                    partInfo.getTableName());
+                partInfo.getTableName());
             // TODO: Should be moved out.
             if (tbl.getPartitionKeysSize() == 0) {
                 throw new HCatException("The table " + partInfo.getTableName()
-                        + " is not partitioned.");
+                    + " is not partitioned.");
             }
 
             hmsClient.add_partition(partInfo.toHivePartition(tbl));
         } catch (InvalidObjectException e) {
             throw new HCatException(
-                    "InvalidObjectException while adding partition.", e);
+                "InvalidObjectException while adding partition.", e);
         } catch (AlreadyExistsException e) {
             throw new HCatException(
-                    "AlreadyExistsException while adding partition.", e);
+                "AlreadyExistsException while adding partition.", e);
         } catch (MetaException e) {
             throw new HCatException("MetaException while adding partition.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while adding partition.", e);
+                "TException while adding partition.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException("The table " + partInfo.getTableName()
-                    + " is could not be found.", e);
+                + " is could not be found.", e);
         }
     }
 
     @Override
     public void dropPartition(String dbName, String tableName,
-            Map<String, String> partitionSpec, boolean ifExists)
-            throws HCatException, ConnectionFailureException {
+                              Map<String, String> partitionSpec, boolean ifExists)
+        throws HCatException, ConnectionFailureException {
         try {
             List<String> ptnValues = new ArrayList<String>();
             ptnValues.addAll(partitionSpec.values());
             hmsClient.dropPartition(checkDB(dbName), tableName, ptnValues,
-                    ifExists);
+                ifExists);
         } catch (NoSuchObjectException e) {
             if (!ifExists) {
                 throw new HCatException(
-                        "NoSuchObjectException while dropping partition.", e);
+                    "NoSuchObjectException while dropping partition.", e);
             }
         } catch (MetaException e) {
             throw new HCatException("MetaException while dropping partition.",
-                    e);
+                e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while dropping partition.", e);
+                "TException while dropping partition.", e);
         }
     }
 
     @Override
     public List<HCatPartition> listPartitionsByFilter(String dbName,
-            String tblName, String filter) throws HCatException,
-            ConnectionFailureException {
+                                                      String tblName, String filter) throws HCatException,
+        ConnectionFailureException {
         List<HCatPartition> hcatPtns = new ArrayList<HCatPartition>();
         try {
             List<Partition> hivePtns = hmsClient.listPartitionsByFilter(
-                    checkDB(dbName), tblName, filter, (short) -1);
+                checkDB(dbName), tblName, filter, (short) -1);
             for (Partition ptn : hivePtns) {
                 hcatPtns.add(new HCatPartition(ptn));
             }
         } catch (MetaException e) {
             throw new HCatException("MetaException while fetching partitions.",
-                    e);
+                e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while fetching partitions.", e);
+                "NoSuchObjectException while fetching partitions.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while fetching partitions.", e);
+                "TException while fetching partitions.", e);
         }
         return hcatPtns;
     }
 
     @Override
     public void markPartitionForEvent(String dbName, String tblName,
-            Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException, ConnectionFailureException {
+                                      Map<String, String> partKVs, PartitionEventType eventType)
+        throws HCatException, ConnectionFailureException {
         try {
             hmsClient.markPartitionForEvent(checkDB(dbName), tblName, partKVs,
-                    eventType);
+                eventType);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while marking partition for event.", e);
+                "MetaException while marking partition for event.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while marking partition for event.",
-                    e);
+                "NoSuchObjectException while marking partition for event.",
+                e);
         } catch (UnknownTableException e) {
             throw new HCatException(
-                    "UnknownTableException while marking partition for event.",
-                    e);
+                "UnknownTableException while marking partition for event.",
+                e);
         } catch (UnknownDBException e) {
             throw new HCatException(
-                    "UnknownDBException while marking partition for event.", e);
+                "UnknownDBException while marking partition for event.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while marking partition for event.", e);
+                "TException while marking partition for event.", e);
         } catch (InvalidPartitionException e) {
             throw new HCatException(
-                    "InvalidPartitionException while marking partition for event.",
-                    e);
+                "InvalidPartitionException while marking partition for event.",
+                e);
         } catch (UnknownPartitionException e) {
             throw new HCatException(
-                    "UnknownPartitionException while marking partition for event.",
-                    e);
+                "UnknownPartitionException while marking partition for event.",
+                e);
         }
     }
 
     @Override
     public boolean isPartitionMarkedForEvent(String dbName, String tblName,
-            Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException, ConnectionFailureException {
+                                             Map<String, String> partKVs, PartitionEventType eventType)
+        throws HCatException, ConnectionFailureException {
         boolean isMarked = false;
         try {
             isMarked = hmsClient.isPartitionMarkedForEvent(checkDB(dbName),
-                    tblName, partKVs, eventType);
+                tblName, partKVs, eventType);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while checking partition for event.", e);
+                "MetaException while checking partition for event.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException(
-                    "NoSuchObjectException while checking partition for event.",
-                    e);
+                "NoSuchObjectException while checking partition for event.",
+                e);
         } catch (UnknownTableException e) {
             throw new HCatException(
-                    "UnknownTableException while checking partition for event.",
-                    e);
+                "UnknownTableException while checking partition for event.",
+                e);
         } catch (UnknownDBException e) {
             throw new HCatException(
-                    "UnknownDBException while checking partition for event.", e);
+                "UnknownDBException while checking partition for event.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while checking partition for event.", e);
+                "TException while checking partition for event.", e);
         } catch (InvalidPartitionException e) {
             throw new HCatException(
-                    "InvalidPartitionException while checking partition for event.",
-                    e);
+                "InvalidPartitionException while checking partition for event.",
+                e);
         } catch (UnknownPartitionException e) {
             throw new HCatException(
-                    "UnknownPartitionException while checking partition for event.",
-                    e);
+                "UnknownPartitionException while checking partition for event.",
+                e);
         }
         return isMarked;
     }
 
     @Override
     public String getDelegationToken(String owner,
-            String renewerKerberosPrincipalName) throws HCatException,
-            ConnectionFailureException {
+                                     String renewerKerberosPrincipalName) throws HCatException,
+        ConnectionFailureException {
         String token = null;
         try {
             token = hmsClient.getDelegationToken(owner,
-                    renewerKerberosPrincipalName);
+                renewerKerberosPrincipalName);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while getting delegation token.", e);
+                "MetaException while getting delegation token.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while getting delegation token.", e);
+                "TException while getting delegation token.", e);
         }
 
         return token;
@@ -504,16 +504,16 @@ public class HCatClientHMSImpl extends HCatClient {
 
     @Override
     public long renewDelegationToken(String tokenStrForm) throws HCatException,
-            ConnectionFailureException {
+        ConnectionFailureException {
         long time = 0;
         try {
             time = hmsClient.renewDelegationToken(tokenStrForm);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while renewing delegation token.", e);
+                "MetaException while renewing delegation token.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while renewing delegation token.", e);
+                "TException while renewing delegation token.", e);
         }
 
         return time;
@@ -521,15 +521,15 @@ public class HCatClientHMSImpl extends HCatClient {
 
     @Override
     public void cancelDelegationToken(String tokenStrForm)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         try {
             hmsClient.cancelDelegationToken(tokenStrForm);
         } catch (MetaException e) {
             throw new HCatException(
-                    "MetaException while canceling delegation token.", e);
+                "MetaException while canceling delegation token.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while canceling delegation token.", e);
+                "TException while canceling delegation token.", e);
         }
     }
 
@@ -542,38 +542,38 @@ public class HCatClientHMSImpl extends HCatClient {
      */
     @Override
     void initialize(Configuration conf) throws HCatException,
-            ConnectionFailureException {
+        ConnectionFailureException {
         this.config = conf;
         try {
             hiveConfig = HCatUtil.getHiveConf(config);
             hmsClient = HCatUtil.getHiveClient(hiveConfig);
         } catch (MetaException exp) {
             throw new HCatException("MetaException while creating HMS client",
-                    exp);
+                exp);
         } catch (IOException exp) {
             throw new HCatException("IOException while creating HMS client",
-                    exp);
+                exp);
         }
 
     }
 
     private Table getHiveTableLike(String dbName, String existingTblName,
-            String newTableName, boolean isExternal, String location)
-            throws HCatException, ConnectionFailureException {
+                                   String newTableName, boolean isExternal, String location)
+        throws HCatException, ConnectionFailureException {
         Table oldtbl = null;
         Table newTable = null;
         try {
             oldtbl = hmsClient.getTable(checkDB(dbName), existingTblName);
         } catch (MetaException e1) {
             throw new HCatException(
-                    "MetaException while retrieving existing table.", e1);
+                "MetaException while retrieving existing table.", e1);
         } catch (TException e1) {
             throw new ConnectionFailureException(
-                    "TException while retrieving existing table.", e1);
+                "TException while retrieving existing table.", e1);
         } catch (NoSuchObjectException e1) {
             throw new HCatException(
-                    "NoSuchObjectException while retrieving existing table.",
-                    e1);
+                "NoSuchObjectException while retrieving existing table.",
+                e1);
         }
         if (oldtbl != null) {
             newTable = new Table();
@@ -626,7 +626,7 @@ public class HCatClientHMSImpl extends HCatClient {
      */
     @Override
     public int addPartitions(List<HCatAddPartitionDesc> partInfoList)
-            throws HCatException, ConnectionFailureException {
+        throws HCatException, ConnectionFailureException {
         int numPartitions = -1;
         if ((partInfoList == null) || (partInfoList.size() == 0)) {
             throw new HCatException("The partition list is null or empty.");
@@ -635,7 +635,7 @@ public class HCatClientHMSImpl extends HCatClient {
         Table tbl = null;
         try {
             tbl = hmsClient.getTable(partInfoList.get(0).getDatabaseName(),
-                    partInfoList.get(0).getTableName());
+                partInfoList.get(0).getTableName());
             ArrayList<Partition> ptnList = new ArrayList<Partition>();
             for (HCatAddPartitionDesc desc : partInfoList) {
                 ptnList.add(desc.toHivePartition(tbl));
@@ -643,19 +643,19 @@ public class HCatClientHMSImpl extends HCatClient {
             numPartitions = hmsClient.add_partitions(ptnList);
         } catch (InvalidObjectException e) {
             throw new HCatException(
-                    "InvalidObjectException while adding partition.", e);
+                "InvalidObjectException while adding partition.", e);
         } catch (AlreadyExistsException e) {
             throw new HCatException(
-                    "AlreadyExistsException while adding partition.", e);
+                "AlreadyExistsException while adding partition.", e);
         } catch (MetaException e) {
             throw new HCatException("MetaException while adding partition.", e);
         } catch (TException e) {
             throw new ConnectionFailureException(
-                    "TException while adding partition.", e);
+                "TException while adding partition.", e);
         } catch (NoSuchObjectException e) {
             throw new HCatException("The table "
-                    + partInfoList.get(0).getTableName()
-                    + " is could not be found.", e);
+                + partInfoList.get(0).getTableName()
+                + " is could not be found.", e);
         }
         return numPartitions;
     }

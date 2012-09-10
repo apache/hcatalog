@@ -42,8 +42,8 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
 
     static {
-      NUMBER_FORMAT.setMinimumIntegerDigits(5);
-      NUMBER_FORMAT.setGroupingUsed(false);
+        NUMBER_FORMAT.setMinimumIntegerDigits(5);
+        NUMBER_FORMAT.setGroupingUsed(false);
     }
 
     public DefaultOutputFormatContainer(org.apache.hadoop.mapred.OutputFormat<WritableComparable<?>, Writable> of) {
@@ -52,7 +52,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
 
     static synchronized String getOutputName(int partition) {
         return "part-" + NUMBER_FORMAT.format(partition);
-      }
+    }
 
     /**
      * Get the record writer for the job. Uses the storagehandler's OutputFormat
@@ -66,7 +66,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         String name = getOutputName(context.getTaskAttemptID().getTaskID().getId());
         return new DefaultRecordWriterContainer(context,
-                getBaseOutputFormat().getRecordWriter(null, new JobConf(context.getConfiguration()), name, InternalUtil.createReporter(context)));
+            getBaseOutputFormat().getRecordWriter(null, new JobConf(context.getConfiguration()), name, InternalUtil.createReporter(context)));
     }
 
 
@@ -80,7 +80,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
      */
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         return new DefaultOutputCommitterContainer(context, new JobConf(context.getConfiguration()).getOutputCommitter());
     }
 
@@ -93,7 +93,7 @@ class DefaultOutputFormatContainer extends OutputFormatContainer {
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
         org.apache.hadoop.mapred.OutputFormat<? super WritableComparable<?>, ? super Writable> outputFormat = getBaseOutputFormat();
         JobConf jobConf = new JobConf(context.getConfiguration());
-        outputFormat.checkOutputSpecs(null,jobConf);
+        outputFormat.checkOutputSpecs(null, jobConf);
         HCatUtil.copyConf(jobConf, context.getConfiguration());
     }
 

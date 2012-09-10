@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hdfs.web.AuthFilter;
@@ -116,31 +117,30 @@ public class Main {
 
     private void checkEnv() {
         checkCurrentDirPermissions();
-        
+
     }
 
     private void checkCurrentDirPermissions() {
         //org.apache.commons.exec.DefaultExecutor requires
         // that current directory exists
         File pwd = new File(".");
-        if(!pwd.exists()){
+        if (!pwd.exists()) {
             String msg = "Server failed to start: templeton: Current working directory '.' does not exist!";
             System.err.println(msg);
-            LOG.fatal( msg);
+            LOG.fatal(msg);
             System.exit(1);
         }
     }
 
     public Server runServer(int port)
-        throws Exception
-    {
+        throws Exception {
 
         //Authenticate using keytab
-        if(UserGroupInformation.isSecurityEnabled()){
+        if (UserGroupInformation.isSecurityEnabled()) {
             UserGroupInformation.loginUserFromKeytab(conf.kerberosPrincipal(),
-                    conf.kerberosKeytab());
+                conf.kerberosKeytab());
         }
-        
+
         // Create the Jetty server
         Server server = new Server(port);
         ServletContextHandler root = new ServletContextHandler(server, "/");
@@ -166,11 +166,11 @@ public class Main {
         FilterHolder authFilter = new FilterHolder(AuthFilter.class);
         if (UserGroupInformation.isSecurityEnabled()) {
             authFilter.setInitParameter("dfs.web.authentication.signature.secret",
-                                        conf.kerberosSecret());
+                conf.kerberosSecret());
             authFilter.setInitParameter("dfs.web.authentication.kerberos.principal",
-                                        conf.kerberosPrincipal());
+                conf.kerberosPrincipal());
             authFilter.setInitParameter("dfs.web.authentication.kerberos.keytab",
-                                        conf.kerberosKeytab());
+                conf.kerberosKeytab());
         }
         return authFilter;
     }
@@ -181,7 +181,7 @@ public class Main {
         HashMap<String, Object> props = new HashMap<String, Object>();
         props.put("com.sun.jersey.api.json.POJOMappingFeature", "true");
         props.put("com.sun.jersey.config.property.WadlGeneratorConfig",
-                  "org.apache.hcatalog.templeton.WadlConfig");
+            "org.apache.hcatalog.templeton.WadlConfig");
         rc.setPropertiesAndFeatures(props);
 
         return rc;

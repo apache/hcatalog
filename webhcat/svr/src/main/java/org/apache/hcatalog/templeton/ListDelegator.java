@@ -20,6 +20,7 @@ package org.apache.hcatalog.templeton;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TempletonJobTracker;
@@ -35,14 +36,13 @@ public class ListDelegator extends TempletonDelegator {
     }
 
     public List<String> run(String user)
-        throws NotAuthorizedException, BadParam, IOException
-    {
+        throws NotAuthorizedException, BadParam, IOException {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         TempletonJobTracker tracker = null;
         try {
             tracker = new TempletonJobTracker(ugi,
-                                              JobTracker.getAddress(appConf),
-                                              appConf);
+                JobTracker.getAddress(appConf),
+                appConf);
 
             ArrayList<String> ids = new ArrayList<String>();
 

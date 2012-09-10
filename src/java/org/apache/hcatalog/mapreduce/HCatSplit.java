@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 /** The HCatSplit wrapper around the InputSplit returned by the underlying InputFormat */
 public class HCatSplit extends InputSplit
-  implements Writable,org.apache.hadoop.mapred.InputSplit {
+    implements Writable, org.apache.hadoop.mapred.InputSplit {
 
     private static final Logger LOG = LoggerFactory.getLogger(HCatSplit.class);
     /** The partition info for the split. */
@@ -61,13 +61,13 @@ public class HCatSplit extends InputSplit
      * @param tableSchema the table level schema
      */
     public HCatSplit(PartInfo partitionInfo,
-        org.apache.hadoop.mapred.InputSplit baseMapRedSplit,
-        HCatSchema tableSchema) {
+                     org.apache.hadoop.mapred.InputSplit baseMapRedSplit,
+                     HCatSchema tableSchema) {
 
-      this.partitionInfo = partitionInfo;
-      // dataSchema can be obtained from partitionInfo.getPartitionSchema()
-      this.baseMapRedSplit = baseMapRedSplit;
-      this.tableSchema = tableSchema;
+        this.partitionInfo = partitionInfo;
+        // dataSchema can be obtained from partitionInfo.getPartitionSchema()
+        this.baseMapRedSplit = baseMapRedSplit;
+        this.tableSchema = tableSchema;
     }
 
     /**
@@ -99,7 +99,7 @@ public class HCatSplit extends InputSplit
      * @return the table schema
      */
     public HCatSchema getTableSchema() {
-      return this.tableSchema;
+        return this.tableSchema;
     }
 
     /* (non-Javadoc)
@@ -108,9 +108,9 @@ public class HCatSplit extends InputSplit
     @Override
     public long getLength() {
         try {
-          return baseMapRedSplit.getLength();
+            return baseMapRedSplit.getLength();
         } catch (IOException e) {
-          LOG.warn("Exception in HCatSplit",e);
+            LOG.warn("Exception in HCatSplit", e);
         }
         return 0; // we errored
     }
@@ -121,9 +121,9 @@ public class HCatSplit extends InputSplit
     @Override
     public String[] getLocations() {
         try {
-          return baseMapRedSplit.getLocations();
+            return baseMapRedSplit.getLocations();
         } catch (IOException e) {
-            LOG.warn("Exception in HCatSplit",e);
+            LOG.warn("Exception in HCatSplit", e);
         }
         return new String[0]; // we errored
     }
@@ -139,23 +139,23 @@ public class HCatSplit extends InputSplit
 
         String baseSplitClassName = WritableUtils.readString(input);
         org.apache.hadoop.mapred.InputSplit split;
-        try{
+        try {
             Class<? extends org.apache.hadoop.mapred.InputSplit> splitClass =
                 (Class<? extends org.apache.hadoop.mapred.InputSplit>) Class.forName(baseSplitClassName);
 
             //Class.forName().newInstance() does not work if the underlying
             //InputSplit has package visibility
             Constructor<? extends org.apache.hadoop.mapred.InputSplit>
-              constructor =
+                constructor =
                 splitClass.getDeclaredConstructor(new Class[]{});
             constructor.setAccessible(true);
 
             split = constructor.newInstance();
             // read baseSplit from input
-            ((Writable)split).readFields(input);
+            ((Writable) split).readFields(input);
             this.baseMapRedSplit = split;
-        }catch(Exception e){
-            throw new IOException ("Exception from " + baseSplitClassName, e);
+        } catch (Exception e) {
+            throw new IOException("Exception from " + baseSplitClassName, e);
         }
 
         String tableSchemaString = WritableUtils.readString(input);
@@ -173,7 +173,7 @@ public class HCatSplit extends InputSplit
         WritableUtils.writeString(output, partitionInfoString);
 
         WritableUtils.writeString(output, baseMapRedSplit.getClass().getName());
-        Writable baseSplitWritable = (Writable)baseMapRedSplit;
+        Writable baseSplitWritable = (Writable) baseMapRedSplit;
         //write  baseSplit into output
         baseSplitWritable.write(output);
 

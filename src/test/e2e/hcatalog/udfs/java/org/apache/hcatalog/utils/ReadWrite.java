@@ -43,7 +43,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce
  * program to test that hcat hands the right data to the map reduce program
- * 
+ *
  * Usage: hadoop jar sumnumbers <serveruri> <output dir> <-libjars hive-hcat
  * jar> The <tab|ctrla> argument controls the output delimiter The hcat jar
  * location should be specified as file://<full path to jar>
@@ -51,7 +51,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
 public class ReadWrite extends Configured implements Tool {
 
     public static class Map extends
-            Mapper<WritableComparable, HCatRecord, Text, HCatRecord> {
+        Mapper<WritableComparable, HCatRecord, Text, HCatRecord> {
 
         String name;
         int age;
@@ -59,10 +59,10 @@ public class ReadWrite extends Configured implements Tool {
 
         @Override
         protected void map(
-                WritableComparable key,
-                HCatRecord value,
-                org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, Text, HCatRecord>.Context context)
-                throws IOException, InterruptedException {
+            WritableComparable key,
+            HCatRecord value,
+            org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, Text, HCatRecord>.Context context)
+            throws IOException, InterruptedException {
             name = (String) value.get(0);
             age = (Integer) value.get(1);
             gpa = (Double) value.get(2);
@@ -81,12 +81,12 @@ public class ReadWrite extends Configured implements Tool {
         String dbName = null;
 
         String principalID = System
-                .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+            .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
         if (principalID != null)
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "ReadWrite");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, null));
+            inputTableName, null));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);
@@ -95,10 +95,10 @@ public class ReadWrite extends Configured implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null));
+            outputTableName, null));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
-                + s);
+            + s);
         HCatOutputFormat.setSchema(job, s);
         job.setOutputFormatClass(HCatOutputFormat.class);
         return (job.waitForCompletion(true) ? 0 : 1);

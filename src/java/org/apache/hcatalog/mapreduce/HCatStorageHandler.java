@@ -34,6 +34,7 @@ import org.apache.hadoop.mapred.OutputFormat;
 public abstract class HCatStorageHandler implements HiveStorageHandler {
 
     //TODO move this to HiveStorageHandler
+
     /**
      * This method is called to allow the StorageHandlers the chance
      * to populate the JobContext.getConfiguration() with properties that
@@ -53,6 +54,7 @@ public abstract class HCatStorageHandler implements HiveStorageHandler {
     public abstract void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties);
 
     //TODO move this to HiveStorageHandler
+
     /**
      * This method is called to allow the StorageHandlers the chance
      * to populate the JobContext.getConfiguration() with properties that
@@ -72,46 +74,46 @@ public abstract class HCatStorageHandler implements HiveStorageHandler {
     public abstract void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties);
 
     /**
-     * 
-     * 
+     *
+     *
      * @return authorization provider
      * @throws HiveException
      */
     public abstract HiveAuthorizationProvider getAuthorizationProvider()
-            throws HiveException;
-    
+        throws HiveException;
+
     /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.hadoop.hive.ql.metadata.HiveStorageHandler#
-     * configureTableJobProperties(org.apache.hadoop.hive.ql.plan.TableDesc,
-     * java.util.Map)
-     */
+    * (non-Javadoc)
+    *
+    * @see org.apache.hadoop.hive.ql.metadata.HiveStorageHandler#
+    * configureTableJobProperties(org.apache.hadoop.hive.ql.plan.TableDesc,
+    * java.util.Map)
+    */
     @Override
     @Deprecated
     public final void configureTableJobProperties(TableDesc tableDesc,
-            Map<String, String> jobProperties) {
+                                                  Map<String, String> jobProperties) {
     }
-    
+
     /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.hadoop.conf.Configurable#getConf()
-     */
+    * (non-Javadoc)
+    *
+    * @see org.apache.hadoop.conf.Configurable#getConf()
+    */
     @Override
     public abstract Configuration getConf();
-    
+
     /*
-     * (non-Javadoc)
-     * 
-     * @see org.apache.hadoop.conf.Configurable#setConf(org.apache.hadoop.conf.
-     * Configuration)
-     */
+    * (non-Javadoc)
+    *
+    * @see org.apache.hadoop.conf.Configurable#setConf(org.apache.hadoop.conf.
+    * Configuration)
+    */
     @Override
     public abstract void setConf(Configuration conf);
 
     OutputFormatContainer getOutputFormatContainer(OutputFormat outputFormat) {
         return new DefaultOutputFormatContainer(outputFormat);
     }
-    
+
 }

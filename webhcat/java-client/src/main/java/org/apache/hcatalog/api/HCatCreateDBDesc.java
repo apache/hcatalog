@@ -47,7 +47,7 @@ public class HCatCreateDBDesc {
      *
      * @return the if not exists
      */
-    public boolean getIfNotExists(){
+    public boolean getIfNotExists() {
         return this.ifNotExits;
     }
 
@@ -78,19 +78,19 @@ public class HCatCreateDBDesc {
         return this.dbName;
     }
 
-    private HCatCreateDBDesc(String dbName){
-       this.dbName = dbName;
+    private HCatCreateDBDesc(String dbName) {
+        this.dbName = dbName;
     }
 
     @Override
     public String toString() {
         return "HCatCreateDBDesc ["
-                + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
-                + (locationUri != null ? "location=" + locationUri + ", "
-                        : "location=null")
-                + (comment != null ? "comment=" + comment + ", " : "comment=null")
-                + (dbProperties != null ? "dbProperties=" + dbProperties + ", "
-                        : "dbProperties=null") + "ifNotExits=" + ifNotExits + "]";
+            + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
+            + (locationUri != null ? "location=" + locationUri + ", "
+            : "location=null")
+            + (comment != null ? "comment=" + comment + ", " : "comment=null")
+            + (dbProperties != null ? "dbProperties=" + dbProperties + ", "
+            : "dbProperties=null") + "ifNotExits=" + ifNotExits + "]";
     }
 
     /**
@@ -99,11 +99,11 @@ public class HCatCreateDBDesc {
      * @param dbName the db name
      * @return the builder
      */
-    public static Builder create(String dbName){
+    public static Builder create(String dbName) {
         return new Builder(dbName);
     }
 
-    Database toHiveDb(){
+    Database toHiveDb() {
         Database hiveDB = new Database();
         hiveDB.setDescription(this.comment);
         hiveDB.setLocationUri(this.locationUri);
@@ -120,7 +120,7 @@ public class HCatCreateDBDesc {
         private String dbName;
         private boolean ifNotExists = false;
 
-        private Builder(String dbName){
+        private Builder(String dbName) {
             this.dbName = dbName;
         }
 
@@ -130,7 +130,7 @@ public class HCatCreateDBDesc {
          * @param value the location of the database.
          * @return the builder
          */
-        public Builder location(String value){
+        public Builder location(String value) {
             this.innerLoc = value;
             return this;
         }
@@ -141,7 +141,7 @@ public class HCatCreateDBDesc {
          * @param value comments.
          * @return the builder
          */
-        public Builder comment(String value){
+        public Builder comment(String value) {
             this.innerComment = value;
             return this;
         }
@@ -152,7 +152,7 @@ public class HCatCreateDBDesc {
          * database with the same name already exists.
          * @return the builder
          */
-        public Builder ifNotExists(boolean ifNotExists){
+        public Builder ifNotExists(boolean ifNotExists) {
             this.ifNotExists = ifNotExists;
             return this;
         }
@@ -176,7 +176,7 @@ public class HCatCreateDBDesc {
          * @throws HCatException
          */
         public HCatCreateDBDesc build() throws HCatException {
-            if(this.dbName == null){
+            if (this.dbName == null) {
                 throw new HCatException("Database name cannot be null.");
             }
             HCatCreateDBDesc desc = new HCatCreateDBDesc(this.dbName);

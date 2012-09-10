@@ -53,36 +53,36 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
 
     @Override
     public RecordWriter<WritableComparable<?>, Put> getRecordWriter(FileSystem ignored,
-            JobConf job, String name, Progressable progress)
-            throws IOException {
+                                                                    JobConf job, String name, Progressable progress)
+        throws IOException {
         long version = HBaseRevisionManagerUtil.getOutputRevision(job);
         return new HBaseDirectRecordWriter(outputFormat.getRecordWriter(ignored, job, name,
-                progress), version);
+            progress), version);
     }
 
     @Override
     public void checkOutputSpecs(FileSystem ignored, JobConf job)
-            throws IOException {
+        throws IOException {
         outputFormat.checkOutputSpecs(ignored, job);
         HBaseUtil.addHBaseDelegationToken(job);
     }
 
     private static class HBaseDirectRecordWriter implements
-            RecordWriter<WritableComparable<?>, Put> {
+        RecordWriter<WritableComparable<?>, Put> {
 
         private RecordWriter<WritableComparable<?>, Put> baseWriter;
         private final Long outputVersion;
 
         public HBaseDirectRecordWriter(
-                RecordWriter<WritableComparable<?>, Put> baseWriter,
-                Long outputVersion) {
+            RecordWriter<WritableComparable<?>, Put> baseWriter,
+            Long outputVersion) {
             this.baseWriter = baseWriter;
             this.outputVersion = outputVersion;
         }
 
         @Override
         public void write(WritableComparable<?> key, Put value)
-                throws IOException {
+            throws IOException {
             Put put = value;
             if (outputVersion != null) {
                 put = new Put(value.getRow(), outputVersion.longValue());
@@ -109,17 +109,17 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
 
         @Override
         public void abortTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
         }
 
         @Override
         public void commitTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
         }
 
         @Override
         public boolean needsTaskCommit(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
             return false;
         }
 
@@ -129,19 +129,19 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
 
         @Override
         public void setupTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
         }
 
         @Override
         public void abortJob(JobContext jobContext, int status)
-                throws IOException {
+            throws IOException {
             super.abortJob(jobContext, status);
             RevisionManager rm = null;
             try {
                 rm = HBaseRevisionManagerUtil
-                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                    .getOpenedRevisionManager(jobContext.getConfiguration());
                 Transaction writeTransaction = HBaseRevisionManagerUtil
-                        .getWriteTransaction(jobContext.getConfiguration());
+                    .getWriteTransaction(jobContext.getConfiguration());
                 rm.abortWriteTransaction(writeTransaction);
             } finally {
                 if (rm != null)
@@ -154,9 +154,9 @@ class HBaseDirectOutputFormat extends HBaseBaseOutputFormat {
             RevisionManager rm = null;
             try {
                 rm = HBaseRevisionManagerUtil
-                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                    .getOpenedRevisionManager(jobContext.getConfiguration());
                 rm.commitWriteTransaction(HBaseRevisionManagerUtil.getWriteTransaction(jobContext
-                        .getConfiguration()));
+                    .getConfiguration()));
             } finally {
                 if (rm != null)
                     rm.close();

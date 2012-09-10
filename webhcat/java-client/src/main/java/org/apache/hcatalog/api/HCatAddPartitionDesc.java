@@ -42,14 +42,14 @@ public class HCatAddPartitionDesc {
     private String tableName;
     private String dbName;
     private String location;
-    private Map<String,String> partSpec;
+    private Map<String, String> partSpec;
 
-     private HCatAddPartitionDesc(String dbName, String tbl, String loc, Map<String,String> spec){
-         this.dbName = dbName;
-         this.tableName = tbl;
-         this.location = loc;
-         this.partSpec = spec;
-     }
+    private HCatAddPartitionDesc(String dbName, String tbl, String loc, Map<String, String> spec) {
+        this.dbName = dbName;
+        this.tableName = tbl;
+        this.location = loc;
+        this.partSpec = spec;
+    }
 
     /**
      * Gets the location.
@@ -88,97 +88,97 @@ public class HCatAddPartitionDesc {
         return this.dbName;
     }
 
-     @Override
+    @Override
     public String toString() {
         return "HCatAddPartitionDesc ["
-                + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
-                + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
-                + (location != null ? "location=" + location + ", " : "location=null")
-                + (partSpec != null ? "partSpec=" + partSpec : "partSpec=null") + "]";
+            + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
+            + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
+            + (location != null ? "location=" + location + ", " : "location=null")
+            + (partSpec != null ? "partSpec=" + partSpec : "partSpec=null") + "]";
     }
 
     /**
-      * Creates the builder for specifying attributes.
-      *
-      * @param dbName the db name
-      * @param tableName the table name
-      * @param location the location
-      * @param partSpec the part spec
-      * @return the builder
-      * @throws HCatException
-      */
-     public static Builder create(String dbName, String tableName, String location,
-             Map<String,String> partSpec) throws HCatException {
-         return new Builder(dbName, tableName, location, partSpec);
-     }
+     * Creates the builder for specifying attributes.
+     *
+     * @param dbName the db name
+     * @param tableName the table name
+     * @param location the location
+     * @param partSpec the part spec
+     * @return the builder
+     * @throws HCatException
+     */
+    public static Builder create(String dbName, String tableName, String location,
+                                 Map<String, String> partSpec) throws HCatException {
+        return new Builder(dbName, tableName, location, partSpec);
+    }
 
-     Partition toHivePartition(Table hiveTable) throws HCatException{
-         Partition hivePtn = new Partition();
-         hivePtn.setDbName(this.dbName);
-         hivePtn.setTableName(this.tableName);
+    Partition toHivePartition(Table hiveTable) throws HCatException {
+        Partition hivePtn = new Partition();
+        hivePtn.setDbName(this.dbName);
+        hivePtn.setTableName(this.tableName);
 
-         List<String> pvals = new ArrayList<String>();
-         for (FieldSchema field : hiveTable.getPartitionKeys()) {
-           String val = partSpec.get(field.getName());
-           if (val == null || val.length() == 0) {
-               throw new HCatException("create partition: Value for key "
-                   + field.getName() + " is null or empty");
-             }
-           pvals.add(val);
-         }
+        List<String> pvals = new ArrayList<String>();
+        for (FieldSchema field : hiveTable.getPartitionKeys()) {
+            String val = partSpec.get(field.getName());
+            if (val == null || val.length() == 0) {
+                throw new HCatException("create partition: Value for key "
+                    + field.getName() + " is null or empty");
+            }
+            pvals.add(val);
+        }
 
-         hivePtn.setValues(pvals);
-         StorageDescriptor sd = new StorageDescriptor(hiveTable.getSd());
-         hivePtn.setSd(sd);
-         hivePtn.setParameters(hiveTable.getParameters());
-         if (this.location != null) {
-             hivePtn.getSd().setLocation(this.location);
-         } else {
-             String partName;
+        hivePtn.setValues(pvals);
+        StorageDescriptor sd = new StorageDescriptor(hiveTable.getSd());
+        hivePtn.setSd(sd);
+        hivePtn.setParameters(hiveTable.getParameters());
+        if (this.location != null) {
+            hivePtn.getSd().setLocation(this.location);
+        } else {
+            String partName;
             try {
                 partName = Warehouse.makePartName(
-                         hiveTable.getPartitionKeys(), pvals);
+                    hiveTable.getPartitionKeys(), pvals);
                 LOG.info("Setting partition location to :" + partName);
             } catch (MetaException e) {
                 throw new HCatException("Exception while creating partition name.", e);
             }
-             Path partPath = new Path(hiveTable.getSd().getLocation(), partName);
-             hivePtn.getSd().setLocation(partPath.toString());
-         }
-         hivePtn.setCreateTime((int) (System.currentTimeMillis() / 1000));
-         hivePtn.setLastAccessTimeIsSet(false);
-         return hivePtn;
-     }
+            Path partPath = new Path(hiveTable.getSd().getLocation(), partName);
+            hivePtn.getSd().setLocation(partPath.toString());
+        }
+        hivePtn.setCreateTime((int) (System.currentTimeMillis() / 1000));
+        hivePtn.setLastAccessTimeIsSet(false);
+        return hivePtn;
+    }
 
-     public static class Builder {
+    public static class Builder {
 
-         private String tableName;
-         private String location;
-         private Map<String,String> values;
-         private String dbName;
+        private String tableName;
+        private String location;
+        private Map<String, String> values;
+        private String dbName;
 
-         private Builder(String dbName, String tableName, String location, Map<String,String> values){
-             this.dbName = dbName;
-             this.tableName = tableName;
-             this.location = location;
-             this.values = values;
-         }
+        private Builder(String dbName, String tableName, String location, Map<String, String> values) {
+            this.dbName = dbName;
+            this.tableName = tableName;
+            this.location = location;
+            this.values = values;
+        }
 
-         /**
-          * Builds the HCatAddPartitionDesc.
-          *
-          * @return the h cat add partition desc
-          * @throws HCatException
-          */
-         public HCatAddPartitionDesc build() throws HCatException {
-             if(this.dbName == null){
-                 this.dbName = MetaStoreUtils.DEFAULT_DATABASE_NAME;
-             }
-             HCatAddPartitionDesc desc = new HCatAddPartitionDesc(
-                     this.dbName, this.tableName, this.location,
-                     this.values);
-             return desc;
-         }
-     }
+        /**
+         * Builds the HCatAddPartitionDesc.
+         *
+         * @return the h cat add partition desc
+         * @throws HCatException
+         */
+        public HCatAddPartitionDesc build() throws HCatException {
+            if (this.dbName == null) {
+                this.dbName = MetaStoreUtils.DEFAULT_DATABASE_NAME;
+            }
+            HCatAddPartitionDesc desc = new HCatAddPartitionDesc(
+                this.dbName, this.tableName, this.location,
+                this.values);
+            return desc;
+        }
+    }
 
 }

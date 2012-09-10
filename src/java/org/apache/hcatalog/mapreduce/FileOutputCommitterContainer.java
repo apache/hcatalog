@@ -87,34 +87,34 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      * @throws IOException
      */
     public FileOutputCommitterContainer(JobContext context,
-                                                          org.apache.hadoop.mapred.OutputCommitter baseCommitter) throws IOException {
+                                        org.apache.hadoop.mapred.OutputCommitter baseCommitter) throws IOException {
         super(context, baseCommitter);
         jobInfo = HCatOutputFormat.getJobInfo(context);
         dynamicPartitioningUsed = jobInfo.isDynamicPartitioningUsed();
 
         this.partitionsDiscovered = !dynamicPartitioningUsed;
-        cachedStorageHandler = HCatUtil.getStorageHandler(context.getConfiguration(),jobInfo.getTableInfo().getStorerInfo());
+        cachedStorageHandler = HCatUtil.getStorageHandler(context.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
     }
 
     @Override
     public void abortTask(TaskAttemptContext context) throws IOException {
-        if (!dynamicPartitioningUsed){
+        if (!dynamicPartitioningUsed) {
             getBaseOutputCommitter().abortTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
 
     @Override
     public void commitTask(TaskAttemptContext context) throws IOException {
-        if (!dynamicPartitioningUsed){
+        if (!dynamicPartitioningUsed) {
             getBaseOutputCommitter().commitTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
 
     @Override
     public boolean needsTaskCommit(TaskAttemptContext context) throws IOException {
-        if (!dynamicPartitioningUsed){
+        if (!dynamicPartitioningUsed) {
             return getBaseOutputCommitter().needsTaskCommit(HCatMapRedUtil.createTaskAttemptContext(context));
-        }else{
+        } else {
             // called explicitly through FileRecordWriterContainer.close() if dynamic - return false by default
             return false;
         }
@@ -122,7 +122,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     @Override
     public void setupJob(JobContext context) throws IOException {
-        if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+        if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
             getBaseOutputCommitter().setupJob(HCatMapRedUtil.createJobContext(context));
         }
         // in dynamic usecase, called through FileRecordWriterContainer
@@ -130,7 +130,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     @Override
     public void setupTask(TaskAttemptContext context) throws IOException {
-        if (!dynamicPartitioningUsed){
+        if (!dynamicPartitioningUsed) {
             getBaseOutputCommitter().setupTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
@@ -138,16 +138,15 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void abortJob(JobContext jobContext, State state) throws IOException {
         org.apache.hadoop.mapred.JobContext
-                mapRedJobContext = HCatMapRedUtil.createJobContext(jobContext);
-        if (dynamicPartitioningUsed){
+            mapRedJobContext = HCatMapRedUtil.createJobContext(jobContext);
+        if (dynamicPartitioningUsed) {
             discoverPartitions(jobContext);
         }
 
-        if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+        if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
             getBaseOutputCommitter().abortJob(mapRedJobContext, state);
-        }
-        else if (dynamicPartitioningUsed){
-            for(JobContext currContext : contextDiscoveredByPath.values()){
+        } else if (dynamicPartitioningUsed) {
+            for (JobContext currContext : contextDiscoveredByPath.values()) {
                 try {
                     new JobConf(currContext.getConfiguration()).getOutputCommitter().abortJob(currContext, state);
                 } catch (Exception e) {
@@ -166,12 +165,12 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             // In the latter case the HCAT_KEY_TOKEN_SIGNATURE property in
             // the conf will not be set
             String tokenStrForm = client.getTokenStrForm();
-            if(tokenStrForm != null && jobContext.getConfiguration().get
-                    (HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+            if (tokenStrForm != null && jobContext.getConfiguration().get
+                (HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
                 client.cancelDelegationToken(tokenStrForm);
             }
-        } catch(Exception e) {
-            if( e instanceof HCatException ) {
+        } catch (Exception e) {
+            if (e instanceof HCatException) {
                 throw (HCatException) e;
             } else {
                 throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
@@ -182,10 +181,10 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
         Path src;
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
-        if (dynamicPartitioningUsed){
+        if (dynamicPartitioningUsed) {
             src = new Path(getPartitionRootLocation(jobInfo.getLocation(),
                 jobInfo.getTableInfo().getTable().getPartitionKeysSize()));
-        }else{
+        } else {
             src = new Path(jobInfo.getLocation());
         }
         FileSystem fs = src.getFileSystem(jobContext.getConfiguration());
@@ -195,31 +194,31 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     public static final String SUCCEEDED_FILE_NAME = "_SUCCESS";
     static final String SUCCESSFUL_JOB_OUTPUT_DIR_MARKER =
-            "mapreduce.fileoutputcommitter.marksuccessfuljobs";
+        "mapreduce.fileoutputcommitter.marksuccessfuljobs";
 
     private static boolean getOutputDirMarking(Configuration conf) {
         return conf.getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER,
-                false);
+            false);
     }
 
     @Override
     public void commitJob(JobContext jobContext) throws IOException {
-        if (dynamicPartitioningUsed){
+        if (dynamicPartitioningUsed) {
             discoverPartitions(jobContext);
         }
-        if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+        if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
             getBaseOutputCommitter().commitJob(HCatMapRedUtil.createJobContext(jobContext));
         }
         // create _SUCCESS FILE if so requested.
         OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(jobContext);
-        if(getOutputDirMarking(jobContext.getConfiguration())) {
+        if (getOutputDirMarking(jobContext.getConfiguration())) {
             Path outputPath = new Path(jobInfo.getLocation());
             if (outputPath != null) {
                 FileSystem fileSys = outputPath.getFileSystem(jobContext.getConfiguration());
                 // create a file in the folder to mark it
                 if (fileSys.exists(outputPath)) {
                     Path filePath = new Path(outputPath, SUCCEEDED_FILE_NAME);
-                    if(!fileSys.exists(filePath)) { // may have been created by baseCommitter.commitJob()
+                    if (!fileSys.exists(filePath)) { // may have been created by baseCommitter.commitJob()
                         fileSys.create(filePath).close();
                     }
                 }
@@ -231,7 +230,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void cleanupJob(JobContext context) throws IOException {
 
-        if (dynamicPartitioningUsed){
+        if (dynamicPartitioningUsed) {
             discoverPartitions(context);
         }
 
@@ -242,13 +241,12 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         Path tblPath = new Path(table.getTTable().getSd().getLocation());
         FileSystem fs = tblPath.getFileSystem(conf);
 
-        if( table.getPartitionKeys().size() == 0 ) {
+        if (table.getPartitionKeys().size() == 0) {
             //non partitioned table
-            if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
-               getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
-            }
-            else if (dynamicPartitioningUsed){
-                for(JobContext currContext : contextDiscoveredByPath.values()){
+            if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+                getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
+            } else if (dynamicPartitioningUsed) {
+                for (JobContext currContext : contextDiscoveredByPath.values()) {
                     try {
                         JobConf jobConf = new JobConf(currContext.getConfiguration());
                         jobConf.getOutputCommitter().cleanupJob(currContext);
@@ -285,35 +283,35 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             FsPermission perms = tblStat.getPermission();
 
             List<Partition> partitionsToAdd = new ArrayList<Partition>();
-            if (!dynamicPartitioningUsed){
+            if (!dynamicPartitioningUsed) {
                 partitionsToAdd.add(
-                        constructPartition(
-                                context,
-                                tblPath.toString(), jobInfo.getPartitionValues()
-                                ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
-                                ,table, fs
-                                ,grpName,perms));
-            }else{
-                for (Entry<String,Map<String,String>> entry : partitionsDiscoveredByPath.entrySet()){
+                    constructPartition(
+                        context,
+                        tblPath.toString(), jobInfo.getPartitionValues()
+                        , jobInfo.getOutputSchema(), getStorerParameterMap(storer)
+                        , table, fs
+                        , grpName, perms));
+            } else {
+                for (Entry<String, Map<String, String>> entry : partitionsDiscoveredByPath.entrySet()) {
                     partitionsToAdd.add(
-                            constructPartition(
-                                    context,
-                                    getPartitionRootLocation(entry.getKey(),entry.getValue().size()), entry.getValue()
-                                    ,jobInfo.getOutputSchema(), getStorerParameterMap(storer)
-                                    ,table, fs
-                                    ,grpName,perms));
+                        constructPartition(
+                            context,
+                            getPartitionRootLocation(entry.getKey(), entry.getValue().size()), entry.getValue()
+                            , jobInfo.getOutputSchema(), getStorerParameterMap(storer)
+                            , table, fs
+                            , grpName, perms));
                 }
             }
 
             //Publish the new partition(s)
-            if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())){
+            if (dynamicPartitioningUsed && harProcessor.isEnabled() && (!partitionsToAdd.isEmpty())) {
 
                 Path src = new Path(ptnRootLocation);
 
                 // check here for each dir we're copying out, to see if it already exists, error out if so
-                moveTaskOutputs(fs, src, src, tblPath,true);
+                moveTaskOutputs(fs, src, src, tblPath, true);
 
-                moveTaskOutputs(fs, src, src, tblPath,false);
+                moveTaskOutputs(fs, src, src, tblPath, false);
                 fs.delete(src, true);
 
 
@@ -326,18 +324,18 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 try {
                     client.add_partitions(partitionsToAdd);
                     partitionsAdded = partitionsToAdd;
-                } catch (Exception e){
+                } catch (Exception e) {
                     // There was an error adding partitions : rollback fs copy and rethrow
-                    for (Partition p : partitionsToAdd){
+                    for (Partition p : partitionsToAdd) {
                         Path ptnPath = new Path(harProcessor.getParentFSPath(new Path(p.getSd().getLocation())));
-                        if (fs.exists(ptnPath)){
-                            fs.delete(ptnPath,true);
+                        if (fs.exists(ptnPath)) {
+                            fs.delete(ptnPath, true);
                         }
                     }
                     throw e;
                 }
 
-            }else{
+            } else {
                 // no harProcessor, regular operation
 
                 // No duplicate partition publish case to worry about because we'll
@@ -346,37 +344,37 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 client.add_partitions(partitionsToAdd);
                 partitionsAdded = partitionsToAdd;
 
-                if (dynamicPartitioningUsed && (partitionsAdded.size()>0)){
+                if (dynamicPartitioningUsed && (partitionsAdded.size() > 0)) {
                     Path src = new Path(ptnRootLocation);
-                    moveTaskOutputs(fs, src, src, tblPath,false);
+                    moveTaskOutputs(fs, src, src, tblPath, false);
                     fs.delete(src, true);
                 }
 
             }
 
-            if(getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
+            if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
                 getBaseOutputCommitter().cleanupJob(HCatMapRedUtil.createJobContext(context));
             }
 
-            if(Security.getInstance().isSecurityEnabled()) {
+            if (Security.getInstance().isSecurityEnabled()) {
                 Security.getInstance().cancelToken(client, context);
             }
         } catch (Exception e) {
 
-            if( partitionsAdded.size() > 0 ) {
+            if (partitionsAdded.size() > 0) {
                 try {
                     //baseCommitter.cleanupJob failed, try to clean up the metastore
-                    for (Partition p : partitionsAdded){
+                    for (Partition p : partitionsAdded) {
                         client.dropPartition(tableInfo.getDatabaseName(),
-                                tableInfo.getTableName(), p.getValues());
+                            tableInfo.getTableName(), p.getValues());
                     }
-                } catch(Exception te) {
+                } catch (Exception te) {
                     //Keep cause as the original exception
                     throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
                 }
             }
 
-            if( e instanceof HCatException ) {
+            if (e instanceof HCatException) {
                 throw (HCatException) e;
             } else {
                 throw new HCatException(ErrorType.ERROR_PUBLISHING_PARTITION, e);
@@ -386,11 +384,11 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         }
     }
 
-    private String getPartitionRootLocation(String ptnLocn,int numPtnKeys) {
-        if (ptnRootLocation  == null){
+    private String getPartitionRootLocation(String ptnLocn, int numPtnKeys) {
+        if (ptnRootLocation == null) {
             // we only need to calculate it once, it'll be the same for other partitions in this job.
             Path ptnRoot = new Path(ptnLocn);
-            for (int i = 0; i < numPtnKeys; i++){
+            for (int i = 0; i < numPtnKeys; i++) {
 //          LOG.info("Getting parent of "+ptnRoot.getName());
                 ptnRoot = ptnRoot.getParent();
             }
@@ -416,11 +414,11 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      */
 
     private Partition constructPartition(
-            JobContext context,
-            String partLocnRoot, Map<String,String> partKVs,
-            HCatSchema outputSchema, Map<String, String> params,
-            Table table, FileSystem fs,
-            String grpName, FsPermission perms) throws IOException {
+        JobContext context,
+        String partLocnRoot, Map<String, String> partKVs,
+        HCatSchema outputSchema, Map<String, String> params,
+        Table table, FileSystem fs,
+        String grpName, FsPermission perms) throws IOException {
 
         Partition partition = new Partition();
         partition.setDbName(table.getDbName());
@@ -428,7 +426,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         partition.setSd(new StorageDescriptor(table.getTTable().getSd()));
 
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        for(HCatFieldSchema fieldSchema : outputSchema.getFields()) {
+        for (HCatFieldSchema fieldSchema : outputSchema.getFields()) {
             fields.add(HCatSchemaUtils.getFieldSchema(fieldSchema));
         }
 
@@ -450,16 +448,16 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         }
         // Apply the group and permissions to the leaf partition and files.
         applyGroupAndPerms(fs, partPath, perms, grpName, true);
-        if (dynamicPartitioningUsed){
-            String dynamicPartitionDestination = getFinalDynamicPartitionDestination(table,partKVs);
-            if (harProcessor.isEnabled()){
+        if (dynamicPartitioningUsed) {
+            String dynamicPartitionDestination = getFinalDynamicPartitionDestination(table, partKVs);
+            if (harProcessor.isEnabled()) {
                 harProcessor.exec(context, partition, partPath);
                 partition.getSd().setLocation(
-                        harProcessor.getProcessedLocation(new Path(dynamicPartitionDestination)));
-            }else{
+                    harProcessor.getProcessedLocation(new Path(dynamicPartitionDestination)));
+            } else {
                 partition.getSd().setLocation(dynamicPartitionDestination);
             }
-        }else{
+        } else {
             partition.getSd().setLocation(partPath.toString());
         }
 
@@ -467,8 +465,8 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     }
 
     private void applyGroupAndPerms(FileSystem fs, Path dir, FsPermission permission,
-            String group, boolean recursive)
-            throws IOException {
+                                    String group, boolean recursive)
+        throws IOException {
         fs.setPermission(dir, permission);
         try {
             fs.setOwner(dir, null, group);
@@ -491,11 +489,11 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         }
     }
 
-    private String getFinalDynamicPartitionDestination(Table table, Map<String,String> partKVs) {
+    private String getFinalDynamicPartitionDestination(Table table, Map<String, String> partKVs) {
         // file:///tmp/hcat_junit_warehouse/employee/_DYN0.7770480401313761/emp_country=IN/emp_state=KA  ->
         // file:///tmp/hcat_junit_warehouse/employee/emp_country=IN/emp_state=KA
         Path partPath = new Path(table.getTTable().getSd().getLocation());
-        for(FieldSchema partKey : table.getPartitionKeys()){
+        for (FieldSchema partKey : table.getPartitionKeys()) {
             partPath = constructPartialPartPath(partPath, partKey.getName().toLowerCase(), partKVs);
         }
         return partPath.toString();
@@ -505,13 +503,13 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         Map<String, String> params = new HashMap<String, String>();
 
         //Copy table level hcat.* keys to the partition
-        for(Entry<Object, Object> entry : storer.getProperties().entrySet()) {
+        for (Entry<Object, Object> entry : storer.getProperties().entrySet()) {
             params.put(entry.getKey().toString(), entry.getValue().toString());
         }
         return params;
     }
 
-    private Path constructPartialPartPath(Path partialPath, String partKey, Map<String,String> partKVs){
+    private Path constructPartialPartPath(Path partialPath, String partKey, Map<String, String> partKVs) {
 
         StringBuilder sb = new StringBuilder(FileUtils.escapePathName(partKey));
         sb.append("=");
@@ -534,7 +532,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
         List<FieldSchema> newColumns = HCatUtil.validatePartitionSchema(table, partitionSchema);
 
-        if( newColumns.size() != 0 ) {
+        if (newColumns.size() != 0) {
             List<FieldSchema> tableColumns = new ArrayList<FieldSchema>(table.getTTable().getSd().getCols());
             tableColumns.addAll(newColumns);
 
@@ -561,12 +559,12 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         if (fs.isFile(file)) {
             Path finalOutputPath = getFinalPath(file, src, dest);
 
-            if (dryRun){
+            if (dryRun) {
 //        LOG.info("Testing if moving ["+file+"] to ["+finalOutputPath+"] would cause a problem");
-                if (fs.exists(finalOutputPath)){
+                if (fs.exists(finalOutputPath)) {
                     throw new HCatException(ErrorType.ERROR_MOVE_FAILED, "Data already exists in " + finalOutputPath + ", duplicate publish possible.");
                 }
-            }else{
+            } else {
 //        LOG.info("Moving ["+file+"] to ["+finalOutputPath+"]");
                 if (!fs.rename(file, finalOutputPath)) {
                     if (!fs.delete(finalOutputPath, true)) {
@@ -577,15 +575,15 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                     }
                 }
             }
-        } else if(fs.getFileStatus(file).isDir()) {
+        } else if (fs.getFileStatus(file).isDir()) {
             FileStatus[] paths = fs.listStatus(file);
             Path finalOutputPath = getFinalPath(file, src, dest);
-            if (!dryRun){
+            if (!dryRun) {
                 fs.mkdirs(finalOutputPath);
             }
             if (paths != null) {
                 for (FileStatus path : paths) {
-                    moveTaskOutputs(fs, path.getPath(), src, dest,dryRun);
+                    moveTaskOutputs(fs, path.getPath(), src, dest, dryRun);
                 }
             }
         }
@@ -606,7 +604,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         URI relativePath = src.toUri().relativize(taskOutputUri);
         if (taskOutputUri == relativePath) {
             throw new HCatException(ErrorType.ERROR_MOVE_FAILED, "Can not get the relative path: base = " +
-                    src + " child = " + file);
+                src + " child = " + file);
         }
         if (relativePath.getPath().length() > 0) {
             return new Path(dest, relativePath.getPath());
@@ -619,7 +617,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      * Run to discover dynamic partitions available
      */
     private void discoverPartitions(JobContext context) throws IOException {
-        if (!partitionsDiscovered){
+        if (!partitionsDiscovered) {
             //      LOG.info("discover ptns called");
             OutputJobInfo jobInfo = HCatOutputFormat.getJobInfo(context);
 
@@ -639,33 +637,33 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             Path pathPattern = new Path(dynPathSpec);
             FileStatus[] status = fs.globStatus(pathPattern);
 
-            partitionsDiscoveredByPath = new LinkedHashMap<String,Map<String, String>>();
-            contextDiscoveredByPath = new LinkedHashMap<String,JobContext>();
+            partitionsDiscoveredByPath = new LinkedHashMap<String, Map<String, String>>();
+            contextDiscoveredByPath = new LinkedHashMap<String, JobContext>();
 
 
             if (status.length == 0) {
                 //        LOG.warn("No partition found genereated by dynamic partitioning in ["
                 //            +loadPath+"] with depth["+jobInfo.getTable().getPartitionKeysSize()
                 //            +"], dynSpec["+dynPathSpec+"]");
-            }else{
-                if ((maxDynamicPartitions != -1) && (status.length > maxDynamicPartitions)){
+            } else {
+                if ((maxDynamicPartitions != -1) && (status.length > maxDynamicPartitions)) {
                     this.partitionsDiscovered = true;
                     throw new HCatException(ErrorType.ERROR_TOO_MANY_DYNAMIC_PTNS,
-                            "Number of dynamic partitions being created "
-                                    + "exceeds configured max allowable partitions["
-                                    + maxDynamicPartitions
-                                    + "], increase parameter ["
-                                    + HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS.varname
-                                    + "] if needed.");
+                        "Number of dynamic partitions being created "
+                            + "exceeds configured max allowable partitions["
+                            + maxDynamicPartitions
+                            + "], increase parameter ["
+                            + HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS.varname
+                            + "] if needed.");
                 }
 
-                for (FileStatus st : status){
+                for (FileStatus st : status) {
                     LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>();
                     Warehouse.makeSpecFromName(fullPartSpec, st.getPath());
-                    partitionsDiscoveredByPath.put(st.getPath().toString(),fullPartSpec);
-                    JobContext currContext = HCatHadoopShims.Instance.get().createJobContext(context.getConfiguration(),context.getJobID());
+                    partitionsDiscoveredByPath.put(st.getPath().toString(), fullPartSpec);
+                    JobContext currContext = HCatHadoopShims.Instance.get().createJobContext(context.getConfiguration(), context.getJobID());
                     HCatOutputFormat.configureOutputStorageHandler(context, jobInfo, fullPartSpec);
-                    contextDiscoveredByPath.put(st.getPath().toString(),currContext);
+                    contextDiscoveredByPath.put(st.getPath().toString(), currContext);
                 }
             }
 

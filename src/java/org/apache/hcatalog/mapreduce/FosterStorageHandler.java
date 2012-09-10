@@ -52,18 +52,19 @@ public class FosterStorageHandler extends HCatStorageHandler {
     /** The directory under which data is initially written for a non partitioned table */
     protected static final String TEMP_DIR_NAME = "_TEMP";
 
-   private Class<? extends InputFormat> ifClass;
-   private Class<? extends OutputFormat> ofClass;
-   private Class<? extends SerDe> serDeClass;
+    private Class<? extends InputFormat> ifClass;
+    private Class<? extends OutputFormat> ofClass;
+    private Class<? extends SerDe> serDeClass;
 
     public FosterStorageHandler(String ifName, String ofName, String serdeName) throws ClassNotFoundException {
         this((Class<? extends InputFormat>) Class.forName(ifName),
-                (Class<? extends OutputFormat>) Class.forName(ofName),
-                (Class<? extends SerDe>) Class.forName(serdeName));
+            (Class<? extends OutputFormat>) Class.forName(ofName),
+            (Class<? extends SerDe>) Class.forName(serdeName));
     }
+
     public FosterStorageHandler(Class<? extends InputFormat> ifClass,
-                                               Class<? extends OutputFormat> ofClass,
-                                               Class<? extends SerDe> serDeClass) {
+                                Class<? extends OutputFormat> ofClass,
+                                Class<? extends SerDe> serDeClass) {
         this.ifClass = ifClass;
         this.ofClass = ofClass;
         this.serDeClass = serDeClass;
@@ -97,36 +98,35 @@ public class FosterStorageHandler extends HCatStorageHandler {
 
     @Override
     public void configureOutputJobProperties(TableDesc tableDesc,
-                                      Map<String, String> jobProperties) {
+                                             Map<String, String> jobProperties) {
         try {
             OutputJobInfo jobInfo = (OutputJobInfo)
-              HCatUtil.deserialize(tableDesc.getJobProperties().get(
-                                      HCatConstants.HCAT_KEY_OUTPUT_INFO));
+                HCatUtil.deserialize(tableDesc.getJobProperties().get(
+                    HCatConstants.HCAT_KEY_OUTPUT_INFO));
             String parentPath = jobInfo.getTableInfo().getTableLocation();
             String dynHash = tableDesc.getJobProperties().get(
-                                      HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
+                HCatConstants.HCAT_DYNAMIC_PTN_JOBID);
 
             // For dynamic partitioned writes without all keyvalues specified,
             // we create a temp dir for the associated write job
-            if (dynHash != null){
+            if (dynHash != null) {
                 parentPath = new Path(parentPath,
-                                      DYNTEMP_DIR_NAME+dynHash).toString();
+                    DYNTEMP_DIR_NAME + dynHash).toString();
             }
 
             String outputLocation;
 
             // For non-partitioned tables, we send them to the temp dir
-            if(dynHash == null && jobInfo.getPartitionValues().size() == 0) {
+            if (dynHash == null && jobInfo.getPartitionValues().size() == 0) {
                 outputLocation = TEMP_DIR_NAME;
-            }
-            else {
+            } else {
                 List<String> cols = new ArrayList<String>();
                 List<String> values = new ArrayList<String>();
 
                 //Get the output location in the order partition keys are defined for the table.
-                for(String name:
+                for (String name :
                     jobInfo.getTableInfo().
-                    getPartitionColumns().getFieldNames()) {
+                        getPartitionColumns().getFieldNames()) {
                     String value = jobInfo.getPartitionValues().get(name);
                     cols.add(name);
                     values.add(value);
@@ -134,29 +134,29 @@ public class FosterStorageHandler extends HCatStorageHandler {
                 outputLocation = FileUtils.makePartName(cols, values);
             }
 
-            jobInfo.setLocation(new Path(parentPath,outputLocation).toString());
+            jobInfo.setLocation(new Path(parentPath, outputLocation).toString());
 
             //only set output dir if partition is fully materialized
-            if(jobInfo.getPartitionValues().size()
+            if (jobInfo.getPartitionValues().size()
                 == jobInfo.getTableInfo().getPartitionColumns().size()) {
                 jobProperties.put("mapred.output.dir", jobInfo.getLocation());
             }
 
             //TODO find a better home for this, RCFile specifc
             jobProperties.put(RCFile.COLUMN_NUMBER_CONF_STR,
-                              Integer.toOctalString(
-                                jobInfo.getOutputSchema().getFields().size()));
+                Integer.toOctalString(
+                    jobInfo.getOutputSchema().getFields().size()));
             jobProperties.put(HCatConstants.HCAT_KEY_OUTPUT_INFO,
-                              HCatUtil.serialize(jobInfo));
+                HCatUtil.serialize(jobInfo));
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to set output path",e);
+            throw new IllegalStateException("Failed to set output path", e);
         }
 
     }
 
     @Override
     OutputFormatContainer getOutputFormatContainer(
-              org.apache.hadoop.mapred.OutputFormat outputFormat) {
+        org.apache.hadoop.mapred.OutputFormat outputFormat) {
         return new FileOutputFormatContainer(outputFormat);
     }
 
@@ -172,7 +172,7 @@ public class FosterStorageHandler extends HCatStorageHandler {
 
     @Override
     public HiveAuthorizationProvider getAuthorizationProvider()
-      throws HiveException {
+        throws HiveException {
         return new DefaultHiveAuthorizationProvider();
     }
 

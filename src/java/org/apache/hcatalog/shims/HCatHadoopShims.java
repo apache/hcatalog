@@ -39,53 +39,55 @@ import org.apache.pig.ResourceSchema;
  **/
 public interface HCatHadoopShims {
 
-  enum PropertyName { CACHE_ARCHIVES, CACHE_FILES, CACHE_SYMLINK };
+    enum PropertyName {CACHE_ARCHIVES, CACHE_FILES, CACHE_SYMLINK}
 
-  public static abstract class Instance {
-    static HCatHadoopShims instance = selectShim();
+    ;
 
-    public static HCatHadoopShims get() {
-      return instance;
+    public static abstract class Instance {
+        static HCatHadoopShims instance = selectShim();
+
+        public static HCatHadoopShims get() {
+            return instance;
+        }
+
+        private static HCatHadoopShims selectShim() {
+            // piggyback on Hive's detection logic
+            String major = ShimLoader.getMajorVersion();
+            String shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims20S";
+            if (major.startsWith("0.23")) {
+                shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims23";
+            }
+            try {
+                Class<? extends HCatHadoopShims> clasz = Class.forName(shimFQN)
+                    .asSubclass(HCatHadoopShims.class);
+                return clasz.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to instantiate: " + shimFQN, e);
+            }
+        }
     }
 
-    private static HCatHadoopShims selectShim() {
-      // piggyback on Hive's detection logic
-      String major = ShimLoader.getMajorVersion();
-      String shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims20S";
-      if (major.startsWith("0.23")) {
-        shimFQN = "org.apache.hcatalog.shims.HCatHadoopShims23";
-      }
-      try {
-        Class<? extends HCatHadoopShims> clasz = Class.forName(shimFQN)
-            .asSubclass(HCatHadoopShims.class);
-        return clasz.newInstance();
-      } catch (Exception e) {
-        throw new RuntimeException("Failed to instantiate: " + shimFQN, e);
-      }
-    }
-  }
+    public TaskID createTaskID();
 
-  public TaskID createTaskID();
+    public TaskAttemptID createTaskAttemptID();
 
-  public TaskAttemptID createTaskAttemptID();
+    public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
+                                                                                   TaskAttemptID taskId);
 
-  public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
-          TaskAttemptID taskId);
+    public org.apache.hadoop.mapred.TaskAttemptContext createTaskAttemptContext(JobConf conf,
+                                                                                org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable);
 
-  public org.apache.hadoop.mapred.TaskAttemptContext createTaskAttemptContext(JobConf conf,
-          org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable);
+    public JobContext createJobContext(Configuration conf, JobID jobId);
 
-  public JobContext createJobContext(Configuration conf, JobID jobId);
+    public org.apache.hadoop.mapred.JobContext createJobContext(JobConf conf, JobID jobId, Progressable progressable);
 
-  public org.apache.hadoop.mapred.JobContext createJobContext(JobConf conf, JobID jobId, Progressable progressable);
+    public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
+                          String arg1, Job job) throws IOException;
 
-  public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
-          String arg1, Job job) throws IOException;
+    public void abortJob(OutputFormat outputFormat, Job job) throws IOException;
 
-  public void abortJob(OutputFormat outputFormat, Job job) throws IOException;
+    /* Referring to job tracker in 0.20 and resource manager in 0.23 */
+    public InetSocketAddress getResourceManagerAddress(Configuration conf);
 
-  /* Referring to job tracker in 0.20 and resource manager in 0.23 */
-  public InetSocketAddress getResourceManagerAddress(Configuration conf);
-
-  public String getPropertyName(PropertyName name);
+    public String getPropertyName(PropertyName name);
 }

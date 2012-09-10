@@ -43,16 +43,14 @@ public class JobState {
     private Configuration config = null;
 
     public JobState(String id, Configuration conf)
-        throws IOException
-    {
+        throws IOException {
         this.id = id;
         config = conf;
         storage = getStorage(conf);
     }
 
     public void delete()
-        throws IOException
-    {
+        throws IOException {
         try {
             storage.delete(type, id);
         } catch (Exception e) {
@@ -114,28 +112,26 @@ public class JobState {
     /**
      * The percent complete of a job
      */
-    public String  getPercentComplete()
-        throws IOException
-    {
+    public String getPercentComplete()
+        throws IOException {
         return getField("percentComplete");
     }
+
     public void setPercentComplete(String percent)
-        throws IOException
-    {
+        throws IOException {
         setField("percentComplete", percent);
     }
 
     /**
      * The child id of TempletonControllerJob
      */
-    public String  getChildId()
-        throws IOException
-    {
+    public String getChildId()
+        throws IOException {
         return getField("childid");
     }
+
     public void setChildId(String childid)
-        throws IOException
-    {
+        throws IOException {
         setField("childid", childid);
     }
 
@@ -200,13 +196,12 @@ public class JobState {
      * The system exit value of the job.
      */
     public Long getExitValue()
-        throws IOException
-    {
+        throws IOException {
         return getLongField("exitValue");
     }
+
     public void setExitValue(long exitValue)
-        throws IOException
-    {
+        throws IOException {
         setLongField("exitValue", exitValue);
     }
 
@@ -214,13 +209,12 @@ public class JobState {
      * When this job was created.
      */
     public Long getCreated()
-        throws IOException
-    {
+        throws IOException {
         return getLongField("created");
     }
+
     public void setCreated(long created)
-        throws IOException
-    {
+        throws IOException {
         setLongField("created", created);
     }
 
@@ -228,13 +222,12 @@ public class JobState {
      * The user who started this job.
      */
     public String getUser()
-        throws IOException
-    {
+        throws IOException {
         return getField("user");
     }
+
     public void setUser(String user)
-        throws IOException
-    {
+        throws IOException {
         setField("user", user);
     }
 
@@ -242,13 +235,12 @@ public class JobState {
      * The url callback
      */
     public String getCallback()
-        throws IOException
-    {
+        throws IOException {
         return getField("callback");
     }
+
     public void setCallback(String callback)
-        throws IOException
-    {
+        throws IOException {
         setField("callback", callback);
     }
 
@@ -256,13 +248,12 @@ public class JobState {
      * The status of a job once it is completed.
      */
     public String getCompleteStatus()
-        throws IOException
-    {
+        throws IOException {
         return getField("completed");
     }
+
     public void setCompleteStatus(String complete)
-        throws IOException
-    {
+        throws IOException {
         setField("completed", complete);
     }
 
@@ -270,13 +261,12 @@ public class JobState {
      * The time when the callback was sent.
      */
     public Long getNotifiedTime()
-        throws IOException
-    {
+        throws IOException {
         return getLongField("notified");
     }
+
     public void setNotifiedTime(long notified)
-        throws IOException
-    {
+        throws IOException {
         setLongField("notified", notified);
     }
 
@@ -288,8 +278,7 @@ public class JobState {
      * Fetch an integer field from the store.
      */
     public Long getLongField(String name)
-        throws IOException
-    {
+        throws IOException {
         String s = storage.getField(type, id, name);
         if (s == null)
             return null;
@@ -297,7 +286,7 @@ public class JobState {
             try {
                 return new Long(s);
             } catch (NumberFormatException e) {
-                LOG.error("templeton: bug " + name + " " + s + " : "+ e);
+                LOG.error("templeton: bug " + name + " " + s + " : " + e);
                 return null;
             }
         }
@@ -307,8 +296,7 @@ public class JobState {
      * Store a String field from the store.
      */
     public void setField(String name, String val)
-        throws IOException
-    {
+        throws IOException {
         try {
             storage.saveField(type, id, name, val);
         } catch (NotFoundException ne) {
@@ -317,8 +305,7 @@ public class JobState {
     }
 
     public String getField(String name)
-        throws IOException
-    {
+        throws IOException {
         return storage.getField(type, id, name);
     }
 
@@ -330,13 +317,12 @@ public class JobState {
      * @throws IOException
      */
     public void setLongField(String name, long val)
-        throws IOException
-    {
+        throws IOException {
         try {
             storage.saveField(type, id, name, String.valueOf(val));
         } catch (NotFoundException ne) {
             throw new IOException("Job " + id + " was not found: " +
-                                  ne.getMessage());
+                ne.getMessage());
         }
     }
 

@@ -106,21 +106,21 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             //do it here
             if (jobConf instanceof JobConf) { //Should be the case
                 HBaseUtil.addHBaseDelegationToken(copyOfConf);
-                ((JobConf)jobConf).getCredentials().addAll(copyOfConf.getCredentials());
+                ((JobConf) jobConf).getCredentials().addAll(copyOfConf.getCredentials());
             }
 
             String outputSchema = jobConf.get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
             jobProperties.put(TableInputFormat.SCAN_COLUMNS, getScanColumns(tableInfo, outputSchema));
 
             String serSnapshot = (String) inputJobInfo.getProperties().get(
-                    HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
+                HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
             if (serSnapshot == null) {
                 HCatTableSnapshot snapshot =
-                        HBaseRevisionManagerUtil.createSnapshot(
-                            RevisionManagerConfiguration.create(copyOfConf),
-                            qualifiedTableName, tableInfo);
+                    HBaseRevisionManagerUtil.createSnapshot(
+                        RevisionManagerConfiguration.create(copyOfConf),
+                        qualifiedTableName, tableInfo);
                 jobProperties.put(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY,
-                        HCatUtil.serialize(snapshot));
+                    HCatUtil.serialize(snapshot));
             }
 
             //This adds it directly to the jobConf. Setting in jobProperties does not get propagated
@@ -155,21 +155,21 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             HBaseConfiguration.addHbaseResources(copyOfConf);
 
             String txnString = outputJobInfo.getProperties().getProperty(
-                    HBaseConstants.PROPERTY_WRITE_TXN_KEY);
+                HBaseConstants.PROPERTY_WRITE_TXN_KEY);
             Transaction txn = null;
             if (txnString == null) {
                 txn = HBaseRevisionManagerUtil.beginWriteTransaction(qualifiedTableName, tableInfo,
-                        RevisionManagerConfiguration.create(copyOfConf));
+                    RevisionManagerConfiguration.create(copyOfConf));
                 String serializedTxn = HCatUtil.serialize(txn);
                 outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
-                        serializedTxn);
+                    serializedTxn);
             } else {
                 txn = (Transaction) HCatUtil.deserialize(txnString);
             }
             if (isBulkMode(outputJobInfo)) {
                 String tableLocation = tableInfo.getTableLocation();
                 String location = new Path(tableLocation, "REVISION_" + txn.getRevisionNumber())
-                        .toString();
+                    .toString();
                 outputJobInfo.getProperties().setProperty(PROPERTY_INT_OUTPUT_LOCATION, location);
                 // We are writing out an intermediate sequenceFile hence
                 // location is not passed in OutputJobInfo.getLocation()
@@ -199,7 +199,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     */
     @Override
     public HiveAuthorizationProvider getAuthorizationProvider()
-            throws HiveException {
+        throws HiveException {
 
         HBaseAuthorizationProvider hbaseAuth = new HBaseAuthorizationProvider();
         hbaseAuth.init(getConf());
@@ -230,7 +230,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
      */
     @Override
     public void commitDropTable(Table tbl, boolean deleteData)
-            throws MetaException {
+        throws MetaException {
         checkDeleteTable(tbl);
 
     }
@@ -256,20 +256,20 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         try {
             String tableName = getFullyQualifiedHBaseTableName(tbl);
             String hbaseColumnsMapping = tbl.getParameters().get(
-                    HBaseSerDe.HBASE_COLUMNS_MAPPING);
+                HBaseSerDe.HBASE_COLUMNS_MAPPING);
 
             if (hbaseColumnsMapping == null) {
                 throw new MetaException(
-                        "No hbase.columns.mapping defined in table"
-                                + " properties.");
+                    "No hbase.columns.mapping defined in table"
+                        + " properties.");
             }
 
             List<String> hbaseColumnFamilies = new ArrayList<String>();
             List<String> hbaseColumnQualifiers = new ArrayList<String>();
             List<byte[]> hbaseColumnFamiliesBytes = new ArrayList<byte[]>();
             int iKey = HBaseUtil.parseColumnMapping(hbaseColumnsMapping,
-                    hbaseColumnFamilies, hbaseColumnFamiliesBytes,
-                    hbaseColumnQualifiers, null);
+                hbaseColumnFamilies, hbaseColumnFamiliesBytes,
+                hbaseColumnQualifiers, null);
 
             HTableDescriptor tableDesc;
             Set<String> uniqueColumnFamilies = new HashSet<String>();
@@ -283,7 +283,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
                     for (String columnFamily : uniqueColumnFamilies) {
                         HColumnDescriptor familyDesc = new HColumnDescriptor(Bytes
-                                .toBytes(columnFamily));
+                            .toBytes(columnFamily));
                         familyDesc.setMaxVersions(Integer.MAX_VALUE);
                         tableDesc.addFamily(familyDesc);
                     }
@@ -292,20 +292,20 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
                 } else {
                     // an external table
                     throw new MetaException("HBase table " + tableName
-                            + " doesn't exist while the table is "
-                            + "declared as an external table.");
+                        + " doesn't exist while the table is "
+                        + "declared as an external table.");
                 }
 
             } else {
                 if (!isExternal) {
                     throw new MetaException("Table " + tableName
-                            + " already exists within HBase."
-                            + " Use CREATE EXTERNAL TABLE instead to"
-                            + " register it in HCatalog.");
+                        + " already exists within HBase."
+                        + " Use CREATE EXTERNAL TABLE instead to"
+                        + " register it in HCatalog.");
                 }
                 // make sure the schema mapping is right
                 tableDesc = getHBaseAdmin().getTableDescriptor(
-                        Bytes.toBytes(tableName));
+                    Bytes.toBytes(tableName));
 
                 for (int i = 0; i < hbaseColumnFamilies.size(); i++) {
                     if (i == iKey) {
@@ -314,8 +314,8 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
 
                     if (!tableDesc.hasFamily(hbaseColumnFamiliesBytes.get(i))) {
                         throw new MetaException("Column Family "
-                                + hbaseColumnFamilies.get(i)
-                                + " is not defined in hbase table " + tableName);
+                            + hbaseColumnFamilies.get(i)
+                            + " is not defined in hbase table " + tableName);
                     }
                 }
             }
@@ -401,7 +401,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         String tableName = tbl.getParameters().get(HBaseSerDe.HBASE_TABLE_NAME);
         if (tableName == null) {
             tableName = tbl.getSd().getSerdeInfo().getParameters()
-                    .get(HBaseSerDe.HBASE_TABLE_NAME);
+                .get(HBaseSerDe.HBASE_TABLE_NAME);
         }
         if (tableName == null) {
             if (tbl.getDbName().equals(MetaStoreUtils.DEFAULT_DATABASE_NAME)) {
@@ -414,14 +414,14 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
         return tableName;
     }
 
-    static String getFullyQualifiedHBaseTableName(HCatTableInfo tableInfo){
+    static String getFullyQualifiedHBaseTableName(HCatTableInfo tableInfo) {
         String qualifiedName = tableInfo.getStorerInfo().getProperties()
-                .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
+            .getProperty(HBaseSerDe.HBASE_TABLE_NAME);
         if (qualifiedName == null) {
             String databaseName = tableInfo.getDatabaseName();
             String tableName = tableInfo.getTableName();
             if ((databaseName == null)
-                    || (databaseName.equals(MetaStoreUtils.DEFAULT_DATABASE_NAME))) {
+                || (databaseName.equals(MetaStoreUtils.DEFAULT_DATABASE_NAME))) {
                 qualifiedName = tableName;
             } else {
                 qualifiedName = databaseName + "." + tableName;
@@ -451,7 +451,7 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     */
     @Override
     public Class<? extends SerDe> getSerDeClass()
-            throws UnsupportedOperationException {
+        throws UnsupportedOperationException {
         return HBaseSerDe.class;
     }
 
@@ -514,28 +514,28 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
      */
     private void addOutputDependencyJars(Configuration conf) throws IOException {
         TableMapReduceUtil.addDependencyJars(conf,
-                //ZK
-                ZooKeeper.class,
-                //HBase
-                HTable.class,
-                //Hive
-                HiveException.class,
-                //HCatalog jar
-                HCatOutputFormat.class,
-                //hcat hbase storage handler jar
-                HBaseHCatStorageHandler.class,
-                //hive hbase storage handler jar
-                HBaseSerDe.class,
-                //hive jar
-                Table.class,
-                //libthrift jar
-                TBase.class,
-                //hbase jar
-                Bytes.class,
-                //thrift-fb303 .jar
-                FacebookBase.class,
-                //guava jar
-                ThreadFactoryBuilder.class);
+            //ZK
+            ZooKeeper.class,
+            //HBase
+            HTable.class,
+            //Hive
+            HiveException.class,
+            //HCatalog jar
+            HCatOutputFormat.class,
+            //hcat hbase storage handler jar
+            HBaseHCatStorageHandler.class,
+            //hive hbase storage handler jar
+            HBaseSerDe.class,
+            //hive jar
+            Table.class,
+            //libthrift jar
+            TBase.class,
+            //hbase jar
+            Bytes.class,
+            //thrift-fb303 .jar
+            FacebookBase.class,
+            //guava jar
+            ThreadFactoryBuilder.class);
     }
 
     /**
@@ -558,15 +558,15 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
     public static boolean isBulkMode(OutputJobInfo outputJobInfo) {
         //Default is false
         String bulkMode = outputJobInfo.getTableInfo().getStorerInfo().getProperties()
-                .getProperty(HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY,
-                        "false");
+            .getProperty(HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY,
+                "false");
         return "true".equals(bulkMode);
     }
 
     private String getScanColumns(HCatTableInfo tableInfo, String outputColSchema) throws IOException {
         StringBuilder builder = new StringBuilder();
         String hbaseColumnMapping = tableInfo.getStorerInfo().getProperties()
-                .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
+            .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
         if (outputColSchema == null) {
             String[] splits = hbaseColumnMapping.split("[,]");
             for (int i = 0; i < splits.length; i++) {
@@ -578,14 +578,14 @@ public class HBaseHCatStorageHandler extends HCatStorageHandler implements HiveM
             HCatSchema tableSchema = tableInfo.getDataColumns();
             List<String> outputFieldNames = outputSchema.getFieldNames();
             List<Integer> outputColumnMapping = new ArrayList<Integer>();
-            for(String fieldName: outputFieldNames){
+            for (String fieldName : outputFieldNames) {
                 int position = tableSchema.getPosition(fieldName);
                 outputColumnMapping.add(position);
             }
             List<String> columnFamilies = new ArrayList<String>();
             List<String> columnQualifiers = new ArrayList<String>();
             HBaseUtil.parseColumnMapping(hbaseColumnMapping, columnFamilies, null,
-                    columnQualifiers, null);
+                columnQualifiers, null);
             for (int i = 0; i < outputColumnMapping.size(); i++) {
                 int cfIndex = outputColumnMapping.get(i);
                 String cf = columnFamilies.get(cfIndex);

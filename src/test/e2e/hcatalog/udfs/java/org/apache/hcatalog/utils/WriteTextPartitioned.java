@@ -46,7 +46,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce
  * program to test that hcat hands the right data to the map reduce program
- * 
+ *
  * Usage: hadoop jar org.apache.hcatalog.utils.HBaseReadWrite -libjars
  * &lt;hcat_jar&gt; * &lt;serveruri&gt; &lt;input_tablename&gt; &lt;output_tablename&gt; [filter]
  * If filter is given it will be provided as the partition to write to.
@@ -56,23 +56,23 @@ public class WriteTextPartitioned extends Configured implements Tool {
     static String filter = null;
 
     public static class Map extends
-            Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord> {
+        Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord> {
 
         @Override
         protected void map(
-                WritableComparable key,
-                HCatRecord value,
-                org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord>.Context context)
-                throws IOException, InterruptedException {
-            String name = (String)value.get(0);
-            int age = (Integer)value.get(1);
-            String ds = (String)value.get(3);
-            
+            WritableComparable key,
+            HCatRecord value,
+            org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord>.Context context)
+            throws IOException, InterruptedException {
+            String name = (String) value.get(0);
+            int age = (Integer) value.get(1);
+            String ds = (String) value.get(3);
+
             HCatRecord record = (filter == null ? new DefaultHCatRecord(3) : new DefaultHCatRecord(2));
             record.set(0, name);
             record.set(1, age);
             if (filter == null) record.set(2, ds);
-            
+
             context.write(null, record);
 
         }
@@ -89,12 +89,12 @@ public class WriteTextPartitioned extends Configured implements Tool {
         String dbName = null;
 
         String principalID = System
-                .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+            .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
         if (principalID != null)
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "WriteTextPartitioned");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, filter));
+            inputTableName, filter));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);
@@ -112,7 +112,7 @@ public class WriteTextPartitioned extends Configured implements Tool {
             partitionVals.put(s[0], val);
         }
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, partitionVals));
+            outputTableName, partitionVals));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
         // Build the schema for this table, which is slightly different than the
         // schema for the input table

@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 package org.apache.hcatalog.hbase.snapshot;
+
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import org.apache.hcatalog.hbase.SkeletonHBaseTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestIDGenerator extends SkeletonHBaseTest{
+public class TestIDGenerator extends SkeletonHBaseTest {
 
     @Test
     public void testIDGeneration() throws Exception {
@@ -35,7 +36,7 @@ public class TestIDGenerator extends SkeletonHBaseTest{
         String servers = getHbaseConf().get("hbase.zookeeper.quorum");
         String[] splits = servers.split(",");
         StringBuffer sb = new StringBuffer();
-        for(String split : splits){
+        for (String split : splits) {
             sb.append(split);
             sb.append(':');
             sb.append(port);
@@ -44,20 +45,20 @@ public class TestIDGenerator extends SkeletonHBaseTest{
 
         String tableName = "myTable";
         long initId = zkutil.nextId(tableName);
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             long id = zkutil.nextId(tableName);
             Assert.assertEquals(initId + (i + 1), id);
         }
     }
 
     @Test
-    public void testMultipleClients() throws InterruptedException{
+    public void testMultipleClients() throws InterruptedException {
 
         int port = getHbaseConf().getInt("hbase.zookeeper.property.clientPort", 2181);
         String servers = getHbaseConf().get("hbase.zookeeper.quorum");
         String[] splits = servers.split(",");
         StringBuffer sb = new StringBuffer();
-        for(String split : splits){
+        for (String split : splits) {
             sb.append(split);
             sb.append(':');
             sb.append(port);
@@ -65,30 +66,30 @@ public class TestIDGenerator extends SkeletonHBaseTest{
 
         ArrayList<IDGenClient> clients = new ArrayList<IDGenClient>();
 
-        for(int i =0; i < 5; i++){
+        for (int i = 0; i < 5; i++) {
             IDGenClient idClient = new IDGenClient(sb.toString(), "/rm_base", 10, "testTable");
             clients.add(idClient);
         }
 
-        for(IDGenClient idClient : clients){
+        for (IDGenClient idClient : clients) {
             idClient.run();
         }
 
-        for(IDGenClient idClient : clients){
+        for (IDGenClient idClient : clients) {
             idClient.join();
         }
 
         HashMap<Long, Long> idMap = new HashMap<Long, Long>();
-        for(IDGenClient idClient : clients){
+        for (IDGenClient idClient : clients) {
             idMap.putAll(idClient.getIdMap());
         }
 
         ArrayList<Long> keys = new ArrayList<Long>(idMap.keySet());
         Collections.sort(keys);
         int startId = 1;
-        for(Long key: keys){
+        for (Long key : keys) {
             Long id = idMap.get(key);
-            System.out.println("Key: " + key + " Value "+ id);
+            System.out.println("Key: " + key + " Value " + id);
             assertTrue(id == startId);
             startId++;
 

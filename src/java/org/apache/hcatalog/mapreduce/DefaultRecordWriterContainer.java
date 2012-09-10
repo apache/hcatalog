@@ -49,32 +49,32 @@ class DefaultRecordWriterContainer extends RecordWriterContainer {
      */
     public DefaultRecordWriterContainer(TaskAttemptContext context,
                                         org.apache.hadoop.mapred.RecordWriter<? super WritableComparable<?>, ? super Writable> baseRecordWriter) throws IOException, InterruptedException {
-        super(context,baseRecordWriter);
+        super(context, baseRecordWriter);
         jobInfo = HCatOutputFormat.getJobInfo(context);
         storageHandler = HCatUtil.getStorageHandler(context.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
         HCatOutputFormat.configureOutputStorageHandler(context);
-        serDe = ReflectionUtils.newInstance(storageHandler.getSerDeClass(),context.getConfiguration());
+        serDe = ReflectionUtils.newInstance(storageHandler.getSerDeClass(), context.getConfiguration());
         hcatRecordOI = InternalUtil.createStructObjectInspector(jobInfo.getOutputSchema());
         try {
             InternalUtil.initializeOutputSerDe(serDe, context.getConfiguration(), jobInfo);
         } catch (SerDeException e) {
-            throw new IOException("Failed to initialize SerDe",e);
+            throw new IOException("Failed to initialize SerDe", e);
         }
     }
 
     @Override
     public void close(TaskAttemptContext context) throws IOException,
-            InterruptedException {
+        InterruptedException {
         getBaseRecordWriter().close(InternalUtil.createReporter(context));
     }
 
     @Override
     public void write(WritableComparable<?> key, HCatRecord value) throws IOException,
-            InterruptedException {
+        InterruptedException {
         try {
             getBaseRecordWriter().write(null, serDe.serialize(value.getAll(), hcatRecordOI));
         } catch (SerDeException e) {
-            throw new IOException("Failed to serialize object",e);
+            throw new IOException("Failed to serialize object", e);
         }
     }
 

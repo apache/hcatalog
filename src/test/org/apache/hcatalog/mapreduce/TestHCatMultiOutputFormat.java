@@ -100,8 +100,8 @@ public class TestHCatMultiOutputFormat {
         public void run() {
             try {
                 String warehouseConf = HiveConf.ConfVars.METASTOREWAREHOUSE.varname + "="
-                        + warehousedir.toString();
-                HiveMetaStore.main(new String[] {"-v", "-p", msPort, "--hiveconf", warehouseConf});
+                    + warehousedir.toString();
+                HiveMetaStore.main(new String[]{"-v", "-p", msPort, "--hiveconf", warehouseConf});
             } catch (Throwable t) {
                 System.err.println("Exiting. Got exception from metastore: " + t.getMessage());
             }
@@ -177,7 +177,7 @@ public class TestHCatMultiOutputFormat {
         FileSystem fs = FileSystem.get(conf);
         System.setProperty("hadoop.log.dir", new File(workDir, "/logs").getAbsolutePath());
         mrCluster = new MiniMRCluster(1, fs.getUri().toString(), 1, null, null,
-                new JobConf(conf));
+            new JobConf(conf));
         mrConf = mrCluster.createJobConf();
         fs.mkdirs(warehousedir);
 
@@ -192,7 +192,7 @@ public class TestHCatMultiOutputFormat {
         hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
 
         hiveConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
-                HCatSemanticAnalyzer.class.getName());
+            HCatSemanticAnalyzer.class.getName());
         hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
@@ -239,9 +239,9 @@ public class TestHCatMultiOutputFormat {
         sd.setInputFormat(org.apache.hadoop.hive.ql.io.RCFileInputFormat.class.getName());
         sd.setOutputFormat(org.apache.hadoop.hive.ql.io.RCFileOutputFormat.class.getName());
         sd.getSerdeInfo().getParameters().put(
-                org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
+            org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
         sd.getSerdeInfo().setSerializationLib(
-                org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe.class.getName());
+            org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe.class.getName());
         tbl.setPartitionKeys(ColumnHolder.partitionCols);
 
         hmsc.createTable(tbl);
@@ -291,10 +291,10 @@ public class TestHCatMultiOutputFormat {
 
         for (int i = 0; i < tableNames.length; i++) {
             configurer.addOutputFormat(tableNames[i], HCatOutputFormat.class, BytesWritable.class,
-                    HCatRecord.class);
+                HCatRecord.class);
             HCatOutputFormat.setOutput(configurer.getJob(tableNames[i]), infoList.get(i));
             HCatOutputFormat.setSchema(configurer.getJob(tableNames[i]),
-                    schemaMap.get(tableNames[i]));
+                schemaMap.get(tableNames[i]));
         }
         configurer.configure();
 
@@ -307,26 +307,26 @@ public class TestHCatMultiOutputFormat {
             outputs.add(getTableData(tbl, "default").get(0));
         }
         Assert.assertEquals("Comparing output of table " +
-                tableNames[0] + " is not correct", outputs.get(0), "a,a,1,ag");
+            tableNames[0] + " is not correct", outputs.get(0), "a,a,1,ag");
         Assert.assertEquals("Comparing output of table " +
-                tableNames[1] + " is not correct", outputs.get(1), "a,1,ag");
+            tableNames[1] + " is not correct", outputs.get(1), "a,1,ag");
         Assert.assertEquals("Comparing output of table " +
-                tableNames[2] + " is not correct", outputs.get(2), "a,a,extra,1,ag");
+            tableNames[2] + " is not correct", outputs.get(2), "a,a,extra,1,ag");
 
         // Check permisssion on partition dirs and files created
         for (int i = 0; i < tableNames.length; i++) {
             Path partitionFile = new Path(warehousedir + "/" + tableNames[i]
-                    + "/ds=1/cluster=ag/part-m-00000");
+                + "/ds=1/cluster=ag/part-m-00000");
             FileSystem fs = partitionFile.getFileSystem(mrConf);
             Assert.assertEquals("File permissions of table " + tableNames[i] + " is not correct",
-                    fs.getFileStatus(partitionFile).getPermission(),
-                    new FsPermission(tablePerms[i]));
+                fs.getFileStatus(partitionFile).getPermission(),
+                new FsPermission(tablePerms[i]));
             Assert.assertEquals("File permissions of table " + tableNames[i] + " is not correct",
-                    fs.getFileStatus(partitionFile.getParent()).getPermission(),
-                    new FsPermission(tablePerms[i]));
+                fs.getFileStatus(partitionFile.getParent()).getPermission(),
+                new FsPermission(tablePerms[i]));
             Assert.assertEquals("File permissions of table " + tableNames[i] + " is not correct",
-                    fs.getFileStatus(partitionFile.getParent().getParent()).getPermission(),
-                    new FsPermission(tablePerms[i]));
+                fs.getFileStatus(partitionFile.getParent().getParent()).getPermission(),
+                new FsPermission(tablePerms[i]));
 
         }
         LOG.info("File permissions verified");
@@ -392,13 +392,13 @@ public class TestHCatMultiOutputFormat {
     }
 
     private static class MyMapper extends
-            Mapper<LongWritable, Text, BytesWritable, HCatRecord> {
+        Mapper<LongWritable, Text, BytesWritable, HCatRecord> {
 
         private int i = 0;
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
-                throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
             HCatRecord record = null;
             String[] splits = value.toString().split(",");
             switch (i) {

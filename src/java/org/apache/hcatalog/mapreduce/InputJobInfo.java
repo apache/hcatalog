@@ -24,114 +24,114 @@ import java.util.List;
 import java.util.Properties;
 
 /** The class used to serialize and store the information read from the metadata server */
-public class InputJobInfo implements Serializable{
+public class InputJobInfo implements Serializable {
 
-  /** The serialization version */
-  private static final long serialVersionUID = 1L;
+    /** The serialization version */
+    private static final long serialVersionUID = 1L;
 
-  /** The db and table names. */
-  private final String databaseName;
-  private final String tableName;
+    /** The db and table names. */
+    private final String databaseName;
+    private final String tableName;
 
-  /** meta information of the table to be read from */
-  private HCatTableInfo tableInfo;
+    /** meta information of the table to be read from */
+    private HCatTableInfo tableInfo;
 
-  /** The partition filter */
-  private String filter;
+    /** The partition filter */
+    private String filter;
 
-  /** The list of partitions matching the filter. */
-  private List<PartInfo> partitions;
+    /** The list of partitions matching the filter. */
+    private List<PartInfo> partitions;
 
-  /** implementation specific job properties */
-  private Properties properties;
+    /** implementation specific job properties */
+    private Properties properties;
 
-  /**
-   * Initializes a new InputJobInfo
-   * for reading data from a table.
-   * @param databaseName the db name
-   * @param tableName the table name
-   * @param filter the partition filter
-   */
+    /**
+     * Initializes a new InputJobInfo
+     * for reading data from a table.
+     * @param databaseName the db name
+     * @param tableName the table name
+     * @param filter the partition filter
+     */
 
-  public static InputJobInfo create(String databaseName,
-      String tableName,
-      String filter) {
-    return new InputJobInfo(databaseName, tableName, filter);
-  }
+    public static InputJobInfo create(String databaseName,
+                                      String tableName,
+                                      String filter) {
+        return new InputJobInfo(databaseName, tableName, filter);
+    }
 
-  
-  private InputJobInfo(String databaseName,
-                       String tableName,
-                       String filter) {
-    this.databaseName = (databaseName == null) ? 
-                        MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
-    this.tableName = tableName;
-    this.filter = filter;
-    this.properties = new Properties();
-  }
 
-  /**
-   * Gets the value of databaseName
-   * @return the databaseName
-   */
-  public String getDatabaseName() {
-    return databaseName;
-  }
+    private InputJobInfo(String databaseName,
+                         String tableName,
+                         String filter) {
+        this.databaseName = (databaseName == null) ?
+            MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
+        this.tableName = tableName;
+        this.filter = filter;
+        this.properties = new Properties();
+    }
 
-  /**
-   * Gets the value of tableName
-   * @return the tableName
-   */
-  public String getTableName() {
-    return tableName;
-  }
+    /**
+     * Gets the value of databaseName
+     * @return the databaseName
+     */
+    public String getDatabaseName() {
+        return databaseName;
+    }
 
-  /**
-   * Gets the table's meta information
-   * @return the HCatTableInfo
-   */
-  public HCatTableInfo getTableInfo() {
-    return tableInfo;
-  }
+    /**
+     * Gets the value of tableName
+     * @return the tableName
+     */
+    public String getTableName() {
+        return tableName;
+    }
 
-  /**
-   * set the tablInfo instance
-   * this should be the same instance
-   * determined by this object's DatabaseName and TableName
-   * @param tableInfo
-   */
-  void setTableInfo(HCatTableInfo tableInfo) {
-    this.tableInfo = tableInfo;
-  }
+    /**
+     * Gets the table's meta information
+     * @return the HCatTableInfo
+     */
+    public HCatTableInfo getTableInfo() {
+        return tableInfo;
+    }
 
-  /**
-   * Gets the value of partition filter
-   * @return the filter string
-   */
-  public String getFilter() {
-    return filter;
-  }
+    /**
+     * set the tablInfo instance
+     * this should be the same instance
+     * determined by this object's DatabaseName and TableName
+     * @param tableInfo
+     */
+    void setTableInfo(HCatTableInfo tableInfo) {
+        this.tableInfo = tableInfo;
+    }
 
-  /**
-   * @return partition info
-   */
-  public List<PartInfo> getPartitions() {
-    return partitions;
-  }
+    /**
+     * Gets the value of partition filter
+     * @return the filter string
+     */
+    public String getFilter() {
+        return filter;
+    }
 
-  /**
-   * @return partition info  list
-   */
-  void setPartitions(List<PartInfo> partitions) {
-    this.partitions = partitions;
-  }
+    /**
+     * @return partition info
+     */
+    public List<PartInfo> getPartitions() {
+        return partitions;
+    }
 
-  /**
-   * Set/Get Property information to be passed down to *StorageHandler implementation
-   * put implementation specific storage handler configurations here
-   * @return the implementation specific job properties 
-   */
-  public Properties getProperties() {
-    return properties;
-  }
+    /**
+     * @return partition info  list
+     */
+    void setPartitions(List<PartInfo> partitions) {
+        this.partitions = partitions;
+    }
+
+    /**
+     * Set/Get Property information to be passed down to *StorageHandler implementation
+     * put implementation specific storage handler configurations here
+     * @return the implementation specific job properties
+     */
+    public Properties getProperties() {
+        return properties;
+    }
 }

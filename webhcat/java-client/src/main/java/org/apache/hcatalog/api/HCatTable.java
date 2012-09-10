@@ -66,9 +66,9 @@ public class HCatTable {
         inputFileFormat = hiveTable.getSd().getInputFormat();
         outputFileFormat = hiveTable.getSd().getOutputFormat();
         storageHandler = hiveTable
-                .getSd()
-                .getParameters()
-                .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE);
+            .getSd()
+            .getParameters()
+            .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE);
         tblProps = hiveTable.getParameters();
         serde = hiveTable.getSd().getSerdeInfo().getSerializationLib();
         location = hiveTable.getSd().getLocation();
@@ -187,7 +187,7 @@ public class HCatTable {
      *
      * @return the serde lib
      */
-    public String getSerdeLib(){
+    public String getSerdeLib() {
         return serde;
     }
 
@@ -196,31 +196,31 @@ public class HCatTable {
      *
      * @return the location
      */
-    public String getLocation(){
+    public String getLocation() {
         return location;
     }
 
     @Override
     public String toString() {
         return "HCatTable ["
-                + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
-                + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
-                + (tabletype != null ? "tabletype=" + tabletype + ", " : "tabletype=null")
-                + (cols != null ? "cols=" + cols + ", " : "cols=null")
-                + (partCols != null ? "partCols=" + partCols + ", " : "partCols==null")
-                + (bucketCols != null ? "bucketCols=" + bucketCols + ", " : "bucketCols=null")
-                + (sortCols != null ? "sortCols=" + sortCols + ", " : "sortCols=null")
-                + "numBuckets="
-                + numBuckets
-                + ", "
-                + (inputFileFormat != null ? "inputFileFormat="
-                        + inputFileFormat + ", " : "inputFileFormat=null")
-                + (outputFileFormat != null ? "outputFileFormat="
-                        + outputFileFormat + ", " : "outputFileFormat=null")
-                + (storageHandler != null ? "storageHandler=" + storageHandler
-                        + ", " : "storageHandler=null")
-                + (tblProps != null ? "tblProps=" + tblProps + ", " : "tblProps=null")
-                + (serde != null ? "serde=" + serde + ", " : "serde=")
-                + (location != null ? "location=" + location : "location=") + "]";
+            + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
+            + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
+            + (tabletype != null ? "tabletype=" + tabletype + ", " : "tabletype=null")
+            + (cols != null ? "cols=" + cols + ", " : "cols=null")
+            + (partCols != null ? "partCols=" + partCols + ", " : "partCols==null")
+            + (bucketCols != null ? "bucketCols=" + bucketCols + ", " : "bucketCols=null")
+            + (sortCols != null ? "sortCols=" + sortCols + ", " : "sortCols=null")
+            + "numBuckets="
+            + numBuckets
+            + ", "
+            + (inputFileFormat != null ? "inputFileFormat="
+            + inputFileFormat + ", " : "inputFileFormat=null")
+            + (outputFileFormat != null ? "outputFileFormat="
+            + outputFileFormat + ", " : "outputFileFormat=null")
+            + (storageHandler != null ? "storageHandler=" + storageHandler
+            + ", " : "storageHandler=null")
+            + (tblProps != null ? "tblProps=" + tblProps + ", " : "tblProps=null")
+            + (serde != null ? "serde=" + serde + ", " : "serde=")
+            + (location != null ? "location=" + location : "location=") + "]";
     }
 }

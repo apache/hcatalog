@@ -43,65 +43,65 @@ import org.apache.hcatalog.mapreduce.InputJobInfo;
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce program
  * to test that hcat hands the right data to the map reduce program
- * 
+ *
  * Usage: hadoop jar sumnumbers <serveruri> <output dir> <-libjars hive-hcat jar>
-            The <tab|ctrla> argument controls the output delimiter
-            The hcat jar location should be specified as file://<full path to jar>
+ The <tab|ctrla> argument controls the output delimiter
+ The hcat jar location should be specified as file://<full path to jar>
  */
 public class SimpleRead extends Configured implements Tool {
 
     private static final String TABLE_NAME = "studenttab10k";
     private static final String TAB = "\t";
-    
-  public static class Map
-       extends Mapper<WritableComparable, HCatRecord, Text, IntWritable>{
-      
-      String name;
-      int age;
-      double gpa;
-      
-    @Override
-  protected void map(WritableComparable key, HCatRecord value, 
-          org.apache.hadoop.mapreduce.Mapper<WritableComparable,HCatRecord,
-          Text,IntWritable>.Context context) 
-    throws IOException ,InterruptedException {
-        name = (String) value.get(0);
-        age = (Integer) value.get(1);
-        gpa = (Double) value.get(2);
-        context.write(new Text(name), new IntWritable(age));
 
+    public static class Map
+        extends Mapper<WritableComparable, HCatRecord, Text, IntWritable> {
+
+        String name;
+        int age;
+        double gpa;
+
+        @Override
+        protected void map(WritableComparable key, HCatRecord value,
+                           org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord,
+                               Text, IntWritable>.Context context)
+            throws IOException, InterruptedException {
+            name = (String) value.get(0);
+            age = (Integer) value.get(1);
+            gpa = (Double) value.get(2);
+            context.write(new Text(name), new IntWritable(age));
+
+        }
     }
-  }
-  
-   public int run(String[] args) throws Exception {
-    Configuration conf = getConf();
-    args = new GenericOptionsParser(conf, args).getRemainingArgs();
 
-    String serverUri = args[0];
-    String tableName = args[1];
-    String outputDir = args[2];
-    String dbName = null;
-    
-    String principalID = System.getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
-    if(principalID != null)
-    conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
-    Job job = new Job(conf, "SimpleRead");
-    HCatInputFormat.setInput(job, InputJobInfo.create(
-    		dbName, tableName, null));
-    // initialize HCatOutputFormat
-    
-    job.setInputFormatClass(HCatInputFormat.class);
-    job.setOutputFormatClass(TextOutputFormat.class);
-    job.setJarByClass(SimpleRead.class);
-    job.setMapperClass(Map.class);
-    job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
-    FileOutputFormat.setOutputPath(job, new Path(outputDir));
-    return (job.waitForCompletion(true) ? 0 : 1);
-  }
-   
-   public static void main(String[] args) throws Exception {
-       int exitCode = ToolRunner.run(new SimpleRead(), args);
-       System.exit(exitCode);
-   }
+    public int run(String[] args) throws Exception {
+        Configuration conf = getConf();
+        args = new GenericOptionsParser(conf, args).getRemainingArgs();
+
+        String serverUri = args[0];
+        String tableName = args[1];
+        String outputDir = args[2];
+        String dbName = null;
+
+        String principalID = System.getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+        if (principalID != null)
+            conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
+        Job job = new Job(conf, "SimpleRead");
+        HCatInputFormat.setInput(job, InputJobInfo.create(
+            dbName, tableName, null));
+        // initialize HCatOutputFormat
+
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
+        job.setJarByClass(SimpleRead.class);
+        job.setMapperClass(Map.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(IntWritable.class);
+        FileOutputFormat.setOutputPath(job, new Path(outputDir));
+        return (job.waitForCompletion(true) ? 0 : 1);
+    }
+
+    public static void main(String[] args) throws Exception {
+        int exitCode = ToolRunner.run(new SimpleRead(), args);
+        System.exit(exitCode);
+    }
 }

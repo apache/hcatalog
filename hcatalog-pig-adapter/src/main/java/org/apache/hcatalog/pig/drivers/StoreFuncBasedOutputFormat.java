@@ -38,82 +38,84 @@ import org.apache.pig.StoreMetadata;
 import org.apache.pig.data.Tuple;
 
 public class StoreFuncBasedOutputFormat extends
-        OutputFormat<BytesWritable, Tuple> {
+    OutputFormat<BytesWritable, Tuple> {
 
     private final StoreFuncInterface storeFunc;
-    
+
     public StoreFuncBasedOutputFormat(StoreFuncInterface storeFunc) {
 
         this.storeFunc = storeFunc;
     }
-    
+
     @Override
     public void checkOutputSpecs(JobContext jobContext) throws IOException,
-            InterruptedException {
-        OutputFormat<BytesWritable,Tuple> outputFormat =  storeFunc.getOutputFormat();
+        InterruptedException {
+        OutputFormat<BytesWritable, Tuple> outputFormat = storeFunc.getOutputFormat();
         outputFormat.checkOutputSpecs(jobContext);
     }
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext ctx)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         String serializedJobInfo = ctx.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(serializedJobInfo);
+        OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(serializedJobInfo);
         ResourceSchema rs = PigHCatUtil.getResourceSchema(outputJobInfo.getOutputSchema());
         String location = outputJobInfo.getLocation();
-        OutputFormat<BytesWritable,Tuple> outputFormat =  storeFunc.getOutputFormat();
+        OutputFormat<BytesWritable, Tuple> outputFormat = storeFunc.getOutputFormat();
         return new StoreFuncBasedOutputCommitter(storeFunc, outputFormat.getOutputCommitter(ctx), location, rs);
     }
 
     @Override
     public RecordWriter<BytesWritable, Tuple> getRecordWriter(
-            TaskAttemptContext ctx) throws IOException, InterruptedException {
-        RecordWriter<BytesWritable,Tuple> writer = storeFunc.getOutputFormat().getRecordWriter(ctx);
+        TaskAttemptContext ctx) throws IOException, InterruptedException {
+        RecordWriter<BytesWritable, Tuple> writer = storeFunc.getOutputFormat().getRecordWriter(ctx);
         String serializedJobInfo = ctx.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(serializedJobInfo);
+        OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(serializedJobInfo);
         ResourceSchema rs = PigHCatUtil.getResourceSchema(outputJobInfo.getOutputSchema());
         String location = outputJobInfo.getLocation();
         return new StoreFuncBasedRecordWriter(writer, storeFunc, location, rs);
     }
-    
+
     static class StoreFuncBasedRecordWriter extends RecordWriter<BytesWritable, Tuple> {
-        private final RecordWriter<BytesWritable,Tuple> writer;
+        private final RecordWriter<BytesWritable, Tuple> writer;
         private final StoreFuncInterface storeFunc;
         private final ResourceSchema schema;
         private final String location;
-        
-        public StoreFuncBasedRecordWriter(RecordWriter<BytesWritable,Tuple> writer, StoreFuncInterface sf, String location, ResourceSchema rs) throws IOException {
+
+        public StoreFuncBasedRecordWriter(RecordWriter<BytesWritable, Tuple> writer, StoreFuncInterface sf, String location, ResourceSchema rs) throws IOException {
             this.writer = writer;
             this.storeFunc = sf;
             this.schema = rs;
             this.location = location;
             storeFunc.prepareToWrite(writer);
         }
-        
+
         @Override
         public void close(TaskAttemptContext ctx) throws IOException,
-                InterruptedException {
+            InterruptedException {
             writer.close(ctx);
         }
 
         @Override
         public void write(BytesWritable key, Tuple value) throws IOException,
-                InterruptedException {
+            InterruptedException {
             storeFunc.putNext(value);
         }
     }
-    
+
     static class StoreFuncBasedOutputCommitter extends OutputCommitter {
         StoreFuncInterface sf;
         OutputCommitter wrappedOutputCommitter;
         String location;
         ResourceSchema rs;
+
         public StoreFuncBasedOutputCommitter(StoreFuncInterface sf, OutputCommitter outputCommitter, String location, ResourceSchema rs) {
             this.sf = sf;
             this.wrappedOutputCommitter = outputCommitter;
             this.location = location;
             this.rs = rs;
         }
+
         @Override
         public void abortTask(TaskAttemptContext context) throws IOException {
             wrappedOutputCommitter.abortTask(context);
@@ -126,7 +128,7 @@ public class StoreFuncBasedOutputFormat extends
 
         @Override
         public boolean needsTaskCommit(TaskAttemptContext context)
-                throws IOException {
+            throws IOException {
             return wrappedOutputCommitter.needsTaskCommit(context);
         }
 
@@ -139,28 +141,28 @@ public class StoreFuncBasedOutputFormat extends
         public void setupTask(TaskAttemptContext context) throws IOException {
             wrappedOutputCommitter.setupTask(context);
         }
-        
+
         public void commitJob(JobContext context) throws IOException {
             wrappedOutputCommitter.commitJob(context);
             if (sf instanceof StoreMetadata) {
                 if (rs != null) {
                     ((StoreMetadata) sf).storeSchema(
-                            rs, location, new Job(context.getConfiguration()) );
+                        rs, location, new Job(context.getConfiguration()));
                 }
             }
         }
-        
+
         @Override
         public void cleanupJob(JobContext context) throws IOException {
             wrappedOutputCommitter.cleanupJob(context);
             if (sf instanceof StoreMetadata) {
                 if (rs != null) {
                     ((StoreMetadata) sf).storeSchema(
-                            rs, location, new Job(context.getConfiguration()) );
+                        rs, location, new Job(context.getConfiguration()));
                 }
             }
         }
-        
+
         public void abortJob(JobContext context, JobStatus.State state) throws IOException {
             wrappedOutputCommitter.abortJob(context, state);
         }

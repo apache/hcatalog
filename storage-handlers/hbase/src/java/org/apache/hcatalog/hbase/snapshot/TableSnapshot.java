@@ -37,7 +37,7 @@ public class TableSnapshot implements Serializable {
     public TableSnapshot(String name, Map<String, Long> cfRevMap, long latestRevision) {
         this.name = name;
         if (cfRevMap == null) {
-          throw new IllegalArgumentException("revision map cannot be null");
+            throw new IllegalArgumentException("revision map cannot be null");
         }
         this.cfRevisionMap = cfRevMap;
         this.latestRevision = latestRevision;

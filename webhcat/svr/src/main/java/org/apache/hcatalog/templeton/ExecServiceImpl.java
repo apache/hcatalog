@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
@@ -67,12 +68,11 @@ public class ExecServiceImpl implements ExecService {
      * @param program   The program to run
      * @param args      Arguments to pass to the program
      * @param env       Any extra environment variables to set
-     * @return          The result of the run.
+     * @return The result of the run.
      */
     public ExecBean run(String program, List<String> args,
                         Map<String, String> env)
-        throws NotAuthorizedException, BusyException, ExecuteException, IOException
-    {
+        throws NotAuthorizedException, BusyException, ExecuteException, IOException {
         boolean aquired = false;
         try {
             aquired = avail.tryAcquire();
@@ -95,12 +95,11 @@ public class ExecServiceImpl implements ExecService {
      * @param program   The program to run.
      * @param args      Arguments to pass to the program
      * @param env       Any extra environment variables to set
-     * @return          The result of the run.
+     * @return The result of the run.
      */
     public ExecBean runUnlimited(String program, List<String> args,
                                  Map<String, String> env)
-        throws NotAuthorizedException, ExecuteException, IOException
-    {
+        throws NotAuthorizedException, ExecuteException, IOException {
         try {
             return auxRun(program, args, env);
         } catch (IOException e) {
@@ -109,13 +108,12 @@ public class ExecServiceImpl implements ExecService {
                 throw e;
             else
                 throw new IOException("Invalid permissions on Templeton directory: "
-                                      + cwd.getCanonicalPath());
+                    + cwd.getCanonicalPath());
         }
     }
 
     private ExecBean auxRun(String program, List<String> args, Map<String, String> env)
-        throws NotAuthorizedException, ExecuteException, IOException
-    {
+        throws NotAuthorizedException, ExecuteException, IOException {
         DefaultExecutor executor = new DefaultExecutor();
         executor.setExitValues(null);
 
@@ -144,8 +142,7 @@ public class ExecServiceImpl implements ExecService {
 
     private CommandLine makeCommandLine(String program,
                                         List<String> args)
-        throws NotAuthorizedException, IOException
-    {
+        throws NotAuthorizedException, IOException {
         String path = validateProgram(program);
         CommandLine cmd = new CommandLine(path);
         if (args != null)
@@ -171,8 +168,8 @@ public class ExecServiceImpl implements ExecService {
         }
         if (env != null)
             res.putAll(env);
-        for(Map.Entry<String, String> envs : res.entrySet()){
-	    LOG.info("Env " + envs.getKey() + "=" + envs.getValue());
+        for (Map.Entry<String, String> envs : res.entrySet()) {
+            LOG.info("Env " + envs.getKey() + "=" + envs.getValue());
         }
         return res;
     }
@@ -182,11 +179,10 @@ public class ExecServiceImpl implements ExecService {
      * an exception if the program is missing or not authorized.
      *
      * @param path      The path of the program.
-     * @return          The path of the validated program.
+     * @return The path of the validated program.
      */
     public String validateProgram(String path)
-        throws NotAuthorizedException, IOException
-    {
+        throws NotAuthorizedException, IOException {
         File f = new File(path);
         if (f.canExecute()) {
             return f.getCanonicalPath();

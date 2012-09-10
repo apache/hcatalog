@@ -27,28 +27,28 @@ import java.util.Map;
  */
 public class HCatContext {
 
-  private static final HCatContext hCatContext = new HCatContext();
+    private static final HCatContext hCatContext = new HCatContext();
 
-  private final Configuration conf;
+    private final Configuration conf;
 
-  private HCatContext() {
-    conf = new Configuration();
-  }
-
-  public static HCatContext getInstance() {
-    return hCatContext;
-  }
-
-  public Configuration getConf() {
-    return conf;
-  }
-
-  /**
-   * Merge the given configuration into the HCatContext conf, overwriting any existing keys.
-   */
-  public void mergeConf(Configuration conf) {
-    for (Map.Entry<String, String> entry : conf) {
-      this.conf.set(entry.getKey(), entry.getValue());
+    private HCatContext() {
+        conf = new Configuration();
     }
-  }
+
+    public static HCatContext getInstance() {
+        return hCatContext;
+    }
+
+    public Configuration getConf() {
+        return conf;
+    }
+
+    /**
+     * Merge the given configuration into the HCatContext conf, overwriting any existing keys.
+     */
+    public void mergeConf(Configuration conf) {
+        for (Map.Entry<String, String> entry : conf) {
+            this.conf.set(entry.getKey(), entry.getValue());
+        }
+    }
 }

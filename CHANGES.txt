@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-493 Convert classes with 2 space indentation to 4 space indentation for consistent style (amalakar via traviscrawford)
+
   HCAT-489 HCatalog style cleanups and readd javac debug option (traviscrawford)
 
   HCAT-431 document hcat type to java class/pig type mapping (lefty via khorgath)

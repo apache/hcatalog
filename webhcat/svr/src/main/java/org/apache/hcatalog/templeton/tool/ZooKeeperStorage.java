@@ -65,25 +65,23 @@ public class ZooKeeperStorage implements TempletonStorage {
      * Open a ZooKeeper connection for the JobState.
      */
     public static ZooKeeper zkOpen(String zkHosts, int zkSessionTimeout)
-        throws IOException
-    {
+        throws IOException {
         return new ZooKeeper(zkHosts,
-                             zkSessionTimeout,
-                             new Watcher() {
-                                 @Override
-                                 synchronized public void process(WatchedEvent event) {
-                                 }
-                             });
+            zkSessionTimeout,
+            new Watcher() {
+                @Override
+                synchronized public void process(WatchedEvent event) {
+                }
+            });
     }
 
     /**
      * Open a ZooKeeper connection for the JobState.
      */
     public static ZooKeeper zkOpen(Configuration conf)
-        throws IOException
-    {
+        throws IOException {
         return zkOpen(conf.get(ZK_HOSTS),
-                      conf.getInt(ZK_SESSION_TIMEOUT, 30000));
+            conf.getInt(ZK_SESSION_TIMEOUT, 30000));
     }
 
     public ZooKeeperStorage() {
@@ -95,8 +93,7 @@ public class ZooKeeperStorage implements TempletonStorage {
      * Close this ZK connection.
      */
     public void close()
-        throws IOException
-    {
+        throws IOException {
         if (zk != null) {
             try {
                 zk.close();
@@ -119,15 +116,14 @@ public class ZooKeeperStorage implements TempletonStorage {
      * Create a node in ZooKeeper
      */
     public void create(Type type, String id)
-        throws IOException
-    {
+        throws IOException {
         try {
             String[] paths = getPaths(makeZnode(type, id));
             boolean wasCreated = false;
             for (String znode : paths) {
                 try {
                     zk.create(znode, new byte[0],
-                              Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                        Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
                     wasCreated = true;
                 } catch (KeeperException.NodeExistsException e) {
                 }
@@ -138,7 +134,7 @@ public class ZooKeeperStorage implements TempletonStorage {
                     // to see how the storage mechanism evolves.
                     if (type.equals(Type.JOB)) {
                         JobStateTracker jt = new JobStateTracker(id, zk, false,
-                                job_trackingpath);
+                            job_trackingpath);
                         jt.create();
                     }
                 } catch (Exception e) {
@@ -153,7 +149,7 @@ public class ZooKeeperStorage implements TempletonStorage {
             if (wasCreated) {
                 try {
                     saveField(type, id, "created",
-                              Long.toString(System.currentTimeMillis()));
+                        Long.toString(System.currentTimeMillis()));
                 } catch (NotFoundException nfe) {
                     // Wow, something's really wrong.
                     throw new IOException("Couldn't write to node " + id, nfe);
@@ -210,17 +206,16 @@ public class ZooKeeperStorage implements TempletonStorage {
      * @throws InterruptedException
      */
     private void setFieldData(Type type, String id, String name, String val)
-        throws KeeperException, UnsupportedEncodingException, InterruptedException
-    {
+        throws KeeperException, UnsupportedEncodingException, InterruptedException {
         try {
             zk.create(makeFieldZnode(type, id, name),
-                      val.getBytes(ENCODING),
-                      Ids.OPEN_ACL_UNSAFE,
-                      CreateMode.PERSISTENT);
-        } catch(KeeperException.NodeExistsException e) {
+                val.getBytes(ENCODING),
+                Ids.OPEN_ACL_UNSAFE,
+                CreateMode.PERSISTENT);
+        } catch (KeeperException.NodeExistsException e) {
             zk.setData(makeFieldZnode(type, id, name),
-                       val.getBytes(ENCODING),
-                       -1);
+                val.getBytes(ENCODING),
+                -1);
         }
     }
 
@@ -246,9 +241,9 @@ public class ZooKeeperStorage implements TempletonStorage {
                 create(type, id);
                 setFieldData(type, id, key, val);
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new NotFoundException("Writing " + key + ": " + val + ", "
-                                        + e.getMessage());
+                + e.getMessage());
         }
     }
 
@@ -257,7 +252,7 @@ public class ZooKeeperStorage implements TempletonStorage {
         try {
             byte[] b = zk.getData(makeFieldZnode(type, id, key), false, null);
             return new String(b, ENCODING);
-        } catch(Exception e) {
+        } catch (Exception e) {
             return null;
         }
     }
@@ -266,12 +261,12 @@ public class ZooKeeperStorage implements TempletonStorage {
     public Map<String, String> getFields(Type type, String id) {
         HashMap<String, String> map = new HashMap<String, String>();
         try {
-            for (String node: zk.getChildren(makeZnode(type, id), false)) {
+            for (String node : zk.getChildren(makeZnode(type, id), false)) {
                 byte[] b = zk.getData(makeFieldZnode(type, id, node),
-                                      false, null);
+                    false, null);
                 map.put(node, new String(b, ENCODING));
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             return map;
         }
         return map;
@@ -287,7 +282,7 @@ public class ZooKeeperStorage implements TempletonStorage {
                     // Other nodes may be trying to delete this at the same time,
                     // so just log errors and skip them.
                     throw new NotFoundException("Couldn't delete " +
-                                                makeFieldZnode(type, id, child));
+                        makeFieldZnode(type, id, child));
                 }
             }
             try {
@@ -295,12 +290,12 @@ public class ZooKeeperStorage implements TempletonStorage {
             } catch (Exception e) {
                 // Same thing -- might be deleted by other nodes, so just go on.
                 throw new NotFoundException("Couldn't delete " +
-                                            makeZnode(type, id));
+                    makeZnode(type, id));
             }
         } catch (Exception e) {
             // Error getting children of node -- probably node has been deleted
             throw new NotFoundException("Couldn't get children of " +
-                                        makeZnode(type, id));
+                makeZnode(type, id));
         }
         return true;
     }
@@ -308,7 +303,7 @@ public class ZooKeeperStorage implements TempletonStorage {
     @Override
     public List<String> getAll() {
         ArrayList<String> allNodes = new ArrayList<String>();
-        for (Type type: Type.values()) {
+        for (Type type : Type.values()) {
             allNodes.addAll(getAllForType(type));
         }
         return allNodes;
@@ -327,7 +322,7 @@ public class ZooKeeperStorage implements TempletonStorage {
     public List<String> getAllForKey(String key, String value) {
         ArrayList<String> allNodes = new ArrayList<String>();
         try {
-            for (Type type: Type.values()) {
+            for (Type type : Type.values()) {
                 allNodes.addAll(getAllForTypeAndKey(type, key, value));
             }
         } catch (Exception e) {

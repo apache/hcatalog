@@ -66,8 +66,8 @@ class HBaseInputFormat implements InputFormat<ImmutableBytesWritable, Result> {
      */
     @Override
     public RecordReader<ImmutableBytesWritable, Result> getRecordReader(
-            InputSplit split, JobConf job, Reporter reporter)
-            throws IOException {
+        InputSplit split, JobConf job, Reporter reporter)
+        throws IOException {
         String jobString = job.get(HCatConstants.HCAT_KEY_JOB_INFO);
         InputJobInfo inputJobInfo = (InputJobInfo) HCatUtil.deserialize(jobString);
 
@@ -103,20 +103,20 @@ class HBaseInputFormat implements InputFormat<ImmutableBytesWritable, Result> {
      */
     @Override
     public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf job, int numSplits)
-            throws IOException {
+        throws IOException {
         inputFormat.setConf(job);
         return convertSplits(inputFormat.getSplits(HCatMapRedUtil.createJobContext(job, null,
-                Reporter.NULL)));
+            Reporter.NULL)));
     }
 
     private InputSplit[] convertSplits(List<org.apache.hadoop.mapreduce.InputSplit> splits) {
         InputSplit[] converted = new InputSplit[splits.size()];
         for (int i = 0; i < splits.size(); i++) {
             org.apache.hadoop.hbase.mapreduce.TableSplit tableSplit =
-                    (org.apache.hadoop.hbase.mapreduce.TableSplit) splits.get(i);
+                (org.apache.hadoop.hbase.mapreduce.TableSplit) splits.get(i);
             TableSplit newTableSplit = new TableSplit(tableSplit.getTableName(),
-                    tableSplit.getStartRow(),
-                    tableSplit.getEndRow(), tableSplit.getRegionLocation());
+                tableSplit.getStartRow(),
+                tableSplit.getEndRow(), tableSplit.getRegionLocation());
             converted[i] = newTableSplit;
         }
         return converted;

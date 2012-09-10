@@ -46,9 +46,8 @@ public class HCatHadoopShims20S implements HCatHadoopShims {
         return new TaskAttemptID();
     }
 
-	@Override
-	public TaskAttemptContext createTaskAttemptContext(Configuration conf,
-			TaskAttemptID taskId) {
+    @Override
+    public TaskAttemptContext createTaskAttemptContext(Configuration conf, TaskAttemptID taskId) {
         return new TaskAttemptContext(conf, taskId);
     }
 
@@ -133,12 +132,12 @@ public class HCatHadoopShims20S implements HCatHadoopShims {
     @Override
     public String getPropertyName(PropertyName name) {
         switch (name) {
-            case CACHE_ARCHIVES:
-                return DistributedCache.CACHE_ARCHIVES;
-            case CACHE_FILES:
-                return DistributedCache.CACHE_FILES;
-            case CACHE_SYMLINK:
-                return DistributedCache.CACHE_SYMLINK;
+        case CACHE_ARCHIVES:
+            return DistributedCache.CACHE_ARCHIVES;
+        case CACHE_FILES:
+            return DistributedCache.CACHE_FILES;
+        case CACHE_SYMLINK:
+            return DistributedCache.CACHE_SYMLINK;
         }
 
         return "";

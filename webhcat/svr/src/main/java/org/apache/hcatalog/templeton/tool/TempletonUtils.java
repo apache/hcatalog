@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -65,14 +66,14 @@ public class TempletonUtils {
      * Is the object non-empty?
      */
     public static <T> boolean isset(Collection<T> col) {
-        return (col != null) && (! col.isEmpty());
+        return (col != null) && (!col.isEmpty());
     }
 
     /**
      * Is the object non-empty?
      */
     public static <K, V> boolean isset(Map<K, V> col) {
-        return (col != null) && (! col.isEmpty());
+        return (col != null) && (!col.isEmpty());
     }
 
 
@@ -160,8 +161,7 @@ public class TempletonUtils {
     public static String[] hadoopFsListAsArray(String files, Configuration conf,
                                                String user)
         throws URISyntaxException, FileNotFoundException, IOException,
-        InterruptedException
-    {
+        InterruptedException {
         if (files == null || conf == null) {
             return null;
         }
@@ -177,8 +177,7 @@ public class TempletonUtils {
     public static String hadoopFsListAsString(String files, Configuration conf,
                                               String user)
         throws URISyntaxException, FileNotFoundException, IOException,
-        InterruptedException
-    {
+        InterruptedException {
         if (files == null || conf == null) {
             return null;
         }
@@ -187,8 +186,7 @@ public class TempletonUtils {
 
     public static String hadoopFsFilename(String fname, Configuration conf, String user)
         throws URISyntaxException, FileNotFoundException, IOException,
-        InterruptedException
-    {
+        InterruptedException {
         Path p = hadoopFsPath(fname, conf, user);
         if (p == null)
             return null;
@@ -201,8 +199,8 @@ public class TempletonUtils {
      */
     public static boolean hadoopFsIsMissing(FileSystem fs, Path p) {
         try {
-            return ! fs.exists(p);
-        } catch(Throwable t) {
+            return !fs.exists(p);
+        } catch (Throwable t) {
             // Got an error, might be there anyway due to a
             // permissions problem.
             return false;
@@ -211,8 +209,7 @@ public class TempletonUtils {
 
     public static Path hadoopFsPath(String fname, Configuration conf, String user)
         throws URISyntaxException, FileNotFoundException, IOException,
-        InterruptedException
-    {
+        InterruptedException {
         if (fname == null || conf == null) {
             return null;
         }
@@ -231,8 +228,7 @@ public class TempletonUtils {
      * GET the given url.  Returns the number of bytes received.
      */
     public static int fetchUrl(URL url)
-        throws IOException
-    {
+        throws IOException {
         URLConnection cnx = url.openConnection();
         InputStream in = cnx.getInputStream();
 
@@ -249,8 +245,7 @@ public class TempletonUtils {
      * Set the environment variables to specify the hadoop user.
      */
     public static Map<String, String> hadoopUserEnv(String user,
-                                                    String overrideClasspath)
-    {
+                                                    String overrideClasspath) {
         HashMap<String, String> env = new HashMap<String, String>();
         env.put("HADOOP_USER_NAME", user);
 

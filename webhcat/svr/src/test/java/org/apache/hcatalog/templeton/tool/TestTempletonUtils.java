@@ -183,7 +183,7 @@ public class TestTempletonUtils {
             Assert.assertTrue(TempletonUtils.hadoopFsListAsString("/tmp,/usr",
                                                            null, null) == null);
             Assert.assertEquals("file:/tmp,file:/usr", TempletonUtils.hadoopFsListAsString
-                         ("/tmp,/usr", new Configuration(), null));
+                ("/tmp,/usr", new Configuration(), null));
         } catch (FileNotFoundException e) {
             Assert.fail("Couldn't find name for /tmp");
         } catch (Exception e) {

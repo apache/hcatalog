@@ -26,15 +26,15 @@ import com.sun.jersey.server.wadl.generators.resourcedoc.WadlGeneratorResourceDo
 /**
  * Simple class that incorporates javadoc information into the
  * wadl produced by jersey.
- * 
+ *
  */
 public class WadlConfig extends WadlGeneratorConfig {
-    
+
     @Override
     public List<WadlGeneratorDescription> configure() {
-        return generator( WadlGeneratorResourceDocSupport.class ) 
-            .prop( "resourceDocStream", "resourcedoc.xml" ) 
-        .descriptions();
+        return generator(WadlGeneratorResourceDocSupport.class)
+            .prop("resourceDocStream", "resourcedoc.xml")
+            .descriptions();
     }
- 
+
 }

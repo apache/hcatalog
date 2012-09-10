@@ -45,7 +45,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce
  * program to test that hcat hands the right data to the map reduce program
- * 
+ *
  * Usage: hadoop jar sumnumbers <serveruri> <output dir> <-libjars hive-hcat
  * jar> The <tab|ctrla> argument controls the output delimiter The hcat jar
  * location should be specified as file://<full path to jar>
@@ -53,40 +53,40 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
 public class GroupByAge extends Configured implements Tool {
 
     public static class Map extends
-            Mapper<WritableComparable, HCatRecord, IntWritable, IntWritable> {
+        Mapper<WritableComparable, HCatRecord, IntWritable, IntWritable> {
 
         int age;
-        
+
         @Override
         protected void map(
-                WritableComparable key,
-                HCatRecord value,
-                org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, IntWritable, IntWritable>.Context context)
-                throws IOException, InterruptedException {
+            WritableComparable key,
+            HCatRecord value,
+            org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, IntWritable, IntWritable>.Context context)
+            throws IOException, InterruptedException {
             age = (Integer) value.get(1);
             context.write(new IntWritable(age), new IntWritable(1));
         }
     }
-    
+
     public static class Reduce extends Reducer<IntWritable, IntWritable,
-    WritableComparable, HCatRecord> {
+        WritableComparable, HCatRecord> {
 
 
-      @Override
-      protected void reduce(IntWritable key, java.lang.Iterable<IntWritable>
-        values, org.apache.hadoop.mapreduce.Reducer<IntWritable,IntWritable,WritableComparable,HCatRecord>.Context context)
-        throws IOException ,InterruptedException {
-          int sum = 0;
-          Iterator<IntWritable> iter = values.iterator();
-          while (iter.hasNext()) {
-              sum++;
-              iter.next();
-          }
-          HCatRecord record = new DefaultHCatRecord(2);
-          record.set(0, key.get());
-          record.set(1, sum);
-          
-          context.write(null, record);
+        @Override
+        protected void reduce(IntWritable key, java.lang.Iterable<IntWritable>
+            values, org.apache.hadoop.mapreduce.Reducer<IntWritable, IntWritable, WritableComparable, HCatRecord>.Context context)
+            throws IOException, InterruptedException {
+            int sum = 0;
+            Iterator<IntWritable> iter = values.iterator();
+            while (iter.hasNext()) {
+                sum++;
+                iter.next();
+            }
+            HCatRecord record = new DefaultHCatRecord(2);
+            record.set(0, key.get());
+            record.set(1, sum);
+
+            context.write(null, record);
         }
     }
 
@@ -100,12 +100,12 @@ public class GroupByAge extends Configured implements Tool {
         String dbName = null;
 
         String principalID = System
-                .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+            .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
         if (principalID != null)
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "GroupByAge");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, null));
+            inputTableName, null));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);
@@ -117,10 +117,10 @@ public class GroupByAge extends Configured implements Tool {
         job.setOutputKeyClass(WritableComparable.class);
         job.setOutputValueClass(DefaultHCatRecord.class);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null));
+            outputTableName, null));
         HCatSchema s = HCatOutputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
-                + s);
+            + s);
         HCatOutputFormat.setSchema(job, s);
         job.setOutputFormatClass(HCatOutputFormat.class);
         return (job.waitForCompletion(true) ? 0 : 1);

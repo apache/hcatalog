@@ -66,135 +66,135 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      */
     @SuppressWarnings("unchecked")
     public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
-      HiveMetaStoreClient client = null;
+        HiveMetaStoreClient client = null;
 
-      try {
+        try {
 
-        Configuration conf = job.getConfiguration();
-        HiveConf hiveConf = HCatUtil.getHiveConf(conf);
-        client = HCatUtil.getHiveClient(hiveConf);
-        Table table = HCatUtil.getTable(client, outputJobInfo.getDatabaseName(),
-            outputJobInfo.getTableName());
+            Configuration conf = job.getConfiguration();
+            HiveConf hiveConf = HCatUtil.getHiveConf(conf);
+            client = HCatUtil.getHiveClient(hiveConf);
+            Table table = HCatUtil.getTable(client, outputJobInfo.getDatabaseName(),
+                outputJobInfo.getTableName());
 
-        List<String> indexList = client.listIndexNames(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), Short.MAX_VALUE);
+            List<String> indexList = client.listIndexNames(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), Short.MAX_VALUE);
 
-        for (String indexName : indexList) {
-            Index index = client.getIndex(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), indexName);
-            if (!index.isDeferredRebuild()) {
-                throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a table with an automatic index from Pig/Mapreduce is not supported");
+            for (String indexName : indexList) {
+                Index index = client.getIndex(outputJobInfo.getDatabaseName(), outputJobInfo.getTableName(), indexName);
+                if (!index.isDeferredRebuild()) {
+                    throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a table with an automatic index from Pig/Mapreduce is not supported");
+                }
             }
-        }
-        StorageDescriptor sd = table.getTTable().getSd();
+            StorageDescriptor sd = table.getTTable().getSd();
 
-        if (sd.isCompressed()) {
-            throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a compressed partition from Pig/Mapreduce is not supported");
-        }
-
-        if (sd.getBucketCols()!=null && !sd.getBucketCols().isEmpty()) {
-            throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with bucket definition from Pig/Mapreduce is not supported");
-        }
-
-        if (sd.getSortCols()!=null && !sd.getSortCols().isEmpty()) {
-            throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with sorted column definition from Pig/Mapreduce is not supported");
-        }
-
-        if (table.getTTable().getPartitionKeysSize() == 0 ){
-          if ((outputJobInfo.getPartitionValues() != null) && (!outputJobInfo.getPartitionValues().isEmpty())){
-            // attempt made to save partition values in non-partitioned table - throw error.
-            throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,
-                "Partition values specified for non-partitioned table");
-          }
-          // non-partitioned table
-          outputJobInfo.setPartitionValues(new HashMap<String, String>());
-
-        } else {
-          // partitioned table, we expect partition values
-          // convert user specified map to have lower case key names
-          Map<String, String> valueMap = new HashMap<String, String>();
-          if (outputJobInfo.getPartitionValues() != null){
-            for(Map.Entry<String, String> entry : outputJobInfo.getPartitionValues().entrySet()) {
-              valueMap.put(entry.getKey().toLowerCase(), entry.getValue());
-            }
-          }
-
-          if ((outputJobInfo.getPartitionValues() == null)
-              || (outputJobInfo.getPartitionValues().size() < table.getTTable().getPartitionKeysSize())){
-            // dynamic partition usecase - partition values were null, or not all were specified
-            // need to figure out which keys are not specified.
-            List<String> dynamicPartitioningKeys = new ArrayList<String>();
-            boolean firstItem = true;
-            for (FieldSchema fs : table.getPartitionKeys()){
-              if (!valueMap.containsKey(fs.getName().toLowerCase())){
-                dynamicPartitioningKeys.add(fs.getName().toLowerCase());
-              }
+            if (sd.isCompressed()) {
+                throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a compressed partition from Pig/Mapreduce is not supported");
             }
 
-            if (valueMap.size() + dynamicPartitioningKeys.size() != table.getTTable().getPartitionKeysSize()){
-              // If this isn't equal, then bogus key values have been inserted, error out.
-              throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,"Invalid partition keys specified");
+            if (sd.getBucketCols() != null && !sd.getBucketCols().isEmpty()) {
+                throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with bucket definition from Pig/Mapreduce is not supported");
             }
 
-            outputJobInfo.setDynamicPartitioningKeys(dynamicPartitioningKeys);
-            String dynHash;
-            if ((dynHash = conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID)) == null){
-              dynHash = String.valueOf(Math.random());
+            if (sd.getSortCols() != null && !sd.getSortCols().isEmpty()) {
+                throw new HCatException(ErrorType.ERROR_NOT_SUPPORTED, "Store into a partition with sorted column definition from Pig/Mapreduce is not supported");
+            }
+
+            if (table.getTTable().getPartitionKeysSize() == 0) {
+                if ((outputJobInfo.getPartitionValues() != null) && (!outputJobInfo.getPartitionValues().isEmpty())) {
+                    // attempt made to save partition values in non-partitioned table - throw error.
+                    throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES,
+                        "Partition values specified for non-partitioned table");
+                }
+                // non-partitioned table
+                outputJobInfo.setPartitionValues(new HashMap<String, String>());
+
+            } else {
+                // partitioned table, we expect partition values
+                // convert user specified map to have lower case key names
+                Map<String, String> valueMap = new HashMap<String, String>();
+                if (outputJobInfo.getPartitionValues() != null) {
+                    for (Map.Entry<String, String> entry : outputJobInfo.getPartitionValues().entrySet()) {
+                        valueMap.put(entry.getKey().toLowerCase(), entry.getValue());
+                    }
+                }
+
+                if ((outputJobInfo.getPartitionValues() == null)
+                    || (outputJobInfo.getPartitionValues().size() < table.getTTable().getPartitionKeysSize())) {
+                    // dynamic partition usecase - partition values were null, or not all were specified
+                    // need to figure out which keys are not specified.
+                    List<String> dynamicPartitioningKeys = new ArrayList<String>();
+                    boolean firstItem = true;
+                    for (FieldSchema fs : table.getPartitionKeys()) {
+                        if (!valueMap.containsKey(fs.getName().toLowerCase())) {
+                            dynamicPartitioningKeys.add(fs.getName().toLowerCase());
+                        }
+                    }
+
+                    if (valueMap.size() + dynamicPartitioningKeys.size() != table.getTTable().getPartitionKeysSize()) {
+                        // If this isn't equal, then bogus key values have been inserted, error out.
+                        throw new HCatException(ErrorType.ERROR_INVALID_PARTITION_VALUES, "Invalid partition keys specified");
+                    }
+
+                    outputJobInfo.setDynamicPartitioningKeys(dynamicPartitioningKeys);
+                    String dynHash;
+                    if ((dynHash = conf.get(HCatConstants.HCAT_DYNAMIC_PTN_JOBID)) == null) {
+                        dynHash = String.valueOf(Math.random());
 //              LOG.info("New dynHash : ["+dynHash+"]");
 //            }else{
 //              LOG.info("Old dynHash : ["+dynHash+"]");
+                    }
+                    conf.set(HCatConstants.HCAT_DYNAMIC_PTN_JOBID, dynHash);
+
+                }
+
+                outputJobInfo.setPartitionValues(valueMap);
             }
-            conf.set(HCatConstants.HCAT_DYNAMIC_PTN_JOBID, dynHash);
 
-          }
+            HCatSchema tableSchema = HCatUtil.extractSchema(table);
+            StorerInfo storerInfo =
+                InternalUtil.extractStorerInfo(table.getTTable().getSd(), table.getParameters());
 
-          outputJobInfo.setPartitionValues(valueMap);
+            List<String> partitionCols = new ArrayList<String>();
+            for (FieldSchema schema : table.getPartitionKeys()) {
+                partitionCols.add(schema.getName());
+            }
+
+            HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(job.getConfiguration(), storerInfo);
+
+            //Serialize the output info into the configuration
+            outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table.getTTable()));
+            outputJobInfo.setOutputSchema(tableSchema);
+            harRequested = getHarRequested(hiveConf);
+            outputJobInfo.setHarRequested(harRequested);
+            maxDynamicPartitions = getMaxDynamicPartitions(hiveConf);
+            outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
+
+            HCatUtil.configureOutputStorageHandler(storageHandler, job, outputJobInfo);
+
+            Path tblPath = new Path(table.getTTable().getSd().getLocation());
+
+            /*  Set the umask in conf such that files/dirs get created with table-dir
+            * permissions. Following three assumptions are made:
+            * 1. Actual files/dirs creation is done by RecordWriter of underlying
+            * output format. It is assumed that they use default permissions while creation.
+            * 2. Default Permissions = FsPermission.getDefault() = 777.
+            * 3. UMask is honored by underlying filesystem.
+            */
+
+            FsPermission.setUMask(conf, FsPermission.getDefault().applyUMask(
+                tblPath.getFileSystem(conf).getFileStatus(tblPath).getPermission()));
+
+            if (Security.getInstance().isSecurityEnabled()) {
+                Security.getInstance().handleSecurity(job, outputJobInfo, client, conf, harRequested);
+            }
+        } catch (Exception e) {
+            if (e instanceof HCatException) {
+                throw (HCatException) e;
+            } else {
+                throw new HCatException(ErrorType.ERROR_SET_OUTPUT, e);
+            }
+        } finally {
+            HCatUtil.closeHiveClientQuietly(client);
         }
-
-        HCatSchema tableSchema = HCatUtil.extractSchema(table);
-        StorerInfo storerInfo =
-            InternalUtil.extractStorerInfo(table.getTTable().getSd(), table.getParameters());
-
-        List<String> partitionCols = new ArrayList<String>();
-        for(FieldSchema schema : table.getPartitionKeys()) {
-          partitionCols.add(schema.getName());
-        }
-
-       HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(job.getConfiguration(), storerInfo);
-
-        //Serialize the output info into the configuration
-        outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table.getTTable()));
-        outputJobInfo.setOutputSchema(tableSchema);
-        harRequested = getHarRequested(hiveConf);
-        outputJobInfo.setHarRequested(harRequested);
-        maxDynamicPartitions = getMaxDynamicPartitions(hiveConf);
-        outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
-
-        HCatUtil.configureOutputStorageHandler(storageHandler,job,outputJobInfo);
-
-        Path tblPath = new Path(table.getTTable().getSd().getLocation());
-
-        /*  Set the umask in conf such that files/dirs get created with table-dir
-         * permissions. Following three assumptions are made:
-         * 1. Actual files/dirs creation is done by RecordWriter of underlying
-         * output format. It is assumed that they use default permissions while creation.
-         * 2. Default Permissions = FsPermission.getDefault() = 777.
-         * 3. UMask is honored by underlying filesystem.
-         */
-
-        FsPermission.setUMask(conf, FsPermission.getDefault().applyUMask(
-            tblPath.getFileSystem(conf).getFileStatus(tblPath).getPermission()));
-
-        if(Security.getInstance().isSecurityEnabled()) {
-            Security.getInstance().handleSecurity(job, outputJobInfo, client, conf, harRequested);
-        }
-      } catch(Exception e) {
-        if( e instanceof HCatException ) {
-          throw (HCatException) e;
-        } else {
-          throw new HCatException(ErrorType.ERROR_SET_OUTPUT, e);
-        }
-      } finally {
-        HCatUtil.closeHiveClientQuietly(client);
-      }
     }
 
     /**
@@ -207,7 +207,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     public static void setSchema(final Job job, final HCatSchema schema) throws IOException {
 
         OutputJobInfo jobInfo = getJobInfo(job);
-        Map<String,String> partMap = jobInfo.getPartitionValues();
+        Map<String, String> partMap = jobInfo.getPartitionValues();
         setPartDetails(jobInfo, schema, partMap);
         job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
     }
@@ -222,9 +222,9 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      */
     @Override
     public RecordWriter<WritableComparable<?>, HCatRecord>
-        getRecordWriter(TaskAttemptContext context)
+    getRecordWriter(TaskAttemptContext context)
         throws IOException, InterruptedException {
-      return getOutputFormat(context).getRecordWriter(context);
+        return getOutputFormat(context).getRecordWriter(context);
     }
 
 
@@ -238,25 +238,25 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      */
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context
-                                       ) throws IOException, InterruptedException {
+    ) throws IOException, InterruptedException {
         return getOutputFormat(context).getOutputCommitter(context);
     }
 
     private static int getMaxDynamicPartitions(HiveConf hConf) {
-      // by default the bounds checking for maximum number of
-      // dynamic partitions is disabled (-1)
-      int maxDynamicPartitions = -1;
+        // by default the bounds checking for maximum number of
+        // dynamic partitions is disabled (-1)
+        int maxDynamicPartitions = -1;
 
-      if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED){
-        maxDynamicPartitions = hConf.getIntVar(
-                                HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
-      }
+        if (HCatConstants.HCAT_IS_DYNAMIC_MAX_PTN_CHECK_ENABLED) {
+            maxDynamicPartitions = hConf.getIntVar(
+                HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS);
+        }
 
-      return maxDynamicPartitions;
+        return maxDynamicPartitions;
     }
 
     private static boolean getHarRequested(HiveConf hConf) {
-      return hConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
+        return hConf.getBoolVar(HiveConf.ConfVars.HIVEARCHIVEENABLED);
     }
 
 }

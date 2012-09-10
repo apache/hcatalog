@@ -92,9 +92,9 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
     public TestHBaseBulkOutputFormat() {
         allConf = getHiveConf();
         allConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
-                HCatSemanticAnalyzer.class.getName());
+            HCatSemanticAnalyzer.class.getName());
         allConf.set(HiveConf.ConfVars.HADOOPFS.varname, getFileSystem().getUri().toString());
-        allConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new Path(getTestDir(),"warehouse").toString());
+        allConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, new Path(getTestDir(), "warehouse").toString());
 
         //Add hbase properties
         for (Map.Entry<String, String> el : getHbaseConf())
@@ -103,8 +103,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
             allConf.set(el.getKey(), el.getValue());
 
         HBaseConfiguration.merge(
-                allConf,
-                RevisionManagerConfiguration.create());
+            allConf,
+            RevisionManagerConfiguration.create());
         SessionState.start(new CliSessionState(allConf));
         hcatDriver = new HCatDriver();
     }
@@ -121,17 +121,17 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         @Override
         public void map(LongWritable key, Text value,
-                OutputCollector<ImmutableBytesWritable, Put> output,
-                Reporter reporter) throws IOException {
+                        OutputCollector<ImmutableBytesWritable, Put> output,
+                        Reporter reporter) throws IOException {
             String vals[] = value.toString().split(",");
             Put put = new Put(Bytes.toBytes(vals[0]));
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
                 put.add(Bytes.toBytes("my_family"),
-                        Bytes.toBytes(pair[0]),
-                        Bytes.toBytes(pair[1]));
+                    Bytes.toBytes(pair[0]),
+                    Bytes.toBytes(pair[1]));
             }
-            output.collect(new ImmutableBytesWritable(Bytes.toBytes(vals[0])),put);
+            output.collect(new ImmutableBytesWritable(Bytes.toBytes(vals[0])), put);
         }
 
     }
@@ -142,37 +142,37 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String vals[] = value.toString().split(",");
             Put put = new Put(Bytes.toBytes(vals[0]));
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
                 put.add(Bytes.toBytes("my_family"),
-                        Bytes.toBytes(pair[0]),
-                        Bytes.toBytes(pair[1]));
+                    Bytes.toBytes(pair[0]),
+                    Bytes.toBytes(pair[1]));
             }
-            context.write(new ImmutableBytesWritable(Bytes.toBytes(vals[0])),put);
+            context.write(new ImmutableBytesWritable(Bytes.toBytes(vals[0])), put);
         }
     }
 
     public static class MapHCatWrite extends Mapper<LongWritable, Text, BytesWritable, HCatRecord> {
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            OutputJobInfo jobInfo = (OutputJobInfo)HCatUtil.deserialize(context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+            OutputJobInfo jobInfo = (OutputJobInfo) HCatUtil.deserialize(context.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
             HCatRecord record = new DefaultHCatRecord(3);
             HCatSchema schema = jobInfo.getOutputSchema();
             String vals[] = value.toString().split(",");
-            record.setInteger("key",schema,Integer.parseInt(vals[0]));
-            for(int i=1;i<vals.length;i++) {
+            record.setInteger("key", schema, Integer.parseInt(vals[0]));
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
-                record.set(pair[0],schema,pair[1]);
+                record.set(pair[0], schema, pair[1]);
             }
-            context.write(null,record);
+            context.write(null, record);
         }
     }
 
     @Test
     public void hbaseBulkOutputFormatTest() throws IOException, ClassNotFoundException, InterruptedException {
         String testName = "hbaseBulkOutputFormatTest";
-        Path methodTestDir = new Path(getTestDir(),testName);
-        LOG.info("starting: "+testName);
+        Path methodTestDir = new Path(getTestDir(), testName);
+        LOG.info("starting: " + testName);
 
         String tableName = newTableName(testName).toLowerCase();
         String familyName = "my_family";
@@ -186,21 +186,20 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         createTable(tableName, new String[]{familyName});
 
         String data[] = {"1,english:one,spanish:uno",
-                               "2,english:two,spanish:dos",
-                               "3,english:three,spanish:tres"};
-
+            "2,english:two,spanish:dos",
+            "3,english:three,spanish:tres"};
 
 
         // input/output settings
-        Path inputPath = new Path(methodTestDir,"mr_input");
-        FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
-        for(String line: data)
+        Path inputPath = new Path(methodTestDir, "mr_input");
+        FSDataOutputStream os = getFileSystem().create(new Path(inputPath, "inputFile.txt"));
+        for (String line : data)
             os.write(Bytes.toBytes(line + "\n"));
         os.close();
-        Path interPath = new Path(methodTestDir,"inter");
+        Path interPath = new Path(methodTestDir, "inter");
         //create job
         JobConf job = new JobConf(conf);
-        job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
+        job.setWorkingDirectory(new Path(methodTestDir, "mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapWriteOldMapper.class);
 
@@ -217,9 +216,9 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
             OutputJobInfo outputJobInfo = OutputJobInfo.create("default", tableName, null);
             Transaction txn = rm.beginWriteTransaction(tableName, Arrays.asList(familyName));
             outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY,
-                                                      HCatUtil.serialize(txn));
+                HCatUtil.serialize(txn));
             job.set(HCatConstants.HCAT_KEY_OUTPUT_INFO,
-                                       HCatUtil.serialize(outputJobInfo));
+                HCatUtil.serialize(outputJobInfo));
         } finally {
             rm.close();
         }
@@ -241,18 +240,18 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
-        int index=0;
-        for(Result result: scanner) {
+        int index = 0;
+        for (Result result : scanner) {
             String vals[] = data[index].toString().split(",");
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
-                assertTrue(result.containsColumn(familyNameBytes,Bytes.toBytes(pair[0])));
-                assertEquals(pair[1],Bytes.toString(result.getValue(familyNameBytes,Bytes.toBytes(pair[0]))));
+                assertTrue(result.containsColumn(familyNameBytes, Bytes.toBytes(pair[0])));
+                assertEquals(pair[1], Bytes.toString(result.getValue(familyNameBytes, Bytes.toBytes(pair[0]))));
             }
             index++;
         }
         //test if load count is the same
-        assertEquals(data.length,index);
+        assertEquals(data.length, index);
         //test if scratch directory was erased
         assertFalse(FileSystem.get(job).exists(interPath));
     }
@@ -260,8 +259,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
     @Test
     public void importSequenceFileTest() throws IOException, ClassNotFoundException, InterruptedException {
         String testName = "importSequenceFileTest";
-        Path methodTestDir = new Path(getTestDir(),testName);
-        LOG.info("starting: "+testName);
+        Path methodTestDir = new Path(getTestDir(), testName);
+        LOG.info("starting: " + testName);
 
         String tableName = newTableName(testName).toLowerCase();
         String familyName = "my_family";
@@ -271,28 +270,27 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         Configuration conf = new Configuration(allConf);
 
         //create table
-        createTable(tableName,new String[]{familyName});
+        createTable(tableName, new String[]{familyName});
 
         String data[] = {"1,english:one,spanish:uno",
-                               "2,english:two,spanish:dos",
-                               "3,english:three,spanish:tres"};
-
+            "2,english:two,spanish:dos",
+            "3,english:three,spanish:tres"};
 
 
         // input/output settings
-        Path inputPath = new Path(methodTestDir,"mr_input");
+        Path inputPath = new Path(methodTestDir, "mr_input");
         getFileSystem().mkdirs(inputPath);
-        FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
-        for(String line: data)
+        FSDataOutputStream os = getFileSystem().create(new Path(inputPath, "inputFile.txt"));
+        for (String line : data)
             os.write(Bytes.toBytes(line + "\n"));
         os.close();
-        Path interPath = new Path(methodTestDir,"inter");
-        Path scratchPath = new Path(methodTestDir,"scratch");
+        Path interPath = new Path(methodTestDir, "inter");
+        Path scratchPath = new Path(methodTestDir, "scratch");
 
 
         //create job
         Job job = new Job(conf, testName);
-        job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
+        job.setWorkingDirectory(new Path(methodTestDir, "mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapWrite.class);
 
@@ -300,7 +298,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         TextInputFormat.setInputPaths(job, inputPath);
 
         job.setOutputFormatClass(SequenceFileOutputFormat.class);
-        SequenceFileOutputFormat.setOutputPath(job,interPath);
+        SequenceFileOutputFormat.setOutputPath(job, interPath);
 
         job.setMapOutputKeyClass(ImmutableBytesWritable.class);
         job.setMapOutputValueClass(Put.class);
@@ -311,7 +309,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
 
-        job = new Job(new Configuration(allConf),testName+"_importer");
+        job = new Job(new Configuration(allConf), testName + "_importer");
         assertTrue(ImportSequenceFile.runJob(job, tableName, interPath, scratchPath));
 
         //verify
@@ -319,18 +317,18 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
-        int index=0;
-        for(Result result: scanner) {
+        int index = 0;
+        for (Result result : scanner) {
             String vals[] = data[index].toString().split(",");
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
-                assertTrue(result.containsColumn(familyNameBytes,Bytes.toBytes(pair[0])));
-                assertEquals(pair[1],Bytes.toString(result.getValue(familyNameBytes,Bytes.toBytes(pair[0]))));
+                assertTrue(result.containsColumn(familyNameBytes, Bytes.toBytes(pair[0])));
+                assertEquals(pair[1], Bytes.toString(result.getValue(familyNameBytes, Bytes.toBytes(pair[0]))));
             }
             index++;
         }
         //test if load count is the same
-        assertEquals(data.length,index);
+        assertEquals(data.length, index);
         //test if scratch directory was erased
         assertFalse(FileSystem.get(job.getConfiguration()).exists(scratchPath));
     }
@@ -338,11 +336,11 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
     @Test
     public void bulkModeHCatOutputFormatTest() throws Exception {
         String testName = "bulkModeHCatOutputFormatTest";
-        Path methodTestDir = new Path(getTestDir(),testName);
-        LOG.info("starting: "+testName);
+        Path methodTestDir = new Path(getTestDir(), testName);
+        LOG.info("starting: " + testName);
 
         String databaseName = testName.toLowerCase();
-        String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
+        String dbDir = new Path(methodTestDir, "DB_" + testName).toString();
         String tableName = newTableName(testName).toLowerCase();
         String familyName = "my_family";
         byte[] familyNameBytes = Bytes.toBytes(familyName);
@@ -355,31 +353,31 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '" + dbDir + "'";
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
-                              "(key int, english string, spanish string) STORED BY " +
-                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY+"'='true',"+
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+            "(key int, english string, spanish string) STORED BY " +
+            "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
+            "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY + "'='true'," +
+            "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName + ":spanish')";
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
 
         String data[] = {"1,english:ONE,spanish:UNO",
-                               "2,english:TWO,spanish:DOS",
-                               "3,english:THREE,spanish:TRES"};
+            "2,english:TWO,spanish:DOS",
+            "3,english:THREE,spanish:TRES"};
 
         // input/output settings
-        Path inputPath = new Path(methodTestDir,"mr_input");
+        Path inputPath = new Path(methodTestDir, "mr_input");
         getFileSystem().mkdirs(inputPath);
         //create multiple files so we can test with multiple mappers
-        for(int i=0;i<data.length;i++) {
-            FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile"+i+".txt"));
+        for (int i = 0; i < data.length; i++) {
+            FSDataOutputStream os = getFileSystem().create(new Path(inputPath, "inputFile" + i + ".txt"));
             os.write(Bytes.toBytes(data[i] + "\n"));
             os.close();
         }
 
         //create job
-        Job job = new Job(conf,testName);
-        job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
+        Job job = new Job(conf, testName);
+        job.setWorkingDirectory(new Path(methodTestDir, "mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapHCatWrite.class);
 
@@ -388,8 +386,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
 
         job.setOutputFormatClass(HCatOutputFormat.class);
-        OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null);
-        HCatOutputFormat.setOutput(job,outputJobInfo);
+        OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName, tableName, null);
+        HCatOutputFormat.setOutput(job, outputJobInfo);
 
         job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
@@ -402,41 +400,41 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         assertTrue(job.waitForCompletion(true));
         RevisionManager rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
         try {
-            TableSnapshot snapshot = rm.createSnapshot(databaseName+"."+tableName);
-            for(String el: snapshot.getColumnFamilies()) {
-                assertEquals(1,snapshot.getRevision(el));
+            TableSnapshot snapshot = rm.createSnapshot(databaseName + "." + tableName);
+            for (String el : snapshot.getColumnFamilies()) {
+                assertEquals(1, snapshot.getRevision(el));
             }
         } finally {
             rm.close();
         }
 
         //verify
-        HTable table = new HTable(conf, databaseName+"."+tableName);
+        HTable table = new HTable(conf, databaseName + "." + tableName);
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
-        int index=0;
-        for(Result result: scanner) {
+        int index = 0;
+        for (Result result : scanner) {
             String vals[] = data[index].toString().split(",");
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
-                assertTrue(result.containsColumn(familyNameBytes,Bytes.toBytes(pair[0])));
-                assertEquals(pair[1],Bytes.toString(result.getValue(familyNameBytes,Bytes.toBytes(pair[0]))));
-                assertEquals(1l,result.getColumn(familyNameBytes,Bytes.toBytes(pair[0])).get(0).getTimestamp());
+                assertTrue(result.containsColumn(familyNameBytes, Bytes.toBytes(pair[0])));
+                assertEquals(pair[1], Bytes.toString(result.getValue(familyNameBytes, Bytes.toBytes(pair[0]))));
+                assertEquals(1l, result.getColumn(familyNameBytes, Bytes.toBytes(pair[0])).get(0).getTimestamp());
             }
             index++;
         }
         //test if load count is the same
-        assertEquals(data.length,index);
+        assertEquals(data.length, index);
     }
 
     @Test
     public void bulkModeHCatOutputFormatTestWithDefaultDB() throws Exception {
         String testName = "bulkModeHCatOutputFormatTestWithDefaultDB";
-        Path methodTestDir = new Path(getTestDir(),testName);
+        Path methodTestDir = new Path(getTestDir(), testName);
 
         String databaseName = "default";
-        String dbDir = new Path(methodTestDir,"DB_"+testName).toString();
+        String dbDir = new Path(methodTestDir, "DB_" + testName).toString();
         String tableName = newTableName(testName).toLowerCase();
         String familyName = "my_family";
         byte[] familyNameBytes = Bytes.toBytes(familyName);
@@ -449,29 +447,29 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '" + dbDir + "'";
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
-                              "(key int, english string, spanish string) STORED BY " +
-                              "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                              "TBLPROPERTIES ('"+HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY+"'='true',"+
-                              "'hbase.columns.mapping'=':key,"+familyName+":english,"+familyName+":spanish')" ;
+            "(key int, english string, spanish string) STORED BY " +
+            "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
+            "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY + "'='true'," +
+            "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName + ":spanish')";
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
 
         String data[] = {"1,english:ONE,spanish:UNO",
-                               "2,english:TWO,spanish:DOS",
-                               "3,english:THREE,spanish:TRES"};
+            "2,english:TWO,spanish:DOS",
+            "3,english:THREE,spanish:TRES"};
 
         // input/output settings
-        Path inputPath = new Path(methodTestDir,"mr_input");
+        Path inputPath = new Path(methodTestDir, "mr_input");
         getFileSystem().mkdirs(inputPath);
-        FSDataOutputStream os = getFileSystem().create(new Path(inputPath,"inputFile.txt"));
-        for(String line: data)
+        FSDataOutputStream os = getFileSystem().create(new Path(inputPath, "inputFile.txt"));
+        for (String line : data)
             os.write(Bytes.toBytes(line + "\n"));
         os.close();
 
         //create job
-        Job job = new Job(conf,testName);
-        job.setWorkingDirectory(new Path(methodTestDir,"mr_work"));
+        Job job = new Job(conf, testName);
+        job.setWorkingDirectory(new Path(methodTestDir, "mr_work"));
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapHCatWrite.class);
 
@@ -480,8 +478,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
 
         job.setOutputFormatClass(HCatOutputFormat.class);
-        OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,tableName,null);
-        HCatOutputFormat.setOutput(job,outputJobInfo);
+        OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName, tableName, null);
+        HCatOutputFormat.setOutput(job, outputJobInfo);
 
         job.setMapOutputKeyClass(BytesWritable.class);
         job.setMapOutputValueClass(HCatRecord.class);
@@ -498,18 +496,18 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         Scan scan = new Scan();
         scan.addFamily(familyNameBytes);
         ResultScanner scanner = table.getScanner(scan);
-        int index=0;
-        for(Result result: scanner) {
+        int index = 0;
+        for (Result result : scanner) {
             String vals[] = data[index].toString().split(",");
-            for(int i=1;i<vals.length;i++) {
+            for (int i = 1; i < vals.length; i++) {
                 String pair[] = vals[i].split(":");
-                assertTrue(result.containsColumn(familyNameBytes,Bytes.toBytes(pair[0])));
-                assertEquals(pair[1],Bytes.toString(result.getValue(familyNameBytes,Bytes.toBytes(pair[0]))));
+                assertTrue(result.containsColumn(familyNameBytes, Bytes.toBytes(pair[0])));
+                assertEquals(pair[1], Bytes.toString(result.getValue(familyNameBytes, Bytes.toBytes(pair[0]))));
             }
             index++;
         }
         //test if load count is the same
-        assertEquals(data.length,index);
+        assertEquals(data.length, index);
     }
 
     @Test
@@ -526,37 +524,37 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         conf.set(HCatConstants.HCAT_KEY_HIVE_CONF, HCatUtil.serialize(allConf.getAllProperties()));
 
         String dbquery = "CREATE DATABASE IF NOT EXISTS " + databaseName + " LOCATION '" + dbDir
-                + "'";
+            + "'";
         String tableQuery = "CREATE TABLE " + databaseName + "." + tableName +
-                "(key int, english string, spanish string) STORED BY " +
-                "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
-                "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY + "'='true'," +
-                "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName
-                + ":spanish')";
+            "(key int, english string, spanish string) STORED BY " +
+            "'org.apache.hcatalog.hbase.HBaseHCatStorageHandler'" +
+            "TBLPROPERTIES ('" + HBaseConstants.PROPERTY_BULK_OUTPUT_MODE_KEY + "'='true'," +
+            "'hbase.columns.mapping'=':key," + familyName + ":english," + familyName
+            + ":spanish')";
 
         assertEquals(0, hcatDriver.run(dbquery).getResponseCode());
         assertEquals(0, hcatDriver.run(tableQuery).getResponseCode());
 
         String data[] = {"1,english:ONE,spanish:UNO",
-                "2,english:TWO,spanish:DOS",
-                "3,english:THREE,spanish:TRES"};
+            "2,english:TWO,spanish:DOS",
+            "3,english:THREE,spanish:TRES"};
 
         Path inputPath = new Path(methodTestDir, "mr_input");
         getFileSystem().mkdirs(inputPath);
         // create multiple files so we can test with multiple mappers
         for (int i = 0; i < data.length; i++) {
             FSDataOutputStream os = getFileSystem().create(
-                    new Path(inputPath, "inputFile" + i + ".txt"));
+                new Path(inputPath, "inputFile" + i + ".txt"));
             os.write(Bytes.toBytes(data[i] + "\n"));
             os.close();
         }
 
         Path workingDir = new Path(methodTestDir, "mr_abort");
         OutputJobInfo outputJobInfo = OutputJobInfo.create(databaseName,
-                tableName, null);
+            tableName, null);
         Job job = configureJob(testName,
-                conf, workingDir, MapWriteAbortTransaction.class,
-                outputJobInfo, inputPath);
+            conf, workingDir, MapWriteAbortTransaction.class,
+            outputJobInfo, inputPath);
         assertFalse(job.waitForCompletion(true));
 
         // verify that revision manager has it as aborted transaction
@@ -566,7 +564,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
             for (String family : snapshot.getColumnFamilies()) {
                 assertEquals(1, snapshot.getRevision(family));
                 List<FamilyRevision> abortedWriteTransactions = rm.getAbortedWriteTransactions(
-                        databaseName + "." + tableName, family);
+                    databaseName + "." + tableName, family);
                 assertEquals(1, abortedWriteTransactions.size());
                 assertEquals(1, abortedWriteTransactions.get(0).getRevision());
             }
@@ -585,7 +583,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         // verify that the storage handler input format returns empty results.
         Path outputDir = new Path(getTestDir(),
-                "mapred/testHBaseTableBulkIgnoreAbortedTransactions");
+            "mapred/testHBaseTableBulkIgnoreAbortedTransactions");
         FileSystem fs = getFileSystem();
         if (fs.exists(outputDir)) {
             fs.delete(outputDir, true);
@@ -595,7 +593,7 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
         job.setMapperClass(MapReadAbortedTransaction.class);
         job.setInputFormatClass(HCatInputFormat.class);
         InputJobInfo inputJobInfo = InputJobInfo.create(databaseName,
-                tableName, null);
+            tableName, null);
         HCatInputFormat.setInput(job, inputJobInfo);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
@@ -608,8 +606,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
     }
 
     private Job configureJob(String jobName, Configuration conf,
-            Path workingDir, Class<? extends Mapper> mapperClass,
-            OutputJobInfo outputJobInfo, Path inputPath) throws IOException {
+                             Path workingDir, Class<? extends Mapper> mapperClass,
+                             OutputJobInfo outputJobInfo, Path inputPath) throws IOException {
         Job job = new Job(conf, jobName);
         job.setWorkingDirectory(workingDir);
         job.setJarByClass(this.getClass());

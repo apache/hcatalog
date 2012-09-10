@@ -46,20 +46,22 @@ public class HCatFieldSchema implements Serializable {
         STRUCT;
 
         public static Category fromType(Type type) {
-            if (Type.ARRAY == type){
+            if (Type.ARRAY == type) {
                 return ARRAY;
-            }else if(Type.STRUCT == type){
+            } else if (Type.STRUCT == type) {
                 return STRUCT;
-            }else if (Type.MAP == type){
+            } else if (Type.MAP == type) {
                 return MAP;
-            }else{
+            } else {
                 return PRIMITIVE;
             }
         }
-    };
+    }
 
-    public boolean isComplex(){
-      return (category == Category.PRIMITIVE) ? false : true;
+    ;
+
+    public boolean isComplex() {
+        return (category == Category.PRIMITIVE) ? false : true;
     }
 
     /**
@@ -84,7 +86,7 @@ public class HCatFieldSchema implements Serializable {
     private String typeString = null;
 
     @SuppressWarnings("unused")
-    private HCatFieldSchema(){
+    private HCatFieldSchema() {
         // preventing empty ctor from being callable
     }
 
@@ -92,7 +94,7 @@ public class HCatFieldSchema implements Serializable {
      * Returns type of the field
      * @return type of the field
      */
-    public Type getType(){
+    public Type getType() {
         return type;
     }
 
@@ -100,7 +102,7 @@ public class HCatFieldSchema implements Serializable {
      * Returns category of the field
      * @return category of the field
      */
-    public Category getCategory(){
+    public Category getCategory() {
         return category;
     }
 
@@ -108,11 +110,11 @@ public class HCatFieldSchema implements Serializable {
      * Returns name of the field
      * @return name of the field
      */
-    public String getName(){
+    public String getName() {
         return fieldName;
     }
 
-    public String getComment(){
+    public String getComment() {
         return comment;
     }
 
@@ -123,7 +125,7 @@ public class HCatFieldSchema implements Serializable {
      * @throws HCatException if call made on non-primitive types
      */
     public HCatFieldSchema(String fieldName, Type type, String comment) throws HCatException {
-        assertTypeInCategory(type,Category.PRIMITIVE,fieldName);
+        assertTypeInCategory(type, Category.PRIMITIVE, fieldName);
         this.fieldName = fieldName;
         this.type = type;
         this.category = Category.PRIMITIVE;
@@ -137,21 +139,21 @@ public class HCatFieldSchema implements Serializable {
      * @param subSchema - subschema of the struct, or element schema of the elements in the array
      * @throws HCatException if call made on Primitive or Map types
      */
-    public HCatFieldSchema(String fieldName, Type type, HCatSchema subSchema,String comment) throws HCatException{
-        assertTypeNotInCategory(type,Category.PRIMITIVE);
-        assertTypeNotInCategory(type,Category.MAP);
+    public HCatFieldSchema(String fieldName, Type type, HCatSchema subSchema, String comment) throws HCatException {
+        assertTypeNotInCategory(type, Category.PRIMITIVE);
+        assertTypeNotInCategory(type, Category.MAP);
         this.fieldName = fieldName;
         this.type = type;
         this.category = Category.fromType(type);
         this.subSchema = subSchema;
-        if(type == Type.ARRAY){
-         this.subSchema.get(0).setName(null);
+        if (type == Type.ARRAY) {
+            this.subSchema.get(0).setName(null);
         }
         this.comment = comment;
     }
 
     private void setName(String name) {
-      this.fieldName = name;
+        this.fieldName = name;
     }
 
     /**
@@ -162,9 +164,9 @@ public class HCatFieldSchema implements Serializable {
      * @param mapValueSchema - subschema of the value of the Map
      * @throws HCatException if call made on non-Map types
      */
-    public HCatFieldSchema(String fieldName, Type type, Type mapKeyType, HCatSchema mapValueSchema, String comment) throws HCatException{
-        assertTypeInCategory(type,Category.MAP, fieldName);
-        assertTypeInCategory(mapKeyType,Category.PRIMITIVE, fieldName);
+    public HCatFieldSchema(String fieldName, Type type, Type mapKeyType, HCatSchema mapValueSchema, String comment) throws HCatException {
+        assertTypeInCategory(type, Category.MAP, fieldName);
+        assertTypeInCategory(mapKeyType, Category.PRIMITIVE, fieldName);
         this.fieldName = fieldName;
         this.type = Type.MAP;
         this.category = Category.MAP;
@@ -175,66 +177,66 @@ public class HCatFieldSchema implements Serializable {
     }
 
     public HCatSchema getStructSubSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.STRUCT, this.fieldName);
+        assertTypeInCategory(this.type, Category.STRUCT, this.fieldName);
         return subSchema;
     }
 
     public HCatSchema getArrayElementSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.ARRAY, this.fieldName);
+        assertTypeInCategory(this.type, Category.ARRAY, this.fieldName);
         return subSchema;
     }
 
     public Type getMapKeyType() throws HCatException {
-        assertTypeInCategory(this.type,Category.MAP, this.fieldName);
+        assertTypeInCategory(this.type, Category.MAP, this.fieldName);
         return mapKeyType;
     }
 
     public HCatSchema getMapValueSchema() throws HCatException {
-        assertTypeInCategory(this.type,Category.MAP, this.fieldName);
+        assertTypeInCategory(this.type, Category.MAP, this.fieldName);
         return subSchema;
     }
 
     private static void assertTypeInCategory(Type type, Category category, String fieldName) throws HCatException {
         Category typeCategory = Category.fromType(type);
-        if (typeCategory != category){
-            throw new HCatException("Type category mismatch. Expected "+category+" but type "+type+" in category "+typeCategory+ " (field "+fieldName+")");
+        if (typeCategory != category) {
+            throw new HCatException("Type category mismatch. Expected " + category + " but type " + type + " in category " + typeCategory + " (field " + fieldName + ")");
         }
     }
 
     private static void assertTypeNotInCategory(Type type, Category category) throws HCatException {
         Category typeCategory = Category.fromType(type);
-        if (typeCategory == category){
-            throw new HCatException("Type category mismatch. Expected type "+type+" not in category "+category+" but was so.");
+        if (typeCategory == category) {
+            throw new HCatException("Type category mismatch. Expected type " + type + " not in category " + category + " but was so.");
         }
     }
 
     @Override
     public String toString() {
-      return new ToStringBuilder(this)
-          .append("fieldName", fieldName)
-          .append("comment", comment)
-          .append("type", getTypeString())
-          .append("category", category)
-          .toString();
+        return new ToStringBuilder(this)
+            .append("fieldName", fieldName)
+            .append("comment", comment)
+            .append("type", getTypeString())
+            .append("category", category)
+            .toString();
     }
 
-    public String getTypeString(){
-        if (typeString != null){
+    public String getTypeString() {
+        if (typeString != null) {
             return typeString;
         }
 
         StringBuilder sb = new StringBuilder();
-        if (Category.PRIMITIVE == category){
+        if (Category.PRIMITIVE == category) {
             sb.append(type);
-        }else if (Category.STRUCT == category){
+        } else if (Category.STRUCT == category) {
             sb.append("struct<");
             sb.append(subSchema.getSchemaAsTypeString());
             sb.append(">");
-        }else if (Category.ARRAY == category){
+        } else if (Category.ARRAY == category) {
             sb.append("array<");
             sb.append(subSchema.getSchemaAsTypeString());
             sb.append(">");
-        }else if (Category.MAP == category){
+        } else if (Category.MAP == category) {
             sb.append("map<");
             sb.append(mapKeyType);
             sb.append(",");

@@ -20,11 +20,12 @@ package org.apache.hcatalog.templeton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.exec.ExecuteException;
 
 /**
  * Submit a streaming job to the MapReduce queue.  Really just a front
-   end to the JarDelegator.
+ end to the JarDelegator.
  *
  * This is the backend of the mapreduce/streaming web service.
  */
@@ -43,16 +44,15 @@ public class StreamingDelegator extends LauncherDelegator {
                            String callback,
                            String completedUrl)
         throws NotAuthorizedException, BadParam, BusyException, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         List<String> args = makeArgs(inputs, output, mapper, reducer,
-                                     files, defines, cmdenvs, jarArgs);
+            files, defines, cmdenvs, jarArgs);
 
         JarDelegator d = new JarDelegator(appConf);
         return d.run(user,
-                     appConf.streamingJar(), null,
-                     null, null, args, defines,
-                     statusdir, callback, completedUrl);
+            appConf.streamingJar(), null,
+            null, null, args, defines,
+            statusdir, callback, completedUrl);
     }
 
     private List<String> makeArgs(List<String> inputs,
@@ -62,8 +62,7 @@ public class StreamingDelegator extends LauncherDelegator {
                                   List<String> files,
                                   List<String> defines,
                                   List<String> cmdenvs,
-                                  List<String> jarArgs)
-    {
+                                  List<String> jarArgs) {
         ArrayList<String> args = new ArrayList<String>();
         for (String input : inputs) {
             args.add("-input");

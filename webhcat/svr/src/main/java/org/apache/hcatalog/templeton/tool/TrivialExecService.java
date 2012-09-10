@@ -39,11 +39,10 @@ public class TrivialExecService {
 
     public Process run(List<String> cmd, List<String> removeEnv,
                        Map<String, String> environmentVariables)
-        throws IOException
-    {
+        throws IOException {
         System.err.println("templeton: starting " + cmd);
-        System.err.print("With environment variables: " );
-        for(Map.Entry<String, String> keyVal : environmentVariables.entrySet()){
+        System.err.print("With environment variables: ");
+        for (Map.Entry<String, String> keyVal : environmentVariables.entrySet()) {
             System.err.println(keyVal.getKey() + "=" + keyVal.getValue());
         }
         ProcessBuilder pb = new ProcessBuilder(cmd);

@@ -48,18 +48,18 @@ import org.apache.hcatalog.mapreduce.HCatStorageHandler;
 final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
     private String tableName;
-    
+
     @Override
     public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context,
-            ASTNode ast) throws SemanticException {
+                              ASTNode ast) throws SemanticException {
 
         Hive db;
         try {
             db = context.getHive();
         } catch (HiveException e) {
             throw new SemanticException(
-                    "Couldn't get Hive DB instance in semantic analysis phase.",
-                    e);
+                "Couldn't get Hive DB instance in semantic analysis phase.",
+                e);
         }
 
         // Analyze and create tbl properties object
@@ -67,7 +67,7 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
         String inputFormat = null, outputFormat = null;
         tableName = BaseSemanticAnalyzer.getUnescapedName((ASTNode) ast
-                .getChild(0));
+            .getChild(0));
         boolean likeTable = false;
 
         for (int num = 1; num < numCh; num++) {
@@ -75,89 +75,89 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
             switch (child.getToken().getType()) {
 
-                case HiveParser.TOK_QUERY: // CTAS
-                    throw new SemanticException(
-                            "Operation not supported. Create table as " +
-                            "Select is not a valid operation.");
+            case HiveParser.TOK_QUERY: // CTAS
+                throw new SemanticException(
+                    "Operation not supported. Create table as " +
+                        "Select is not a valid operation.");
 
-                case HiveParser.TOK_TABLEBUCKETS:
-                    break;
+            case HiveParser.TOK_TABLEBUCKETS:
+                break;
 
-                case HiveParser.TOK_TBLSEQUENCEFILE:
-                    inputFormat = HCatConstants.SEQUENCEFILE_INPUT;
-                    outputFormat = HCatConstants.SEQUENCEFILE_OUTPUT;
-                    break;
+            case HiveParser.TOK_TBLSEQUENCEFILE:
+                inputFormat = HCatConstants.SEQUENCEFILE_INPUT;
+                outputFormat = HCatConstants.SEQUENCEFILE_OUTPUT;
+                break;
 
-                case HiveParser.TOK_TBLTEXTFILE:
-                    inputFormat      = org.apache.hadoop.mapred.TextInputFormat.class.getName();
-                    outputFormat     = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
+            case HiveParser.TOK_TBLTEXTFILE:
+                inputFormat = org.apache.hadoop.mapred.TextInputFormat.class.getName();
+                outputFormat = org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat.class.getName();
 
-                    break;
+                break;
 
-                case HiveParser.TOK_LIKETABLE:
-                    likeTable = true;
-                    break;
+            case HiveParser.TOK_LIKETABLE:
+                likeTable = true;
+                break;
 
-                case HiveParser.TOK_IFNOTEXISTS:
-                    try {
-                        List<String> tables = db.getTablesByPattern(tableName);
-                        if (tables != null && tables.size() > 0) { // table
-                                                                   // exists
-                            return ast;
-                        }
-                    } catch (HiveException e) {
-                        throw new SemanticException(e);
-                    }
-                    break;
-
-                case HiveParser.TOK_TABLEPARTCOLS:
-                    List<FieldSchema> partCols = BaseSemanticAnalyzer
-                            .getColumns((ASTNode) child.getChild(0), false);
-                    for (FieldSchema fs : partCols) {
-                        if (!fs.getType().equalsIgnoreCase("string")) {
-                            throw new SemanticException(
-                                    "Operation not supported. HCatalog only " +
-                                    "supports partition columns of type string. "
-                                            + "For column: "
-                                            + fs.getName()
-                                            + " Found type: " + fs.getType());
-                        }
-                    }
-                    break;
-
-                case HiveParser.TOK_STORAGEHANDLER:
-                    String storageHandler = BaseSemanticAnalyzer
-                            .unescapeSQLString(child.getChild(0).getText());
-                    if (org.apache.commons.lang.StringUtils
-                            .isNotEmpty(storageHandler)) {
+            case HiveParser.TOK_IFNOTEXISTS:
+                try {
+                    List<String> tables = db.getTablesByPattern(tableName);
+                    if (tables != null && tables.size() > 0) { // table
+                        // exists
                         return ast;
                     }
+                } catch (HiveException e) {
+                    throw new SemanticException(e);
+                }
+                break;
 
-                    break;
-
-                case HiveParser.TOK_TABLEFILEFORMAT:
-                    if (child.getChildCount() < 2) {
+            case HiveParser.TOK_TABLEPARTCOLS:
+                List<FieldSchema> partCols = BaseSemanticAnalyzer
+                    .getColumns((ASTNode) child.getChild(0), false);
+                for (FieldSchema fs : partCols) {
+                    if (!fs.getType().equalsIgnoreCase("string")) {
                         throw new SemanticException(
-                                "Incomplete specification of File Format. " +
-                                "You must provide InputFormat, OutputFormat.");
+                            "Operation not supported. HCatalog only " +
+                                "supports partition columns of type string. "
+                                + "For column: "
+                                + fs.getName()
+                                + " Found type: " + fs.getType());
                     }
-                    inputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
-                            .getChild(0).getText());
-                    outputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
-                            .getChild(1).getText());
-                    break;
+                }
+                break;
 
-                case HiveParser.TOK_TBLRCFILE:
-                    inputFormat = RCFileInputFormat.class.getName();
-                    outputFormat = RCFileOutputFormat.class.getName();
-                    break;
+            case HiveParser.TOK_STORAGEHANDLER:
+                String storageHandler = BaseSemanticAnalyzer
+                    .unescapeSQLString(child.getChild(0).getText());
+                if (org.apache.commons.lang.StringUtils
+                    .isNotEmpty(storageHandler)) {
+                    return ast;
+                }
+
+                break;
+
+            case HiveParser.TOK_TABLEFILEFORMAT:
+                if (child.getChildCount() < 2) {
+                    throw new SemanticException(
+                        "Incomplete specification of File Format. " +
+                            "You must provide InputFormat, OutputFormat.");
+                }
+                inputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
+                    .getChild(0).getText());
+                outputFormat = BaseSemanticAnalyzer.unescapeSQLString(child
+                    .getChild(1).getText());
+                break;
+
+            case HiveParser.TOK_TBLRCFILE:
+                inputFormat = RCFileInputFormat.class.getName();
+                outputFormat = RCFileOutputFormat.class.getName();
+                break;
 
             }
         }
-        
+
         if (!likeTable && (inputFormat == null || outputFormat == null)) {
             throw new SemanticException(
-                    "STORED AS specification is either incomplete or incorrect.");
+                "STORED AS specification is either incomplete or incorrect.");
         }
 
 
@@ -166,8 +166,8 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
 
     @Override
     public void postAnalyze(HiveSemanticAnalyzerHookContext context,
-            List<Task<? extends Serializable>> rootTasks)
-            throws SemanticException {
+                            List<Task<? extends Serializable>> rootTasks)
+        throws SemanticException {
 
         if (rootTasks.size() == 0) {
             // There will be no DDL task created in case if its CREATE TABLE IF
@@ -175,12 +175,12 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
             return;
         }
         CreateTableDesc desc = ((DDLTask) rootTasks.get(rootTasks.size() - 1))
-                .getWork().getCreateTblDesc();
+            .getWork().getCreateTblDesc();
         if (desc == null) {
-          // Desc will be null if its CREATE TABLE LIKE. Desc will be
-          // contained in CreateTableLikeDesc. Currently, HCat disallows CTLT in
-          // pre-hook. So, desc can never be null.
-          return;
+            // Desc will be null if its CREATE TABLE LIKE. Desc will be
+            // contained in CreateTableLikeDesc. Currently, HCat disallows CTLT in
+            // pre-hook. So, desc can never be null.
+            return;
         }
         Map<String, String> tblProps = desc.getTblProps();
         if (tblProps == null) {
@@ -196,11 +196,11 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
         } else {
             try {
                 HCatStorageHandler storageHandlerInst = HCatUtil
-                        .getStorageHandler(context.getConf(),
-                                                     desc.getStorageHandler(),
-                                                     desc.getSerName(),
-                                                     desc.getInputFormat(),
-                                                     desc.getOutputFormat());
+                    .getStorageHandler(context.getConf(),
+                        desc.getStorageHandler(),
+                        desc.getSerName(),
+                        desc.getInputFormat(),
+                        desc.getOutputFormat());
                 //Authorization checks are performed by the storageHandler.getAuthorizationProvider(), if  
                 //StorageDelegationAuthorizationProvider is used.
             } catch (IOException e) {
@@ -209,33 +209,33 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
         }
 
         if (desc != null) {
-          try {
-            Table table = context.getHive().newTable(desc.getTableName());
-            if (desc.getLocation() != null) {
-              table.setDataLocation(new Path(desc.getLocation()).toUri());
+            try {
+                Table table = context.getHive().newTable(desc.getTableName());
+                if (desc.getLocation() != null) {
+                    table.setDataLocation(new Path(desc.getLocation()).toUri());
+                }
+                if (desc.getStorageHandler() != null) {
+                    table.setProperty(
+                        org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE,
+                        desc.getStorageHandler());
+                }
+                for (Map.Entry<String, String> prop : tblProps.entrySet()) {
+                    table.setProperty(prop.getKey(), prop.getValue());
+                }
+                for (Map.Entry<String, String> prop : desc.getSerdeProps().entrySet()) {
+                    table.setSerdeParam(prop.getKey(), prop.getValue());
+                }
+                //TODO: set other Table properties as needed
+
+                //authorize against the table operation so that location permissions can be checked if any
+
+                if (HiveConf.getBoolVar(context.getConf(),
+                    HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED)) {
+                    authorize(table, Privilege.CREATE);
+                }
+            } catch (HiveException ex) {
+                throw new SemanticException(ex);
             }
-            if (desc.getStorageHandler() != null) {
-              table.setProperty(
-                org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE,
-                desc.getStorageHandler());
-            }
-            for (Map.Entry<String, String> prop : tblProps.entrySet()) {
-              table.setProperty(prop.getKey(), prop.getValue());
-            }
-            for (Map.Entry<String, String> prop : desc.getSerdeProps().entrySet()) {
-              table.setSerdeParam(prop.getKey(), prop.getValue());
-            }
-            //TODO: set other Table properties as needed
-  
-            //authorize against the table operation so that location permissions can be checked if any
-            
-            if (HiveConf.getBoolVar(context.getConf(),
-                HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED)) {
-              authorize(table, Privilege.CREATE);
-            }
-          } catch (HiveException ex) {
-            throw new SemanticException(ex);
-          }
         }
 
         desc.setTblProps(tblProps);

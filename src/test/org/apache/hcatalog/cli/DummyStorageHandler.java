@@ -91,7 +91,7 @@ class DummyStorageHandler extends HCatStorageHandler {
 
     @Override
     public HiveAuthorizationProvider getAuthorizationProvider()
-            throws HiveException {
+        throws HiveException {
         return new DummyAuthProvider();
     }
 
@@ -140,8 +140,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void authorize(Privilege[] readRequiredPriv,
-                Privilege[] writeRequiredPriv) throws HiveException,
-                AuthorizationException {
+                              Privilege[] writeRequiredPriv) throws HiveException,
+            AuthorizationException {
         }
 
         /* @param db
@@ -153,8 +153,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void authorize(Database db, Privilege[] readRequiredPriv,
-                Privilege[] writeRequiredPriv) throws HiveException,
-                AuthorizationException {
+                              Privilege[] writeRequiredPriv) throws HiveException,
+            AuthorizationException {
         }
 
         /* @param table
@@ -166,8 +166,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void authorize(org.apache.hadoop.hive.ql.metadata.Table table, Privilege[] readRequiredPriv,
-                Privilege[] writeRequiredPriv) throws HiveException,
-                AuthorizationException {
+                              Privilege[] writeRequiredPriv) throws HiveException,
+            AuthorizationException {
         }
 
         /* @param part
@@ -179,8 +179,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void authorize(Partition part, Privilege[] readRequiredPriv,
-                Privilege[] writeRequiredPriv) throws HiveException,
-                AuthorizationException {
+                              Privilege[] writeRequiredPriv) throws HiveException,
+            AuthorizationException {
         }
 
         /* @param table
@@ -194,8 +194,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void authorize(org.apache.hadoop.hive.ql.metadata.Table table, Partition part, List<String> columns,
-                Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
-                throws HiveException, AuthorizationException {
+                              Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
+            throws HiveException, AuthorizationException {
         }
 
     }
@@ -205,7 +205,7 @@ class DummyStorageHandler extends HCatStorageHandler {
      * mapred.InputFormat required by HiveStorageHandler.
      */
     class DummyInputFormat implements
-            InputFormat<WritableComparable, HCatRecord> {
+        InputFormat<WritableComparable, HCatRecord> {
 
         /*
          * @see
@@ -215,8 +215,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public RecordReader<WritableComparable, HCatRecord> getRecordReader(
-                InputSplit split, JobConf jobconf, Reporter reporter)
-                throws IOException {
+            InputSplit split, JobConf jobconf, Reporter reporter)
+            throws IOException {
             throw new IOException("This operation is not supported.");
         }
 
@@ -227,7 +227,7 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public InputSplit[] getSplits(JobConf jobconf, int number)
-                throws IOException {
+            throws IOException {
             throw new IOException("This operation is not supported.");
         }
     }
@@ -237,8 +237,8 @@ class DummyStorageHandler extends HCatStorageHandler {
      * mapred.OutputFormat and HiveOutputFormat required by HiveStorageHandler.
      */
     class DummyOutputFormat implements
-            OutputFormat<WritableComparable<?>, HCatRecord>,
-            HiveOutputFormat<WritableComparable<?>, HCatRecord> {
+        OutputFormat<WritableComparable<?>, HCatRecord>,
+        HiveOutputFormat<WritableComparable<?>, HCatRecord> {
 
         /*
          * @see
@@ -247,7 +247,7 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public void checkOutputSpecs(FileSystem fs, JobConf jobconf)
-                throws IOException {
+            throws IOException {
             throw new IOException("This operation is not supported.");
 
         }
@@ -260,8 +260,8 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public RecordWriter<WritableComparable<?>, HCatRecord> getRecordWriter(
-                FileSystem fs, JobConf jobconf, String str,
-                Progressable progress) throws IOException {
+            FileSystem fs, JobConf jobconf, String str,
+            Progressable progress) throws IOException {
             throw new IOException("This operation is not supported.");
         }
 
@@ -274,10 +274,10 @@ class DummyStorageHandler extends HCatStorageHandler {
          */
         @Override
         public org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter getHiveRecordWriter(
-                JobConf jc, Path finalOutPath,
-                Class<? extends Writable> valueClass, boolean isCompressed,
-                Properties tableProperties, Progressable progress)
-                throws IOException {
+            JobConf jc, Path finalOutPath,
+            Class<? extends Writable> valueClass, boolean isCompressed,
+            Properties tableProperties, Progressable progress)
+            throws IOException {
             throw new IOException("This operation is not supported.");
         }
 

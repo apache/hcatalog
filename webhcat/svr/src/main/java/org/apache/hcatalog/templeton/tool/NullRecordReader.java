@@ -18,6 +18,7 @@
 package org.apache.hcatalog.templeton.tool;
 
 import java.io.IOException;
+
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -27,15 +28,15 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * An empty record reader.
  */
 public class NullRecordReader
-    extends RecordReader<NullWritable, NullWritable>
-{
+    extends RecordReader<NullWritable, NullWritable> {
     @Override
     public void initialize(InputSplit genericSplit, TaskAttemptContext context)
-        throws IOException
-    {}
+        throws IOException {
+    }
 
     @Override
-    public void close() throws IOException {}
+    public void close() throws IOException {
+    }
 
     @Override
     public NullWritable getCurrentKey() {
@@ -48,7 +49,9 @@ public class NullRecordReader
     }
 
     @Override
-    public float getProgress() { return 1.0f; }
+    public float getProgress() {
+        return 1.0f;
+    }
 
     @Override
     public boolean nextKeyValue() throws IOException {

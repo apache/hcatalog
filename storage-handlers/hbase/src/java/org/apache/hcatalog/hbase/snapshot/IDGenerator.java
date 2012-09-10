@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 package org.apache.hcatalog.hbase.snapshot;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class generates revision id's for transactions.
  */
-class IDGenerator implements LockListener{
+class IDGenerator implements LockListener {
 
     private ZooKeeper zookeeper;
     private String zNodeDataLoc;
@@ -41,7 +42,7 @@ class IDGenerator implements LockListener{
     private static final Logger LOG = LoggerFactory.getLogger(IDGenerator.class);
 
     IDGenerator(ZooKeeper zookeeper, String tableName, String idGenNode)
-            throws IOException {
+        throws IOException {
         this.zookeeper = zookeeper;
         this.zNodeDataLoc = idGenNode;
         this.zNodeLockBasePath = PathUtil.getLockManagementNode(idGenNode);
@@ -53,7 +54,7 @@ class IDGenerator implements LockListener{
      * @return revision ID
      * @throws IOException
      */
-    public long obtainID() throws IOException{
+    public long obtainID() throws IOException {
         WriteLock wLock = new WriteLock(zookeeper, zNodeLockBasePath, Ids.OPEN_ACL_UNSAFE);
         wLock.setLockListener(this);
         try {
@@ -62,7 +63,7 @@ class IDGenerator implements LockListener{
                 //TO DO : Let this request queue up and try obtaining lock.
                 throw new IOException("Unable to obtain lock to obtain id.");
             } else {
-                    id = incrementAndReadCounter();
+                id = incrementAndReadCounter();
             }
         } catch (KeeperException e) {
             LOG.warn("Exception while obtaining lock for ID.", e);
@@ -82,34 +83,34 @@ class IDGenerator implements LockListener{
      * @return revision ID
      * @throws IOException
      */
-    public long readID() throws IOException{
+    public long readID() throws IOException {
         long curId;
         try {
             Stat stat = new Stat();
             byte[] data = zookeeper.getData(this.zNodeDataLoc, false, stat);
-            curId = Long.parseLong(new String(data,Charset.forName("UTF-8")));
+            curId = Long.parseLong(new String(data, Charset.forName("UTF-8")));
         } catch (KeeperException e) {
             LOG.warn("Exception while reading current revision id.", e);
             throw new IOException("Exception while reading current revision id.", e);
         } catch (InterruptedException e) {
             LOG.warn("Exception while reading current revision id.", e);
-            throw new IOException("Exception while reading current revision id.",e);
+            throw new IOException("Exception while reading current revision id.", e);
         }
 
         return curId;
     }
 
 
-    private long incrementAndReadCounter() throws IOException{
+    private long incrementAndReadCounter() throws IOException {
 
         long curId, usedId;
         try {
             Stat stat = new Stat();
             byte[] data = zookeeper.getData(this.zNodeDataLoc, false, stat);
-            usedId = Long.parseLong((new String(data,Charset.forName("UTF-8"))));
-            curId = usedId +1;
+            usedId = Long.parseLong((new String(data, Charset.forName("UTF-8"))));
+            curId = usedId + 1;
             String lastUsedID = String.valueOf(curId);
-            zookeeper.setData(this.zNodeDataLoc, lastUsedID.getBytes(Charset.forName("UTF-8")), -1 );
+            zookeeper.setData(this.zNodeDataLoc, lastUsedID.getBytes(Charset.forName("UTF-8")), -1);
 
         } catch (KeeperException e) {
             LOG.warn("Exception while incrementing revision id.", e);

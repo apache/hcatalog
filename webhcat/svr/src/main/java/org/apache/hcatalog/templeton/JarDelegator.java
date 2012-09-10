@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.exec.ExecuteException;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 
@@ -40,12 +41,11 @@ public class JarDelegator extends LauncherDelegator {
                            List<String> jarArgs, List<String> defines,
                            String statusdir, String callback, String completedUrl)
         throws NotAuthorizedException, BadParam, BusyException, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         runAs = user;
         List<String> args = makeArgs(jar, mainClass,
-                                     libjars, files, jarArgs, defines,
-                                     statusdir, completedUrl);
+            libjars, files, jarArgs, defines,
+            statusdir, completedUrl);
 
         return enqueueController(user, callback, args);
     }
@@ -54,15 +54,14 @@ public class JarDelegator extends LauncherDelegator {
                                   String libjars, String files,
                                   List<String> jarArgs, List<String> defines,
                                   String statusdir, String completedUrl)
-        throws BadParam, IOException, InterruptedException
-    {
+        throws BadParam, IOException, InterruptedException {
         ArrayList<String> args = new ArrayList<String>();
         try {
             ArrayList<String> allFiles = new ArrayList();
             allFiles.add(TempletonUtils.hadoopFsFilename(jar, appConf, runAs));
 
             args.addAll(makeLauncherArgs(appConf, statusdir,
-                                         completedUrl, allFiles));
+                completedUrl, allFiles));
             args.add("--");
             args.add(appConf.clusterHadoop());
             args.add("jar");
@@ -72,12 +71,12 @@ public class JarDelegator extends LauncherDelegator {
             if (TempletonUtils.isset(libjars)) {
                 args.add("-libjars");
                 args.add(TempletonUtils.hadoopFsListAsString(libjars, appConf,
-                        runAs));
+                    runAs));
             }
             if (TempletonUtils.isset(files)) {
                 args.add("-files");
                 args.add(TempletonUtils.hadoopFsListAsString(files, appConf,
-                        runAs));
+                    runAs));
             }
 
             for (String d : defines)

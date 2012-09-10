@@ -18,6 +18,7 @@
 package org.apache.hcatalog.templeton;
 
 import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapred.JobID;
@@ -39,15 +40,14 @@ public class StatusDelegator extends TempletonDelegator {
     }
 
     public QueueStatusBean run(String user, String id)
-        throws NotAuthorizedException, BadParam, IOException
-    {
+        throws NotAuthorizedException, BadParam, IOException {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         TempletonJobTracker tracker = null;
         JobState state = null;
         try {
             tracker = new TempletonJobTracker(ugi,
-                                              JobTracker.getAddress(appConf),
-                                              appConf);
+                JobTracker.getAddress(appConf),
+                appConf);
             JobID jobid = StatusDelegator.StringToJobID(id);
             if (jobid == null)
                 throw new BadParam("Invalid jobid: " + id);
@@ -67,8 +67,7 @@ public class StatusDelegator extends TempletonDelegator {
                                              JobID jobid,
                                              String childid,
                                              JobState state)
-        throws BadParam, IOException
-    {
+        throws BadParam, IOException {
         JobID bestid = jobid;
         if (childid != null)
             bestid = StatusDelegator.StringToJobID(childid);
@@ -94,8 +93,7 @@ public class StatusDelegator extends TempletonDelegator {
     public static QueueStatusBean makeStatus(TempletonJobTracker tracker,
                                              JobID jobid,
                                              JobState state)
-        throws BadParam, IOException
-    {
+        throws BadParam, IOException {
         return makeStatus(tracker, jobid, state.getChildId(), state);
     }
 
@@ -103,8 +101,7 @@ public class StatusDelegator extends TempletonDelegator {
      * A version of JobID.forName with our app specific error handling.
      */
     public static JobID StringToJobID(String id)
-        throws BadParam
-    {
+        throws BadParam {
         try {
             return JobID.forName(id);
         } catch (IllegalArgumentException e) {

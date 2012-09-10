@@ -192,11 +192,14 @@ public class AppConfig extends Configuration {
 
     public long zkCleanupInterval()  {
         return getLong(ZooKeeperCleanup.ZK_CLEANUP_INTERVAL,
-                       (1000L * 60L * 60L * 12L)); }
-    public long zkMaxAge()           {
+            (1000L * 60L * 60L * 12L));
+    }
+
+    public long zkMaxAge() {
         return getLong(ZooKeeperCleanup.ZK_CLEANUP_MAX_AGE,
-                       (1000L * 60L * 60L * 24L * 7L)); }
+            (1000L * 60L * 60L * 24L * 7L));
+    }
+
     public String zkHosts()          { return get(ZooKeeperStorage.ZK_HOSTS); }
-    public int zkSessionTimeout()    { return getInt(ZooKeeperStorage.ZK_SESSION_TIMEOUT,
-                                                     30000); }
+    public int zkSessionTimeout()    { return getInt(ZooKeeperStorage.ZK_SESSION_TIMEOUT, 30000); }
 }

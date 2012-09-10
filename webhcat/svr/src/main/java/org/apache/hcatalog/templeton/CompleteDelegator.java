@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.MalformedURLException;
 import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hcatalog.templeton.tool.JobState;
@@ -50,8 +51,7 @@ public class CompleteDelegator extends TempletonDelegator {
     }
 
     public CompleteBean run(String id)
-        throws CallbackFailedException, IOException
-    {
+        throws CallbackFailedException, IOException {
         if (id == null)
             acceptWithError("No jobid given");
 
@@ -64,7 +64,7 @@ public class CompleteDelegator extends TempletonDelegator {
             Long notified = state.getNotifiedTime();
             if (notified != null)
                 return acceptWithError("Callback already run on "
-                                       + new Date(notified.longValue()));
+                    + new Date(notified.longValue()));
 
             String callback = state.getCallback();
             if (callback == null)
@@ -90,16 +90,14 @@ public class CompleteDelegator extends TempletonDelegator {
      * replaced with the completed jobid.
      */
     public static void doCallback(String jobid, String url)
-        throws MalformedURLException, IOException
-    {
+        throws MalformedURLException, IOException {
         if (url.contains("$jobId"))
             url = url.replace("$jobId", jobid);
         TempletonUtils.fetchUrl(new URL(url));
     }
 
     private void failed(String msg, Exception e)
-        throws CallbackFailedException
-    {
+        throws CallbackFailedException {
         if (e != null)
             LOG.error(msg, e);
         else

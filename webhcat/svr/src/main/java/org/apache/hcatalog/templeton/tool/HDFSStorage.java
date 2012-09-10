@@ -75,7 +75,7 @@ public class HDFSStorage implements TempletonStorage {
             out.write(val);
         } catch (IOException e) {
             LOG.info("Couldn't write to " + getPath(type) + "/" + id + ": "
-                     + e.getMessage());
+                + e.getMessage());
         } finally {
             try {
                 out.flush();
@@ -90,13 +90,12 @@ public class HDFSStorage implements TempletonStorage {
     public String getField(Type type, String id, String key) {
         BufferedReader in = null;
         try {
-            in = new BufferedReader(new InputStreamReader
-                                    (fs.open(new Path(getPath(type) + "/" +
-                                                      id + "/" + key))));
+            in = new BufferedReader(new InputStreamReader(fs.open(new Path(getPath(type) + "/" +
+                id + "/" + key))));
             String line = null;
             String val = "";
             while ((line = in.readLine()) != null) {
-                if (! val.equals("")) {
+                if (!val.equals("")) {
                     val += "\n";
                 }
                 val += line;
@@ -104,7 +103,7 @@ public class HDFSStorage implements TempletonStorage {
             return val;
         } catch (IOException e) {
             LOG.trace("Couldn't find " + getPath(type) + "/" + id + "/" + key
-                      + ": " + e.getMessage());
+                + ": " + e.getMessage());
         } finally {
             try {
                 in.close();
@@ -120,10 +119,8 @@ public class HDFSStorage implements TempletonStorage {
         HashMap<String, String> map = new HashMap<String, String>();
         BufferedReader in = null;
         try {
-            for (FileStatus status : fs.listStatus
-                     (new Path(getPath(type) + "/" + id))) {
-                in = new BufferedReader(new InputStreamReader
-                                        (fs.open(status.getPath())));
+            for (FileStatus status : fs.listStatus(new Path(getPath(type) + "/" + id))) {
+                in = new BufferedReader(new InputStreamReader(fs.open(status.getPath())));
                 String line = null;
                 String val = "";
                 while ((line = in.readLine()) != null) {
@@ -152,7 +149,7 @@ public class HDFSStorage implements TempletonStorage {
             fs.delete(new Path(getPath(type) + "/" + id), true);
         } catch (IOException e) {
             throw new NotFoundException("Node " + id + " was not found: " +
-                                        e.getMessage());
+                e.getMessage());
         }
         return false;
     }
@@ -160,7 +157,7 @@ public class HDFSStorage implements TempletonStorage {
     @Override
     public List<String> getAll() {
         ArrayList<String> allNodes = new ArrayList<String>();
-        for (Type type: Type.values()) {
+        for (Type type : Type.values()) {
             allNodes.addAll(getAllForType(type));
         }
         return allNodes;
@@ -189,7 +186,7 @@ public class HDFSStorage implements TempletonStorage {
             }
         } catch (Exception e) {
             LOG.trace("Couldn't find children for key " + key + ": " +
-                      e.getMessage());
+                e.getMessage());
         }
         return allNodes;
     }
@@ -200,7 +197,7 @@ public class HDFSStorage implements TempletonStorage {
         HashMap<String, String> map = new HashMap<String, String>();
         try {
             for (FileStatus status :
-                     fs.listStatus(new Path(getPath(type)))) {
+                fs.listStatus(new Path(getPath(type)))) {
                 map = (HashMap<String, String>)
                     getFields(type, status.getPath().getName());
                 if (map.get(key).equals(value)) {
@@ -209,7 +206,7 @@ public class HDFSStorage implements TempletonStorage {
             }
         } catch (Exception e) {
             LOG.trace("Couldn't find children for key " + key + ": " +
-                      e.getMessage());
+                e.getMessage());
         }
         return allNodes;
     }

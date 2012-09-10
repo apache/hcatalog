@@ -95,30 +95,30 @@ public class ManyMiniCluster {
         miniZookeeperClusterEnabled = b.miniZookeeperClusterEnabled;
     }
 
-    protected synchronized  void start() {
+    protected synchronized void start() {
         try {
             if (!started) {
                 FileUtil.fullyDelete(workDir);
-                if(miniMRClusterEnabled) {
+                if (miniMRClusterEnabled) {
                     setupMRCluster();
                 }
-                if(miniZookeeperClusterEnabled || miniHBaseClusterEnabled) {
+                if (miniZookeeperClusterEnabled || miniHBaseClusterEnabled) {
                     miniZookeeperClusterEnabled = true;
                     setupZookeeper();
                 }
-                if(miniHBaseClusterEnabled) {
+                if (miniHBaseClusterEnabled) {
                     setupHBaseCluster();
                 }
-                if(miniHiveMetastoreEnabled) {
+                if (miniHiveMetastoreEnabled) {
                     setUpMetastore();
                 }
             }
-        } catch(Exception e) {
-            throw new IllegalStateException("Failed to setup cluster",e);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to setup cluster", e);
         }
     }
 
-    protected synchronized  void stop() {
+    protected synchronized void stop() {
         if (hbaseCluster != null) {
             HConnectionManager.deleteAllConnections(true);
             try {
@@ -136,19 +136,19 @@ public class ManyMiniCluster {
             }
             zookeeperCluster = null;
         }
-        if(mrCluster != null) {
+        if (mrCluster != null) {
             try {
                 mrCluster.shutdown();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             mrCluster = null;
         }
-        if(dfsCluster != null) {
+        if (dfsCluster != null) {
             try {
                 dfsCluster.getFileSystem().close();
                 dfsCluster.shutdown();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             dfsCluster = null;
@@ -189,7 +189,7 @@ public class ManyMiniCluster {
         try {
             return FileSystem.get(jobConf);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to get FileSystem",e);
+            throw new IllegalStateException("Failed to get FileSystem", e);
         }
     }
 
@@ -205,38 +205,38 @@ public class ManyMiniCluster {
             final int jobTrackerPort = findFreePort();
             final int taskTrackerPort = findFreePort();
 
-            if(jobConf == null)
+            if (jobConf == null)
                 jobConf = new JobConf();
 
             jobConf.setInt("mapred.submit.replication", 1);
             //conf.set("hadoop.job.history.location",new File(workDir).getAbsolutePath()+"/history");
-            System.setProperty("hadoop.log.dir",new File(workDir,"/logs").getAbsolutePath());
+            System.setProperty("hadoop.log.dir", new File(workDir, "/logs").getAbsolutePath());
 
             mrCluster = new MiniMRCluster(jobTrackerPort,
-                                          taskTrackerPort,
-                                          numTaskTrackers,
-                                          getFileSystem().getUri().toString(),
-                                          numTaskTrackers,
-                                          null,
-                                          null,
-                                          null,
-                                          jobConf);
+                taskTrackerPort,
+                numTaskTrackers,
+                getFileSystem().getUri().toString(),
+                numTaskTrackers,
+                null,
+                null,
+                null,
+                jobConf);
 
             jobConf = mrCluster.createJobConf();
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to Setup MR Cluster",e);
+            throw new IllegalStateException("Failed to Setup MR Cluster", e);
         }
     }
 
     private void setupZookeeper() {
         try {
-            zookeeperDir = new File(workDir,"zk").getAbsolutePath();
+            zookeeperDir = new File(workDir, "zk").getAbsolutePath();
             zookeeperPort = findFreePort();
             zookeeperCluster = new MiniZooKeeperCluster();
             zookeeperCluster.setDefaultClientPort(zookeeperPort);
             zookeeperCluster.startup(new File(zookeeperDir));
-        } catch(Exception e) {
-            throw new IllegalStateException("Failed to Setup Zookeeper Cluster",e);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to Setup Zookeeper Cluster", e);
         }
     }
 
@@ -244,10 +244,10 @@ public class ManyMiniCluster {
         final int numRegionServers = 1;
 
         try {
-            hbaseDir = new File(workDir,"hbase").getAbsolutePath();
+            hbaseDir = new File(workDir, "hbase").getAbsolutePath();
             hbaseRoot = "file://" + hbaseDir;
 
-            if(hbaseConf == null)
+            if (hbaseConf == null)
                 hbaseConf = HBaseConfiguration.create();
 
             hbaseConf.set("hbase.rootdir", hbaseRoot);
@@ -264,12 +264,12 @@ public class ManyMiniCluster {
             //opening the META table ensures that cluster is running
             new HTable(hbaseConf, HConstants.META_TABLE_NAME);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to setup HBase Cluster",e);
+            throw new IllegalStateException("Failed to setup HBase Cluster", e);
         }
     }
 
     private void setUpMetastore() throws Exception {
-        if(hiveConf == null)
+        if (hiveConf == null)
             hiveConf = new HiveConf(this.getClass());
 
         //The default org.apache.hadoop.hive.ql.hooks.PreExecutePrinter hook
@@ -278,13 +278,13 @@ public class ManyMiniCluster {
         hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
         hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
         hiveConf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
-                     "jdbc:derby:"+new File(workDir+"/metastore_db")+";create=true");
+            "jdbc:derby:" + new File(workDir + "/metastore_db") + ";create=true");
         hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.toString(),
-                     new File(workDir,"warehouse").toString());
+            new File(workDir, "warehouse").toString());
         //set where derby logs
-        File derbyLogFile = new File(workDir+"/derby.log");
+        File derbyLogFile = new File(workDir + "/derby.log");
         derbyLogFile.createNewFile();
-        System.setProperty("derby.stream.error.file",derbyLogFile.getPath());
+        System.setProperty("derby.stream.error.file", derbyLogFile.getPath());
 
 
 //    Driver driver = new Driver(hiveConf);

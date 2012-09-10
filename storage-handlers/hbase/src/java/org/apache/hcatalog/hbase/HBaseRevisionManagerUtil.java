@@ -65,7 +65,7 @@ class HBaseRevisionManagerUtil {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     static HCatTableSnapshot createSnapshot(Configuration jobConf,
-            String hbaseTableName, HCatTableInfo tableInfo ) throws IOException {
+                                            String hbaseTableName, HCatTableInfo tableInfo) throws IOException {
 
         RevisionManager rm = null;
         TableSnapshot snpt;
@@ -90,8 +90,8 @@ class HBaseRevisionManagerUtil {
      * @throws IOException Signals that an I/O exception has occurred.
      */
     static HCatTableSnapshot createSnapshot(Configuration jobConf,
-            String tableName, long revision)
-            throws IOException {
+                                            String tableName, long revision)
+        throws IOException {
 
         TableSnapshot snpt;
         RevisionManager rm = null;
@@ -103,14 +103,14 @@ class HBaseRevisionManagerUtil {
         }
 
         String inputJobString = jobConf.get(HCatConstants.HCAT_KEY_JOB_INFO);
-        if(inputJobString == null){
+        if (inputJobString == null) {
             throw new IOException(
-                    "InputJobInfo information not found in JobContext. "
-                            + "HCatInputFormat.setInput() not called?");
+                "InputJobInfo information not found in JobContext. "
+                    + "HCatInputFormat.setInput() not called?");
         }
         InputJobInfo inputInfo = (InputJobInfo) HCatUtil.deserialize(inputJobString);
         HCatTableSnapshot hcatSnapshot = HBaseRevisionManagerUtil
-                .convertSnapshot(snpt, inputInfo.getTableInfo());
+            .convertSnapshot(snpt, inputInfo.getTableInfo());
 
         return hcatSnapshot;
     }
@@ -123,7 +123,7 @@ class HBaseRevisionManagerUtil {
      * @throws IOException
      */
     static RevisionManager getOpenedRevisionManager(Configuration jobConf) throws IOException {
-      return RevisionManagerFactory.getOpenedRevisionManager(jobConf);
+        return RevisionManagerFactory.getOpenedRevisionManager(jobConf);
     }
 
     static void closeRevisionManagerQuietly(RevisionManager rm) {
@@ -138,14 +138,14 @@ class HBaseRevisionManagerUtil {
 
 
     static HCatTableSnapshot convertSnapshot(TableSnapshot hbaseSnapshot,
-            HCatTableInfo hcatTableInfo) throws IOException {
+                                             HCatTableInfo hcatTableInfo) throws IOException {
 
         HCatSchema hcatTableSchema = hcatTableInfo.getDataColumns();
         Map<String, String> hcatHbaseColMap = getHCatHBaseColumnMapping(hcatTableInfo);
         HashMap<String, Long> revisionMap = new HashMap<String, Long>();
 
         for (HCatFieldSchema fSchema : hcatTableSchema.getFields()) {
-            if(hcatHbaseColMap.containsKey(fSchema.getName())){
+            if (hcatHbaseColMap.containsKey(fSchema.getName())) {
                 String colFamily = hcatHbaseColMap.get(fSchema.getName());
                 long revisionID = hbaseSnapshot.getRevision(colFamily);
                 revisionMap.put(fSchema.getName(), revisionID);
@@ -153,12 +153,12 @@ class HBaseRevisionManagerUtil {
         }
 
         HCatTableSnapshot hcatSnapshot = new HCatTableSnapshot(
-                 hcatTableInfo.getDatabaseName(), hcatTableInfo.getTableName(),revisionMap,hbaseSnapshot.getLatestRevision());
+            hcatTableInfo.getDatabaseName(), hcatTableInfo.getTableName(), revisionMap, hbaseSnapshot.getLatestRevision());
         return hcatSnapshot;
     }
 
     static TableSnapshot convertSnapshot(HCatTableSnapshot hcatSnapshot,
-            HCatTableInfo hcatTableInfo) throws IOException {
+                                         HCatTableInfo hcatTableInfo) throws IOException {
 
         HCatSchema hcatTableSchema = hcatTableInfo.getDataColumns();
         Map<String, Long> revisionMap = new HashMap<String, Long>();
@@ -172,8 +172,8 @@ class HBaseRevisionManagerUtil {
         }
 
         String fullyQualifiedName = hcatSnapshot.getDatabaseName() + "."
-                + hcatSnapshot.getTableName();
-        return new TableSnapshot(fullyQualifiedName, revisionMap,hcatSnapshot.getLatestRevision());
+            + hcatSnapshot.getTableName();
+        return new TableSnapshot(fullyQualifiedName, revisionMap, hcatSnapshot.getLatestRevision());
 
     }
 
@@ -186,13 +186,13 @@ class HBaseRevisionManagerUtil {
      * @throws IOException
      */
     static Transaction beginWriteTransaction(String qualifiedTableName,
-            HCatTableInfo tableInfo, Configuration jobConf) throws IOException {
+                                             HCatTableInfo tableInfo, Configuration jobConf) throws IOException {
         Transaction txn;
         RevisionManager rm = null;
         try {
             rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(jobConf);
             String hBaseColumns = tableInfo.getStorerInfo().getProperties()
-                    .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
+                .getProperty(HBaseSerDe.HBASE_COLUMNS_MAPPING);
             String[] splits = hBaseColumns.split("[,:]");
             Set<String> families = new HashSet<String>();
             for (int i = 0; i < splits.length; i += 2) {
@@ -207,13 +207,13 @@ class HBaseRevisionManagerUtil {
     }
 
     static Transaction getWriteTransaction(Configuration conf) throws IOException {
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+        OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
         return (Transaction) HCatUtil.deserialize(outputJobInfo.getProperties()
-                                                               .getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
+            .getProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY));
     }
 
     static void setWriteTransaction(Configuration conf, Transaction txn) throws IOException {
-        OutputJobInfo outputJobInfo = (OutputJobInfo)HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+        OutputJobInfo outputJobInfo = (OutputJobInfo) HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
         outputJobInfo.getProperties().setProperty(HBaseConstants.PROPERTY_WRITE_TXN_KEY, HCatUtil.serialize(txn));
         conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(outputJobInfo));
     }
@@ -228,19 +228,19 @@ class HBaseRevisionManagerUtil {
         return getWriteTransaction(conf).getRevisionNumber();
     }
 
-    private static Map<String, String> getHCatHBaseColumnMapping( HCatTableInfo hcatTableInfo)
-            throws IOException {
+    private static Map<String, String> getHCatHBaseColumnMapping(HCatTableInfo hcatTableInfo)
+        throws IOException {
 
         HCatSchema hcatTableSchema = hcatTableInfo.getDataColumns();
         StorerInfo storeInfo = hcatTableInfo.getStorerInfo();
         String hbaseColumnMapping = storeInfo.getProperties().getProperty(
-                HBaseSerDe.HBASE_COLUMNS_MAPPING);
+            HBaseSerDe.HBASE_COLUMNS_MAPPING);
 
         Map<String, String> hcatHbaseColMap = new HashMap<String, String>();
         List<String> columnFamilies = new ArrayList<String>();
         List<String> columnQualifiers = new ArrayList<String>();
         HBaseUtil.parseColumnMapping(hbaseColumnMapping, columnFamilies,
-                null, columnQualifiers, null);
+            null, columnQualifiers, null);
 
         for (HCatFieldSchema column : hcatTableSchema.getFields()) {
             int fieldPos = hcatTableSchema.getPosition(column.getName());

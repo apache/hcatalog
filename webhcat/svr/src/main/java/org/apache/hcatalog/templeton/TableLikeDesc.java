@@ -30,10 +30,11 @@ public class TableLikeDesc extends GroupPermissionsDesc {
     public String existingTable;
     public String newTable;
 
-    public TableLikeDesc() {}
+    public TableLikeDesc() {
+    }
 
     public String toString() {
         return String.format("TableLikeDesc(existingTable=%s, newTable=%s, location=%s",
-                             existingTable, newTable, location);
+            existingTable, newTable, location);
     }
 }

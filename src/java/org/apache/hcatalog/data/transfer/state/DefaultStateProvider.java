@@ -23,25 +23,25 @@ import java.util.Random;
 
 public class DefaultStateProvider implements StateProvider {
 
-  /**
-   * Default implementation. Here, ids are generated randomly.
-   */
-  @Override
-  public int getId() {
+    /**
+     * Default implementation. Here, ids are generated randomly.
+     */
+    @Override
+    public int getId() {
 
-    NumberFormat numberFormat = NumberFormat.getInstance();
-    numberFormat.setMinimumIntegerDigits(5);
-    numberFormat.setGroupingUsed(false);
-    return Integer
-        .parseInt(numberFormat.format(Math.abs(new Random().nextInt())));
-  }
-
-  private static StateProvider sp;
-
-  public static synchronized StateProvider get() {
-    if (null == sp) {
-      sp = new DefaultStateProvider();
+        NumberFormat numberFormat = NumberFormat.getInstance();
+        numberFormat.setMinimumIntegerDigits(5);
+        numberFormat.setGroupingUsed(false);
+        return Integer
+            .parseInt(numberFormat.format(Math.abs(new Random().nextInt())));
     }
-    return sp;
-  }
+
+    private static StateProvider sp;
+
+    public static synchronized StateProvider get() {
+        if (null == sp) {
+            sp = new DefaultStateProvider();
+        }
+        return sp;
+    }
 }

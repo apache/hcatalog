@@ -51,7 +51,7 @@ public class JobStateTracker {
      *
      */
     public JobStateTracker(String node, ZooKeeper zk, boolean nodeIsTracker,
-            String job_trackingpath) {
+                           String job_trackingpath) {
         this.zk = zk;
         if (nodeIsTracker) {
             trackingnode = node;
@@ -65,13 +65,12 @@ public class JobStateTracker {
      * Create the parent znode for this job state.
      */
     public void create()
-        throws IOException
-    {
+        throws IOException {
         String[] paths = ZooKeeperStorage.getPaths(job_trackingroot);
         for (String znode : paths) {
             try {
                 zk.create(znode, new byte[0],
-                          Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             } catch (KeeperException.NodeExistsException e) {
             } catch (Exception e) {
                 throw new IOException("Unable to create parent nodes");
@@ -79,15 +78,14 @@ public class JobStateTracker {
         }
         try {
             trackingnode = zk.create(makeTrackingZnode(), jobid.getBytes(),
-                    Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
+                Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT_SEQUENTIAL);
         } catch (Exception e) {
             throw new IOException("Unable to create " + makeTrackingZnode());
         }
     }
 
     public void delete()
-        throws IOException
-    {
+        throws IOException {
         try {
             zk.delete(makeTrackingJobZnode(trackingnode), -1);
         } catch (Exception e) {
@@ -103,7 +101,7 @@ public class JobStateTracker {
     public String getJobID() throws IOException {
         try {
             return new String(zk.getData(makeTrackingJobZnode(trackingnode),
-                    false, new Stat()));
+                false, new Stat()));
         } catch (KeeperException e) {
             // It was deleted during the transaction
             throw new IOException("Node already deleted " + trackingnode);
@@ -131,11 +129,11 @@ public class JobStateTracker {
      * expired.
      */
     public static List<String> getTrackingJobs(Configuration conf, ZooKeeper zk)
-            throws IOException {
+        throws IOException {
         ArrayList<String> jobs = new ArrayList<String>();
         try {
             for (String myid : zk.getChildren(
-                    conf.get(TempletonStorage.STORAGE_ROOT)
+                conf.get(TempletonStorage.STORAGE_ROOT)
                     + ZooKeeperStorage.TRACKINGDIR, false)) {
                 jobs.add(myid);
             }

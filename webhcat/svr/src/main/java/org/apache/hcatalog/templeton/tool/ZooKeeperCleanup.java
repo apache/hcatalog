@@ -77,7 +77,7 @@ public class ZooKeeperCleanup extends Thread {
     }
 
     public static void startInstance(Configuration appConf) throws IOException {
-        if (! isRunning) {
+        if (!isRunning) {
             getInstance(appConf).start();
         }
     }
@@ -122,7 +122,7 @@ public class ZooKeeperCleanup extends Thread {
 
                 long sleepMillis = (long) (Math.random() * interval);
                 LOG.info("Next execution: " + new Date(new Date().getTime()
-                                                       + sleepMillis));
+                    + sleepMillis));
                 Thread.sleep(sleepMillis);
 
             } catch (Exception e) {
@@ -157,8 +157,8 @@ public class ZooKeeperCleanup extends Thread {
         JobState state = null;
         try {
             JobStateTracker tracker = new JobStateTracker(node, zk, true,
-                    appConf.get(TempletonStorage.STORAGE_ROOT +
-                            ZooKeeperStorage.TRACKINGDIR));
+                appConf.get(TempletonStorage.STORAGE_ROOT +
+                    ZooKeeperStorage.TRACKINGDIR));
             long now = new Date().getTime();
             state = new JobState(tracker.getJobID(), appConf);
 

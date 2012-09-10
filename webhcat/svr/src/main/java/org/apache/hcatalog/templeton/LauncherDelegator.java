@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,8 +49,7 @@ public class LauncherDelegator extends TempletonDelegator {
     }
 
     public void registerJob(String id, String user, String callback)
-        throws IOException
-    {
+        throws IOException {
         JobState state = null;
         try {
             state = new JobState(id, Main.getAppConfigInstance());
@@ -65,12 +65,11 @@ public class LauncherDelegator extends TempletonDelegator {
      * Enqueue the TempletonControllerJob directly calling doAs.
      */
     public EnqueueBean enqueueController(String user, String callback,
-                                                 List<String> args)
+                                         List<String> args)
         throws NotAuthorizedException, BusyException, ExecuteException,
-        IOException, QueueException
-    {
+        IOException, QueueException {
         try {
-            UserGroupInformation ugi = UgiFactory.getUgi(user); 
+            UserGroupInformation ugi = UgiFactory.getUgi(user);
 
             final long startTime = System.nanoTime();
 
@@ -91,24 +90,22 @@ public class LauncherDelegator extends TempletonDelegator {
     }
 
     private String queueAsUser(UserGroupInformation ugi, final List<String> args)
-        throws IOException, InterruptedException
-    {
+        throws IOException, InterruptedException {
         String id = ugi.doAs(new PrivilegedExceptionAction<String>() {
-                public String run() throws Exception {
-                    String[] array = new String[args.size()];
-                    TempletonControllerJob ctrl = new TempletonControllerJob();
-                    ToolRunner.run(ctrl, args.toArray(array));
-                    return ctrl.getSubmittedId();
-                }
-            });
+            public String run() throws Exception {
+                String[] array = new String[args.size()];
+                TempletonControllerJob ctrl = new TempletonControllerJob();
+                ToolRunner.run(ctrl, args.toArray(array));
+                return ctrl.getSubmittedId();
+            }
+        });
 
         return id;
     }
 
     public List<String> makeLauncherArgs(AppConfig appConf, String statusdir,
                                          String completedUrl,
-                                         List<String> copyFiles)
-    {
+                                         List<String> copyFiles) {
         ArrayList<String> args = new ArrayList<String>();
 
         args.add("-libjars");
@@ -122,9 +119,9 @@ public class LauncherDelegator extends TempletonDelegator {
         // Internal vars
         addDef(args, TempletonControllerJob.STATUSDIR_NAME, statusdir);
         addDef(args, TempletonControllerJob.COPY_NAME,
-               TempletonUtils.encodeArray(copyFiles));
+            TempletonUtils.encodeArray(copyFiles));
         addDef(args, TempletonControllerJob.OVERRIDE_CLASSPATH,
-               makeOverrideClasspath(appConf));
+            makeOverrideClasspath(appConf));
 
         // Job vars
         addStorageVars(args);
@@ -136,21 +133,21 @@ public class LauncherDelegator extends TempletonDelegator {
     // Storage vars
     private void addStorageVars(List<String> args) {
         addDef(args, TempletonStorage.STORAGE_CLASS,
-               appConf.get(TempletonStorage.STORAGE_CLASS));
+            appConf.get(TempletonStorage.STORAGE_CLASS));
         addDef(args, TempletonStorage.STORAGE_ROOT,
-                appConf.get(TempletonStorage.STORAGE_ROOT));
+            appConf.get(TempletonStorage.STORAGE_ROOT));
         addDef(args, ZooKeeperStorage.ZK_HOSTS,
-                appConf.get(ZooKeeperStorage.ZK_HOSTS));
+            appConf.get(ZooKeeperStorage.ZK_HOSTS));
         addDef(args, ZooKeeperStorage.ZK_SESSION_TIMEOUT,
-                appConf.get(ZooKeeperStorage.ZK_SESSION_TIMEOUT));
+            appConf.get(ZooKeeperStorage.ZK_SESSION_TIMEOUT));
     }
 
     // Completion notifier vars
     private void addCompletionVars(List<String> args, String completedUrl) {
         addDef(args, AppConfig.HADOOP_END_RETRY_NAME,
-               appConf.get(AppConfig.CALLBACK_RETRY_NAME));
+            appConf.get(AppConfig.CALLBACK_RETRY_NAME));
         addDef(args, AppConfig.HADOOP_END_INTERVAL_NAME,
-               appConf.get(AppConfig.CALLBACK_INTERVAL_NAME));
+            appConf.get(AppConfig.CALLBACK_INTERVAL_NAME));
         addDef(args, AppConfig.HADOOP_END_URL_NAME, completedUrl);
     }
 

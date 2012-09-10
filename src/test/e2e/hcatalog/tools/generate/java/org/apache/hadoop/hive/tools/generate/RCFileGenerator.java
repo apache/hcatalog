@@ -46,24 +46,24 @@ public class RCFileGenerator {
     private static Random rand;
 
     private static Path getFile(String filename) throws Exception {
-       return new Path(basedir, filename);
+        return new Path(basedir, filename);
     }
 
     private static String[] firstName = {"alice", "bob", "calvin", "david",
-      "ethan", "fred", "gabriella", "holly", "irene", "jessica", "katie",
-      "luke", "mike", "nick", "oscar", "priscilla", "quinn", "rachel",
-      "sarah", "tom", "ulysses", "victor", "wendy", "xavier", "yuri",
-      "zach"};
+        "ethan", "fred", "gabriella", "holly", "irene", "jessica", "katie",
+        "luke", "mike", "nick", "oscar", "priscilla", "quinn", "rachel",
+        "sarah", "tom", "ulysses", "victor", "wendy", "xavier", "yuri",
+        "zach"};
 
     private static String[] lastName = {"allen", "brown", "carson",
-      "davidson", "ellison", "falkner", "garcia", "hernandez", "ichabod",
-      "johnson", "king", "laertes", "miller", "nixon", "ovid", "polk",
-      "quirinius", "robinson", "steinbeck", "thompson", "underhill",
-      "van buren", "white", "xylophone", "young", "zipper"};
+        "davidson", "ellison", "falkner", "garcia", "hernandez", "ichabod",
+        "johnson", "king", "laertes", "miller", "nixon", "ovid", "polk",
+        "quirinius", "robinson", "steinbeck", "thompson", "underhill",
+        "van buren", "white", "xylophone", "young", "zipper"};
 
     private static String randomName() {
         StringBuffer buf =
-            new StringBuffer(firstName[rand.nextInt(firstName.length)]);
+                new StringBuffer(firstName[rand.nextInt(firstName.length)]);
         buf.append(' ');
         buf.append(lastName[rand.nextInt(lastName.length)]);
         return buf.toString();
@@ -115,8 +115,8 @@ public class RCFileGenerator {
     }
 
     private static void usage() {
-        System.err.println("Usage: rcfilegen format number_of_rows " + 
-            "output_file plain_output_file");
+        System.err.println("Usage: rcfilegen format number_of_rows " +
+                "output_file plain_output_file");
         System.err.println("  format one of:  student voter alltypes");
         System.exit(1);
     }
@@ -140,7 +140,7 @@ public class RCFileGenerator {
                                 int numRows,
                                 String output, String plainOutput) throws Exception {
         int numFields = 0;
-        if (format.equals("student")) { 
+        if (format.equals("student")) {
             rand = new Random(numRows);
             numFields = 3;
         } else if (format.equals("voter")) {
@@ -153,8 +153,8 @@ public class RCFileGenerator {
 
         RCFileOutputFormat.setColumnNumber(conf, numFields);
         RCFile.Writer writer = new RCFile.Writer(fs, conf, getFile(output),
-            null, new DefaultCodec());
-        
+                null, new DefaultCodec());
+
         PrintWriter pw = new PrintWriter(new FileWriter(plainOutput));
 
         for (int j = 0; j < numRows; j++) {
@@ -164,30 +164,30 @@ public class RCFileGenerator {
 
             if (format.equals("student")) {
                 byte[][] f = {
-                    randomName().getBytes("UTF-8"),
-                    Integer.valueOf(randomAge()).toString().getBytes("UTF-8"),
-                    Double.valueOf(randomGpa()).toString().getBytes("UTF-8")
+                        randomName().getBytes("UTF-8"),
+                        Integer.valueOf(randomAge()).toString().getBytes("UTF-8"),
+                        Double.valueOf(randomGpa()).toString().getBytes("UTF-8")
                 };
                 fields = f;
             } else if (format.equals("voter")) {
                 byte[][] f = {
-                    randomName().getBytes("UTF-8"),
-                    Integer.valueOf(randomAge()).toString().getBytes("UTF-8"),
-                    randomRegistration().getBytes("UTF-8"),
-                    Double.valueOf(randomContribution()).toString().getBytes("UTF-8")
+                        randomName().getBytes("UTF-8"),
+                        Integer.valueOf(randomAge()).toString().getBytes("UTF-8"),
+                        randomRegistration().getBytes("UTF-8"),
+                        Double.valueOf(randomContribution()).toString().getBytes("UTF-8")
                 };
                 fields = f;
             } else if (format.equals("alltypes")) {
                 byte[][] f = {
-                    Integer.valueOf(rand.nextInt(Byte.MAX_VALUE)).toString().getBytes("UTF-8"),
-                    Integer.valueOf(rand.nextInt(Short.MAX_VALUE)).toString().getBytes("UTF-8"),
-                    Integer.valueOf(rand.nextInt()).toString().getBytes("UTF-8"),
-                    Long.valueOf(rand.nextLong()).toString().getBytes("UTF-8"),
-                    Float.valueOf(rand.nextFloat() * 1000).toString().getBytes("UTF-8"),
-                    Double.valueOf(rand.nextDouble() * 1000000).toString().getBytes("UTF-8"),
-                    randomName().getBytes("UTF-8"),
-                    randomMap(),
-                    randomArray()
+                        Integer.valueOf(rand.nextInt(Byte.MAX_VALUE)).toString().getBytes("UTF-8"),
+                        Integer.valueOf(rand.nextInt(Short.MAX_VALUE)).toString().getBytes("UTF-8"),
+                        Integer.valueOf(rand.nextInt()).toString().getBytes("UTF-8"),
+                        Long.valueOf(rand.nextLong()).toString().getBytes("UTF-8"),
+                        Float.valueOf(rand.nextFloat() * 1000).toString().getBytes("UTF-8"),
+                        Double.valueOf(rand.nextDouble() * 1000000).toString().getBytes("UTF-8"),
+                        randomName().getBytes("UTF-8"),
+                        randomMap(),
+                        randomArray()
                 };
                 fields = f;
             }
@@ -195,10 +195,10 @@ public class RCFileGenerator {
 
             for (int i = 0; i < fields.length; i++) {
                 BytesRefWritable field = new BytesRefWritable(fields[i], 0,
-                    fields[i].length);
+                        fields[i].length);
                 row.set(i, field);
                 pw.print(new String(fields[i]));
-                if (i!=fields.length-1)
+                if (i != fields.length - 1)
                     pw.print("\t");
                 else
                     pw.println();
@@ -209,6 +209,6 @@ public class RCFileGenerator {
 
         writer.close();
         pw.close();
-  }
+    }
 }
 

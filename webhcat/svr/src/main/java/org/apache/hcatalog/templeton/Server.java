@@ -39,6 +39,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
+
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -103,10 +104,14 @@ public class Server {
     private static AppConfig appConf = Main.getAppConfigInstance();
 
     // The SecurityContext set by AuthFilter
-    private @Context SecurityContext theSecurityContext;
+    private
+    @Context
+    SecurityContext theSecurityContext;
 
     // The uri requested
-    private @Context UriInfo theUriInfo;
+    private
+    @Context
+    UriInfo theUriInfo;
 
     private static final Log LOG = LogFactory.getLog(Server.class);
 
@@ -150,8 +155,7 @@ public class Server {
                         @FormParam("group") String group,
                         @FormParam("permissions") String permissions)
         throws NotAuthorizedException, BusyException, BadParam,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         verifyUser();
         verifyParam(exec, "exec");
 
@@ -168,13 +172,12 @@ public class Server {
     public Response listTables(@PathParam("db") String db,
                                @QueryParam("like") String tablePattern)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
 
         HcatDelegator d = new HcatDelegator(appConf, execService);
-        if (! TempletonUtils.isset(tablePattern))
+        if (!TempletonUtils.isset(tablePattern))
             tablePattern = "*";
         return d.listTables(getUser(), db, tablePattern);
     }
@@ -189,8 +192,7 @@ public class Server {
                                 @PathParam("table") String table,
                                 TableDesc desc)
         throws SimpleWebException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -211,8 +213,7 @@ public class Server {
                                     @PathParam("newTable") String newTable,
                                     TableLikeDesc desc)
         throws SimpleWebException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(existingTable, ":existingTable");
@@ -236,8 +237,7 @@ public class Server {
                               @PathParam("table") String table,
                               @QueryParam("format") String format)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -261,8 +261,7 @@ public class Server {
                               @QueryParam("group") String group,
                               @QueryParam("permissions") String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -283,8 +282,7 @@ public class Server {
                                 @FormParam("group") String group,
                                 @FormParam("permissions") String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(oldTable, ":table");
@@ -304,8 +302,7 @@ public class Server {
                                          @PathParam("table") String table,
                                          @PathParam("property") String property)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -324,8 +321,7 @@ public class Server {
     public Response listTableProperties(@PathParam("db") String db,
                                         @PathParam("table") String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -345,8 +341,7 @@ public class Server {
                                         @PathParam("property") String property,
                                         TablePropertyDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -366,8 +361,7 @@ public class Server {
     public Response listPartitions(@PathParam("db") String db,
                                    @PathParam("table") String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -386,8 +380,7 @@ public class Server {
                                   @PathParam("table") String table,
                                   @PathParam("partition") String partition)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -408,8 +401,7 @@ public class Server {
                                     @PathParam("partition") String partition,
                                     PartitionDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -432,15 +424,14 @@ public class Server {
                                   @QueryParam("group") String group,
                                   @QueryParam("permissions") String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
         verifyParam(partition, ":partition");
         HcatDelegator d = new HcatDelegator(appConf, execService);
         return d.dropPartition(getUser(), db, table, partition, ifExists,
-                               group, permissions);
+            group, permissions);
     }
 
     /**
@@ -451,12 +442,11 @@ public class Server {
     @Produces(MediaType.APPLICATION_JSON)
     public Response listDatabases(@QueryParam("like") String dbPattern)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
 
         HcatDelegator d = new HcatDelegator(appConf, execService);
-        if (! TempletonUtils.isset(dbPattern))
+        if (!TempletonUtils.isset(dbPattern))
             dbPattern = "*";
         return d.listDatabases(getUser(), dbPattern);
     }
@@ -470,8 +460,7 @@ public class Server {
     public Response descDatabase(@PathParam("db") String db,
                                  @QueryParam("format") String format)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         HcatDelegator d = new HcatDelegator(appConf, execService);
@@ -487,8 +476,7 @@ public class Server {
     public Response createDatabase(@PathParam("db") String db,
                                    DatabaseDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         desc.database = db;
@@ -508,15 +496,14 @@ public class Server {
                                  @QueryParam("group") String group,
                                  @QueryParam("permissions") String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         if (TempletonUtils.isset(option))
             verifyDdlParam(option, "option");
         HcatDelegator d = new HcatDelegator(appConf, execService);
         return d.dropDatabase(getUser(), db, ifExists, option,
-                              group, permissions);
+            group, permissions);
     }
 
     /**
@@ -529,8 +516,7 @@ public class Server {
     public Response listColumns(@PathParam("db") String db,
                                 @PathParam("table") String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -549,8 +535,7 @@ public class Server {
                                @PathParam("table") String table,
                                @PathParam("column") String column)
         throws SimpleWebException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -571,8 +556,7 @@ public class Server {
                                  @PathParam("column") String column,
                                  ColumnDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        BadParam, ExecuteException, IOException
-    {
+        BadParam, ExecuteException, IOException {
         verifyUser();
         verifyDdlParam(db, ":db");
         verifyDdlParam(table, ":table");
@@ -601,8 +585,7 @@ public class Server {
                                           @FormParam("statusdir") String statusdir,
                                           @FormParam("callback") String callback)
         throws NotAuthorizedException, BusyException, BadParam, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         verifyUser();
         verifyParam(inputs, "input");
         verifyParam(mapper, "mapper");
@@ -610,8 +593,8 @@ public class Server {
 
         StreamingDelegator d = new StreamingDelegator(appConf);
         return d.run(getUser(), inputs, output, mapper, reducer,
-                     files, defines, cmdenvs, args,
-                     statusdir, callback, getCompletedUrl());
+            files, defines, cmdenvs, args,
+            statusdir, callback, getCompletedUrl());
     }
 
     /**
@@ -629,17 +612,16 @@ public class Server {
                                     @FormParam("statusdir") String statusdir,
                                     @FormParam("callback") String callback)
         throws NotAuthorizedException, BusyException, BadParam, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         verifyUser();
         verifyParam(jar, "jar");
         verifyParam(mainClass, "class");
 
         JarDelegator d = new JarDelegator(appConf);
         return d.run(getUser(),
-                     jar, mainClass,
-                     libjars, files, args, defines,
-                     statusdir, callback, getCompletedUrl());
+            jar, mainClass,
+            libjars, files, args, defines,
+            statusdir, callback, getCompletedUrl());
     }
 
     /**
@@ -655,17 +637,16 @@ public class Server {
                            @FormParam("statusdir") String statusdir,
                            @FormParam("callback") String callback)
         throws NotAuthorizedException, BusyException, BadParam, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         verifyUser();
         if (execute == null && srcFile == null)
             throw new BadParam("Either execute or file parameter required");
 
         PigDelegator d = new PigDelegator(appConf);
         return d.run(getUser(),
-                     execute, srcFile,
-                     pigArgs, otherFiles,
-                     statusdir, callback, getCompletedUrl());
+            execute, srcFile,
+            pigArgs, otherFiles,
+            statusdir, callback, getCompletedUrl());
     }
 
     /**
@@ -680,15 +661,14 @@ public class Server {
                             @FormParam("statusdir") String statusdir,
                             @FormParam("callback") String callback)
         throws NotAuthorizedException, BusyException, BadParam, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         verifyUser();
         if (execute == null && srcFile == null)
             throw new BadParam("Either execute or file parameter required");
 
         HiveDelegator d = new HiveDelegator(appConf);
         return d.run(getUser(), execute, srcFile, defines,
-                     statusdir, callback, getCompletedUrl());
+            statusdir, callback, getCompletedUrl());
     }
 
     /**
@@ -698,8 +678,7 @@ public class Server {
     @Path("queue/{jobid}")
     @Produces({MediaType.APPLICATION_JSON})
     public QueueStatusBean showQueueId(@PathParam("jobid") String jobid)
-        throws NotAuthorizedException, BadParam, IOException
-    {
+        throws NotAuthorizedException, BadParam, IOException {
         verifyUser();
         verifyParam(jobid, ":jobid");
 
@@ -714,8 +693,7 @@ public class Server {
     @Path("queue/{jobid}")
     @Produces({MediaType.APPLICATION_JSON})
     public QueueStatusBean deleteQueueId(@PathParam("jobid") String jobid)
-        throws NotAuthorizedException, BadParam, IOException
-    {
+        throws NotAuthorizedException, BadParam, IOException {
         verifyUser();
         verifyParam(jobid, ":jobid");
 
@@ -730,8 +708,7 @@ public class Server {
     @Path("queue")
     @Produces({MediaType.APPLICATION_JSON})
     public List<String> showQueueList()
-        throws NotAuthorizedException, BadParam, IOException
-    {
+        throws NotAuthorizedException, BadParam, IOException {
         verifyUser();
 
         ListDelegator d = new ListDelegator(appConf);
@@ -745,8 +722,7 @@ public class Server {
     @Path("internal/complete/{jobid}")
     @Produces({MediaType.APPLICATION_JSON})
     public CompleteBean completeJob(@PathParam("jobid") String jobid)
-        throws CallbackFailedException, IOException
-    {
+        throws CallbackFailedException, IOException {
         CompleteDelegator d = new CompleteDelegator(appConf);
         return d.run(jobid);
     }
@@ -755,11 +731,10 @@ public class Server {
      * Verify that we have a valid user.  Throw an exception if invalid.
      */
     public void verifyUser()
-        throws NotAuthorizedException
-    {
+        throws NotAuthorizedException {
         if (getUser() == null) {
             String msg = "No user found.";
-            if (! UserGroupInformation.isSecurityEnabled())
+            if (!UserGroupInformation.isSecurityEnabled())
                 msg += "  Missing " + PseudoAuthenticator.USER_NAME + " parameter.";
             throw new NotAuthorizedException(msg);
         }
@@ -769,8 +744,7 @@ public class Server {
      * Verify that the parameter exists.  Throw an exception if invalid.
      */
     public void verifyParam(String param, String name)
-        throws BadParam
-    {
+        throws BadParam {
         if (param == null)
             throw new BadParam("Missing " + name + " parameter");
     }
@@ -779,8 +753,7 @@ public class Server {
      * Verify that the parameter exists.  Throw an exception if invalid.
      */
     public void verifyParam(List<String> param, String name)
-        throws BadParam
-    {
+        throws BadParam {
         if (param == null || param.isEmpty())
             throw new BadParam("Missing " + name + " parameter");
     }
@@ -794,12 +767,11 @@ public class Server {
      * Bug: This needs to allow for quoted ddl identifiers.
      */
     public void verifyDdlParam(String param, String name)
-        throws BadParam
-    {
+        throws BadParam {
         verifyParam(param, name);
         Matcher m = DDL_ID.matcher(param);
-        if (! m.matches())
-            throw new BadParam("Invalid DDL identifier " + name );
+        if (!m.matches())
+            throw new BadParam("Invalid DDL identifier " + name);
     }
 
     /**

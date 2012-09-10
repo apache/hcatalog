@@ -41,35 +41,35 @@ public class Transaction implements Serializable {
         this.revision = revision;
     }
 
-   /**
+    /**
      * @return The revision number associated with a transaction.
      */
-   public long getRevisionNumber(){
-       return this.revision;
-   }
+    public long getRevisionNumber() {
+        return this.revision;
+    }
 
     /**
      * @return The table name associated with a transaction.
      */
-   public String getTableName() {
+    public String getTableName() {
         return tableName;
     }
 
     /**
      * @return The column families associated with a transaction.
      */
-   public List<String> getColumnFamilies() {
+    public List<String> getColumnFamilies() {
         return columnFamilies;
     }
 
     /**
      * @return The expire timestamp associated with a transaction.
      */
-   long getTransactionExpireTimeStamp(){
+    long getTransactionExpireTimeStamp() {
         return this.timeStamp + this.keepAlive;
     }
 
-    void setKeepAlive(long seconds){
+    void setKeepAlive(long seconds) {
         this.keepAlive = seconds;
     }
 
@@ -78,7 +78,7 @@ public class Transaction implements Serializable {
      *
      * @return long  The keep alive value for the transaction.
      */
-    public long getKeepAliveValue(){
+    public long getKeepAliveValue() {
         return this.keepAlive;
     }
 
@@ -87,15 +87,15 @@ public class Transaction implements Serializable {
      *
      * @return FamilyRevision An instance of FamilyRevision associated with the transaction.
      */
-    FamilyRevision getFamilyRevisionInfo(){
+    FamilyRevision getFamilyRevisionInfo() {
         return new FamilyRevision(revision, getTransactionExpireTimeStamp());
     }
 
-   /**
-    * Keep alive transaction. This methods extends the expire timestamp of a
-    * transaction by the "keep alive" amount.
-    */
-   void keepAliveTransaction(){
+    /**
+     * Keep alive transaction. This methods extends the expire timestamp of a
+     * transaction by the "keep alive" amount.
+     */
+    void keepAliveTransaction() {
         this.timeStamp = this.timeStamp + this.keepAlive;
     }
 

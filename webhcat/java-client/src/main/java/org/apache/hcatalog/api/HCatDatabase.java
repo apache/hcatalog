@@ -44,7 +44,7 @@ public class HCatDatabase {
      *
      * @return the database name
      */
-    public String getName(){
+    public String getName() {
         return dbName;
     }
 
@@ -53,7 +53,7 @@ public class HCatDatabase {
      *
      * @return the dB location
      */
-    public String getLocation(){
+    public String getLocation() {
         return dbLocation;
     }
 
@@ -62,7 +62,7 @@ public class HCatDatabase {
      *
      * @return the comment
      */
-    public String getComment(){
+    public String getComment() {
         return comment;
     }
 
@@ -71,17 +71,17 @@ public class HCatDatabase {
      *
      * @return the dB properties
      */
-    public Map<String, String> getProperties(){
+    public Map<String, String> getProperties() {
         return props;
     }
 
     @Override
     public String toString() {
         return "HCatDatabase ["
-                + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
-                + (dbLocation != null ? "dbLocation=" + dbLocation + ", " : "dbLocation=null")
-                + (comment != null ? "comment=" + comment + ", " : "comment=null")
-                + (props != null ? "props=" + props : "props=null") + "]";
+            + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
+            + (dbLocation != null ? "dbLocation=" + dbLocation + ", " : "dbLocation=null")
+            + (comment != null ? "comment=" + comment + ", " : "comment=null")
+            + (props != null ? "props=" + props : "props=null") + "]";
     }
 
 }

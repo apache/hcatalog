@@ -49,7 +49,7 @@ public class ZNodeName implements Comparable<ZNodeName> {
             } catch (NumberFormatException e) {
                 LOG.info("Number format exception for " + idx, e);
             } catch (ArrayIndexOutOfBoundsException e) {
-               LOG.info("Array out of bounds for " + idx, e);
+                LOG.info("Array out of bounds for " + idx, e);
             }
         }
     }

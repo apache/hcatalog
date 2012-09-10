@@ -33,10 +33,10 @@ package org.apache.hcatalog.hbase.snapshot;
  * baseDir/TrasactionBasePath/TableB/columnFamily-1/abortedTxns
 
  */
-public class PathUtil{
+public class PathUtil {
 
-    static final String      DATA_DIR = "/data";
-    static final String      CLOCK_NODE   = "/clock";
+    static final String DATA_DIR = "/data";
+    static final String CLOCK_NODE = "/clock";
 
     /**
      * This method returns the data path associated with the currently
@@ -47,10 +47,10 @@ public class PathUtil{
      * @return The path of the running transactions data.
      */
     static String getRunningTxnInfoPath(String baseDir, String tableName,
-            String columnFamily) {
+                                        String columnFamily) {
         String txnBasePath = getTransactionBasePath(baseDir);
         String path = txnBasePath + "/" + tableName + "/" + columnFamily
-                + "/runningTxns";
+            + "/runningTxns";
         return path;
     }
 
@@ -63,10 +63,10 @@ public class PathUtil{
      * @return The path of the aborted transactions data.
      */
     static String getAbortInformationPath(String baseDir, String tableName,
-            String columnFamily) {
+                                          String columnFamily) {
         String txnBasePath = getTransactionBasePath(baseDir);
         String path = txnBasePath + "/" + tableName + "/" + columnFamily
-                + "/abortData";
+            + "/abortData";
         return path;
     }
 
@@ -83,13 +83,13 @@ public class PathUtil{
         return revisionIDNode;
     }
 
-   /**
-    * Gets the lock management node for any znode that needs to be locked.
-    *
-    * @param path the path of the znode.
-    * @return the lock management node path.
-    */
-   static String getLockManagementNode(String path) {
+    /**
+     * Gets the lock management node for any znode that needs to be locked.
+     *
+     * @param path the path of the znode.
+     * @return the lock management node path.
+     */
+    static String getLockManagementNode(String path) {
         String lockNode = path + "_locknode_";
         return lockNode;
     }
@@ -112,7 +112,7 @@ public class PathUtil{
      * @param tableName the table name
      * @return the txn data path for the table.
      */
-    static String getTxnDataPath(String baseDir, String tableName){
+    static String getTxnDataPath(String baseDir, String tableName) {
         String txnBasePath = getTransactionBasePath(baseDir);
         String path = txnBasePath + "/" + tableName;
         return path;

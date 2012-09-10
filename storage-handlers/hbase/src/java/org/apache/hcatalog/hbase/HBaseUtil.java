@@ -28,7 +28,7 @@ import org.apache.hadoop.mapred.JobConf;
 
 class HBaseUtil {
 
-    private HBaseUtil(){
+    private HBaseUtil() {
     }
 
     /**
@@ -47,97 +47,97 @@ class HBaseUtil {
     static int parseColumnMapping(
         String columnMapping,
         List<String> colFamilies,
-        List<byte []> colFamiliesBytes,
+        List<byte[]> colFamiliesBytes,
         List<String> colQualifiers,
-        List<byte []> colQualifiersBytes) throws IOException {
+        List<byte[]> colQualifiersBytes) throws IOException {
 
-      int rowKeyIndex = -1;
+        int rowKeyIndex = -1;
 
-      if (colFamilies == null || colQualifiers == null) {
-        throw new IllegalArgumentException("Error: caller must pass in lists for the column families " +
-            "and qualifiers.");
-      }
-
-      colFamilies.clear();
-      colQualifiers.clear();
-
-      if (columnMapping == null) {
-        throw new IllegalArgumentException("Error: hbase.columns.mapping missing for this HBase table.");
-      }
-
-      if (columnMapping.equals("") || columnMapping.equals(HBaseSerDe.HBASE_KEY_COL)) {
-        throw new IllegalArgumentException("Error: hbase.columns.mapping specifies only the HBase table"
-            + " row key. A valid Hive-HBase table must specify at least one additional column.");
-      }
-
-      String [] mapping = columnMapping.split(",");
-
-      for (int i = 0; i < mapping.length; i++) {
-        String elem = mapping[i];
-        int idxFirst = elem.indexOf(":");
-        int idxLast = elem.lastIndexOf(":");
-
-        if (idxFirst < 0 || !(idxFirst == idxLast)) {
-          throw new IllegalArgumentException("Error: the HBase columns mapping contains a badly formed " +
-              "column family, column qualifier specification.");
+        if (colFamilies == null || colQualifiers == null) {
+            throw new IllegalArgumentException("Error: caller must pass in lists for the column families " +
+                "and qualifiers.");
         }
 
-        if (elem.equals(HBaseSerDe.HBASE_KEY_COL)) {
-          rowKeyIndex = i;
-          colFamilies.add(elem);
-          colQualifiers.add(null);
-        } else {
-          String [] parts = elem.split(":");
-          assert(parts.length > 0 && parts.length <= 2);
-          colFamilies.add(parts[0]);
+        colFamilies.clear();
+        colQualifiers.clear();
 
-          if (parts.length == 2) {
-            colQualifiers.add(parts[1]);
-          } else {
-            colQualifiers.add(null);
-          }
+        if (columnMapping == null) {
+            throw new IllegalArgumentException("Error: hbase.columns.mapping missing for this HBase table.");
         }
-      }
 
-      if (rowKeyIndex == -1) {
-        colFamilies.add(0, HBaseSerDe.HBASE_KEY_COL);
-        colQualifiers.add(0, null);
-        rowKeyIndex = 0;
-      }
-
-      if (colFamilies.size() != colQualifiers.size()) {
-        throw new IOException("Error in parsing the hbase columns mapping.");
-      }
-
-      // populate the corresponding byte [] if the client has passed in a non-null list
-      if (colFamiliesBytes != null) {
-        colFamiliesBytes.clear();
-
-        for (String fam : colFamilies) {
-          colFamiliesBytes.add(Bytes.toBytes(fam));
+        if (columnMapping.equals("") || columnMapping.equals(HBaseSerDe.HBASE_KEY_COL)) {
+            throw new IllegalArgumentException("Error: hbase.columns.mapping specifies only the HBase table"
+                + " row key. A valid Hive-HBase table must specify at least one additional column.");
         }
-      }
 
-      if (colQualifiersBytes != null) {
-        colQualifiersBytes.clear();
+        String[] mapping = columnMapping.split(",");
 
-        for (String qual : colQualifiers) {
-          if (qual == null) {
-            colQualifiersBytes.add(null);
-          } else {
-            colQualifiersBytes.add(Bytes.toBytes(qual));
-          }
+        for (int i = 0; i < mapping.length; i++) {
+            String elem = mapping[i];
+            int idxFirst = elem.indexOf(":");
+            int idxLast = elem.lastIndexOf(":");
+
+            if (idxFirst < 0 || !(idxFirst == idxLast)) {
+                throw new IllegalArgumentException("Error: the HBase columns mapping contains a badly formed " +
+                    "column family, column qualifier specification.");
+            }
+
+            if (elem.equals(HBaseSerDe.HBASE_KEY_COL)) {
+                rowKeyIndex = i;
+                colFamilies.add(elem);
+                colQualifiers.add(null);
+            } else {
+                String[] parts = elem.split(":");
+                assert (parts.length > 0 && parts.length <= 2);
+                colFamilies.add(parts[0]);
+
+                if (parts.length == 2) {
+                    colQualifiers.add(parts[1]);
+                } else {
+                    colQualifiers.add(null);
+                }
+            }
         }
-      }
 
-      if (colFamiliesBytes != null && colQualifiersBytes != null) {
-        if (colFamiliesBytes.size() != colQualifiersBytes.size()) {
-          throw new IOException("Error in caching the bytes for the hbase column families " +
-              "and qualifiers.");
+        if (rowKeyIndex == -1) {
+            colFamilies.add(0, HBaseSerDe.HBASE_KEY_COL);
+            colQualifiers.add(0, null);
+            rowKeyIndex = 0;
         }
-      }
 
-      return rowKeyIndex;
+        if (colFamilies.size() != colQualifiers.size()) {
+            throw new IOException("Error in parsing the hbase columns mapping.");
+        }
+
+        // populate the corresponding byte [] if the client has passed in a non-null list
+        if (colFamiliesBytes != null) {
+            colFamiliesBytes.clear();
+
+            for (String fam : colFamilies) {
+                colFamiliesBytes.add(Bytes.toBytes(fam));
+            }
+        }
+
+        if (colQualifiersBytes != null) {
+            colQualifiersBytes.clear();
+
+            for (String qual : colQualifiers) {
+                if (qual == null) {
+                    colQualifiersBytes.add(null);
+                } else {
+                    colQualifiersBytes.add(Bytes.toBytes(qual));
+                }
+            }
+        }
+
+        if (colFamiliesBytes != null && colQualifiersBytes != null) {
+            if (colFamiliesBytes.size() != colQualifiersBytes.size()) {
+                throw new IOException("Error in caching the bytes for the hbase column families " +
+                    "and qualifiers.");
+            }
+        }
+
+        return rowKeyIndex;
     }
 
     /**

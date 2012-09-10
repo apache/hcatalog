@@ -53,10 +53,10 @@ import org.apache.pig.data.Tuple;
 import org.junit.Test;
 
 public class TestSequenceFileReadWrite extends TestCase {
-  private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
-      "/build/test/data/" + TestSequenceFileReadWrite.class.getCanonicalName();
-  private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
-  private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
+    private static final String TEST_DATA_DIR = System.getProperty("user.dir") +
+            "/build/test/data/" + TestSequenceFileReadWrite.class.getCanonicalName();
+    private static final String TEST_WAREHOUSE_DIR = TEST_DATA_DIR + "/warehouse";
+    private static final String INPUT_FILE_NAME = TEST_DATA_DIR + "/input.data";
 
     private static Driver driver;
     private static PigServer server;
@@ -86,7 +86,7 @@ public class TestSequenceFileReadWrite extends TestCase {
     }
 
     @Test
-   public void testSequenceTableWriteRead() throws Exception{
+    public void testSequenceTableWriteRead() throws Exception {
         Initialize();
         String createTable = "CREATE TABLE demo_table(a0 int, a1 String, a2 String) STORED AS SEQUENCEFILE";
         driver.run("drop table demo_table");
@@ -112,10 +112,10 @@ public class TestSequenceFileReadWrite extends TestCase {
             numTuplesRead++;
         }
         assertEquals(input.length, numTuplesRead);
-   }
+    }
 
     @Test
-    public void testTextTableWriteRead() throws Exception{
+    public void testTextTableWriteRead() throws Exception {
         Initialize();
         String createTable = "CREATE TABLE demo_table_1(a0 int, a1 String, a2 String) STORED AS TEXTFILE";
         driver.run("drop table demo_table_1");
@@ -144,7 +144,7 @@ public class TestSequenceFileReadWrite extends TestCase {
     }
 
     @Test
-    public void testSequenceTableWriteReadMR() throws Exception{
+    public void testSequenceTableWriteReadMR() throws Exception {
         Initialize();
         String createTable = "CREATE TABLE demo_table_2(a0 int, a1 String, a2 String) STORED AS SEQUENCEFILE";
         driver.run("drop table demo_table_2");
@@ -238,27 +238,27 @@ public class TestSequenceFileReadWrite extends TestCase {
     }
 
 
-  public static class Map extends Mapper<LongWritable, Text, NullWritable, DefaultHCatRecord>{
+    public static class Map extends Mapper<LongWritable, Text, NullWritable, DefaultHCatRecord> {
 
-      public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-          String[] cols = value.toString().split(",");
-          DefaultHCatRecord record = new DefaultHCatRecord(3);
-          record.set(0,Integer.parseInt(cols[0]));
-          record.set(1,cols[1]);
-          record.set(2,cols[2]);
-          context.write(NullWritable.get(), record);
-      }
+        public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String[] cols = value.toString().split(",");
+            DefaultHCatRecord record = new DefaultHCatRecord(3);
+            record.set(0, Integer.parseInt(cols[0]));
+            record.set(1, cols[1]);
+            record.set(2, cols[2]);
+            context.write(NullWritable.get(), record);
+        }
     }
 
-  private HCatSchema getSchema() throws HCatException {
-      HCatSchema schema = new HCatSchema(new ArrayList<HCatFieldSchema>());
-      schema.append(new HCatFieldSchema("a0", HCatFieldSchema.Type.INT,
-              ""));
-      schema.append(new HCatFieldSchema("a1",
-              HCatFieldSchema.Type.STRING, ""));
-      schema.append(new HCatFieldSchema("a2",
-              HCatFieldSchema.Type.STRING, ""));
-      return schema;
-  }
+    private HCatSchema getSchema() throws HCatException {
+        HCatSchema schema = new HCatSchema(new ArrayList<HCatFieldSchema>());
+        schema.append(new HCatFieldSchema("a0", HCatFieldSchema.Type.INT,
+                ""));
+        schema.append(new HCatFieldSchema("a1",
+                HCatFieldSchema.Type.STRING, ""));
+        schema.append(new HCatFieldSchema("a2",
+                HCatFieldSchema.Type.STRING, ""));
+        return schema;
+    }
 
 }

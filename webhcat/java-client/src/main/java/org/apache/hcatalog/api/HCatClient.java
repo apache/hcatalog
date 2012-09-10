@@ -30,8 +30,10 @@ import org.apache.hcatalog.common.HCatException;
  */
 public abstract class HCatClient {
 
-    public enum DROP_DB_MODE { RESTRICT, CASCADE };
+    public enum DROP_DB_MODE {RESTRICT, CASCADE}
+
     public static final String HCAT_CLIENT_IMPL_CLASS = "hcat.client.impl.class";
+
     /**
      * Creates an instance of HCatClient.
      *
@@ -40,32 +42,32 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public static HCatClient create(Configuration conf) throws HCatException,
-            ConnectionFailureException {
+        ConnectionFailureException {
         HCatClient client = null;
         String className = conf.get(HCAT_CLIENT_IMPL_CLASS,
-                HCatClientHMSImpl.class.getName());
+            HCatClientHMSImpl.class.getName());
         try {
             Class<? extends HCatClient> clientClass = Class.forName(className,
-                    true, JavaUtils.getClassLoader()).asSubclass(
+                true, JavaUtils.getClassLoader()).asSubclass(
                     HCatClient.class);
             client = (HCatClient) clientClass.newInstance();
         } catch (ClassNotFoundException e) {
             throw new HCatException(
-                    "ClassNotFoundException while creating client class.", e);
+                "ClassNotFoundException while creating client class.", e);
         } catch (InstantiationException e) {
             throw new HCatException(
-                    "InstantiationException while creating client class.", e);
+                "InstantiationException while creating client class.", e);
         } catch (IllegalAccessException e) {
             throw new HCatException(
-                    "IllegalAccessException while creating client class.", e);
+                "IllegalAccessException while creating client class.", e);
         }
-        if(client != null){
+        if (client != null) {
             client.initialize(conf);
         }
         return client;
     }
 
-    abstract void initialize(Configuration conf) throws HCatException,ConnectionFailureException;
+    abstract void initialize(Configuration conf) throws HCatException, ConnectionFailureException;
 
     /**
      * Get all existing databases that match the given
@@ -76,7 +78,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract List<String> listDatabaseNamesByPattern(String pattern)
-            throws HCatException, ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Gets the database.
@@ -85,7 +87,7 @@ public abstract class HCatClient {
      * @return An instance of HCatDatabaseInfo.
      * @throws HCatException,ConnectionFailureException
      */
-    public abstract HCatDatabase getDatabase(String dbName) throws HCatException,ConnectionFailureException;
+    public abstract HCatDatabase getDatabase(String dbName) throws HCatException, ConnectionFailureException;
 
     /**
      * Creates the database.
@@ -94,7 +96,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void createDatabase(HCatCreateDBDesc dbInfo)
-            throws HCatException,ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Drops a database.
@@ -108,7 +110,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void dropDatabase(String dbName, boolean ifExists,
-            DROP_DB_MODE mode) throws HCatException, ConnectionFailureException;
+                                      DROP_DB_MODE mode) throws HCatException, ConnectionFailureException;
 
     /**
      * Returns all existing tables from the specified database which match the given
@@ -119,7 +121,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract List<String> listTableNamesByPattern(String dbName, String tablePattern)
-            throws HCatException,ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Gets the table.
@@ -130,7 +132,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract HCatTable getTable(String dbName, String tableName)
-            throws HCatException,ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Creates the table.
@@ -139,7 +141,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void createTable(HCatCreateTableDesc createTableDesc)
-            throws HCatException,ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Creates the table like an existing table.
@@ -154,8 +156,8 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void createTableLike(String dbName, String existingTblName,
-            String newTableName, boolean ifNotExists, boolean isExternal,
-            String location) throws HCatException,ConnectionFailureException;
+                                         String newTableName, boolean ifNotExists, boolean isExternal,
+                                         String location) throws HCatException, ConnectionFailureException;
 
     /**
      * Drop table.
@@ -167,7 +169,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void dropTable(String dbName, String tableName,
-            boolean ifExists) throws HCatException,ConnectionFailureException;
+                                   boolean ifExists) throws HCatException, ConnectionFailureException;
 
     /**
      * Renames a table.
@@ -178,7 +180,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void renameTable(String dbName, String oldName,
-            String newName) throws HCatException, ConnectionFailureException;
+                                     String newName) throws HCatException, ConnectionFailureException;
 
     /**
      * Gets all the partitions.
@@ -189,7 +191,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract List<HCatPartition> getPartitions(String dbName, String tblName)
-            throws HCatException,ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Gets the partition.
@@ -201,7 +203,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract HCatPartition getPartition(String dbName, String tableName,
-            Map<String,String> partitionSpec) throws HCatException,ConnectionFailureException;
+                                               Map<String, String> partitionSpec) throws HCatException, ConnectionFailureException;
 
     /**
      * Adds the partition.
@@ -210,7 +212,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void addPartition(HCatAddPartitionDesc partInfo)
-            throws HCatException, ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Adds a list of partitions.
@@ -220,7 +222,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract int addPartitions(List<HCatAddPartitionDesc> partInfoList)
-            throws HCatException, ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Drops partition.
@@ -232,8 +234,8 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void dropPartition(String dbName, String tableName,
-            Map<String, String> partitionSpec, boolean ifExists)
-            throws HCatException, ConnectionFailureException;
+                                       Map<String, String> partitionSpec, boolean ifExists)
+        throws HCatException, ConnectionFailureException;
 
     /**
      * List partitions by filter.
@@ -247,7 +249,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract List<HCatPartition> listPartitionsByFilter(String dbName, String tblName,
-            String filter) throws HCatException,ConnectionFailureException;
+                                                               String filter) throws HCatException, ConnectionFailureException;
 
     /**
      * Mark partition for event.
@@ -259,8 +261,8 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void markPartitionForEvent(String dbName, String tblName,
-            Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException,ConnectionFailureException;
+                                               Map<String, String> partKVs, PartitionEventType eventType)
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Checks if a partition is marked for event.
@@ -273,8 +275,8 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract boolean isPartitionMarkedForEvent(String dbName, String tblName,
-            Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException,ConnectionFailureException;
+                                                      Map<String, String> partKVs, PartitionEventType eventType)
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Gets the delegation token.
@@ -285,8 +287,8 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract String getDelegationToken(String owner,
-            String renewerKerberosPrincipalName) throws HCatException,
-            ConnectionFailureException;
+                                              String renewerKerberosPrincipalName) throws HCatException,
+        ConnectionFailureException;
 
     /**
      * Renew delegation token.
@@ -296,7 +298,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract long renewDelegationToken(String tokenStrForm)
-            throws HCatException, ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Cancel delegation token.
@@ -305,7 +307,7 @@ public abstract class HCatClient {
      * @throws HCatException,ConnectionFailureException
      */
     public abstract void cancelDelegationToken(String tokenStrForm)
-            throws HCatException, ConnectionFailureException;
+        throws HCatException, ConnectionFailureException;
 
     /**
      * Close the hcatalog client.

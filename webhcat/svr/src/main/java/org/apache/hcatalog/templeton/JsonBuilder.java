@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -40,8 +41,7 @@ public class JsonBuilder {
 
     // Parse the json map.
     private JsonBuilder(String json)
-        throws IOException
-    {
+        throws IOException {
         map = jsonToMap(json);
     }
 
@@ -49,8 +49,7 @@ public class JsonBuilder {
      * Create a new map object from the existing json.
      */
     public static JsonBuilder create(String json)
-        throws IOException
-    {
+        throws IOException {
         return new JsonBuilder(json);
     }
 
@@ -58,8 +57,7 @@ public class JsonBuilder {
      * Create a new map object.
      */
     public static JsonBuilder create()
-        throws IOException
-    {
+        throws IOException {
         return new JsonBuilder(null);
     }
 
@@ -67,8 +65,7 @@ public class JsonBuilder {
      * Create a new map error object.
      */
     public static JsonBuilder createError(String msg, int code)
-        throws IOException
-    {
+        throws IOException {
         return new JsonBuilder(null)
             .put("error", msg)
             .put("errorCode", code);
@@ -109,8 +106,7 @@ public class JsonBuilder {
      * Turn the map back to json.
      */
     public String buildJson()
-        throws IOException
-    {
+        throws IOException {
         return mapToJson(map);
     }
 
@@ -153,8 +149,7 @@ public class JsonBuilder {
     /**
      * Check if this is an error doc.
      */
-    public static boolean isError(Map obj)
-    {
+    public static boolean isError(Map obj) {
         return (obj != null) && obj.containsKey("error");
     }
 
@@ -162,9 +157,8 @@ public class JsonBuilder {
      * Convert a json string to a Map.
      */
     public static Map jsonToMap(String json)
-        throws IOException
-    {
-        if (! TempletonUtils.isset(json))
+        throws IOException {
+        if (!TempletonUtils.isset(json))
             return new HashMap<String, Object>();
         else {
             ObjectMapper mapper = new ObjectMapper();
@@ -176,8 +170,7 @@ public class JsonBuilder {
      * Convert a map to a json string.
      */
     public static String mapToJson(Object obj)
-        throws IOException
-    {
+        throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         mapper.writeValue(out, obj);

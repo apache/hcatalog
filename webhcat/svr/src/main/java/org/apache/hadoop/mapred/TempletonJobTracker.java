@@ -19,6 +19,7 @@ package org.apache.hadoop.mapred;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.net.NetUtils;
@@ -36,16 +37,15 @@ public class TempletonJobTracker {
     public TempletonJobTracker(UserGroupInformation ugi,
                                InetSocketAddress addr,
                                Configuration conf)
-        throws IOException
-    {
+        throws IOException {
         cnx = (JobSubmissionProtocol)
             RPC.getProxy(JobSubmissionProtocol.class,
-                         JobSubmissionProtocol.versionID,
-                         addr,
-                         ugi,
-                         conf,
-                         NetUtils.getSocketFactory(conf,
-                                                   JobSubmissionProtocol.class));
+                JobSubmissionProtocol.versionID,
+                addr,
+                ugi,
+                conf,
+                NetUtils.getSocketFactory(conf,
+                    JobSubmissionProtocol.class));
     }
 
     /**
@@ -54,8 +54,7 @@ public class TempletonJobTracker {
      * @return Profile of the job, or null if not found.
      */
     public JobProfile getJobProfile(JobID jobid)
-        throws IOException
-    {
+        throws IOException {
         return cnx.getJobProfile(jobid);
     }
 
@@ -65,8 +64,7 @@ public class TempletonJobTracker {
      * @return Status of the job, or null if not found.
      */
     public JobStatus getJobStatus(JobID jobid)
-        throws IOException
-    {
+        throws IOException {
         return cnx.getJobStatus(jobid);
     }
 
@@ -75,8 +73,7 @@ public class TempletonJobTracker {
      * Kill a job.
      */
     public void killJob(JobID jobid)
-        throws IOException
-    {
+        throws IOException {
         cnx.killJob(jobid);
     }
 
@@ -84,8 +81,7 @@ public class TempletonJobTracker {
      * Get all the jobs submitted.
      */
     public JobStatus[] getAllJobs()
-        throws IOException
-    {
+        throws IOException {
         return cnx.getAllJobs();
     }
 

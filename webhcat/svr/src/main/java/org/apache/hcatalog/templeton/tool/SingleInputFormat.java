@@ -20,6 +20,7 @@ package org.apache.hcatalog.templeton.tool;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -31,21 +32,18 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
  * An empty InputFormat.
  */
 public class SingleInputFormat
-    extends InputFormat<NullWritable, NullWritable>
-{
+    extends InputFormat<NullWritable, NullWritable> {
     public List<InputSplit> getSplits(JobContext job)
-        throws IOException
-    {
+        throws IOException {
         List<InputSplit> res = new ArrayList<InputSplit>();
         res.add(new NullSplit());
         return res;
     }
 
     public RecordReader<NullWritable, NullWritable>
-        createRecordReader(InputSplit split,
-                           TaskAttemptContext context)
-        throws IOException
-    {
+    createRecordReader(InputSplit split,
+                       TaskAttemptContext context)
+        throws IOException {
         return new NullRecordReader();
     }
 }

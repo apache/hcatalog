@@ -41,7 +41,7 @@ public class HCatPartition {
     private int createTime;
     private int lastAccessTime;
     private StorageDescriptor sd;
-    private Map<String,String> parameters;
+    private Map<String, String> parameters;
 
     HCatPartition(Partition partition) throws HCatException {
         this.tableName = partition.getTableName();
@@ -62,7 +62,7 @@ public class HCatPartition {
      *
      * @return the table name
      */
-    public String getTableName(){
+    public String getTableName() {
         return this.tableName;
     }
 
@@ -71,7 +71,7 @@ public class HCatPartition {
      *
      * @return the database name
      */
-    public String getDatabaseName(){
+    public String getDatabaseName() {
         return this.dbName;
     }
 
@@ -80,8 +80,8 @@ public class HCatPartition {
      *
      * @return the columns
      */
-    public List<HCatFieldSchema> getColumns(){
-       return this.tableCols;
+    public List<HCatFieldSchema> getColumns() {
+        return this.tableCols;
     }
 
     /**
@@ -89,7 +89,7 @@ public class HCatPartition {
      *
      * @return the input format
      */
-    public String getInputFormat(){
+    public String getInputFormat() {
         return this.sd.getInputFormat();
     }
 
@@ -98,7 +98,7 @@ public class HCatPartition {
      *
      * @return the output format
      */
-    public String getOutputFormat(){
+    public String getOutputFormat() {
         return this.sd.getOutputFormat();
     }
 
@@ -109,8 +109,8 @@ public class HCatPartition {
      */
     public String getStorageHandler() {
         return this.sd
-                .getParameters()
-                .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE);
+            .getParameters()
+            .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE);
     }
 
     /**
@@ -118,7 +118,7 @@ public class HCatPartition {
      *
      * @return the location
      */
-    public String getLocation(){
+    public String getLocation() {
         return this.sd.getLocation();
     }
 
@@ -127,7 +127,7 @@ public class HCatPartition {
      *
      * @return the serde
      */
-    public String getSerDe(){
+    public String getSerDe() {
         return this.sd.getSerdeInfo().getSerializationLib();
     }
 
@@ -140,7 +140,7 @@ public class HCatPartition {
      *
      * @return the last access time
      */
-    public int getLastAccessTime(){
+    public int getLastAccessTime() {
         return this.lastAccessTime;
     }
 
@@ -158,7 +158,7 @@ public class HCatPartition {
      *
      * @return the values
      */
-    public List<String> getValues(){
+    public List<String> getValues() {
         return this.values;
     }
 
@@ -167,7 +167,7 @@ public class HCatPartition {
      *
      * @return the bucket columns
      */
-    public List<String> getBucketCols(){
+    public List<String> getBucketCols() {
         return this.sd.getBucketCols();
     }
 
@@ -176,7 +176,7 @@ public class HCatPartition {
      *
      * @return the number of buckets
      */
-    public int getNumBuckets(){
+    public int getNumBuckets() {
         return this.sd.getNumBuckets();
     }
 
@@ -185,19 +185,19 @@ public class HCatPartition {
      *
      * @return the sort columns
      */
-    public List<Order> getSortCols(){
+    public List<Order> getSortCols() {
         return this.sd.getSortCols();
     }
 
     @Override
     public String toString() {
         return "HCatPartition ["
-                + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
-                + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
-                + (values != null ? "values=" + values + ", " : "values=null")
-                + "createTime=" + createTime + ", lastAccessTime="
-                + lastAccessTime + ", " + (sd != null ? "sd=" + sd + ", " : "sd=null")
-                + (parameters != null ? "parameters=" + parameters : "parameters=null") + "]";
+            + (tableName != null ? "tableName=" + tableName + ", " : "tableName=null")
+            + (dbName != null ? "dbName=" + dbName + ", " : "dbName=null")
+            + (values != null ? "values=" + values + ", " : "values=null")
+            + "createTime=" + createTime + ", lastAccessTime="
+            + lastAccessTime + ", " + (sd != null ? "sd=" + sd + ", " : "sd=null")
+            + (parameters != null ? "parameters=" + parameters : "parameters=null") + "]";
     }
 
 }

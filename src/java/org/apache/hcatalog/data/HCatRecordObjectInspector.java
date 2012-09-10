@@ -25,28 +25,28 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 
 public class HCatRecordObjectInspector extends StandardStructObjectInspector {
 
-  protected HCatRecordObjectInspector(List<String> structFieldNames,
-      List<ObjectInspector> structFieldObjectInspectors) {
-    super(structFieldNames, structFieldObjectInspectors);
-  }
-
-  @Override
-  public Object getStructFieldData(Object data, StructField fieldRef) {
-    if (data == null){
-      return new IllegalArgumentException("Data passed in to get field from was null!");
+    protected HCatRecordObjectInspector(List<String> structFieldNames,
+                                        List<ObjectInspector> structFieldObjectInspectors) {
+        super(structFieldNames, structFieldObjectInspectors);
     }
 
-    int fieldID = ((MyField) fieldRef).getFieldID();
-    if (!(fieldID >= 0 && fieldID < fields.size())){
-      throw new IllegalArgumentException("Invalid field index ["+fieldID+"]");
+    @Override
+    public Object getStructFieldData(Object data, StructField fieldRef) {
+        if (data == null) {
+            return new IllegalArgumentException("Data passed in to get field from was null!");
+        }
+
+        int fieldID = ((MyField) fieldRef).getFieldID();
+        if (!(fieldID >= 0 && fieldID < fields.size())) {
+            throw new IllegalArgumentException("Invalid field index [" + fieldID + "]");
+        }
+
+        return ((HCatRecord) data).get(fieldID);
     }
 
-    return ((HCatRecord) data).get(fieldID);
-  }
-
-  @Override
-  public List<Object> getStructFieldsDataAsList(Object o) {
-    return ((HCatRecord) o).getAll();
-  }
+    @Override
+    public List<Object> getStructFieldsDataAsList(Object o) {
+        return ((HCatRecord) o).getAll();
+    }
 
 }

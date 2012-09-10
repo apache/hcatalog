@@ -42,99 +42,99 @@ import org.apache.hcatalog.shims.HCatHadoopShims;
 
 /**
  * This reader reads via {@link HCatInputFormat}
- * 
+ *
  */
 public class HCatInputFormatReader extends HCatReader {
 
-  private InputSplit split;
+    private InputSplit split;
 
-  public HCatInputFormatReader(InputSplit split, Configuration config,
-      StateProvider sp) {
-    super(config, sp);
-    this.split = split;
-  }
-
-  public HCatInputFormatReader(ReadEntity info, Map<String, String> config) {
-    super(info, config);
-  }
-
-  @Override
-  public ReaderContext prepareRead() throws HCatException {
-
-    try {
-      Job job = new Job(conf);
-      InputJobInfo jobInfo = InputJobInfo.create(re.getDbName(),
-          re.getTableName(), re.getFilterString());
-      HCatInputFormat.setInput(job, jobInfo);
-      HCatInputFormat hcif = new HCatInputFormat();
-      ReaderContext cntxt = new ReaderContext();
-      cntxt.setInputSplits(hcif.getSplits(
-                  HCatHadoopShims.Instance.get().createJobContext(job.getConfiguration(), null)));
-      cntxt.setConf(job.getConfiguration());
-      return cntxt;
-    } catch (IOException e) {
-      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-    } catch (InterruptedException e) {
-      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+    public HCatInputFormatReader(InputSplit split, Configuration config,
+                                 StateProvider sp) {
+        super(config, sp);
+        this.split = split;
     }
-  }
 
-  @Override
-  public Iterator<HCatRecord> read() throws HCatException {
-
-    HCatInputFormat inpFmt = new HCatInputFormat();
-    RecordReader<WritableComparable, HCatRecord> rr;
-    try {
-      TaskAttemptContext cntxt = HCatHadoopShims.Instance.get().createTaskAttemptContext(conf, new TaskAttemptID());
-      rr = inpFmt.createRecordReader(split, cntxt);
-      rr.initialize(split, cntxt);
-    } catch (IOException e) {
-      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-    } catch (InterruptedException e) {
-      throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
-    }
-    return new HCatRecordItr(rr);
-  }
-
-  private static class HCatRecordItr implements Iterator<HCatRecord> {
-
-    private RecordReader<WritableComparable, HCatRecord> curRecReader;
-
-    HCatRecordItr(RecordReader<WritableComparable, HCatRecord> rr) {
-      curRecReader = rr;
+    public HCatInputFormatReader(ReadEntity info, Map<String, String> config) {
+        super(info, config);
     }
 
     @Override
-    public boolean hasNext() {
-      try {
-        boolean retVal = curRecReader.nextKeyValue();
-        if (retVal) {
-          return true;
+    public ReaderContext prepareRead() throws HCatException {
+
+        try {
+            Job job = new Job(conf);
+            InputJobInfo jobInfo = InputJobInfo.create(re.getDbName(),
+                re.getTableName(), re.getFilterString());
+            HCatInputFormat.setInput(job, jobInfo);
+            HCatInputFormat hcif = new HCatInputFormat();
+            ReaderContext cntxt = new ReaderContext();
+            cntxt.setInputSplits(hcif.getSplits(
+                HCatHadoopShims.Instance.get().createJobContext(job.getConfiguration(), null)));
+            cntxt.setConf(job.getConfiguration());
+            return cntxt;
+        } catch (IOException e) {
+            throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+        } catch (InterruptedException e) {
+            throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
         }
-        // if its false, we need to close recordReader.
-        curRecReader.close();
-        return false;
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
     }
 
     @Override
-    public HCatRecord next() {
-      try {
-        return curRecReader.getCurrentValue();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+    public Iterator<HCatRecord> read() throws HCatException {
+
+        HCatInputFormat inpFmt = new HCatInputFormat();
+        RecordReader<WritableComparable, HCatRecord> rr;
+        try {
+            TaskAttemptContext cntxt = HCatHadoopShims.Instance.get().createTaskAttemptContext(conf, new TaskAttemptID());
+            rr = inpFmt.createRecordReader(split, cntxt);
+            rr.initialize(split, cntxt);
+        } catch (IOException e) {
+            throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+        } catch (InterruptedException e) {
+            throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED, e);
+        }
+        return new HCatRecordItr(rr);
     }
 
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("Not allowed");
+    private static class HCatRecordItr implements Iterator<HCatRecord> {
+
+        private RecordReader<WritableComparable, HCatRecord> curRecReader;
+
+        HCatRecordItr(RecordReader<WritableComparable, HCatRecord> rr) {
+            curRecReader = rr;
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                boolean retVal = curRecReader.nextKeyValue();
+                if (retVal) {
+                    return true;
+                }
+                // if its false, we need to close recordReader.
+                curRecReader.close();
+                return false;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public HCatRecord next() {
+            try {
+                return curRecReader.getCurrentValue();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("Not allowed");
+        }
     }
-  }
 }

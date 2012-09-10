@@ -64,12 +64,12 @@ class ImportSequenceFile {
     private final static String IMPORTER_WORK_DIR = "_IMPORTER_MR_WORK_DIR";
 
 
-    private static class SequenceFileImporter  extends Mapper<ImmutableBytesWritable, Put, ImmutableBytesWritable, Put> {
+    private static class SequenceFileImporter extends Mapper<ImmutableBytesWritable, Put, ImmutableBytesWritable, Put> {
 
         @Override
         public void map(ImmutableBytesWritable rowKey, Put value,
                         Context context)
-                throws IOException {
+            throws IOException {
             try {
                 context.write(new ImmutableBytesWritable(value.getRow()), value);
             } catch (InterruptedException e) {
@@ -112,7 +112,7 @@ class ImportSequenceFile {
                 @Override
                 public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
                     try {
-                        baseOutputCommitter.abortJob(jobContext,state);
+                        baseOutputCommitter.abortJob(jobContext, state);
                     } finally {
                         cleanupScratch(jobContext);
                     }
@@ -124,13 +124,13 @@ class ImportSequenceFile {
                         baseOutputCommitter.commitJob(jobContext);
                         Configuration conf = jobContext.getConfiguration();
                         try {
-                        //import hfiles
-                        new LoadIncrementalHFiles(conf)
+                            //import hfiles
+                            new LoadIncrementalHFiles(conf)
                                 .doBulkLoad(HFileOutputFormat.getOutputPath(jobContext),
-                                                   new HTable(conf,
-                                                                      conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY)));
+                                    new HTable(conf,
+                                        conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY)));
                         } catch (Exception e) {
-                        	throw new IOException("BulkLoad failed.", e);
+                            throw new IOException("BulkLoad failed.", e);
                         }
                     } finally {
                         cleanupScratch(jobContext);
@@ -146,16 +146,16 @@ class ImportSequenceFile {
                     }
                 }
 
-                private void cleanupScratch(JobContext context) throws IOException{
+                private void cleanupScratch(JobContext context) throws IOException {
                     FileSystem fs = FileSystem.get(context.getConfiguration());
-                    fs.delete(HFileOutputFormat.getOutputPath(context),true);
+                    fs.delete(HFileOutputFormat.getOutputPath(context), true);
                 }
             };
         }
     }
 
     private static Job createSubmittableJob(Configuration conf, String tableName, Path inputDir, Path scratchDir, boolean localMode)
-            throws IOException {
+        throws IOException {
         Job job = new Job(conf, NAME + "_" + tableName);
         job.setJarByClass(SequenceFileImporter.class);
         FileInputFormat.setInputPaths(job, inputDir);
@@ -172,16 +172,16 @@ class ImportSequenceFile {
         job.setOutputFormatClass(ImporterOutputFormat.class);
 
         //local mode doesn't support symbolic links so we have to manually set the actual path
-        if(localMode) {
+        if (localMode) {
             String partitionFile = null;
-            for(URI uri: DistributedCache.getCacheFiles(job.getConfiguration())) {
-                if(DEFAULT_PATH.equals(uri.getFragment())) {
+            for (URI uri : DistributedCache.getCacheFiles(job.getConfiguration())) {
+                if (DEFAULT_PATH.equals(uri.getFragment())) {
                     partitionFile = uri.toString();
                     break;
                 }
             }
-            partitionFile = partitionFile.substring(0,partitionFile.lastIndexOf("#"));
-            job.getConfiguration().set(TotalOrderPartitioner.PARTITIONER_PATH,partitionFile.toString());
+            partitionFile = partitionFile.substring(0, partitionFile.lastIndexOf("#"));
+            job.getConfiguration().set(TotalOrderPartitioner.PARTITIONER_PATH, partitionFile.toString());
         }
 
         return job;
@@ -190,7 +190,7 @@ class ImportSequenceFile {
     /**
      * Method to run the Importer MapReduce Job. Normally will be called by another MR job
      * during OutputCommitter.commitJob().
-      * @param parentContext JobContext of the parent job
+     * @param parentContext JobContext of the parent job
      * @param tableName name of table to bulk load data into
      * @param InputDir path of SequenceFile formatted data to read
      * @param scratchDir temporary path for the Importer MR job to build the HFiles which will be imported
@@ -199,21 +199,21 @@ class ImportSequenceFile {
     static boolean runJob(JobContext parentContext, String tableName, Path InputDir, Path scratchDir) {
         Configuration parentConf = parentContext.getConfiguration();
         Configuration conf = new Configuration();
-        for(Map.Entry<String,String> el: parentConf) {
-            if(el.getKey().startsWith("hbase."))
-                conf.set(el.getKey(),el.getValue());
-            if(el.getKey().startsWith("mapred.cache.archives"))
-                conf.set(el.getKey(),el.getValue());
+        for (Map.Entry<String, String> el : parentConf) {
+            if (el.getKey().startsWith("hbase."))
+                conf.set(el.getKey(), el.getValue());
+            if (el.getKey().startsWith("mapred.cache.archives"))
+                conf.set(el.getKey(), el.getValue());
         }
 
         //Inherit jar dependencies added to distributed cache loaded by parent job
-        conf.set("mapred.job.classpath.archives",parentConf.get("mapred.job.classpath.archives", ""));
-        conf.set("mapreduce.job.cache.archives.visibilities",parentConf.get("mapreduce.job.cache.archives.visibilities",""));
+        conf.set("mapred.job.classpath.archives", parentConf.get("mapred.job.classpath.archives", ""));
+        conf.set("mapreduce.job.cache.archives.visibilities", parentConf.get("mapreduce.job.cache.archives.visibilities", ""));
 
         //Temporary fix until hbase security is ready
         //We need the written HFile to be world readable so
         //hbase regionserver user has the privileges to perform a hdfs move
-        if(parentConf.getBoolean("hadoop.security.authorization", false)) {
+        if (parentConf.getBoolean("hadoop.security.authorization", false)) {
             FsPermission.setUMask(conf, FsPermission.valueOf("----------"));
         }
 
@@ -225,25 +225,24 @@ class ImportSequenceFile {
         boolean success = false;
         try {
             FileSystem fs = FileSystem.get(parentConf);
-            Path workDir = new Path(new Job(parentConf).getWorkingDirectory(),IMPORTER_WORK_DIR);
-            if(!fs.mkdirs(workDir))
-                throw new IOException("Importer work directory already exists: "+workDir);
+            Path workDir = new Path(new Job(parentConf).getWorkingDirectory(), IMPORTER_WORK_DIR);
+            if (!fs.mkdirs(workDir))
+                throw new IOException("Importer work directory already exists: " + workDir);
             Job job = createSubmittableJob(conf, tableName, InputDir, scratchDir, localMode);
             job.setWorkingDirectory(workDir);
             job.getCredentials().addAll(parentContext.getCredentials());
             success = job.waitForCompletion(true);
             fs.delete(workDir, true);
             //We only cleanup on success because failure might've been caused by existence of target directory
-            if(localMode && success)
-            {
-                new ImporterOutputFormat().getOutputCommitter(org.apache.hadoop.mapred.HCatMapRedUtil.createTaskAttemptContext(conf,new TaskAttemptID())).commitJob(job);
+            if (localMode && success) {
+                new ImporterOutputFormat().getOutputCommitter(org.apache.hadoop.mapred.HCatMapRedUtil.createTaskAttemptContext(conf, new TaskAttemptID())).commitJob(job);
             }
         } catch (InterruptedException e) {
             LOG.error("ImportSequenceFile Failed", e);
         } catch (ClassNotFoundException e) {
-            LOG.error("ImportSequenceFile Failed",e);
+            LOG.error("ImportSequenceFile Failed", e);
         } catch (IOException e) {
-            LOG.error("ImportSequenceFile Failed",e);
+            LOG.error("ImportSequenceFile Failed", e);
         }
         return success;
     }

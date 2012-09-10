@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import org.apache.commons.exec.ExecuteException;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 
@@ -41,12 +42,11 @@ public class PigDelegator extends LauncherDelegator {
                            List<String> pigArgs, String otherFiles,
                            String statusdir, String callback, String completedUrl)
         throws NotAuthorizedException, BadParam, BusyException, QueueException,
-        ExecuteException, IOException, InterruptedException
-    {
+        ExecuteException, IOException, InterruptedException {
         runAs = user;
         List<String> args = makeArgs(execute,
-                                     srcFile, pigArgs,
-                                     otherFiles, statusdir, completedUrl);
+            srcFile, pigArgs,
+            otherFiles, statusdir, completedUrl);
 
         return enqueueController(user, callback, args);
     }
@@ -54,17 +54,15 @@ public class PigDelegator extends LauncherDelegator {
     private List<String> makeArgs(String execute, String srcFile,
                                   List<String> pigArgs, String otherFiles,
                                   String statusdir, String completedUrl)
-        throws BadParam, IOException, InterruptedException
-    {
+        throws BadParam, IOException, InterruptedException {
         ArrayList<String> args = new ArrayList<String>();
         try {
             ArrayList<String> allFiles = new ArrayList<String>();
             if (TempletonUtils.isset(srcFile))
                 allFiles.add(TempletonUtils.hadoopFsFilename
-                        (srcFile, appConf, runAs));
+                    (srcFile, appConf, runAs));
             if (TempletonUtils.isset(otherFiles)) {
-                String[] ofs = TempletonUtils.hadoopFsListAsArray
-                        (otherFiles, appConf, runAs);
+                String[] ofs = TempletonUtils.hadoopFsListAsArray(otherFiles, appConf, runAs);
                 allFiles.addAll(Arrays.asList(ofs));
             }
 
@@ -81,7 +79,7 @@ public class PigDelegator extends LauncherDelegator {
             } else if (TempletonUtils.isset(srcFile)) {
                 args.add("-file");
                 args.add(TempletonUtils.hadoopFsPath(srcFile, appConf, runAs)
-                        .getName());
+                    .getName());
             }
         } catch (FileNotFoundException e) {
             throw new BadParam(e.getMessage());

@@ -24,6 +24,7 @@ import org.apache.hcatalog.templeton.Server;
  */
 public class MockServer extends Server {
     public String user;
+
     public MockServer() {
         execService = new MockExecService();
         resetUser();

@@ -27,7 +27,7 @@ import java.util.Map;
  * record readers to obtain knowledge about the revisions of a
  * column to be filtered.
  */
-public class HCatTableSnapshot implements Serializable{
+public class HCatTableSnapshot implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String tableName;
@@ -52,15 +52,15 @@ public class HCatTableSnapshot implements Serializable{
     /**
      * @return The name of the database to which the table snapshot belongs.
      */
-    public String getDatabaseName(){
+    public String getDatabaseName() {
         return this.databaseName;
     }
 
     /**
      * @return The revision number of a column in a snapshot.
      */
-    long getRevision(String column){
-        if(columnMap.containsKey(column))
+    long getRevision(String column) {
+        if (columnMap.containsKey(column))
             return this.columnMap.get(column);
         return latestRevision;
     }
@@ -71,7 +71,7 @@ public class HCatTableSnapshot implements Serializable{
      * @param column The data column of the table
      * @return true, if successful
      */
-    boolean containsColumn(String column){
+    boolean containsColumn(String column) {
         return this.columnMap.containsKey(column);
     }
 
@@ -84,8 +84,8 @@ public class HCatTableSnapshot implements Serializable{
 
     @Override
     public String toString() {
-        String snapshot = " Database Name: " + this.databaseName +" Table Name : " + tableName +
-                 "Latest Revision: "+latestRevision+" Column revision : " + columnMap.toString();
+        String snapshot = " Database Name: " + this.databaseName + " Table Name : " + tableName +
+            "Latest Revision: " + latestRevision + " Column revision : " + columnMap.toString();
         return snapshot;
     }
 }

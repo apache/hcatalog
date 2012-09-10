@@ -34,62 +34,62 @@ import org.apache.hadoop.hive.ql.plan.DDLWork;
 import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hcatalog.common.HCatConstants;
 
-final class CreateDatabaseHook  extends HCatSemanticAnalyzerBase {
+final class CreateDatabaseHook extends HCatSemanticAnalyzerBase {
 
-  String databaseName;
+    String databaseName;
 
-  @Override
-  public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
-  throws SemanticException {
+    @Override
+    public ASTNode preAnalyze(HiveSemanticAnalyzerHookContext context, ASTNode ast)
+        throws SemanticException {
 
-    Hive db;
-    try {
-      db = context.getHive();
-    } catch (HiveException e) {
-      throw new SemanticException("Couldn't get Hive DB instance in semantic analysis phase.", e);
-    }
-
-    // Analyze and create tbl properties object
-    int numCh = ast.getChildCount();
-
-    databaseName = BaseSemanticAnalyzer.getUnescapedName((ASTNode)ast.getChild(0));
-
-    for (int num = 1; num < numCh; num++) {
-      ASTNode child = (ASTNode) ast.getChild(num);
-
-      switch (child.getToken().getType()) {
-
-      case HiveParser.TOK_IFNOTEXISTS:
+        Hive db;
         try {
-          List<String> dbs = db.getDatabasesByPattern(databaseName);
-          if (dbs != null && dbs.size() > 0) { // db exists
-            return ast;
-          }
+            db = context.getHive();
         } catch (HiveException e) {
-          throw new SemanticException(e);
+            throw new SemanticException("Couldn't get Hive DB instance in semantic analysis phase.", e);
         }
-        break;
-      }
+
+        // Analyze and create tbl properties object
+        int numCh = ast.getChildCount();
+
+        databaseName = BaseSemanticAnalyzer.getUnescapedName((ASTNode) ast.getChild(0));
+
+        for (int num = 1; num < numCh; num++) {
+            ASTNode child = (ASTNode) ast.getChild(num);
+
+            switch (child.getToken().getType()) {
+
+            case HiveParser.TOK_IFNOTEXISTS:
+                try {
+                    List<String> dbs = db.getDatabasesByPattern(databaseName);
+                    if (dbs != null && dbs.size() > 0) { // db exists
+                        return ast;
+                    }
+                } catch (HiveException e) {
+                    throw new SemanticException(e);
+                }
+                break;
+            }
+        }
+
+        return ast;
     }
 
-    return ast;
-  }
-
-  @Override
-  public void postAnalyze(HiveSemanticAnalyzerHookContext context,
-      List<Task<? extends Serializable>> rootTasks) throws SemanticException {
-    context.getConf().set(HCatConstants.HCAT_CREATE_DB_NAME, databaseName);
-    super.postAnalyze(context, rootTasks);
-  }
-  
-  @Override
-  protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext context,
-      Hive hive, DDLWork work) throws HiveException {
-    CreateDatabaseDesc createDb = work.getCreateDatabaseDesc();
-    if (createDb != null) {
-      Database db = new Database(createDb.getName(), createDb.getComment(), 
-          createDb.getLocationUri(), createDb.getDatabaseProperties());
-      authorize(db, Privilege.CREATE);
+    @Override
+    public void postAnalyze(HiveSemanticAnalyzerHookContext context,
+                            List<Task<? extends Serializable>> rootTasks) throws SemanticException {
+        context.getConf().set(HCatConstants.HCAT_CREATE_DB_NAME, databaseName);
+        super.postAnalyze(context, rootTasks);
     }
-  }
+
+    @Override
+    protected void authorizeDDLWork(HiveSemanticAnalyzerHookContext context,
+                                    Hive hive, DDLWork work) throws HiveException {
+        CreateDatabaseDesc createDb = work.getCreateDatabaseDesc();
+        if (createDb != null) {
+            Database db = new Database(createDb.getName(), createDb.getComment(),
+                createDb.getLocationUri(), createDb.getDatabaseProperties());
+            authorize(db, Privilege.CREATE);
+        }
+    }
 }

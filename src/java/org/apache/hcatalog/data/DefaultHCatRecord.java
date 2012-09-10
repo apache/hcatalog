@@ -31,20 +31,20 @@ public class DefaultHCatRecord extends HCatRecord {
 
     private List<Object> contents;
 
-    public DefaultHCatRecord(){
+    public DefaultHCatRecord() {
         contents = new ArrayList<Object>();
     }
 
-    public DefaultHCatRecord(int size){
+    public DefaultHCatRecord(int size) {
         contents = new ArrayList<Object>(size);
-        for(int i=0; i < size; i++){
+        for (int i = 0; i < size; i++) {
             contents.add(null);
         }
     }
 
     @Override
     public void remove(int idx) throws HCatException {
-      contents.remove(idx);
+        contents.remove(idx);
     }
 
     public DefaultHCatRecord(List<Object> list) {
@@ -76,7 +76,7 @@ public class DefaultHCatRecord extends HCatRecord {
 
         contents.clear();
         int len = in.readInt();
-        for(int i =0; i < len; i++){
+        for (int i = 0; i < len; i++) {
             contents.add(ReaderWriter.readDatum(in));
         }
     }
@@ -106,8 +106,8 @@ public class DefaultHCatRecord extends HCatRecord {
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        for(Object o : contents) {
-            sb.append(o+"\t");
+        for (Object o : contents) {
+            sb.append(o + "\t");
         }
         return sb.toString();
     }
@@ -119,12 +119,12 @@ public class DefaultHCatRecord extends HCatRecord {
 
     @Override
     public void set(String fieldName, HCatSchema recordSchema, Object value) throws HCatException {
-        set(recordSchema.getPosition(fieldName),value);
+        set(recordSchema.getPosition(fieldName), value);
     }
 
     @Override
     public void copy(HCatRecord r) throws HCatException {
-      this.contents = r.getAll();
+        this.contents = r.getAll();
     }
 
 }

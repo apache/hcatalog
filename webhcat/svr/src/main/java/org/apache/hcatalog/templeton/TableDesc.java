@@ -40,7 +40,8 @@ public class TableDesc extends GroupPermissionsDesc {
     /**
      * Create a new TableDesc
      */
-    public TableDesc() {}
+    public TableDesc() {
+    }
 
     public String toString() {
         return String.format("TableDesc(table=%s, columns=%s)", table, columns);
@@ -49,18 +50,18 @@ public class TableDesc extends GroupPermissionsDesc {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (! (o instanceof TableDesc))
+        if (!(o instanceof TableDesc))
             return false;
         TableDesc that = (TableDesc) o;
-        return xequals(this.external,        that.external)
-            && xequals(this.ifNotExists,     that.ifNotExists)
-            && xequals(this.table,           that.table)
-            && xequals(this.comment,         that.comment)
-            && xequals(this.columns,         that.columns)
-            && xequals(this.partitionedBy,   that.partitionedBy)
-            && xequals(this.clusteredBy,     that.clusteredBy)
-            && xequals(this.format,          that.format)
-            && xequals(this.location,        that.location)
+        return xequals(this.external, that.external)
+            && xequals(this.ifNotExists, that.ifNotExists)
+            && xequals(this.table, that.table)
+            && xequals(this.comment, that.comment)
+            && xequals(this.columns, that.columns)
+            && xequals(this.partitionedBy, that.partitionedBy)
+            && xequals(this.clusteredBy, that.clusteredBy)
+            && xequals(this.format, that.format)
+            && xequals(this.location, that.location)
             && xequals(this.tableProperties, that.tableProperties)
             && super.equals(that)
             ;
@@ -75,7 +76,8 @@ public class TableDesc extends GroupPermissionsDesc {
         public List<ClusterSortOrderDesc> sortedBy;
         public int numberOfBuckets;
 
-        public ClusteredByDesc() {}
+        public ClusteredByDesc() {
+        }
 
         public String toString() {
             String fmt
@@ -86,11 +88,11 @@ public class TableDesc extends GroupPermissionsDesc {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof ClusteredByDesc))
+            if (!(o instanceof ClusteredByDesc))
                 return false;
             ClusteredByDesc that = (ClusteredByDesc) o;
-            return xequals(this.columnNames,     that.columnNames)
-                && xequals(this.sortedBy,        that.sortedBy)
+            return xequals(this.columnNames, that.columnNames)
+                && xequals(this.sortedBy, that.sortedBy)
                 && xequals(this.numberOfBuckets, that.numberOfBuckets)
                 ;
         }
@@ -104,7 +106,8 @@ public class TableDesc extends GroupPermissionsDesc {
         public String columnName;
         public SortDirectionDesc order;
 
-        public ClusterSortOrderDesc() {}
+        public ClusterSortOrderDesc() {
+        }
 
         public ClusterSortOrderDesc(String columnName, SortDirectionDesc order) {
             this.columnName = columnName;
@@ -114,17 +117,17 @@ public class TableDesc extends GroupPermissionsDesc {
         public String toString() {
             return String
                 .format("ClusterSortOrderDesc(columnName=%s, order=%s)",
-                        columnName, order);
+                    columnName, order);
         }
 
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof ClusterSortOrderDesc))
+            if (!(o instanceof ClusterSortOrderDesc))
                 return false;
             ClusterSortOrderDesc that = (ClusterSortOrderDesc) o;
-            return xequals(this.columnName,     that.columnName)
-                && xequals(this.order,          that.order)
+            return xequals(this.columnName, that.columnName)
+                && xequals(this.order, that.order)
                 ;
         }
     }
@@ -146,17 +149,18 @@ public class TableDesc extends GroupPermissionsDesc {
         public String storedAs;
         public StoredByDesc storedBy;
 
-        public StorageFormatDesc() {}
+        public StorageFormatDesc() {
+        }
 
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof StorageFormatDesc))
+            if (!(o instanceof StorageFormatDesc))
                 return false;
             StorageFormatDesc that = (StorageFormatDesc) o;
-            return xequals(this.rowFormat,      that.rowFormat)
-                && xequals(this.storedAs,       that.storedAs)
-                && xequals(this.storedBy,       that.storedBy)
+            return xequals(this.rowFormat, that.rowFormat)
+                && xequals(this.storedAs, that.storedAs)
+                && xequals(this.storedBy, that.storedBy)
                 ;
         }
     }
@@ -172,20 +176,21 @@ public class TableDesc extends GroupPermissionsDesc {
         public String linesTerminatedBy;
         public SerdeDesc serde;
 
-        public RowFormatDesc() {}
+        public RowFormatDesc() {
+        }
 
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof RowFormatDesc))
+            if (!(o instanceof RowFormatDesc))
                 return false;
             RowFormatDesc that = (RowFormatDesc) o;
-            return xequals(this.fieldsTerminatedBy,     that.fieldsTerminatedBy)
+            return xequals(this.fieldsTerminatedBy, that.fieldsTerminatedBy)
                 && xequals(this.collectionItemsTerminatedBy,
-                           that.collectionItemsTerminatedBy)
-                && xequals(this.mapKeysTerminatedBy,    that.mapKeysTerminatedBy)
-                && xequals(this.linesTerminatedBy,      that.linesTerminatedBy)
-                && xequals(this.serde,                  that.serde)
+                    that.collectionItemsTerminatedBy)
+                && xequals(this.mapKeysTerminatedBy, that.mapKeysTerminatedBy)
+                && xequals(this.linesTerminatedBy, that.linesTerminatedBy)
+                && xequals(this.serde, that.serde)
                 ;
         }
     }
@@ -198,16 +203,17 @@ public class TableDesc extends GroupPermissionsDesc {
         public String name;
         public Map<String, String> properties;
 
-        public SerdeDesc() {}
+        public SerdeDesc() {
+        }
 
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof SerdeDesc))
+            if (!(o instanceof SerdeDesc))
                 return false;
             SerdeDesc that = (SerdeDesc) o;
-            return xequals(this.name,           that.name)
-                && xequals(this.properties,     that.properties)
+            return xequals(this.name, that.name)
+                && xequals(this.properties, that.properties)
                 ;
         }
     }
@@ -220,16 +226,17 @@ public class TableDesc extends GroupPermissionsDesc {
         public String className;
         public Map<String, String> properties;
 
-        public StoredByDesc() {}
+        public StoredByDesc() {
+        }
 
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (! (o instanceof StoredByDesc))
+            if (!(o instanceof StoredByDesc))
                 return false;
             StoredByDesc that = (StoredByDesc) o;
-            return xequals(this.className,      that.className)
-                && xequals(this.properties,     that.properties)
+            return xequals(this.className, that.className)
+                && xequals(this.properties, that.properties)
                 ;
         }
     }

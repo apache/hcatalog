@@ -57,11 +57,12 @@ class HiveClientCache {
     // Thread local variable containing each thread's unique ID, is used as one of the keys for the cache
     // causing each thread to get a different client even if the hiveConf is same.
     private static final ThreadLocal<Integer> threadId =
-            new ThreadLocal<Integer>() {
-                @Override protected Integer initialValue() {
-                    return nextId.getAndIncrement();
-                }
-            };
+        new ThreadLocal<Integer>() {
+            @Override
+            protected Integer initialValue() {
+                return nextId.getAndIncrement();
+            }
+        };
 
     private int getThreadId() {
         return threadId.get();
@@ -70,39 +71,39 @@ class HiveClientCache {
     /**
      * @param timeout the length of time in seconds after a client is created that it should be automatically removed
      */
-     public HiveClientCache(final int timeout) {
-         this.timeout = timeout;
-         RemovalListener<HiveClientCacheKey, CacheableHiveMetaStoreClient> removalListener =
-             new RemovalListener<HiveClientCacheKey, CacheableHiveMetaStoreClient>() {
-                 public void onRemoval(RemovalNotification<HiveClientCacheKey, CacheableHiveMetaStoreClient> notification) {
-                     CacheableHiveMetaStoreClient hiveMetaStoreClient = notification.getValue();
-                     if (hiveMetaStoreClient != null) {
-                         synchronized (CACHE_TEARDOWN_LOCK) {
+    public HiveClientCache(final int timeout) {
+        this.timeout = timeout;
+        RemovalListener<HiveClientCacheKey, CacheableHiveMetaStoreClient> removalListener =
+            new RemovalListener<HiveClientCacheKey, CacheableHiveMetaStoreClient>() {
+                public void onRemoval(RemovalNotification<HiveClientCacheKey, CacheableHiveMetaStoreClient> notification) {
+                    CacheableHiveMetaStoreClient hiveMetaStoreClient = notification.getValue();
+                    if (hiveMetaStoreClient != null) {
+                        synchronized (CACHE_TEARDOWN_LOCK) {
                             hiveMetaStoreClient.setExpiredFromCache();
                             hiveMetaStoreClient.tearDownIfUnused();
-                         }
-                     }
-                 }
-             };
-         hiveCache = CacheBuilder.newBuilder()
-                 .expireAfterWrite(timeout, TimeUnit.SECONDS)
-                 .removalListener(removalListener)
-                 .build();
+                        }
+                    }
+                }
+            };
+        hiveCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(timeout, TimeUnit.SECONDS)
+            .removalListener(removalListener)
+            .build();
 
-         // Add a shutdown hook for cleanup, if there are elements remaining in the cache which were not cleaned up.
-         // This is the best effort approach. Ignore any error while doing so. Notice that most of the clients
-         // would get cleaned up via either the removalListener or the close() call, only the active clients
-         // that are in the cache or expired but being used in other threads wont get cleaned. The following code will only
-         // clean the active cache ones. The ones expired from cache but being hold by other threads are in the mercy
-         // of finalize() being called.
-         Thread cleanupHiveClientShutdownThread = new Thread() {
-             @Override
-             public void run() {
-                 LOG.info("Cleaning up hive client cache in ShutDown hook");
-                 closeAllClientsQuietly();
-             }
-         };
-         Runtime.getRuntime().addShutdownHook(cleanupHiveClientShutdownThread);
+        // Add a shutdown hook for cleanup, if there are elements remaining in the cache which were not cleaned up.
+        // This is the best effort approach. Ignore any error while doing so. Notice that most of the clients
+        // would get cleaned up via either the removalListener or the close() call, only the active clients
+        // that are in the cache or expired but being used in other threads wont get cleaned. The following code will only
+        // clean the active cache ones. The ones expired from cache but being hold by other threads are in the mercy
+        // of finalize() being called.
+        Thread cleanupHiveClientShutdownThread = new Thread() {
+            @Override
+            public void run() {
+                LOG.info("Cleaning up hive client cache in ShutDown hook");
+                closeAllClientsQuietly();
+            }
+        };
+        Runtime.getRuntime().addShutdownHook(cleanupHiveClientShutdownThread);
     }
 
     /**
@@ -215,36 +216,36 @@ class HiveClientCache {
             if (o == null || getClass() != o.getClass()) return false;
             HiveClientCacheKey that = (HiveClientCacheKey) o;
             return new EqualsBuilder().
-                    append(this.metaStoreURIs,
-                            that.metaStoreURIs).
-                    append(this.ugi, that.ugi).
-                    append(this.threadId, that.threadId).isEquals();
+                append(this.metaStoreURIs,
+                    that.metaStoreURIs).
+                append(this.ugi, that.ugi).
+                append(this.threadId, that.threadId).isEquals();
         }
 
         @Override
         public int hashCode() {
             return new HashCodeBuilder().
-                    append(metaStoreURIs).
-                    append(ugi).
-                    append(threadId).toHashCode();
+                append(metaStoreURIs).
+                append(ugi).
+                append(threadId).toHashCode();
         }
     }
 
     /**
      * Add # of current users on HiveMetaStoreClient, so that the client can be cleaned when no one is using it.
      */
-    public static class CacheableHiveMetaStoreClient extends HiveMetaStoreClient  {
-        private  AtomicInteger users = new AtomicInteger(0);
+    public static class CacheableHiveMetaStoreClient extends HiveMetaStoreClient {
+        private AtomicInteger users = new AtomicInteger(0);
         private volatile boolean expiredFromCache = false;
         private boolean isClosed = false;
         private final long expiryTime;
-        private static final int EXPIRY_TIME_EXTENSION_IN_MILLIS = 60*1000;
+        private static final int EXPIRY_TIME_EXTENSION_IN_MILLIS = 60 * 1000;
 
         public CacheableHiveMetaStoreClient(final HiveConf conf, final int timeout) throws MetaException {
             super(conf);
             // Extend the expiry time with some extra time on top of guava expiry time to make sure
             // that items closed() are for sure expired and would never be returned by guava.
-            this.expiryTime = System.currentTimeMillis() + timeout*1000 + EXPIRY_TIME_EXTENSION_IN_MILLIS;
+            this.expiryTime = System.currentTimeMillis() + timeout * 1000 + EXPIRY_TIME_EXTENSION_IN_MILLIS;
         }
 
         private void acquire() {
@@ -287,9 +288,9 @@ class HiveClientCache {
          * This *MUST* be called by anyone who uses this client.
          */
         @Override
-        public void close(){
+        public void close() {
             release();
-            if(System.currentTimeMillis() >= expiryTime)
+            if (System.currentTimeMillis() >= expiryTime)
                 setExpiredFromCache();
             tearDownIfUnused();
         }
@@ -300,7 +301,7 @@ class HiveClientCache {
          *  2. It has expired from the cache
          */
         private void tearDownIfUnused() {
-            if(users.get() == 0 && expiredFromCache) {
+            if (users.get() == 0 && expiredFromCache) {
                 this.tearDown();
             }
         }
@@ -310,11 +311,11 @@ class HiveClientCache {
          */
         protected synchronized void tearDown() {
             try {
-                if(!isClosed) {
+                if (!isClosed) {
                     super.close();
                 }
                 isClosed = true;
-            } catch(Exception e) {
+            } catch (Exception e) {
                 LOG.warn("Error closing hive metastore client. Ignored.", e);
             }
         }

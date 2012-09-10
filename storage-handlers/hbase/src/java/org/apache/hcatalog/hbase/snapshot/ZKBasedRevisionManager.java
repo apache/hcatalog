@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 /**
  * The service for providing revision management to Hbase tables.
  */
-public class ZKBasedRevisionManager implements RevisionManager{
+public class ZKBasedRevisionManager implements RevisionManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(ZKBasedRevisionManager.class);
     private String zkHostList;
@@ -51,19 +51,19 @@ public class ZKBasedRevisionManager implements RevisionManager{
     public void initialize(Configuration conf) {
         conf = new Configuration(conf);
         if (conf.get(RMConstants.ZOOKEEPER_HOSTLIST) == null) {
-           String zkHostList = conf.get(HConstants.ZOOKEEPER_QUORUM);
-           int port = conf.getInt(HConstants.ZOOKEEPER_CLIENT_PORT,
-                   HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
-           String[] splits = zkHostList.split(",");
-           StringBuffer sb = new StringBuffer();
-           for (String split : splits) {
-               sb.append(split);
-               sb.append(':');
-               sb.append(port);
-               sb.append(',');
-           }
-           sb.deleteCharAt(sb.length() - 1);
-           conf.set(RMConstants.ZOOKEEPER_HOSTLIST, sb.toString());
+            String zkHostList = conf.get(HConstants.ZOOKEEPER_QUORUM);
+            int port = conf.getInt(HConstants.ZOOKEEPER_CLIENT_PORT,
+                HConstants.DEFAULT_ZOOKEPER_CLIENT_PORT);
+            String[] splits = zkHostList.split(",");
+            StringBuffer sb = new StringBuffer();
+            for (String split : splits) {
+                sb.append(split);
+                sb.append(':');
+                sb.append(port);
+                sb.append(',');
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            conf.set(RMConstants.ZOOKEEPER_HOSTLIST, sb.toString());
         }
         this.zkHostList = conf.get(RMConstants.ZOOKEEPER_HOSTLIST);
         this.baseDir = conf.get(RMConstants.ZOOKEEPER_DATADIR);
@@ -91,11 +91,11 @@ public class ZKBasedRevisionManager implements RevisionManager{
     private void checkInputParams(String table, List<String> families) {
         if (table == null) {
             throw new IllegalArgumentException(
-                    "The table name must be specified for reading.");
+                "The table name must be specified for reading.");
         }
         if (families == null || families.isEmpty()) {
             throw new IllegalArgumentException(
-                    "At least one column family should be specified for reading.");
+                "At least one column family should be specified for reading.");
         }
     }
 
@@ -118,14 +118,14 @@ public class ZKBasedRevisionManager implements RevisionManager{
      * @see org.apache.hcatalog.hbase.snapshot.RevisionManager#beginWriteTransaction(java.lang.String, java.util.List, long)
      */
     public Transaction beginWriteTransaction(String table,
-            List<String> families, long keepAlive) throws IOException {
+                                             List<String> families, long keepAlive) throws IOException {
 
         checkInputParams(table, families);
         zkUtil.setUpZnodesForTable(table, families);
         long nextId = zkUtil.nextId(table);
         long expireTimestamp = zkUtil.getTimeStamp();
         Transaction transaction = new Transaction(table, families, nextId,
-                expireTimestamp);
+            expireTimestamp);
         if (keepAlive != -1) {
             transaction.setKeepAlive(keepAlive);
         } else {
@@ -135,32 +135,31 @@ public class ZKBasedRevisionManager implements RevisionManager{
         refreshTransactionList(transaction.getTableName());
         String lockPath = prepareLockNode(table);
         WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
-                Ids.OPEN_ACL_UNSAFE);
+            Ids.OPEN_ACL_UNSAFE);
         RMLockListener myLockListener = new RMLockListener();
         wLock.setLockListener(myLockListener);
         try {
             boolean lockGrabbed = wLock.lock();
             if (lockGrabbed == false) {
-              //TO DO : Let this request queue up and try obtaining lock.
+                //TO DO : Let this request queue up and try obtaining lock.
                 throw new IOException(
-                        "Unable to obtain lock while beginning transaction. "
-                                + transaction.toString());
+                    "Unable to obtain lock while beginning transaction. "
+                        + transaction.toString());
             } else {
                 List<String> colFamilies = transaction.getColumnFamilies();
                 FamilyRevision revisionData = transaction.getFamilyRevisionInfo();
                 for (String cfamily : colFamilies) {
                     String path = PathUtil.getRunningTxnInfoPath(
-                            baseDir, table, cfamily);
+                        baseDir, table, cfamily);
                     zkUtil.updateData(path, revisionData,
-                            ZKUtil.UpdateMode.APPEND);
+                        ZKUtil.UpdateMode.APPEND);
                 }
             }
         } catch (KeeperException e) {
             throw new IOException("Exception while obtaining lock.", e);
         } catch (InterruptedException e) {
             throw new IOException("Exception while obtaining lock.", e);
-        }
-        finally {
+        } finally {
             wLock.unlock();
         }
 
@@ -174,7 +173,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
      * @see org.apache.hcatalog.hbase.snapshot.RevisionManager#beginWriteTransaction(java.lang.String, java.util.List)
      */
     public Transaction beginWriteTransaction(String table, List<String> families)
-            throws IOException {
+        throws IOException {
         return beginWriteTransaction(table, families, -1);
     }
 
@@ -188,25 +187,25 @@ public class ZKBasedRevisionManager implements RevisionManager{
 
         String lockPath = prepareLockNode(transaction.getTableName());
         WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
-                Ids.OPEN_ACL_UNSAFE);
+            Ids.OPEN_ACL_UNSAFE);
         RMLockListener myLockListener = new RMLockListener();
         wLock.setLockListener(myLockListener);
         try {
             boolean lockGrabbed = wLock.lock();
             if (lockGrabbed == false) {
-              //TO DO : Let this request queue up and try obtaining lock.
+                //TO DO : Let this request queue up and try obtaining lock.
                 throw new IOException(
-                        "Unable to obtain lock while commiting transaction. "
-                                + transaction.toString());
+                    "Unable to obtain lock while commiting transaction. "
+                        + transaction.toString());
             } else {
                 String tableName = transaction.getTableName();
                 List<String> colFamilies = transaction.getColumnFamilies();
                 FamilyRevision revisionData = transaction.getFamilyRevisionInfo();
                 for (String cfamily : colFamilies) {
                     String path = PathUtil.getRunningTxnInfoPath(
-                            baseDir, tableName, cfamily);
+                        baseDir, tableName, cfamily);
                     zkUtil.updateData(path, revisionData,
-                            ZKUtil.UpdateMode.REMOVE);
+                        ZKUtil.UpdateMode.REMOVE);
                 }
 
             }
@@ -214,8 +213,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
             throw new IOException("Exception while obtaining lock.", e);
         } catch (InterruptedException e) {
             throw new IOException("Exception while obtaining lock.", e);
-        }
-        finally {
+        } finally {
             wLock.unlock();
         }
         LOG.info("Write Transaction committed: " + transaction.toString());
@@ -231,30 +229,30 @@ public class ZKBasedRevisionManager implements RevisionManager{
         refreshTransactionList(transaction.getTableName());
         String lockPath = prepareLockNode(transaction.getTableName());
         WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
-                Ids.OPEN_ACL_UNSAFE);
+            Ids.OPEN_ACL_UNSAFE);
         RMLockListener myLockListener = new RMLockListener();
         wLock.setLockListener(myLockListener);
         try {
             boolean lockGrabbed = wLock.lock();
             if (lockGrabbed == false) {
-              //TO DO : Let this request queue up and try obtaining lock.
+                //TO DO : Let this request queue up and try obtaining lock.
                 throw new IOException(
-                        "Unable to obtain lock while aborting transaction. "
-                                + transaction.toString());
+                    "Unable to obtain lock while aborting transaction. "
+                        + transaction.toString());
             } else {
                 String tableName = transaction.getTableName();
                 List<String> colFamilies = transaction.getColumnFamilies();
                 FamilyRevision revisionData = transaction
-                        .getFamilyRevisionInfo();
+                    .getFamilyRevisionInfo();
                 for (String cfamily : colFamilies) {
                     String path = PathUtil.getRunningTxnInfoPath(
-                            baseDir, tableName, cfamily);
+                        baseDir, tableName, cfamily);
                     zkUtil.updateData(path, revisionData,
-                            ZKUtil.UpdateMode.REMOVE);
+                        ZKUtil.UpdateMode.REMOVE);
                     path = PathUtil.getAbortInformationPath(baseDir,
-                            tableName, cfamily);
+                        tableName, cfamily);
                     zkUtil.updateData(path, revisionData,
-                            ZKUtil.UpdateMode.APPEND);
+                        ZKUtil.UpdateMode.APPEND);
                 }
 
             }
@@ -262,54 +260,53 @@ public class ZKBasedRevisionManager implements RevisionManager{
             throw new IOException("Exception while obtaining lock.", e);
         } catch (InterruptedException e) {
             throw new IOException("Exception while obtaining lock.", e);
-        }
-        finally {
+        } finally {
             wLock.unlock();
         }
         LOG.info("Write Transaction aborted: " + transaction.toString());
     }
 
 
-     /* @param transaction
-     /* @throws IOException
-      * @see org.apache.hcatalog.hbase.snapshot.RevsionManager#keepAlive(org.apache.hcatalog.hbase.snapshot.Transaction)
-      */
-     public void keepAlive(Transaction transaction)
-            throws IOException {
+    /* @param transaction
+   /* @throws IOException
+    * @see org.apache.hcatalog.hbase.snapshot.RevsionManager#keepAlive(org.apache.hcatalog.hbase.snapshot.Transaction)
+    */
+    public void keepAlive(Transaction transaction)
+        throws IOException {
 
-         refreshTransactionList(transaction.getTableName());
-         transaction.keepAliveTransaction();
-         String lockPath = prepareLockNode(transaction.getTableName());
-         WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
-                 Ids.OPEN_ACL_UNSAFE);
-         RMLockListener myLockListener = new RMLockListener();
-         wLock.setLockListener(myLockListener);
-         try {
-             boolean lockGrabbed = wLock.lock();
-             if (lockGrabbed == false) {
-               //TO DO : Let this request queue up and try obtaining lock.
-                 throw new IOException(
-                         "Unable to obtain lock for keep alive of transaction. "
-                                 + transaction.toString());
-             }else {
-                 String tableName = transaction.getTableName();
-                 List<String> colFamilies = transaction.getColumnFamilies();
-                 FamilyRevision revisionData = transaction.getFamilyRevisionInfo();
-                 for (String cfamily : colFamilies) {
-                     String path = PathUtil.getRunningTxnInfoPath(
-                             baseDir, tableName, cfamily);
-                     zkUtil.updateData(path, revisionData,
-                             ZKUtil.UpdateMode.KEEP_ALIVE);
-                 }
+        refreshTransactionList(transaction.getTableName());
+        transaction.keepAliveTransaction();
+        String lockPath = prepareLockNode(transaction.getTableName());
+        WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
+            Ids.OPEN_ACL_UNSAFE);
+        RMLockListener myLockListener = new RMLockListener();
+        wLock.setLockListener(myLockListener);
+        try {
+            boolean lockGrabbed = wLock.lock();
+            if (lockGrabbed == false) {
+                //TO DO : Let this request queue up and try obtaining lock.
+                throw new IOException(
+                    "Unable to obtain lock for keep alive of transaction. "
+                        + transaction.toString());
+            } else {
+                String tableName = transaction.getTableName();
+                List<String> colFamilies = transaction.getColumnFamilies();
+                FamilyRevision revisionData = transaction.getFamilyRevisionInfo();
+                for (String cfamily : colFamilies) {
+                    String path = PathUtil.getRunningTxnInfoPath(
+                        baseDir, tableName, cfamily);
+                    zkUtil.updateData(path, revisionData,
+                        ZKUtil.UpdateMode.KEEP_ALIVE);
+                }
 
-             }
-         } catch (KeeperException e) {
-             throw new IOException("Exception while obtaining lock.", e);
-         } catch (InterruptedException e) {
-             throw new IOException("Exception while obtaining lock.", e);
-         }finally {
-             wLock.unlock();
-         }
+            }
+        } catch (KeeperException e) {
+            throw new IOException("Exception while obtaining lock.", e);
+        } catch (InterruptedException e) {
+            throw new IOException("Exception while obtaining lock.", e);
+        } finally {
+            wLock.unlock();
+        }
 
     }
 
@@ -320,13 +317,13 @@ public class ZKBasedRevisionManager implements RevisionManager{
     /* @throws IOException
      * @see org.apache.hcatalog.hbase.snapshot.RevsionManager#createSnapshot(java.lang.String)
      */
-    public TableSnapshot createSnapshot(String tableName) throws IOException{
+    public TableSnapshot createSnapshot(String tableName) throws IOException {
         refreshTransactionList(tableName);
         long latestID = zkUtil.currentID(tableName);
         HashMap<String, Long> cfMap = new HashMap<String, Long>();
         List<String> columnFamilyNames = zkUtil.getColumnFamiliesOfTable(tableName);
 
-        for(String cfName: columnFamilyNames){
+        for (String cfName : columnFamilyNames) {
             String cfPath = PathUtil.getRunningTxnInfoPath(baseDir, tableName, cfName);
             List<FamilyRevision> tranxList = zkUtil.getTransactionList(cfPath);
             long version;
@@ -334,15 +331,15 @@ public class ZKBasedRevisionManager implements RevisionManager{
                 Collections.sort(tranxList);
                 // get the smallest running Transaction ID
                 long runningVersion = tranxList.get(0).getRevision();
-                version = runningVersion -1;
+                version = runningVersion - 1;
             } else {
                 version = latestID;
             }
             cfMap.put(cfName, version);
         }
 
-        TableSnapshot snapshot = new TableSnapshot(tableName, cfMap,latestID);
-        LOG.debug("Created snapshot For table: "+tableName+" snapshot: "+snapshot);
+        TableSnapshot snapshot = new TableSnapshot(tableName, cfMap, latestID);
+        LOG.debug("Created snapshot For table: " + tableName + " snapshot: " + snapshot);
         return snapshot;
     }
 
@@ -354,18 +351,18 @@ public class ZKBasedRevisionManager implements RevisionManager{
     /* @throws IOException
      * @see org.apache.hcatalog.hbase.snapshot.RevsionManager#createSnapshot(java.lang.String, long)
      */
-    public TableSnapshot createSnapshot(String tableName, long revision) throws IOException{
+    public TableSnapshot createSnapshot(String tableName, long revision) throws IOException {
 
         long currentID = zkUtil.currentID(tableName);
         if (revision > currentID) {
             throw new IOException(
-                    "The revision specified in the snapshot is higher than the current revision of the table.");
+                "The revision specified in the snapshot is higher than the current revision of the table.");
         }
         refreshTransactionList(tableName);
         HashMap<String, Long> cfMap = new HashMap<String, Long>();
         List<String> columnFamilies = zkUtil.getColumnFamiliesOfTable(tableName);
 
-        for(String cf: columnFamilies){
+        for (String cf : columnFamilies) {
             cfMap.put(cf, revision);
         }
 
@@ -380,40 +377,40 @@ public class ZKBasedRevisionManager implements RevisionManager{
      * @throws java.io.IOException
      */
     List<FamilyRevision> getRunningTransactions(String table,
-            String columnFamily) throws IOException {
+                                                String columnFamily) throws IOException {
         String path = PathUtil.getRunningTxnInfoPath(baseDir, table,
-                columnFamily);
+            columnFamily);
         return zkUtil.getTransactionList(path);
     }
 
     @Override
-     public List<FamilyRevision> getAbortedWriteTransactions(String table,
-            String columnFamily) throws IOException {
-         String path = PathUtil.getAbortInformationPath(baseDir, table, columnFamily);
-         return zkUtil.getTransactionList(path);
+    public List<FamilyRevision> getAbortedWriteTransactions(String table,
+                                                            String columnFamily) throws IOException {
+        String path = PathUtil.getAbortInformationPath(baseDir, table, columnFamily);
+        return zkUtil.getTransactionList(path);
     }
 
-     private void refreshTransactionList(String tableName) throws IOException{
+    private void refreshTransactionList(String tableName) throws IOException {
         String lockPath = prepareLockNode(tableName);
         WriteLock wLock = new WriteLock(zkUtil.getSession(), lockPath,
-                Ids.OPEN_ACL_UNSAFE);
+            Ids.OPEN_ACL_UNSAFE);
         RMLockListener myLockListener = new RMLockListener();
         wLock.setLockListener(myLockListener);
         try {
             boolean lockGrabbed = wLock.lock();
             if (lockGrabbed == false) {
-              //TO DO : Let this request queue up and try obtaining lock.
+                //TO DO : Let this request queue up and try obtaining lock.
                 throw new IOException(
-                        "Unable to obtain lock while refreshing transactions of table "
-                                + tableName + ".");
-            }else {
+                    "Unable to obtain lock while refreshing transactions of table "
+                        + tableName + ".");
+            } else {
                 List<String> cfPaths = zkUtil
-                        .getColumnFamiliesOfTable(tableName);
+                    .getColumnFamiliesOfTable(tableName);
                 for (String cf : cfPaths) {
                     String runningDataPath = PathUtil.getRunningTxnInfoPath(
-                            baseDir, tableName, cf);
+                        baseDir, tableName, cf);
                     zkUtil.refreshTransactions(runningDataPath);
-        }
+                }
 
             }
         } catch (KeeperException e) {
@@ -424,22 +421,22 @@ public class ZKBasedRevisionManager implements RevisionManager{
             wLock.unlock();
         }
 
-     }
+    }
 
-     private String prepareLockNode(String tableName) throws IOException{
-         String txnDataPath = PathUtil.getTxnDataPath(this.baseDir, tableName);
-         String lockPath = PathUtil.getLockManagementNode(txnDataPath);
-         zkUtil.ensurePathExists(lockPath, null, Ids.OPEN_ACL_UNSAFE,
-                 CreateMode.PERSISTENT);
-         return lockPath;
-     }
+    private String prepareLockNode(String tableName) throws IOException {
+        String txnDataPath = PathUtil.getTxnDataPath(this.baseDir, tableName);
+        String lockPath = PathUtil.getLockManagementNode(txnDataPath);
+        zkUtil.ensurePathExists(lockPath, null, Ids.OPEN_ACL_UNSAFE,
+            CreateMode.PERSISTENT);
+        return lockPath;
+    }
 
     /*
      * This class is a listener class for the locks used in revision management.
      * TBD: Use the following class to signal that that the lock is actually
      * been granted.
      */
-     class RMLockListener implements LockListener {
+    class RMLockListener implements LockListener {
 
         /*
          * @see org.apache.hcatalog.hbase.snapshot.lock.LockListener#lockAcquired()
@@ -457,7 +454,7 @@ public class ZKBasedRevisionManager implements RevisionManager{
 
         }
 
-     }
+    }
 
 
 }

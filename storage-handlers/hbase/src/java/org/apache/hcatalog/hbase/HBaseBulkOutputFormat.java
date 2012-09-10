@@ -51,7 +51,7 @@ import org.apache.hcatalog.hbase.snapshot.RevisionManager;
 class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
 
     private final static ImmutableBytesWritable EMPTY_LIST = new ImmutableBytesWritable(
-            new byte[0]);
+        new byte[0]);
     private SequenceFileOutputFormat<WritableComparable<?>, Put> baseOutputFormat;
 
     public HBaseBulkOutputFormat() {
@@ -60,7 +60,7 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
 
     @Override
     public void checkOutputSpecs(FileSystem ignored, JobConf job)
-            throws IOException {
+        throws IOException {
         baseOutputFormat.checkOutputSpecs(ignored, job);
         HBaseUtil.addHBaseDelegationToken(job);
         addJTDelegationToken(job);
@@ -68,13 +68,13 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
 
     @Override
     public RecordWriter<WritableComparable<?>, Put> getRecordWriter(
-            FileSystem ignored, JobConf job, String name, Progressable progress)
-            throws IOException {
+        FileSystem ignored, JobConf job, String name, Progressable progress)
+        throws IOException {
         job.setOutputKeyClass(ImmutableBytesWritable.class);
         job.setOutputValueClass(Put.class);
         long version = HBaseRevisionManagerUtil.getOutputRevision(job);
         return new HBaseBulkRecordWriter(baseOutputFormat.getRecordWriter(
-                ignored, job, name, progress), version);
+            ignored, job, name, progress), version);
     }
 
     private void addJTDelegationToken(JobConf job) throws IOException {
@@ -84,7 +84,7 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
             JobClient jobClient = new JobClient(new JobConf(job));
             try {
                 job.getCredentials().addToken(new Text("my mr token"),
-                        jobClient.getDelegationToken(null));
+                    jobClient.getDelegationToken(null));
             } catch (InterruptedException e) {
                 throw new IOException("Error while getting JT delegation token", e);
             }
@@ -92,21 +92,21 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
     }
 
     private static class HBaseBulkRecordWriter implements
-            RecordWriter<WritableComparable<?>, Put> {
+        RecordWriter<WritableComparable<?>, Put> {
 
         private RecordWriter<WritableComparable<?>, Put> baseWriter;
         private final Long outputVersion;
 
         public HBaseBulkRecordWriter(
-                RecordWriter<WritableComparable<?>, Put> baseWriter,
-                Long outputVersion) {
+            RecordWriter<WritableComparable<?>, Put> baseWriter,
+            Long outputVersion) {
             this.baseWriter = baseWriter;
             this.outputVersion = outputVersion;
         }
 
         @Override
         public void write(WritableComparable<?> key, Put value)
-                throws IOException {
+            throws IOException {
             Put put = value;
             if (outputVersion != null) {
                 put = new Put(value.getRow(), outputVersion.longValue());
@@ -136,19 +136,19 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
 
         @Override
         public void abortTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
             baseOutputCommitter.abortTask(taskContext);
         }
 
         @Override
         public void commitTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
             baseOutputCommitter.commitTask(taskContext);
         }
 
         @Override
         public boolean needsTaskCommit(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
             return baseOutputCommitter.needsTaskCommit(taskContext);
         }
 
@@ -159,20 +159,20 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
 
         @Override
         public void setupTask(TaskAttemptContext taskContext)
-                throws IOException {
+            throws IOException {
             baseOutputCommitter.setupTask(taskContext);
         }
 
         @Override
         public void abortJob(JobContext jobContext, int status)
-                throws IOException {
+            throws IOException {
             baseOutputCommitter.abortJob(jobContext, status);
             RevisionManager rm = null;
             try {
                 rm = HBaseRevisionManagerUtil
-                        .getOpenedRevisionManager(jobContext.getConfiguration());
+                    .getOpenedRevisionManager(jobContext.getConfiguration());
                 rm.abortWriteTransaction(HBaseRevisionManagerUtil
-                        .getWriteTransaction(jobContext.getConfiguration()));
+                    .getWriteTransaction(jobContext.getConfiguration()));
             } finally {
                 cleanIntermediate(jobContext);
                 if (rm != null)
@@ -189,18 +189,18 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
                 Path srcPath = FileOutputFormat.getOutputPath(jobContext.getJobConf());
                 if (!FileSystem.get(conf).exists(srcPath)) {
                     throw new IOException("Failed to bulk import hfiles. " +
-                    		"Intermediate data directory is cleaned up or missing. " +
-                    		"Please look at the bulk import job if it exists for failure reason");
+                        "Intermediate data directory is cleaned up or missing. " +
+                        "Please look at the bulk import job if it exists for failure reason");
                 }
                 Path destPath = new Path(srcPath.getParent(), srcPath.getName() + "_hfiles");
                 boolean success = ImportSequenceFile.runJob(jobContext,
-                                conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
-                                srcPath,
-                                destPath);
-                if(!success) {
+                    conf.get(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY),
+                    srcPath,
+                    destPath);
+                if (!success) {
                     cleanIntermediate(jobContext);
                     throw new IOException("Failed to bulk import hfiles." +
-                    		" Please look at the bulk import job for failure reason");
+                        " Please look at the bulk import job for failure reason");
                 }
                 rm = HBaseRevisionManagerUtil.getOpenedRevisionManager(conf);
                 rm.commitWriteTransaction(HBaseRevisionManagerUtil.getWriteTransaction(conf));
@@ -212,7 +212,7 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
         }
 
         private void cleanIntermediate(JobContext jobContext)
-                throws IOException {
+            throws IOException {
             FileSystem fs = FileSystem.get(jobContext.getConfiguration());
             fs.delete(FileOutputFormat.getOutputPath(jobContext.getJobConf()), true);
         }

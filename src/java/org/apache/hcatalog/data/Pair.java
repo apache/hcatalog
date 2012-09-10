@@ -42,44 +42,44 @@ public class Pair<T, U> implements Serializable {
      */
     @Override
     public String toString() {
-        return "[" + first.toString() +"," + second.toString() + "]";
+        return "[" + first.toString() + "," + second.toString() + "]";
     }
 
     @Override
     public int hashCode() {
         return (((this.first == null ? 1 : this.first.hashCode()) * 17)
-                + (this.second == null ? 1 : this.second.hashCode()) * 19);
+            + (this.second == null ? 1 : this.second.hashCode()) * 19);
     }
 
     @Override
     public boolean equals(Object other) {
-        if(other == null) {
+        if (other == null) {
             return false;
         }
 
-        if(! (other instanceof Pair)) {
+        if (!(other instanceof Pair)) {
             return false;
         }
 
         Pair otherPair = (Pair) other;
 
-        if(this.first == null) {
-            if(otherPair.first != null) {
+        if (this.first == null) {
+            if (otherPair.first != null) {
                 return false;
             } else {
                 return true;
             }
         }
 
-        if(this.second == null) {
-            if(otherPair.second != null) {
+        if (this.second == null) {
+            if (otherPair.second != null) {
                 return false;
             } else {
                 return true;
             }
         }
 
-        if(this.first.equals(otherPair.first) && this.second.equals(otherPair.second)) {
+        if (this.first.equals(otherPair.first) && this.second.equals(otherPair.second)) {
             return true;
         } else {
             return false;

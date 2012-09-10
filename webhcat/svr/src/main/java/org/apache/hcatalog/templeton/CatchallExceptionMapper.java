@@ -20,6 +20,7 @@ package org.apache.hcatalog.templeton;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -29,8 +30,7 @@ import org.apache.commons.logging.LogFactory;
  */
 @Provider
 public class CatchallExceptionMapper
-    implements ExceptionMapper<Exception>
-{
+    implements ExceptionMapper<Exception> {
     private static final Log LOG = LogFactory.getLog(CatchallExceptionMapper.class);
 
     public Response toResponse(Exception e) {

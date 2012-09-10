@@ -207,7 +207,7 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
      * @throws InterruptedException
      */
     public static <K, V> void write(String alias, K key, V value, TaskInputOutputContext context)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         KeyValue<K, V> keyval = new KeyValue<K, V>(key, value);
         context.write(new Text(alias), keyval);
     }
@@ -227,14 +227,14 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
 
     @Override
     public RecordWriter<Writable, Writable> getRecordWriter(TaskAttemptContext context)
-            throws IOException,
-            InterruptedException {
+        throws IOException,
+        InterruptedException {
         return new MultiRecordWriter(context);
     }
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException,
-            InterruptedException {
+        InterruptedException {
         return new MultiOutputCommitter(context);
     }
 

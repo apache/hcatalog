@@ -18,6 +18,7 @@
 package org.apache.hcatalog.templeton;
 
 import java.io.IOException;
+
 import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.JobProfile;
 import org.apache.hcatalog.templeton.tool.JobState;
@@ -29,15 +30,16 @@ public class QueueStatusBean {
     public JobStatus status;
     public JobProfile profile;
 
-    public String  id;
-    public String  parentId;
-    public String  percentComplete;
-    public Long    exitValue;
-    public String  user;
-    public String  callback;
-    public String  completed;
+    public String id;
+    public String parentId;
+    public String percentComplete;
+    public Long exitValue;
+    public String user;
+    public String callback;
+    public String completed;
 
-    public QueueStatusBean() {}
+    public QueueStatusBean() {
+    }
 
     /**
      * Create a new QueueStatusBean
@@ -47,19 +49,18 @@ public class QueueStatusBean {
      * @param profile    job profile
      */
     public QueueStatusBean(JobState state, JobStatus status, JobProfile profile)
-        throws IOException
-    {
+        throws IOException {
         this.status = status;
         this.profile = profile;
 
-        id              = profile.getJobID().toString();
-        parentId        = state.getId();
+        id = profile.getJobID().toString();
+        parentId = state.getId();
         if (id.equals(parentId))
             parentId = null;
         percentComplete = state.getPercentComplete();
-        exitValue       = state.getExitValue();
-        user            = state.getUser();
-        callback        = state.getCallback();
-        completed       = state.getCompleteStatus();
+        exitValue = state.getExitValue();
+        user = state.getUser();
+        callback = state.getCallback();
+        completed = state.getCompleteStatus();
     }
 }

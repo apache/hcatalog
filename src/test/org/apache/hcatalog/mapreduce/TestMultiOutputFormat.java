@@ -74,7 +74,7 @@ public class TestMultiOutputFormat {
         // LocalJobRunner does not work with mapreduce OutputCommitter. So need
         // to use MiniMRCluster. MAPREDUCE-2350
         mrCluster = new MiniMRCluster(1, fs.getUri().toString(), 1, null, null,
-                new JobConf(conf));
+            new JobConf(conf));
         mrConf = mrCluster.createJobConf();
     }
 
@@ -111,7 +111,7 @@ public class TestMultiOutputFormat {
         JobConfigurer configurer = MultiOutputFormat.createConfigurer(job);
         configurer.addOutputFormat("out1", TextOutputFormat.class, IntWritable.class, Text.class);
         configurer.addOutputFormat("out2", SequenceFileOutputFormat.class, Text.class,
-                IntWritable.class);
+            IntWritable.class);
         Path outDir = new Path(workDir.getPath(), job.getJobName());
         FileOutputFormat.setOutputPath(configurer.getJob("out1"), new Path(outDir, "out1"));
         FileOutputFormat.setOutputPath(configurer.getJob("out2"), new Path(outDir, "out2"));
@@ -124,19 +124,19 @@ public class TestMultiOutputFormat {
         DistributedCache.addFileToClassPath(new Path(inputFile), job.getConfiguration(), fs);
         String dummyFile = createInputFile("dummy file");
         DistributedCache.addFileToClassPath(new Path(dummyFile), configurer.getJob("out1")
-                .getConfiguration(), fs);
+            .getConfiguration(), fs);
         // duplicate of the value. Merging should remove duplicates
         DistributedCache.addFileToClassPath(new Path(inputFile), configurer.getJob("out2")
-                .getConfiguration(), fs);
+            .getConfiguration(), fs);
 
         configurer.configure();
 
         // Verify if the configs are merged
         Path[] fileClassPaths = DistributedCache.getFileClassPaths(job.getConfiguration());
-        Assert.assertArrayEquals(new Path[] {new Path(inputFile), new Path(dummyFile)},
-                fileClassPaths);
-        URI[] expectedCacheFiles = new URI[] {new Path(inputFile).makeQualified(fs).toUri(),
-                new Path(dummyFile).makeQualified(fs).toUri()};
+        Assert.assertArrayEquals(new Path[]{new Path(inputFile), new Path(dummyFile)},
+            fileClassPaths);
+        URI[] expectedCacheFiles = new URI[]{new Path(inputFile).makeQualified(fs).toUri(),
+            new Path(dummyFile).makeQualified(fs).toUri()};
         URI[] cacheFiles = DistributedCache.getCacheFiles(job.getConfiguration());
         Assert.assertArrayEquals(expectedCacheFiles, cacheFiles);
 
@@ -180,9 +180,9 @@ public class TestMultiOutputFormat {
 
         configurer.addOutputFormat("out1", TextOutputFormat.class, IntWritable.class, Text.class);
         configurer.addOutputFormat("out2", SequenceFileOutputFormat.class, Text.class,
-                IntWritable.class);
+            IntWritable.class);
         configurer.addOutputFormat("out3", NullOutputFormat.class, Text.class,
-                IntWritable.class);
+            IntWritable.class);
         Path outDir = new Path(workDir.getPath(), job.getJobName());
         FileOutputFormat.setOutputPath(configurer.getJob("out1"), new Path(outDir, "out1"));
         FileOutputFormat.setOutputPath(configurer.getJob("out2"), new Path(outDir, "out2"));
@@ -237,14 +237,14 @@ public class TestMultiOutputFormat {
     }
 
     private static class MultiOutWordIndexMapper extends
-            Mapper<LongWritable, Text, Writable, Writable> {
+        Mapper<LongWritable, Text, Writable, Writable> {
 
         private IntWritable index = new IntWritable(1);
         private Text word = new Text();
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
-                throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
             StringTokenizer itr = new StringTokenizer(value.toString());
             while (itr.hasMoreTokens()) {
                 word.set(itr.nextToken());
@@ -256,14 +256,14 @@ public class TestMultiOutputFormat {
     }
 
     private static class WordCountMapper extends
-            Mapper<LongWritable, Text, Text, IntWritable> {
+        Mapper<LongWritable, Text, Text, IntWritable> {
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
-                throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
             StringTokenizer itr = new StringTokenizer(value.toString());
             while (itr.hasMoreTokens()) {
                 word.set(itr.nextToken());
@@ -273,13 +273,13 @@ public class TestMultiOutputFormat {
     }
 
     private static class MultiOutWordCountReducer extends
-            Reducer<Text, IntWritable, Writable, Writable> {
+        Reducer<Text, IntWritable, Writable, Writable> {
 
         private IntWritable count = new IntWritable();
 
         @Override
         protected void reduce(Text word, Iterable<IntWritable> values, Context context)
-                throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
             int sum = 0;
             for (IntWritable val : values) {
                 sum += val.get();
@@ -292,23 +292,34 @@ public class TestMultiOutputFormat {
     }
 
     private static class NullOutputFormat<K, V> extends
-            org.apache.hadoop.mapreduce.lib.output.NullOutputFormat<K, V> {
+        org.apache.hadoop.mapreduce.lib.output.NullOutputFormat<K, V> {
 
         @Override
         public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
             return new OutputCommitter() {
-                public void abortTask(TaskAttemptContext taskContext) { }
-                public void cleanupJob(JobContext jobContext) { }
-                public void commitJob(JobContext jobContext) { }
+                public void abortTask(TaskAttemptContext taskContext) {
+                }
+
+                public void cleanupJob(JobContext jobContext) {
+                }
+
+                public void commitJob(JobContext jobContext) {
+                }
+
                 public void commitTask(TaskAttemptContext taskContext) {
                     Assert.fail("needsTaskCommit is false but commitTask was called");
                 }
+
                 public boolean needsTaskCommit(TaskAttemptContext taskContext) {
-                  return false;
+                    return false;
                 }
-                public void setupJob(JobContext jobContext) { }
-                public void setupTask(TaskAttemptContext taskContext) { }
-              };
+
+                public void setupJob(JobContext jobContext) {
+                }
+
+                public void setupTask(TaskAttemptContext taskContext) {
+                }
+            };
         }
     }
 

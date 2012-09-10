@@ -49,20 +49,20 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
 
     @Override
     public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
-            org.apache.hadoop.mapreduce.TaskAttemptID taskId) {
+                                                                                   org.apache.hadoop.mapreduce.TaskAttemptID taskId) {
         return new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl(conf, taskId);
     }
 
     @Override
     public org.apache.hadoop.mapred.TaskAttemptContext createTaskAttemptContext(org.apache.hadoop.mapred.JobConf conf,
-            org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable) {
+                                                                                org.apache.hadoop.mapred.TaskAttemptID taskId, Progressable progressable) {
         org.apache.hadoop.mapred.TaskAttemptContext newContext = null;
         try {
             java.lang.reflect.Constructor construct = org.apache.hadoop.mapred.TaskAttemptContextImpl.class.getDeclaredConstructor(
-                    org.apache.hadoop.mapred.JobConf.class, org.apache.hadoop.mapred.TaskAttemptID.class,
-                    Reporter.class);
+                org.apache.hadoop.mapred.JobConf.class, org.apache.hadoop.mapred.TaskAttemptID.class,
+                Reporter.class);
             construct.setAccessible(true);
-            newContext = (org.apache.hadoop.mapred.TaskAttemptContext)construct.newInstance(conf, taskId, (Reporter)progressable);
+            newContext = (org.apache.hadoop.mapred.TaskAttemptContext) construct.newInstance(conf, taskId, (Reporter) progressable);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -71,7 +71,7 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
 
     @Override
     public JobContext createJobContext(Configuration conf,
-            JobID jobId) {
+                                       JobID jobId) {
         JobContext ctxt = new JobContextImpl(conf, jobId);
 
         return ctxt;
@@ -79,15 +79,15 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
 
     @Override
     public org.apache.hadoop.mapred.JobContext createJobContext(org.apache.hadoop.mapred.JobConf conf,
-            org.apache.hadoop.mapreduce.JobID jobId, Progressable progressable) {
-        org.apache.hadoop.mapred.JobContext newContext = 
-            new org.apache.hadoop.mapred.JobContextImpl(conf, jobId, (org.apache.hadoop.mapred.Reporter)progressable);
+                                                                org.apache.hadoop.mapreduce.JobID jobId, Progressable progressable) {
+        org.apache.hadoop.mapred.JobContext newContext =
+            new org.apache.hadoop.mapred.JobContextImpl(conf, jobId, (org.apache.hadoop.mapred.Reporter) progressable);
         return newContext;
     }
 
     @Override
     public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
-            String arg1, Job job) throws IOException {
+                          String arg1, Job job) throws IOException {
         // Do nothing as this was fixed by MAPREDUCE-1447.
     }
 
@@ -106,12 +106,12 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
     @Override
     public String getPropertyName(PropertyName name) {
         switch (name) {
-            case CACHE_ARCHIVES:
-                return MRJobConfig.CACHE_ARCHIVES;
-            case CACHE_FILES:
-                return MRJobConfig.CACHE_FILES;
-            case CACHE_SYMLINK:
-                return MRJobConfig.CACHE_SYMLINK;
+        case CACHE_ARCHIVES:
+            return MRJobConfig.CACHE_ARCHIVES;
+        case CACHE_FILES:
+            return MRJobConfig.CACHE_FILES;
+        case CACHE_SYMLINK:
+            return MRJobConfig.CACHE_SYMLINK;
         }
 
         return "";

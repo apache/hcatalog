@@ -45,7 +45,7 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
      * @throws IOException
      */
     public DefaultOutputCommitterContainer(JobContext context, org.apache.hadoop.mapred.OutputCommitter baseCommitter) throws IOException {
-        super(context,baseCommitter);
+        super(context, baseCommitter);
     }
 
     @Override
@@ -95,8 +95,8 @@ class DefaultOutputCommitterContainer extends OutputCommitterContainer {
             HiveConf hiveConf = HCatUtil.getHiveConf(context.getConfiguration());
             client = HCatUtil.getHiveClient(hiveConf);
             String tokenStrForm = client.getTokenStrForm();
-            if(tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
-              client.cancelDelegationToken(tokenStrForm);
+            if (tokenStrForm != null && context.getConfiguration().get(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE) != null) {
+                client.cancelDelegationToken(tokenStrForm);
             }
         } catch (Exception e) {
             LOG.warn("Failed to cancel delegation token", e);

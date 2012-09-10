@@ -73,7 +73,7 @@ public interface RevisionManager {
      * @throws IOException
      */
     public Transaction beginWriteTransaction(String table, List<String> families)
-            throws IOException;
+        throws IOException;
 
     /**
      * Start the write transaction.
@@ -85,7 +85,7 @@ public interface RevisionManager {
      * @throws IOException
      */
     public Transaction beginWriteTransaction(String table,
-            List<String> families, long keepAlive) throws IOException;
+                                             List<String> families, long keepAlive) throws IOException;
 
     /**
      * Commit the write transaction.
@@ -94,7 +94,7 @@ public interface RevisionManager {
      * @throws IOException
      */
     public void commitWriteTransaction(Transaction transaction)
-            throws IOException;
+        throws IOException;
 
     /**
      * Abort the write transaction.
@@ -103,7 +103,7 @@ public interface RevisionManager {
      * @throws IOException
      */
     public void abortWriteTransaction(Transaction transaction)
-            throws IOException;
+        throws IOException;
 
     /**
      * Get the list of aborted Transactions for a column family
@@ -114,7 +114,7 @@ public interface RevisionManager {
      * @throws java.io.IOException
      */
     public List<FamilyRevision> getAbortedWriteTransactions(String table,
-        String columnFamily) throws IOException;
+                                                            String columnFamily) throws IOException;
 
     /**
      * Create the latest snapshot of the table.
@@ -134,7 +134,7 @@ public interface RevisionManager {
      * @throws IOException
      */
     public TableSnapshot createSnapshot(String tableName, long revision)
-            throws IOException;
+        throws IOException;
 
     /**
      * Extends the expiration of a transaction by the time indicated by keep alive.

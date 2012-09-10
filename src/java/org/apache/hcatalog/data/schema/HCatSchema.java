@@ -30,12 +30,12 @@ import org.apache.hcatalog.common.HCatException;
  * HCatSchema. This class is NOT thread-safe.
  */
 
-public class HCatSchema implements Serializable{
+public class HCatSchema implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private final List<HCatFieldSchema> fieldSchemas;
-    private final Map<String,Integer> fieldPositionMap;
+    private final Map<String, Integer> fieldPositionMap;
     private final List<String> fieldNames;
 
     /**
@@ -44,44 +44,44 @@ public class HCatSchema implements Serializable{
      * on fieldSchemas won't get reflected in HCatSchema.  Each fieldSchema's name
      * in the list must be unique, otherwise throws IllegalArgumentException.
      */
-    public HCatSchema(final List<HCatFieldSchema> fieldSchemas){
+    public HCatSchema(final List<HCatFieldSchema> fieldSchemas) {
         this.fieldSchemas = new ArrayList<HCatFieldSchema>(fieldSchemas);
         int idx = 0;
-        fieldPositionMap = new HashMap<String,Integer>();
+        fieldPositionMap = new HashMap<String, Integer>();
         fieldNames = new ArrayList<String>();
-        for (HCatFieldSchema field : fieldSchemas){
-            if(field == null)
+        for (HCatFieldSchema field : fieldSchemas) {
+            if (field == null)
                 throw new IllegalArgumentException("Field cannot be null");
 
             String fieldName = field.getName();
-            if(fieldPositionMap.containsKey(fieldName))
+            if (fieldPositionMap.containsKey(fieldName))
                 throw new IllegalArgumentException("Field named " + fieldName +
-                                                   " already exists");
+                    " already exists");
             fieldPositionMap.put(fieldName, idx);
             fieldNames.add(fieldName);
             idx++;
         }
     }
 
-    public void append(final HCatFieldSchema hfs) throws HCatException{
-      if(hfs == null)
-        throw new HCatException("Attempt to append null HCatFieldSchema in HCatSchema.");
+    public void append(final HCatFieldSchema hfs) throws HCatException {
+        if (hfs == null)
+            throw new HCatException("Attempt to append null HCatFieldSchema in HCatSchema.");
 
-      String fieldName = hfs.getName();
-      if(fieldPositionMap.containsKey(fieldName))
-        throw new HCatException("Attempt to append HCatFieldSchema with already " +
-            "existing name: " + fieldName + ".");
+        String fieldName = hfs.getName();
+        if (fieldPositionMap.containsKey(fieldName))
+            throw new HCatException("Attempt to append HCatFieldSchema with already " +
+                "existing name: " + fieldName + ".");
 
-      this.fieldSchemas.add(hfs);
-      this.fieldNames.add(fieldName);
-      this.fieldPositionMap.put(fieldName, this.size()-1);
+        this.fieldSchemas.add(hfs);
+        this.fieldNames.add(fieldName);
+        this.fieldPositionMap.put(fieldName, this.size() - 1);
     }
 
     /**
      *  Users are not allowed to modify the list directly, since HCatSchema
      *  maintains internal state. Use append/remove to modify the schema.
      */
-    public List<HCatFieldSchema> getFields(){
+    public List<HCatFieldSchema> getFields() {
         return Collections.unmodifiableList(this.fieldSchemas);
     }
 
@@ -91,14 +91,14 @@ public class HCatSchema implements Serializable{
      * present, returns null.
      */
     public Integer getPosition(String fieldName) {
-      return fieldPositionMap.get(fieldName);
+        return fieldPositionMap.get(fieldName);
     }
 
     public HCatFieldSchema get(String fieldName) throws HCatException {
         return get(getPosition(fieldName));
     }
 
-    public List<String> getFieldNames(){
+    public List<String> getFieldNames() {
         return this.fieldNames;
     }
 
@@ -106,32 +106,32 @@ public class HCatSchema implements Serializable{
         return fieldSchemas.get(position);
     }
 
-    public int size(){
-      return fieldSchemas.size();
+    public int size() {
+        return fieldSchemas.size();
     }
 
     public void remove(final HCatFieldSchema hcatFieldSchema) throws HCatException {
 
-      if(!fieldSchemas.contains(hcatFieldSchema)){
-        throw new HCatException("Attempt to delete a non-existent column from HCat Schema: "+ hcatFieldSchema);
-      }
+        if (!fieldSchemas.contains(hcatFieldSchema)) {
+            throw new HCatException("Attempt to delete a non-existent column from HCat Schema: " + hcatFieldSchema);
+        }
 
-      fieldSchemas.remove(hcatFieldSchema);
-      fieldPositionMap.remove(hcatFieldSchema);
-      fieldNames.remove(hcatFieldSchema.getName());
+        fieldSchemas.remove(hcatFieldSchema);
+        fieldPositionMap.remove(hcatFieldSchema);
+        fieldNames.remove(hcatFieldSchema.getName());
     }
 
     @Override
     public String toString() {
         boolean first = true;
         StringBuilder sb = new StringBuilder();
-        for (HCatFieldSchema hfs : fieldSchemas){
-            if (!first){
+        for (HCatFieldSchema hfs : fieldSchemas) {
+            if (!first) {
                 sb.append(",");
-            }else{
+            } else {
                 first = false;
             }
-            if (hfs.getName() != null){
+            if (hfs.getName() != null) {
                 sb.append(hfs.getName());
                 sb.append(":");
             }
@@ -140,16 +140,16 @@ public class HCatSchema implements Serializable{
         return sb.toString();
     }
 
-    public String getSchemaAsTypeString(){
+    public String getSchemaAsTypeString() {
         boolean first = true;
         StringBuilder sb = new StringBuilder();
-        for (HCatFieldSchema hfs : fieldSchemas){
-            if (!first){
+        for (HCatFieldSchema hfs : fieldSchemas) {
+            if (!first) {
                 sb.append(",");
-            }else{
+            } else {
                 first = false;
             }
-            if (hfs.getName() != null){
+            if (hfs.getName() != null) {
                 sb.append(hfs.getName());
                 sb.append(":");
             }
@@ -170,7 +170,7 @@ public class HCatSchema implements Serializable{
             return false;
         }
         HCatSchema other = (HCatSchema) obj;
-       if (!this.getFields().equals(other.getFields())) {
+        if (!this.getFields().equals(other.getFields())) {
             return false;
         }
         return true;

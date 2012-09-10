@@ -34,6 +34,7 @@ import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.thrift.TException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -74,13 +75,13 @@ public class TestHiveClientCache {
     public void testCacheHit() throws IOException, MetaException, LoginException {
 
         HiveClientCache cache = new HiveClientCache(1000);
-        HiveMetaStoreClient  client = cache.get(hiveConf);
+        HiveMetaStoreClient client = cache.get(hiveConf);
         assertNotNull(client);
         client.close(); // close shouldn't matter
 
         // Setting a non important configuration should return the same client only
         hiveConf.setIntVar(HiveConf.ConfVars.DYNAMICPARTITIONMAXPARTS, 10);
-        HiveMetaStoreClient  client2 = cache.get(hiveConf);
+        HiveMetaStoreClient client2 = cache.get(hiveConf);
         assertNotNull(client2);
         assertEquals(client, client2);
         client2.close();
@@ -89,12 +90,12 @@ public class TestHiveClientCache {
     @Test
     public void testCacheMiss() throws IOException, MetaException, LoginException {
         HiveClientCache cache = new HiveClientCache(1000);
-        HiveMetaStoreClient  client = cache.get(hiveConf);
+        HiveMetaStoreClient client = cache.get(hiveConf);
         assertNotNull(client);
 
         // Set different uri as it is one of the criteria deciding whether to return the same client or not
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, " "); // URIs are checked for string equivalence, even spaces make them different
-        HiveMetaStoreClient  client2 = cache.get(hiveConf);
+        HiveMetaStoreClient client2 = cache.get(hiveConf);
         assertNotNull(client2);
         assertNotSame(client, client2);
     }
@@ -106,7 +107,7 @@ public class TestHiveClientCache {
     @Test
     public void testCacheExpiry() throws IOException, MetaException, LoginException, InterruptedException {
         HiveClientCache cache = new HiveClientCache(1);
-        HiveClientCache.CacheableHiveMetaStoreClient client = (HiveClientCache.CacheableHiveMetaStoreClient)cache.get(hiveConf);
+        HiveClientCache.CacheableHiveMetaStoreClient client = (HiveClientCache.CacheableHiveMetaStoreClient) cache.get(hiveConf);
         assertNotNull(client);
 
         Thread.sleep(2500);
@@ -165,9 +166,9 @@ public class TestHiveClientCache {
      */
     @Test
     public void testHMSCBreakability() throws IOException, MetaException, LoginException, TException, AlreadyExistsException,
-        InvalidObjectException, NoSuchObjectException, InterruptedException {
+            InvalidObjectException, NoSuchObjectException, InterruptedException {
         // Setup
-        LocalMetaServer metaServer =  new LocalMetaServer();
+        LocalMetaServer metaServer = new LocalMetaServer();
         metaServer.start();
 
         final HiveClientCache cache = new HiveClientCache(1000);
@@ -253,6 +254,7 @@ public class TestHiveClientCache {
         public HiveConf getHiveConf() {
             return hiveConf;
         }
+
         public void shutDown() {
             System.setSecurityManager(securityManager);
         }

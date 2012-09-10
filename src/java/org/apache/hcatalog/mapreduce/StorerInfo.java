@@ -47,12 +47,12 @@ public class StorerInfo implements Serializable {
      * @param properties the properties for the storage handler
      */
     public StorerInfo(String ifClass, String ofClass, String serdeClass, String storageHandlerClass, Properties properties) {
-      super();
-      this.ifClass =ifClass;
-      this.ofClass = ofClass;
-      this.serdeClass = serdeClass;
-      this.storageHandlerClass = storageHandlerClass;
-      this.properties = properties;
+        super();
+        this.ifClass = ifClass;
+        this.ofClass = ofClass;
+        this.serdeClass = serdeClass;
+        this.storageHandlerClass = storageHandlerClass;
+        this.properties = properties;
     }
 
     /**
@@ -94,14 +94,14 @@ public class StorerInfo implements Serializable {
      * @return the storer properties
      */
     public Properties getProperties() {
-      return properties;
+        return properties;
     }
 
     /**
      * @param properties the storer properties to set 
      */
     public void setProperties(Properties properties) {
-      this.properties = properties;
+        this.properties = properties;
     }
 
 

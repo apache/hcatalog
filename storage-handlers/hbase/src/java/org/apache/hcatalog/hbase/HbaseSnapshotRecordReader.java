@@ -56,8 +56,8 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
     private final Configuration conf;
     private final int maxRevisions = 1;
     private ResultScanner scanner;
-    private Scan  scan;
-    private HTable  htable;
+    private Scan scan;
+    private HTable htable;
     private TableSnapshot snapshot;
     private Iterator<Result> resultItr;
     private Set<Long> allAbortedTransactions;
@@ -69,9 +69,9 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
         this.conf = conf;
         String snapshotString = conf.get(HBaseConstants.PROPERTY_TABLE_SNAPSHOT_KEY);
         HCatTableSnapshot hcatSnapshot = (HCatTableSnapshot) HCatUtil
-                .deserialize(snapshotString);
+            .deserialize(snapshotString);
         this.snapshot = HBaseRevisionManagerUtil.convertSnapshot(hcatSnapshot,
-                inpJobInfo.getTableInfo());
+            inpJobInfo.getTableInfo());
     }
 
     public void init() throws IOException {
@@ -104,7 +104,7 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
             for (byte[] familyKey : families) {
                 String family = Bytes.toString(familyKey);
                 List<FamilyRevision> abortedWriteTransactions = rm.getAbortedWriteTransactions(
-                        tableName, family);
+                    tableName, family);
                 if (abortedWriteTransactions != null) {
                     for (FamilyRevision revision : abortedWriteTransactions) {
                         abortedTransactions.add(revision.getRevision());
@@ -172,7 +172,7 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
     public boolean next(ImmutableBytesWritable key, Result value) throws IOException {
         if (this.resultItr == null) {
             LOG.warn("The HBase result iterator is found null. It is possible"
-                    + " that the record reader has already been closed.");
+                + " that the record reader has already been closed.");
         } else {
             while (resultItr.hasNext()) {
                 Result temp = resultItr.next();
@@ -233,7 +233,7 @@ class HbaseSnapshotRecordReader implements RecordReader<ImmutableBytesWritable, 
             }
         }
 
-        if(finalKeyVals.size() == 0){
+        if (finalKeyVals.size() == 0) {
             return null;
         } else {
             KeyValue[] kvArray = new KeyValue[finalKeyVals.size()];

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.Response;
+
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -52,8 +53,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public ExecBean run(String user, String exec, boolean format,
                         String group, String permissions)
-        throws NotAuthorizedException, BusyException, ExecuteException, IOException
-    {
+        throws NotAuthorizedException, BusyException, ExecuteException, IOException {
         SecureProxySupport proxy = new SecureProxySupport();
         try {
             List<String> args = makeArgs(exec, format, group, permissions);
@@ -103,8 +103,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response descDatabase(String user, String db, boolean extended)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "desc database " + db + "; ";
         if (extended)
             exec = "desc database extended " + db + "; ";
@@ -115,12 +114,12 @@ public class HcatDelegator extends LauncherDelegator {
         } catch (HcatException e) {
             if (e.execBean.stderr.indexOf("Error in semantic analysis") > -1) {
                 return JsonBuilder.create().
-                        put("error", "Database " + db + " does not exist")
-                        .put("errorCode", "404")
-                        .put("database", db).build();
+                    put("error", "Database " + db + " does not exist")
+                    .put("errorCode", "404")
+                    .put("database", db).build();
             }
             throw new HcatException("unable to describe database: " + db,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -130,8 +129,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response listDatabases(String user, String dbPattern)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("show databases like '%s';", dbPattern);
         try {
             String res = jsonRun(user, exec);
@@ -139,7 +137,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to show databases for: " + dbPattern,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -148,8 +146,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response createDatabase(String user, DatabaseDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "create database";
         if (desc.ifNotExists)
             exec += " if not exists";
@@ -160,7 +157,7 @@ public class HcatDelegator extends LauncherDelegator {
             exec += String.format(" location '%s'", desc.location);
         if (TempletonUtils.isset(desc.properties))
             exec += String.format(" with dbproperties (%s)",
-                                  makePropertiesStatement(desc.properties));
+                makePropertiesStatement(desc.properties));
         exec += ";";
 
         String res = jsonRun(user, exec, desc.group, desc.permissions);
@@ -176,8 +173,7 @@ public class HcatDelegator extends LauncherDelegator {
                                  boolean ifExists, String option,
                                  String group, String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "drop database";
         if (ifExists)
             exec += " if exists";
@@ -197,8 +193,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response createTable(String user, String db, TableDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = makeCreateTable(db, desc);
 
         try {
@@ -210,7 +205,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (final HcatException e) {
             throw new HcatException("unable to create table: " + desc.table,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -219,8 +214,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response createTableLike(String user, String db, TableLikeDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; create", db);
 
         if (desc.external)
@@ -239,7 +233,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (final HcatException e) {
             throw new HcatException("unable to create table: " + desc.newTable,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -248,8 +242,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response descTable(String user, String db, String table, boolean extended)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "use " + db + "; ";
         if (extended)
             exec += "desc extended " + table + "; ";
@@ -263,7 +256,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to describe table: " + table,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -273,10 +266,9 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response listTables(String user, String db, String tablePattern)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; show tables like '%s';",
-                                    db, tablePattern);
+            db, tablePattern);
         try {
             String res = jsonRun(user, exec);
             return JsonBuilder.create(res)
@@ -284,7 +276,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to show tables for: " + tablePattern,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -294,10 +286,9 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response descExtendedTable(String user, String db, String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; show table extended like %s;",
-                                    db, table);
+            db, table);
         try {
             String res = jsonRun(user, exec);
             JsonBuilder jb = JsonBuilder.create(singleTable(res, table))
@@ -364,7 +355,7 @@ public class HcatDelegator extends LauncherDelegator {
             exec += String.format(" location '%s'", desc.location);
         if (TempletonUtils.isset(desc.tableProperties))
             exec += String.format(" tblproperties (%s)",
-                                  makePropertiesStatement(desc.tableProperties));
+                makePropertiesStatement(desc.tableProperties));
         exec += ";";
 
         return exec;
@@ -411,9 +402,9 @@ public class HcatDelegator extends LauncherDelegator {
     private String makeRowFormat(TableDesc.RowFormatDesc desc) {
         String res =
             makeTermBy(desc.fieldsTerminatedBy, "fields")
-            + makeTermBy(desc.collectionItemsTerminatedBy, "collection items")
-            + makeTermBy(desc.mapKeysTerminatedBy, "map keys")
-            + makeTermBy(desc.linesTerminatedBy, "lines");
+                + makeTermBy(desc.collectionItemsTerminatedBy, "collection items")
+                + makeTermBy(desc.mapKeysTerminatedBy, "map keys")
+                + makeTermBy(desc.linesTerminatedBy, "lines");
 
         if (TempletonUtils.isset(res))
             return "row format delimited" + res;
@@ -427,7 +418,7 @@ public class HcatDelegator extends LauncherDelegator {
     private String makeTermBy(String sep, String fieldName) {
 
         if (TempletonUtils.isset(sep))
-          return String.format(" %s terminated by '%s'", fieldName, sep);
+            return String.format(" %s terminated by '%s'", fieldName, sep);
         else
             return "";
     }
@@ -437,7 +428,7 @@ public class HcatDelegator extends LauncherDelegator {
         String res = "row format serde " + desc.name;
         if (TempletonUtils.isset(desc.properties))
             res += String.format(" with serdeproperties (%s)",
-                                 makePropertiesStatement(desc.properties));
+                makePropertiesStatement(desc.properties));
         return res;
     }
 
@@ -454,14 +445,13 @@ public class HcatDelegator extends LauncherDelegator {
         String res = String.format("stored by '%s'", desc.className);
         if (TempletonUtils.isset(desc.properties))
             res += String.format(" with serdeproperties (%s)",
-                                 makePropertiesStatement(desc.properties));
+                makePropertiesStatement(desc.properties));
         return res;
     }
 
     // Pull out the first table from the "show extended" json.
     private String singleTable(String json, String table)
-        throws IOException
-    {
+        throws IOException {
         Map obj = JsonBuilder.jsonToMap(json);
         if (JsonBuilder.isError(obj))
             return json;
@@ -472,8 +462,8 @@ public class HcatDelegator extends LauncherDelegator {
         else {
             return JsonBuilder
                 .createError(String.format("Table %s does not exist", table),
-                             JsonBuilder.MISSING).
-                buildJson();
+                    JsonBuilder.MISSING).
+                    buildJson();
         }
     }
 
@@ -484,8 +474,7 @@ public class HcatDelegator extends LauncherDelegator {
                               String table, boolean ifExists,
                               String group, String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; drop table", db);
         if (ifExists)
             exec += " if exists";
@@ -509,10 +498,9 @@ public class HcatDelegator extends LauncherDelegator {
                                 String oldTable, String newTable,
                                 String group, String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; alter table %s rename to %s;",
-                                    db, oldTable, newTable);
+            db, oldTable, newTable);
         try {
             String res = jsonRun(user, exec, group, permissions, true);
             return JsonBuilder.create(res)
@@ -521,7 +509,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to rename table: " + oldTable,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -531,8 +519,7 @@ public class HcatDelegator extends LauncherDelegator {
     public Response descTableProperty(String user, String db,
                                       String table, String property)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         Response res = descTable(user, db, table, true);
         if (res.getStatus() != JsonBuilder.OK)
             return res;
@@ -558,8 +545,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response listTableProperties(String user, String db, String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         Response res = descTable(user, db, table, true);
         if (res.getStatus() != JsonBuilder.OK)
             return res;
@@ -577,11 +563,10 @@ public class HcatDelegator extends LauncherDelegator {
     public Response addOneTableProperty(String user, String db, String table,
                                         TablePropertyDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec
             = String.format("use %s; alter table %s set tblproperties ('%s'='%s');",
-                            db, table, desc.name, desc.value);
+                db, table, desc.name, desc.value);
         try {
             String res = jsonRun(user, exec, desc.group, desc.permissions, true);
             return JsonBuilder.create(res)
@@ -591,12 +576,12 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to add table property: " + table,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
     private Map tableProperties(Object extendedTable) {
-        if (! (extendedTable instanceof Map))
+        if (!(extendedTable instanceof Map))
             return null;
         Map m = (Map) extendedTable;
         Map tableInfo = (Map) m.get("tableInfo");
@@ -611,8 +596,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response listPartitions(String user, String db, String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "use " + db + "; ";
         exec += "show partitions " + table + "; ";
         try {
@@ -623,7 +607,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to show partitions for table: " + table,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -633,8 +617,7 @@ public class HcatDelegator extends LauncherDelegator {
     public Response descOnePartition(String user, String db, String table,
                                      String partition)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = "use " + db + "; ";
         exec += "show table extended like " + table
             + " partition (" + partition + "); ";
@@ -648,9 +631,9 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to show partition: "
-                                    + table + " " + partition,
-                                    e.execBean,
-                                    exec);
+                + table + " " + partition,
+                e.execBean,
+                exec);
         }
     }
 
@@ -660,8 +643,7 @@ public class HcatDelegator extends LauncherDelegator {
     public Response addOnePartition(String user, String db, String table,
                                     PartitionDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; alter table %s add", db, table);
         if (desc.ifNotExists)
             exec += " if not exists";
@@ -673,11 +655,11 @@ public class HcatDelegator extends LauncherDelegator {
             String res = jsonRun(user, exec, desc.group, desc.permissions, true);
             if (res.indexOf("AlreadyExistsException") > -1) {
                 return JsonBuilder.create().
-                        put("error", "Partition already exists")
-                        .put("errorCode", "409")
-                        .put("database", db)
-                        .put("table", table)
-                        .put("partition", desc.partition).build();
+                    put("error", "Partition already exists")
+                    .put("errorCode", "409")
+                    .put("database", db)
+                    .put("table", table)
+                    .put("partition", desc.partition).build();
             }
             return JsonBuilder.create(res)
                 .put("database", db)
@@ -686,7 +668,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to add partition: " + desc,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -697,8 +679,7 @@ public class HcatDelegator extends LauncherDelegator {
                                   String table, String partition, boolean ifExists,
                                   String group, String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; alter table %s drop", db, table);
         if (ifExists)
             exec += " if exists";
@@ -713,7 +694,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to drop partition: " + partition,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -723,13 +704,12 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response listColumns(String user, String db, String table)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         try {
             return descTable(user, db, table, false);
         } catch (HcatException e) {
             throw new HcatException("unable to show columns for table: " + table,
-                                    e.execBean, e.statement);
+                e.execBean, e.statement);
         }
     }
 
@@ -738,8 +718,7 @@ public class HcatDelegator extends LauncherDelegator {
      */
     public Response descOneColumn(String user, String db, String table, String column)
         throws SimpleWebException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         Response res = listColumns(user, db, table);
         if (res.getStatus() != JsonBuilder.OK)
             return res;
@@ -748,7 +727,7 @@ public class HcatDelegator extends LauncherDelegator {
         final Map fields = (o != null && (o instanceof Map)) ? (Map) o : null;
         if (fields == null)
             throw new SimpleWebException(500, "Internal error, unable to find column "
-                                         + column);
+                + column);
 
 
         List<Map> cols = (List) fields.get("columns");
@@ -763,9 +742,11 @@ public class HcatDelegator extends LauncherDelegator {
         }
         if (found == null)
             throw new SimpleWebException(500, "unable to find column " + column,
-                                         new HashMap<String, Object>() {{
-                                                 put("description", fields);
-                                             }});
+                new HashMap<String, Object>() {
+                    {
+                        put("description", fields);
+                    }
+                });
         fields.remove("columns");
         fields.put("column", found);
         return Response.fromResponse(res).entity(fields).build();
@@ -777,10 +758,9 @@ public class HcatDelegator extends LauncherDelegator {
     public Response addOneColumn(String user, String db, String table,
                                  ColumnDesc desc)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         String exec = String.format("use %s; alter table %s add columns (%s %s",
-                                    db, table, desc.name, desc.type);
+            db, table, desc.name, desc.type);
         if (TempletonUtils.isset(desc.comment))
             exec += String.format(" comment '%s'", desc.comment);
         exec += ");";
@@ -793,7 +773,7 @@ public class HcatDelegator extends LauncherDelegator {
                 .build();
         } catch (HcatException e) {
             throw new HcatException("unable to add column: " + desc,
-                                    e.execBean, exec);
+                e.execBean, exec);
         }
     }
 
@@ -826,11 +806,10 @@ public class HcatDelegator extends LauncherDelegator {
                            String group, String permissions,
                            boolean requireEmptyOutput)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         ExecBean res = run(user, exec, true, group, permissions);
 
-        if (! isValid(res, requireEmptyOutput))
+        if (!isValid(res, requireEmptyOutput))
             throw new HcatException("Failure calling hcat: " + exec, res, exec);
 
         return res.stdout;
@@ -840,8 +819,7 @@ public class HcatDelegator extends LauncherDelegator {
     // permissions set.
     private String jsonRun(String user, String exec)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         return jsonRun(user, exec, null, null);
     }
 
@@ -849,8 +827,7 @@ public class HcatDelegator extends LauncherDelegator {
     private String jsonRun(String user, String exec,
                            String group, String permissions)
         throws HcatException, NotAuthorizedException, BusyException,
-        ExecuteException, IOException
-    {
+        ExecuteException, IOException {
         return jsonRun(user, exec, group, permissions, false);
     }
 }

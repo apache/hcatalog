@@ -27,8 +27,7 @@ import javax.ws.rs.ext.Provider;
  */
 @Provider
 public class SimpleExceptionMapper
-    implements ExceptionMapper<SimpleWebException>
-{
+    implements ExceptionMapper<SimpleWebException> {
     public Response toResponse(SimpleWebException e) {
         return e.getResponse();
     }

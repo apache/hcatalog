@@ -15,35 +15,35 @@
 
 <project name="HCatalog-test-utils" default="udf-jar">
 
-    <property name="udf.jarfile" value="testudf.jar" />
-    <property name="udfs.build.dir" value="${basedir}/build" />
-    <property name="udfs.src.dir" value="${basedir}/org/" />
+    <property name="udf.jarfile" value="testudf.jar"/>
+    <property name="udfs.build.dir" value="${basedir}/build"/>
+    <property name="udfs.src.dir" value="${basedir}/org/"/>
 
     <path id="udf-classpath">
-       <fileset file="../../../../../../build/hcatalog/*.jar" />
-       <fileset file="../../../../../../build/ivy/lib/default/*.jar" />
+        <fileset file="../../../../../../build/hcatalog/*.jar"/>
+        <fileset file="../../../../../../build/ivy/lib/default/*.jar"/>
     </path>
 
     <target name="init">
-        <mkdir dir="${udfs.build.dir}" />
+        <mkdir dir="${udfs.build.dir}"/>
     </target>
 
     <target name="clean">
-        <delete dir="${udfs.build.dir}" />
-        <delete file="${udf.jarfile}" />
+        <delete dir="${udfs.build.dir}"/>
+        <delete file="${udf.jarfile}"/>
     </target>
 
     <target name="udf-compile" depends="init">
         <echo>*** Compiling UDFs ***</echo>
         <javac srcdir="${udfs.src.dir}" destdir="${udfs.build.dir}" debug="on">
-            <classpath refid="udf-classpath" />
+            <classpath refid="udf-classpath"/>
         </javac>
     </target>
 
     <target name="udf-jar" depends="udf-compile">
         <echo>*** Creating UDF jar ***</echo>
         <jar duplicate="preserve" jarfile="${udf.jarfile}">
-	    <fileset dir="build"/>
+            <fileset dir="build"/>
         </jar>
     </target>
 </project>

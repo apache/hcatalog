@@ -49,8 +49,8 @@ import static org.junit.Assert.assertTrue;
 
 public class TestHCatClient {
     private static final Logger LOG = LoggerFactory.getLogger(TestHCatClient.class);
-    private static final String msPort  = "20101";
-    private static HiveConf  hcatConf;
+    private static final String msPort = "20101";
+    private static HiveConf hcatConf;
     private static SecurityManager securityManager;
 
     private static class RunMS implements Runnable {
@@ -58,7 +58,7 @@ public class TestHCatClient {
         @Override
         public void run() {
             try {
-                HiveMetaStore.main(new String[] { "-v", "-p", msPort });
+                HiveMetaStore.main(new String[]{"-v", "-p", msPort});
             } catch (Throwable t) {
                 LOG.error("Exiting. Got exception from metastore: ", t);
             }
@@ -83,14 +83,14 @@ public class TestHCatClient {
         hcatConf = new HiveConf(TestHCatClient.class);
         hcatConf.set("hive.metastore.local", "false");
         hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:"
-                + msPort);
+            + msPort);
         hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
         hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
-                HCatSemanticAnalyzer.class.getName());
+            HCatSemanticAnalyzer.class.getName());
         hcatConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
         hcatConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
         hcatConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname,
-                "false");
+            "false");
         System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
         System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
     }
@@ -104,7 +104,7 @@ public class TestHCatClient {
         client.dropDatabase(db, true, HCatClient.DROP_DB_MODE.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(db).ifNotExists(false)
-                .build();
+            .build();
         client.createDatabase(dbDesc);
         List<String> dbNames = client.listDatabaseNamesByPattern("*");
         assertTrue(dbNames.contains("default"));
@@ -114,22 +114,22 @@ public class TestHCatClient {
         assertTrue(testDb.getComment() == null);
         assertTrue(testDb.getProperties().size() == 0);
         String warehouseDir = System
-                .getProperty(ConfVars.METASTOREWAREHOUSE.varname, "/user/hive/warehouse");
+            .getProperty(ConfVars.METASTOREWAREHOUSE.varname, "/user/hive/warehouse");
         assertTrue(testDb.getLocation().equals(
-                "file:" + warehouseDir + "/" + db + ".db"));
+            "file:" + warehouseDir + "/" + db + ".db"));
         ArrayList<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
         cols.add(new HCatFieldSchema("id", Type.INT, "id comment"));
         cols.add(new HCatFieldSchema("value", Type.STRING, "value comment"));
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                .create(db, tableOne, cols).fileFormat("rcfile").build();
+            .create(db, tableOne, cols).fileFormat("rcfile").build();
         client.createTable(tableDesc);
         HCatTable table1 = client.getTable(db, tableOne);
         assertTrue(table1.getInputFileFormat().equalsIgnoreCase(
-                RCFileInputFormat.class.getName()));
+            RCFileInputFormat.class.getName()));
         assertTrue(table1.getOutputFileFormat().equalsIgnoreCase(
-                RCFileOutputFormat.class.getName()));
+            RCFileOutputFormat.class.getName()));
         assertTrue(table1.getSerdeLib().equalsIgnoreCase(
-                ColumnarSerDe.class.getName()));
+            ColumnarSerDe.class.getName()));
         assertTrue(table1.getCols().equals(cols));
         // Since "ifexists" was not set to true, trying to create the same table
         // again
@@ -138,20 +138,20 @@ public class TestHCatClient {
             client.createTable(tableDesc);
         } catch (HCatException e) {
             assertTrue(e.getMessage().contains(
-                    "AlreadyExistsException while creating table."));
+                "AlreadyExistsException while creating table."));
         }
 
         client.dropTable(db, tableOne, true);
         HCatCreateTableDesc tableDesc2 = HCatCreateTableDesc.create(db,
-                tableTwo, cols).build();
+            tableTwo, cols).build();
         client.createTable(tableDesc2);
         HCatTable table2 = client.getTable(db, tableTwo);
         assertTrue(table2.getInputFileFormat().equalsIgnoreCase(
-                TextInputFormat.class.getName()));
+            TextInputFormat.class.getName()));
         assertTrue(table2.getOutputFileFormat().equalsIgnoreCase(
-                IgnoreKeyTextOutputFormat.class.getName()));
+            IgnoreKeyTextOutputFormat.class.getName()));
         assertTrue(table2.getLocation().equalsIgnoreCase(
-                "file:" + warehouseDir + "/" + db + ".db/" + tableTwo));
+            "file:" + warehouseDir + "/" + db + ".db/" + tableTwo));
         client.close();
     }
 
@@ -163,48 +163,48 @@ public class TestHCatClient {
         client.dropDatabase(dbName, true, HCatClient.DROP_DB_MODE.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(dbName)
-                .ifNotExists(true).build();
+            .ifNotExists(true).build();
         client.createDatabase(dbDesc);
         ArrayList<HCatFieldSchema> cols = new ArrayList<HCatFieldSchema>();
         cols.add(new HCatFieldSchema("userid", Type.INT, "id columns"));
         cols.add(new HCatFieldSchema("viewtime", Type.BIGINT,
-                "view time columns"));
+            "view time columns"));
         cols.add(new HCatFieldSchema("pageurl", Type.STRING, ""));
         cols.add(new HCatFieldSchema("ip", Type.STRING,
-                "IP Address of the User"));
+            "IP Address of the User"));
 
         ArrayList<HCatFieldSchema> ptnCols = new ArrayList<HCatFieldSchema>();
         ptnCols.add(new HCatFieldSchema("dt", Type.STRING, "date column"));
         ptnCols.add(new HCatFieldSchema("country", Type.STRING,
-                "country column"));
+            "country column"));
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                .create(dbName, tableName, cols).fileFormat("sequencefile")
-                .partCols(ptnCols).build();
+            .create(dbName, tableName, cols).fileFormat("sequencefile")
+            .partCols(ptnCols).build();
         client.createTable(tableDesc);
 
         Map<String, String> firstPtn = new HashMap<String, String>();
         firstPtn.put("dt", "04/30/2012");
         firstPtn.put("country", "usa");
         HCatAddPartitionDesc addPtn = HCatAddPartitionDesc.create(dbName,
-                tableName, null, firstPtn).build();
+            tableName, null, firstPtn).build();
         client.addPartition(addPtn);
 
         Map<String, String> secondPtn = new HashMap<String, String>();
         secondPtn.put("dt", "04/12/2012");
         secondPtn.put("country", "brazil");
         HCatAddPartitionDesc addPtn2 = HCatAddPartitionDesc.create(dbName,
-                tableName, null, secondPtn).build();
+            tableName, null, secondPtn).build();
         client.addPartition(addPtn2);
 
         Map<String, String> thirdPtn = new HashMap<String, String>();
         thirdPtn.put("dt", "04/13/2012");
         thirdPtn.put("country", "argetina");
         HCatAddPartitionDesc addPtn3 = HCatAddPartitionDesc.create(dbName,
-                tableName, null, thirdPtn).build();
+            tableName, null, thirdPtn).build();
         client.addPartition(addPtn3);
 
         List<HCatPartition> ptnList = client.listPartitionsByFilter(dbName,
-                tableName, null);
+            tableName, null);
         assertTrue(ptnList.size() == 3);
 
         HCatPartition ptn = client.getPartition(dbName, tableName, firstPtn);
@@ -212,29 +212,29 @@ public class TestHCatClient {
 
         client.dropPartition(dbName, tableName, firstPtn, true);
         ptnList = client.listPartitionsByFilter(dbName,
-                tableName, null);
+            tableName, null);
         assertTrue(ptnList.size() == 2);
 
         List<HCatPartition> ptnListTwo = client.listPartitionsByFilter(dbName,
-                tableName, "country = \"argetina\"");
+            tableName, "country = \"argetina\"");
         assertTrue(ptnListTwo.size() == 1);
 
         client.markPartitionForEvent(dbName, tableName, thirdPtn,
-                PartitionEventType.LOAD_DONE);
+            PartitionEventType.LOAD_DONE);
         boolean isMarked = client.isPartitionMarkedForEvent(dbName, tableName,
-                thirdPtn, PartitionEventType.LOAD_DONE);
+            thirdPtn, PartitionEventType.LOAD_DONE);
         assertTrue(isMarked);
         client.close();
     }
 
     @Test
-    public void testDatabaseLocation() throws Exception{
+    public void testDatabaseLocation() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String dbName = "locationDB";
         client.dropDatabase(dbName, true, HCatClient.DROP_DB_MODE.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(dbName)
-                .ifNotExists(true).location("/tmp/"+dbName).build();
+            .ifNotExists(true).location("/tmp/" + dbName).build();
         client.createDatabase(dbDesc);
         HCatDatabase newDB = client.getDatabase(dbName);
         assertTrue(newDB.getLocation().equalsIgnoreCase("file:/tmp/" + dbName));
@@ -253,12 +253,12 @@ public class TestHCatClient {
         cols.add(new HCatFieldSchema("id", Type.INT, "id columns"));
         cols.add(new HCatFieldSchema("value", Type.STRING, "id columns"));
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                .create(null, tableName, cols).fileFormat("rcfile").build();
+            .create(null, tableName, cols).fileFormat("rcfile").build();
         client.createTable(tableDesc);
         // create a new table similar to previous one.
         client.createTableLike(null, tableName, cloneTable, true, false, null);
         List<String> tables = client.listTableNamesByPattern(null, "table*");
-        assertTrue(tables.size() ==2);
+        assertTrue(tables.size() == 2);
         client.close();
     }
 
@@ -273,12 +273,12 @@ public class TestHCatClient {
         cols.add(new HCatFieldSchema("id", Type.INT, "id columns"));
         cols.add(new HCatFieldSchema("value", Type.STRING, "id columns"));
         HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                .create(null, tableName, cols).fileFormat("rcfile").build();
+            .create(null, tableName, cols).fileFormat("rcfile").build();
         client.createTable(tableDesc);
-        client.renameTable(null, tableName,newName);
+        client.renameTable(null, tableName, newName);
         try {
             client.getTable(null, tableName);
-        } catch(HCatException exp){
+        } catch (HCatException exp) {
             assertTrue(exp.getMessage().contains("NoSuchObjectException while fetching table"));
         }
         HCatTable newTable = client.getTable(null, newName);
@@ -299,7 +299,7 @@ public class TestHCatClient {
         cols.add(new HCatFieldSchema("value", Type.STRING, "id columns"));
         try {
             HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                    .create(null, tableName, cols).fileFormat("rcfile").build();
+                .create(null, tableName, cols).fileFormat("rcfile").build();
             client.createTable(tableDesc);
         } catch (Exception exp) {
             isExceptionCaught = true;
@@ -309,7 +309,7 @@ public class TestHCatClient {
             String newName = "goodTable";
             client.dropTable(null, newName, true);
             HCatCreateTableDesc tableDesc2 = HCatCreateTableDesc
-                    .create(null, newName, cols).fileFormat("rcfile").build();
+                .create(null, newName, cols).fileFormat("rcfile").build();
             client.createTable(tableDesc2);
             HCatTable newTable = client.getTable(null, newName);
             assertTrue(newTable != null);
@@ -332,7 +332,7 @@ public class TestHCatClient {
         cols.add(new HCatFieldSchema("value", Type.STRING, "id columns"));
         try {
             HCatCreateTableDesc tableDesc = HCatCreateTableDesc
-                    .create(null, tableName, cols).fileFormat("rcfile").build();
+                .create(null, tableName, cols).fileFormat("rcfile").build();
             client.createTable(tableDesc);
             // The DB foo is non-existent.
             client.getTable("foo", tableName);
@@ -342,7 +342,7 @@ public class TestHCatClient {
             String newName = "goodTable";
             client.dropTable(null, newName, true);
             HCatCreateTableDesc tableDesc2 = HCatCreateTableDesc
-                    .create(null, newName, cols).fileFormat("rcfile").build();
+                .create(null, newName, cols).fileFormat("rcfile").build();
             client.createTable(tableDesc2);
             HCatTable newTable = client.getTable(null, newName);
             assertTrue(newTable != null);

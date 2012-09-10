@@ -46,7 +46,7 @@ public abstract class SkeletonHBaseTest {
 
     protected final static String DEFAULT_CONTEXT_HANDLE = "default";
 
-    protected static Map<String,Context> contextMap = new HashMap<String,Context>();
+    protected static Map<String, Context> contextMap = new HashMap<String, Context>();
     protected static Set<String> tableNames = new HashSet<String>();
 
     /**
@@ -59,7 +59,7 @@ public abstract class SkeletonHBaseTest {
         try {
             HBaseAdmin admin = new HBaseAdmin(getHbaseConf());
             HTableDescriptor tableDesc = new HTableDescriptor(tableName);
-            for(String family: families) {
+            for (String family : families) {
                 HColumnDescriptor columnDescriptor = new HColumnDescriptor(family);
                 tableDesc.addFamily(columnDescriptor);
             }
@@ -72,13 +72,13 @@ public abstract class SkeletonHBaseTest {
     }
 
     protected String newTableName(String prefix) {
-        String name =null;
+        String name = null;
         int tries = 100;
         do {
-            name = prefix+"_"+Math.abs(new Random().nextLong());
-        } while(tableNames.contains(name) && --tries > 0);
-        if(tableNames.contains(name))
-            throw new IllegalStateException("Couldn't find a unique table name, tableNames size: "+tableNames.size());
+            name = prefix + "_" + Math.abs(new Random().nextLong());
+        } while (tableNames.contains(name) && --tries > 0);
+        if (tableNames.contains(name))
+            throw new IllegalStateException("Couldn't find a unique table name, tableNames size: " + tableNames.size());
         tableNames.add(name);
         return name;
     }
@@ -89,8 +89,8 @@ public abstract class SkeletonHBaseTest {
      */
     @BeforeClass
     public static void setup() {
-        if(!contextMap.containsKey(getContextHandle()))
-            contextMap.put(getContextHandle(),new Context(getContextHandle()));
+        if (!contextMap.containsKey(getContextHandle()))
+            contextMap.put(getContextHandle(), new Context(getContextHandle()));
 
         contextMap.get(getContextHandle()).start();
     }
@@ -172,18 +172,18 @@ public abstract class SkeletonHBaseTest {
 
         public Context(String handle) {
             try {
-                testDir = new File(TEST_DIR+"/test_"+handle+"_"+Math.abs(new Random().nextLong())+"/").getCanonicalPath();
+                testDir = new File(TEST_DIR + "/test_" + handle + "_" + Math.abs(new Random().nextLong()) + "/").getCanonicalPath();
             } catch (IOException e) {
-                throw new IllegalStateException("Failed to generate testDir",e);
+                throw new IllegalStateException("Failed to generate testDir", e);
             }
-            System.out.println("Cluster work directory: "+testDir);
+            System.out.println("Cluster work directory: " + testDir);
         }
 
         public void start() {
-            if(usageCount++ == 0) {
-            	ManyMiniCluster.Builder b = ManyMiniCluster.create(new File(testDir));
+            if (usageCount++ == 0) {
+                ManyMiniCluster.Builder b = ManyMiniCluster.create(new File(testDir));
                 if (testConf != null) {
-                   b.hbaseConf(HBaseConfiguration.create(testConf));
+                    b.hbaseConf(HBaseConfiguration.create(testConf));
                 }
                 cluster = b.build();
                 cluster.start();
@@ -195,16 +195,16 @@ public abstract class SkeletonHBaseTest {
         }
 
         public void stop() {
-            if( --usageCount == 0)  {
+            if (--usageCount == 0) {
                 try {
                     cluster.stop();
                     cluster = null;
                 } finally {
-                    System.out.println("Trying to cleanup: "+testDir);
+                    System.out.println("Trying to cleanup: " + testDir);
                     try {
                         FileUtil.fullyDelete(new File(testDir));
                     } catch (IOException e) {
-                        throw new IllegalStateException("Failed to cleanup test dir",e);
+                        throw new IllegalStateException("Failed to cleanup test dir", e);
                     }
                 }
             }

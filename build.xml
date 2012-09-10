@@ -21,451 +21,452 @@
          xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
-  <property name="path.to.basedir" location="${basedir}"/>
+    <property name="path.to.basedir" location="${basedir}"/>
 
-  <loadproperties srcfile="${basedir}/build.properties"/>
+    <loadproperties srcfile="${basedir}/build.properties"/>
 
-  <!--  
-  ================================================================================
-  Imports
-  ================================================================================ -->
+    <!--
+   ================================================================================
+   Imports
+   ================================================================================ -->
 
-  <!--
-  ================================================================================
-  Properties and Classpaths Section
-  ================================================================================
-  -->
+    <!--
+    ================================================================================
+    Properties and Classpaths Section
+    ================================================================================
+    -->
 
-  <condition property="staging">
-    <equals arg1="${repo}" arg2="staging"/>
-  </condition>
+    <condition property="staging">
+        <equals arg1="${repo}" arg2="staging"/>
+    </condition>
 
-  <!-- e2e test properties -->
-  <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
+    <!-- e2e test properties -->
+    <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
 
-  <!-- ivy properties set here -->
-  <property name="ivy.repo.dir" value="${user.home}/ivyrepo" />
-  <property name="ivy.dir" location="ivy" />
-  <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
-  <property name="asfrepo" value="https://repository.apache.org"/>
-  <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
-  <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
-  <property name="asfstagingrepo" value="${asfrepo}/service/local/staging/deploy/maven2"/>
-  <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
-  <property name="ant_task.jar" location="${ivy.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
-  <property name="ant_task_repo_url"
-    value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
-  <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
-  <property name="ivy.xml" location="${basedir}/ivy.xml"/>
-  <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
-  <property name="build.ivy.dir" location="${build.dir}/ivy" />
-  <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
-  <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
-  <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
-  <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
+    <!-- ivy properties set here -->
+    <property name="ivy.repo.dir" value="${user.home}/ivyrepo"/>
+    <property name="ivy.dir" location="ivy"/>
+    <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
+    <property name="asfrepo" value="https://repository.apache.org"/>
+    <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
+    <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
+    <property name="asfstagingrepo" value="${asfrepo}/service/local/staging/deploy/maven2"/>
+    <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
+    <property name="ant_task.jar" location="${ivy.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
+    <property name="ant_task_repo_url"
+              value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
+    <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
+    <property name="ivy.xml" location="${basedir}/ivy.xml"/>
+    <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml"/>
+    <property name="build.ivy.dir" location="${build.dir}/ivy"/>
+    <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
+    <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib"/>
+    <property name="ivy.lib.dir" location="${build.ivy.lib.dir}/${ant.project.name}"/>
+    <property name="build.ivy.report.dir" location="${build.ivy.dir}/report"/>
 
-  <!-- packaging properties -->
-  <property name="package.prefix" value="/usr"/>
-  <property name="package.conf.dir" value="/etc/hcatalog"/>
-  <property name="package.log.dir" value="/var/log/hcatalog"/>
-  <property name="package.pid.dir" value="/var/run/hcatalog"/>
-  <property name="package.var.dir" value="/var/lib/hcatalog"/>
-  <property name="package.share.dir" value="/share/hcatalog/${module}"/>
-  <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
-  <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
+    <!-- packaging properties -->
+    <property name="package.prefix" value="/usr"/>
+    <property name="package.conf.dir" value="/etc/hcatalog"/>
+    <property name="package.log.dir" value="/var/log/hcatalog"/>
+    <property name="package.pid.dir" value="/var/run/hcatalog"/>
+    <property name="package.var.dir" value="/var/lib/hcatalog"/>
+    <property name="package.share.dir" value="/share/hcatalog/${module}"/>
+    <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
+    <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
 
-  <!-- rats properties -->
-  <property name="rat.reporting.classname" value="rat.Report"/>
+    <!-- rats properties -->
+    <property name="rat.reporting.classname" value="rat.Report"/>
 
-  <path id="compile.classpath">
-    <fileset dir="${build.dir}/ivy/lib/default">
-      <include name="**/*.jar"/>
-    </fileset>
-  </path>
+    <path id="compile.classpath">
+        <fileset dir="${build.dir}/ivy/lib/default">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
 
-  <path id="test.class.path">
-    <pathelement location="${test.classes}"/>
-    <pathelement location="${build.classes}"/>
-    <pathelement location="conf"/>
-    <fileset dir="${build.dir}/ivy/lib/test">
-      <include name="**/*.jar"/>
-    </fileset>
-    <pathelement location="${basedir}/hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
-  </path>
+    <path id="test.class.path">
+        <pathelement location="${test.classes}"/>
+        <pathelement location="${build.classes}"/>
+        <pathelement location="conf"/>
+        <fileset dir="${build.dir}/ivy/lib/test">
+            <include name="**/*.jar"/>
+        </fileset>
+        <pathelement location="${basedir}/hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
+    </path>
 
-  <!-- Classpath that includes all sub packages, used for things like Java docs -->
-  <path id="uber.classpath">
-    <fileset dir="${basedir}">
-      <include name="**/build/ivy/lib/default/*.jar"/>
-    </fileset>
-  </path>
+    <!-- Classpath that includes all sub packages, used for things like Java docs -->
+    <path id="uber.classpath">
+        <fileset dir="${basedir}">
+            <include name="**/build/ivy/lib/default/*.jar"/>
+        </fileset>
+    </path>
 
-  <!-- This is a little janky because hcatalog-core.jar is not yet a submodule. -->
-  <target name="ivy-report" depends="ivy-retrieve">
-    <antcall target="_ivy-report"/>
-    <ant target="_ivy-report" dir="hcatalog-pig-adapter" inheritAll="false" useNativeBasedir="true"/>
-    <ant target="ivy-report" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
-  </target>
+    <!-- This is a little janky because hcatalog-core.jar is not yet a submodule. -->
+    <target name="ivy-report" depends="ivy-retrieve">
+        <antcall target="_ivy-report"/>
+        <ant target="_ivy-report" dir="hcatalog-pig-adapter" inheritAll="false" useNativeBasedir="true"/>
+        <ant target="ivy-report" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 
-  <target name="ivy-download" description="To download ivy" unless="offline">
-    <echo message="${ant.project.name}"/>
-    <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true" skipexisting="true"/>
-    <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
-      <classpath>
-        <pathelement location="${ivy.jar}"/>
-      </classpath>
-    </typedef>
-  </target>
+    <target name="ivy-download" description="To download ivy" unless="offline">
+        <echo message="${ant.project.name}"/>
+        <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true" skipexisting="true"/>
+        <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
+            <classpath>
+                <pathelement location="${ivy.jar}"/>
+            </classpath>
+        </typedef>
+    </target>
 
-  <target name="ivy-init" depends="ivy-download,_ivy-init">
-    <!-- HCatalog started as a single source tree that produced multiple artifacts.
-    Currently its going through a transition to subprojects. During this transition
-    we jank together pom files for artifacts produced in the existing source tree until
-    they are correctly generated from per-subproject ivy.xml files. -->
-    <copy file="${pom.file}" tofile="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
-          overwrite="true"/>
-    <replace file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
-             token="artifactId>hcatalog"
-             value="artifactId>hcatalog-core"/>
+    <target name="ivy-init" depends="ivy-download,_ivy-init">
+        <!-- HCatalog started as a single source tree that produced multiple artifacts.
+        Currently its going through a transition to subprojects. During this transition
+        we jank together pom files for artifacts produced in the existing source tree until
+        they are correctly generated from per-subproject ivy.xml files. -->
+        <copy file="${pom.file}" tofile="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
+              overwrite="true"/>
+        <replace file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"
+                 token="artifactId>hcatalog"
+                 value="artifactId>hcatalog-core"/>
 
-    <copy file="${pom.file}" overwrite="true"
-          tofile="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
-    <replace file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"
-             token="artifactId>hcatalog"
-             value="artifactId>hcatalog-server-extensions"/>
-  </target>
+        <copy file="${pom.file}" overwrite="true"
+              tofile="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
+        <replace file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"
+                 token="artifactId>hcatalog"
+                 value="artifactId>hcatalog-server-extensions"/>
+    </target>
 
-  <target name="init" depends="ivy-retrieve,mvn-init">
-    <mkdir dir="${dist.dir}" />
-    <mkdir dir="${build.classes}" />
-    <mkdir dir="${test.classes}" />
-  </target>
+    <target name="init" depends="ivy-retrieve,mvn-init">
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${build.classes}"/>
+        <mkdir dir="${test.classes}"/>
+    </target>
 
-  <!--
-  ================================================================================
-  Main Build and Jar Section
-  ================================================================================
-  -->
-  <!-- Build HCatalog src files -->
-  <target name="compile-src" depends="init">
-    <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
-        includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
-        optimize="${javac.optimize}" target="${javac.version}"
-        source="${javac.version}" deprecation="${javac.deprecation}"
-        includeantruntime="false">
-      <compilerarg line="${javac.args}"/>
-      <classpath refid="compile.classpath"/>
-    </javac>
-  </target>
- 
-  <!-- Build the hcatalog client jar -->
-  <target name="clientjar" depends="compile-src">
-    <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
-         basedir="${build.classes}"/>
-    <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
-      <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
-    </artifact:install>
-  </target>
+    <!--
+    ================================================================================
+    Main Build and Jar Section
+    ================================================================================
+    -->
+    <!-- Build HCatalog src files -->
+    <target name="compile-src" depends="init">
+        <javac encoding="${build.encoding}" srcdir="${src.dir}" excludes="${excludes}"
+               includes="**/*.java" destdir="${build.classes}" debug="${javac.debug}"
+               optimize="${javac.optimize}" target="${javac.version}"
+               source="${javac.version}" deprecation="${javac.deprecation}"
+               includeantruntime="false">
+            <compilerarg line="${javac.args}"/>
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
 
-  <!--
-  ================================================================================
-  Build server side code, mainly listener.
-  ================================================================================
-  -->
-  <target name="server-extensions" depends="compile-src">
-    <jar jarfile="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar"
-         basedir="${build.classes}"
-         includes="org/apache/hcatalog/listener/**,org/apache/hcatalog/metadata/**"/>
-    <artifact:install file="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar">
-      <artifact:pom file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
-    </artifact:install>
-  </target>
+    <!-- Build the hcatalog client jar -->
+    <target name="clientjar" depends="compile-src">
+        <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
+             basedir="${build.classes}"/>
+        <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
+            <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
+        </artifact:install>
+    </target>
 
-  <!--
-  ================================================================================
-  Build both clientjar and server-extensions
-  ================================================================================
-  -->
-  <target name="jar" depends="checkstyle,shims,clientjar,server-extensions,jar-storage-handlers">
-    <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
-    <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
+    <!--
+    ================================================================================
+    Build server side code, mainly listener.
+    ================================================================================
+    -->
+    <target name="server-extensions" depends="compile-src">
+        <jar jarfile="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar"
+             basedir="${build.classes}"
+             includes="org/apache/hcatalog/listener/**,org/apache/hcatalog/metadata/**"/>
+        <artifact:install
+                file="${build.dir}/${ant.project.name}/${ant.project.name}-server-extensions-${hcatalog.version}.jar">
+            <artifact:pom file="${build.ivy.dir}/hcatalog-server-extensions-${hcatalog.version}.pom"/>
+        </artifact:install>
+    </target>
 
-    <!-- Build hcatalog.jar, bundling the pig adapter. Our intention is to stop producing this
-         fat jar after some migration period. -->
-    <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}">
-      <zipfileset src="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"/>
-      <zipfileset src="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
-    </jar>
-  </target>
+    <!--
+    ================================================================================
+    Build both clientjar and server-extensions
+    ================================================================================
+    -->
+    <target name="jar" depends="checkstyle,shims,clientjar,server-extensions,jar-storage-handlers">
+        <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
+        <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
+        <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
 
-  <!--
-  ================================================================================
-  Build shims
-  ================================================================================
-  -->
+        <!-- Build hcatalog.jar, bundling the pig adapter. Our intention is to stop producing this
+             fat jar after some migration period. -->
+        <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.jar}">
+            <zipfileset src="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"/>
+            <zipfileset src="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
+        </jar>
+    </target>
 
-  <target name="shims" depends="compile-src">
-    <ant antfile="shims/build.xml" target="jar" inheritAll="false" useNativeBasedir="true"/>
-  </target>
+    <!--
+    ================================================================================
+    Build shims
+    ================================================================================
+    -->
 
-  <!--
-  ================================================================================
-  Build storage handlers
-  ================================================================================
-  -->
+    <target name="shims" depends="compile-src">
+        <ant antfile="shims/build.xml" target="jar" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 
-  <target name="jar-storage-handlers">        
-    <ant target="jar" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
-  </target>
+    <!--
+    ================================================================================
+    Build storage handlers
+    ================================================================================
+    -->
 
-  <!--
-  ================================================================================
-  Test Section
-  ================================================================================
-  -->
-  <!-- Build HCatalog test files -->
-  <target name="compile-test" depends="jar">
-    <javac
-        encoding="${build.encoding}"
-        srcdir="${test.src.dir}"
-        excludes="${test.excludes}"
-        includes="**/*.java"
-        destdir="${test.classes}"
-        debug="${javac.debug}"
-        optimize="${javac.optimize}"
-        target="${javac.version}"
-        source="${javac.version}"
-        deprecation="${javac.deprecation}"
-        includeantruntime="false">
-      <compilerarg line="${javac.args}"/>
-      <classpath refid="test.class.path"/>
-    </javac>
-  </target>
+    <target name="jar-storage-handlers">
+        <ant target="jar" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 
-  <target name="test" depends="compile-test" description="run unit tests">
-    <_junit srcDir="${basedir}/src/test"/>
-    <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="test" dir="webhcat/svr" inheritAll="false"/>
-    <ant target="test" dir="webhcat/java-client" inheritAll="false"/>
-    <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
-  </target>
+    <!--
+    ================================================================================
+    Test Section
+    ================================================================================
+    -->
+    <!-- Build HCatalog test files -->
+    <target name="compile-test" depends="jar">
+        <javac
+                encoding="${build.encoding}"
+                srcdir="${test.src.dir}"
+                excludes="${test.excludes}"
+                includes="**/*.java"
+                destdir="${test.classes}"
+                debug="${javac.debug}"
+                optimize="${javac.optimize}"
+                target="${javac.version}"
+                source="${javac.version}"
+                deprecation="${javac.deprecation}"
+                includeantruntime="false">
+            <compilerarg line="${javac.args}"/>
+            <classpath refid="test.class.path"/>
+        </javac>
+    </target>
 
-  <target name="test-with-clover" depends="clover-init, compile-test"
-          description="run unit tests and generate code coverage reports">
-    <_junit srcDir="${basedir}/src/test"/>
-    <ant target="_test-with-clover" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="_test-with-clover" dir="webhcat/svr" inheritAll="false"/>
-    <ant target="_test-with-clover" dir="webhcat/java-client" inheritAll="false"/>
-    <!-- storage-handlers do not have coverage as they have not
-         yet been migrated to the new build files. -->
-    <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
-  </target>
+    <target name="test" depends="compile-test" description="run unit tests">
+        <_junit srcDir="${basedir}/src/test"/>
+        <ant target="test" dir="hcatalog-pig-adapter" inheritAll="false"/>
+        <ant target="test" dir="webhcat/svr" inheritAll="false"/>
+        <ant target="test" dir="webhcat/java-client" inheritAll="false"/>
+        <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+    </target>
+
+    <target name="test-with-clover" depends="clover-init, compile-test"
+            description="run unit tests and generate code coverage reports">
+        <_junit srcDir="${basedir}/src/test"/>
+        <ant target="_test-with-clover" dir="hcatalog-pig-adapter" inheritAll="false"/>
+        <ant target="_test-with-clover" dir="webhcat/svr" inheritAll="false"/>
+        <ant target="_test-with-clover" dir="webhcat/java-client" inheritAll="false"/>
+        <!-- storage-handlers do not have coverage as they have not
+             yet been migrated to the new build files. -->
+        <ant target="test" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 
 
-  <!--
-  ================================================================================
-  Findbugs Section
-  ================================================================================
-  -->
+    <!--
+    ================================================================================
+    Findbugs Section
+    ================================================================================
+    -->
 
-  <target name="findbugs" depends="init-findbugs,jar">
-    <property name="findbugs.out.dir" value="${test.dir}/findbugs"/>
-    <property name="findbugs.exclude.file" value="${test.src.dir}/findbugsExcludeFile.xml"/>
-    <property name="findbugs.report.htmlfile"
-      value="${findbugs.out.dir}/hcat-findbugs-report.html"/>
-    <property name="findbugs.report.xmlfile"
-      value="${findbugs.out.dir}/hcat-findbugs-report.xml"/>
+    <target name="findbugs" depends="init-findbugs,jar">
+        <property name="findbugs.out.dir" value="${test.dir}/findbugs"/>
+        <property name="findbugs.exclude.file" value="${test.src.dir}/findbugsExcludeFile.xml"/>
+        <property name="findbugs.report.htmlfile"
+                  value="${findbugs.out.dir}/hcat-findbugs-report.html"/>
+        <property name="findbugs.report.xmlfile"
+                  value="${findbugs.out.dir}/hcat-findbugs-report.xml"/>
 
-    <_findbugs outputDir="${findbugs.out.dir}"
-               outputFile="${findbugs.report.xmlfile}"
-               excludeFilter="${findbugs.exclude.file}"
-               findbugsReportXmlFile="${findbugs.report.xmlfile}"
-               findbugsReportHtmlFile="${findbugs.report.htmlfile}"
-               sourceDir="${src.dir}"
-               jarDir="${build.dir}/${ant.project.name}"
-               classPathRef="compile.classpath"/>
+        <_findbugs outputDir="${findbugs.out.dir}"
+                   outputFile="${findbugs.report.xmlfile}"
+                   excludeFilter="${findbugs.exclude.file}"
+                   findbugsReportXmlFile="${findbugs.report.xmlfile}"
+                   findbugsReportHtmlFile="${findbugs.report.htmlfile}"
+                   sourceDir="${src.dir}"
+                   jarDir="${build.dir}/${ant.project.name}"
+                   classPathRef="compile.classpath"/>
 
-    <ant target="findbugs" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="findbugs" dir="webhcat/svr" inheritAll="false"/>
-    <ant target="findbugs" dir="webhcat/java-client" inheritAll="false"/>
-  </target>
+        <ant target="findbugs" dir="hcatalog-pig-adapter" inheritAll="false"/>
+        <ant target="findbugs" dir="webhcat/svr" inheritAll="false"/>
+        <ant target="findbugs" dir="webhcat/java-client" inheritAll="false"/>
+    </target>
 
-  <!--
-  ================================================================================
-  Clean Section
-  ================================================================================
-  -->
-  <!-- Clean up children -->
-  <target name="clean" description="Cleanup all build artifacts">
-    <echo message="${ant.project.name}"/>
-    <delete dir="${build.dir}" />
-    <delete dir="${test.warehouse.dir}"/>
-    <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
-    <ant target="clean" dir="webhcat/svr" inheritAll="false"/>
-    <ant target="clean" dir="webhcat/java-client" inheritAll="false"/>
-    <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
-    <ant target="clean" dir="shims" inheritAll="false" useNativeBasedir="true"/>
-  </target>
- 
-  <!--
-  ================================================================================
-  Docs Section
-  ================================================================================
-  -->
-  <target name="docs" depends="forrest, javadoc"
-          description="Generate Javadoc and Forrest documentation">
-  </target>
+    <!--
+    ================================================================================
+    Clean Section
+    ================================================================================
+    -->
+    <!-- Clean up children -->
+    <target name="clean" description="Cleanup all build artifacts">
+        <echo message="${ant.project.name}"/>
+        <delete dir="${build.dir}"/>
+        <delete dir="${test.warehouse.dir}"/>
+        <ant target="clean" dir="hcatalog-pig-adapter" inheritAll="false"/>
+        <ant target="clean" dir="webhcat/svr" inheritAll="false"/>
+        <ant target="clean" dir="webhcat/java-client" inheritAll="false"/>
+        <ant target="clean" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
+        <ant target="clean" dir="shims" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 
-  <target name="forrest" if="forrest.home"
-          description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line.">
-    <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
-          failonerror="true">
-    </exec>
-    <copy todir="${build.docs}/">
-      <fileset dir="${docs.src}/build/site/" />
-    </copy>
-  </target>
+    <!--
+    ================================================================================
+    Docs Section
+    ================================================================================
+    -->
+    <target name="docs" depends="forrest, javadoc"
+            description="Generate Javadoc and Forrest documentation">
+    </target>
 
-  <target name="javadoc" depends="jar" description="Generate Javadoc documentation">
-    <mkdir dir="${build.javadoc}" />
-    <javadoc overview="${src.dir}/../docs/overview.html"
-             packagenames="org.apache.hcatalog.*"
-             destdir="${build.javadoc}"
-             author="true"
-             version="true"
-             use="true"
-             noqualifier="all"
-             windowtitle="HCatalog ${hcatalog.version} API"
-             doctitle="HCatalog ${hcatalog.version} API"
-             failonerror="true">
-      <packageset dir="${src.dir}" />
-      <packageset dir="hcatalog-pig-adapter/src/main/java" />
-      <packageset dir="webhcat/svr/src/main/java" />
-      <packageset dir="webhcat/java-client/src/main/java" />
-      <classpath>
-        <path refid="uber.classpath"/>
-      </classpath>
-      <group title="hcatalog" packages="org.apache.hcatalog.*"/>
-    </javadoc>
-  </target>
+    <target name="forrest" if="forrest.home"
+            description="Generate forrest-based documentation. To use, specify -Dforrest.home=&lt;base of Apache Forrest installation&gt; on the command line.">
+        <exec dir="${docs.src}" executable="${forrest.home}/bin/forrest"
+              failonerror="true">
+        </exec>
+        <copy todir="${build.docs}/">
+            <fileset dir="${docs.src}/build/site/"/>
+        </copy>
+    </target>
 
-  <!--
-  ===============================================================================
-  Distribution Section
-  ===============================================================================
-  -->
-  <target name="package-storage-handlers">
-    <property name="handlers.dir" value="${dist.dir}/share/hcatalog/storage-handlers"/>
-    <mkdir dir="${handlers.dir}"/>
-    <ant target="package" dir="storage-handlers" inheritAll="false" useNativeBasedir="true">     
-        <property name="dist.handlers.dir" value="${handlers.dir}"/>
-    </ant>
-    <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
-      <fileset dir="${dist.dir}/share/${ant.project.name}/storage-handlers">
-        <include name="*/lib/*"/>
-      </fileset>
-    </copy>
-  </target>
+    <target name="javadoc" depends="jar" description="Generate Javadoc documentation">
+        <mkdir dir="${build.javadoc}"/>
+        <javadoc overview="${src.dir}/../docs/overview.html"
+                 packagenames="org.apache.hcatalog.*"
+                 destdir="${build.javadoc}"
+                 author="true"
+                 version="true"
+                 use="true"
+                 noqualifier="all"
+                 windowtitle="HCatalog ${hcatalog.version} API"
+                 doctitle="HCatalog ${hcatalog.version} API"
+                 failonerror="true">
+            <packageset dir="${src.dir}"/>
+            <packageset dir="hcatalog-pig-adapter/src/main/java"/>
+            <packageset dir="webhcat/svr/src/main/java"/>
+            <packageset dir="webhcat/java-client/src/main/java"/>
+            <classpath>
+                <path refid="uber.classpath"/>
+            </classpath>
+            <group title="hcatalog" packages="org.apache.hcatalog.*"/>
+        </javadoc>
+    </target>
 
-  <target name="package" depends="jar, docs" description="Create an HCatalog release">
-    <mkdir dir="${dist.dir}" />
-    <mkdir dir="${dist.dir}/share/${ant.project.name}/lib" />
-    <mkdir dir="${dist.dir}/etc/hcatalog" />
-    <mkdir dir="${dist.dir}/bin" />
-    <mkdir dir="${dist.dir}/sbin" />
-    <mkdir dir="${dist.dir}/share/${ant.project.name}/scripts" />
-    <mkdir dir="${dist.dir}/share/${ant.project.name}/templates/conf" />
-    <mkdir dir="${dist.dir}/share/doc/${ant.project.name}" />
-    <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/api" />
-    <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/jdiff"/>
-    <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/license" />
+    <!--
+    ===============================================================================
+    Distribution Section
+    ===============================================================================
+    -->
+    <target name="package-storage-handlers">
+        <property name="handlers.dir" value="${dist.dir}/share/hcatalog/storage-handlers"/>
+        <mkdir dir="${handlers.dir}"/>
+        <ant target="package" dir="storage-handlers" inheritAll="false" useNativeBasedir="true">
+            <property name="dist.handlers.dir" value="${handlers.dir}"/>
+        </ant>
+        <copy todir="${dist.dir}/share/${ant.project.name}/lib" includeEmptyDirs="false" flatten="true">
+            <fileset dir="${dist.dir}/share/${ant.project.name}/storage-handlers">
+                <include name="*/lib/*"/>
+            </fileset>
+        </copy>
+    </target>
 
-    <copy todir="${dist.dir}/share/${ant.project.name}" includeEmptyDirs="false">
-      <fileset dir="${build.dir}/${ant.project.name}/">
-        <include name="hcatalog-*.jar"/>
-      </fileset>
-      <fileset dir="hcatalog-pig-adapter/build">
-        <include name="hcatalog-*.jar"/>
-      </fileset>
-      <fileset dir="webhcat/svr/build">
-        <include name="webhcat-*.jar"/>
-      </fileset>
-      <fileset dir="webhcat/java-client/build">
-        <include name="webhcat-java-client*.jar"/>
-      </fileset>
-    </copy>
+    <target name="package" depends="jar, docs" description="Create an HCatalog release">
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${dist.dir}/share/${ant.project.name}/lib"/>
+        <mkdir dir="${dist.dir}/etc/hcatalog"/>
+        <mkdir dir="${dist.dir}/bin"/>
+        <mkdir dir="${dist.dir}/sbin"/>
+        <mkdir dir="${dist.dir}/share/${ant.project.name}/scripts"/>
+        <mkdir dir="${dist.dir}/share/${ant.project.name}/templates/conf"/>
+        <mkdir dir="${dist.dir}/share/doc/${ant.project.name}"/>
+        <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/api"/>
+        <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/jdiff"/>
+        <mkdir dir="${dist.dir}/share/doc/${ant.project.name}/license"/>
 
-    <copy todir="${dist.dir}/bin">
-      <fileset dir="bin/">
-        <include name="hcat"/>
-      </fileset>
+        <copy todir="${dist.dir}/share/${ant.project.name}" includeEmptyDirs="false">
+            <fileset dir="${build.dir}/${ant.project.name}/">
+                <include name="hcatalog-*.jar"/>
+            </fileset>
+            <fileset dir="hcatalog-pig-adapter/build">
+                <include name="hcatalog-*.jar"/>
+            </fileset>
+            <fileset dir="webhcat/svr/build">
+                <include name="webhcat-*.jar"/>
+            </fileset>
+            <fileset dir="webhcat/java-client/build">
+                <include name="webhcat-java-client*.jar"/>
+            </fileset>
+        </copy>
 
-    </copy>
-    <copy todir="${dist.dir}/libexec">
-      <fileset dir="bin">
-        <include name="hcat-config.sh"/>
-      </fileset>
-    </copy>
+        <copy todir="${dist.dir}/bin">
+            <fileset dir="bin/">
+                <include name="hcat"/>
+            </fileset>
 
-    <copy todir="${dist.dir}/sbin">
-      <fileset dir="${package.dir}">
-        <include name="*.sh"/>
-      </fileset>
-    </copy>
+        </copy>
+        <copy todir="${dist.dir}/libexec">
+            <fileset dir="bin">
+                <include name="hcat-config.sh"/>
+            </fileset>
+        </copy>
 
-    <copy todir="${dist.dir}/etc/${ant.project.name}">
-      <fileset dir="conf" />
-    </copy>
+        <copy todir="${dist.dir}/sbin">
+            <fileset dir="${package.dir}">
+                <include name="*.sh"/>
+            </fileset>
+        </copy>
 
-    <copy todir="${dist.dir}/share/${ant.project.name}/scripts">
-       <fileset dir="scripts">
-         <include name="*.sh"/>
-       </fileset>
-    </copy>
+        <copy todir="${dist.dir}/etc/${ant.project.name}">
+            <fileset dir="conf"/>
+        </copy>
 
-    <copy todir="${dist.dir}/share/${ant.project.name}/templates/conf">
-      <fileset dir="src/packages/templates/conf">
-        <include name="*"/>
-      </fileset>
-    </copy>
+        <copy todir="${dist.dir}/share/${ant.project.name}/scripts">
+            <fileset dir="scripts">
+                <include name="*.sh"/>
+            </fileset>
+        </copy>
 
-    <copy todir="${dist.dir}/sbin">
-      <fileset dir="${package.dir}">
-        <include name="*.sh"/>
-      </fileset>
-      <fileset dir="webhcat/svr/src/main/bin">
-        <include name="*.sh"/>
-      </fileset>
-      <fileset dir="bin">
-        <include name="hcat_server.sh"/>
-      </fileset>
-    </copy>
+        <copy todir="${dist.dir}/share/${ant.project.name}/templates/conf">
+            <fileset dir="src/packages/templates/conf">
+                <include name="*"/>
+            </fileset>
+        </copy>
 
-	<!-- Copy the licenses and such -->
-    <copy todir="${dist.dir}/share/doc/${ant.project.name}">
-      <fileset dir=".">
-        <include name="*.txt" />
-      </fileset>
-    </copy>
+        <copy todir="${dist.dir}/sbin">
+            <fileset dir="${package.dir}">
+                <include name="*.sh"/>
+            </fileset>
+            <fileset dir="webhcat/svr/src/main/bin">
+                <include name="*.sh"/>
+            </fileset>
+            <fileset dir="bin">
+                <include name="hcat_server.sh"/>
+            </fileset>
+        </copy>
 
-    <copy todir="${dist.dir}/share/doc/${ant.project.name}/license">
-      <fileset dir="license" />
-    </copy>
+        <!-- Copy the licenses and such -->
+        <copy todir="${dist.dir}/share/doc/${ant.project.name}">
+            <fileset dir=".">
+                <include name="*.txt"/>
+            </fileset>
+        </copy>
 
-    <chmod perm="ugo+x" type="file">
-      <fileset dir="${dist.dir}/bin" />
-      <fileset dir="${dist.dir}/sbin" />
-    </chmod>
-       <!--package storage-handlers -->
-      <antcall target="package-storage-handlers"/>
+        <copy todir="${dist.dir}/share/doc/${ant.project.name}/license">
+            <fileset dir="license"/>
+        </copy>
+
+        <chmod perm="ugo+x" type="file">
+            <fileset dir="${dist.dir}/bin"/>
+            <fileset dir="${dist.dir}/sbin"/>
+        </chmod>
+        <!--package storage-handlers -->
+        <antcall target="package-storage-handlers"/>
     </target>
 
     <target name="releaseaudit" depends="ivy-retrieve" description="Release Audit activities">
-      <java classname="${rat.reporting.classname}" fork="true">
-        <classpath refid="releaseaudit.classpath"/>
-        <arg value="${basedir}/src"/>
-      </java>
+        <java classname="${rat.reporting.classname}" fork="true">
+            <classpath refid="releaseaudit.classpath"/>
+            <arg value="${basedir}/src"/>
+        </java>
     </target>
 
     <!-- ================================================================== -->
@@ -473,7 +474,8 @@
     <!-- ================================================================== -->
     <target name="src-release" depends="clean" description="Source distribution">
         <mkdir dir="${build.dir}"/>
-        <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
+        <tar compression="gzip" longfile="gnu"
+             destfile="${build.dir}/${ant.project.name}-src-${hcatalog.version}.tar.gz">
             <tarfileset dir="${basedir}" mode="644" prefix="${ant.project.name}-src-${hcatalog.version}">
                 <include name="conf/**"/>
                 <include name="hcatalog-pig-adapter/**"/>
@@ -493,7 +495,7 @@
                 <include name="bin/**"/>
             </tarfileset>
         </tar>
-    </target> 
+    </target>
 
     <!-- ================================================================== -->
     <!-- Make release binary packages                                       -->
@@ -501,15 +503,15 @@
     <target name="tar" depends="package" description="Create release tarball">
         <tar compression="gzip" longfile="gnu" destfile="${build.dir}/${final.name}.tar.gz">
             <tarfileset dir="${build.dir}" mode="664">
-                <include name="${final.name}/**" />
-                <exclude name="${final.name}/bin/*" />
-                <exclude name="${final.name}/sbin/*" />
-                <exclude name="${final.name}/share/hcatalog/scripts/*" />
+                <include name="${final.name}/**"/>
+                <exclude name="${final.name}/bin/*"/>
+                <exclude name="${final.name}/sbin/*"/>
+                <exclude name="${final.name}/share/hcatalog/scripts/*"/>
             </tarfileset>
             <tarfileset dir="${build.dir}" mode="755">
-                <include name="${final.name}/bin/*" />
-                <include name="${final.name}/sbin/*" />
-                <include name="${final.name}/share/hcatalog/scripts/*" />
+                <include name="${final.name}/bin/*"/>
+                <include name="${final.name}/sbin/*"/>
+                <include name="${final.name}/share/hcatalog/scripts/*"/>
             </tarfileset>
         </tar>
     </target>
@@ -530,10 +532,10 @@
         <ant dir="${test.e2e.dir}" target="deploy"/>
     </target>
 
-  <import file="ant/checkstyle.xml"/>
-  <import file="ant/dependencies.xml"/>
-  <import file="ant/deploy.xml"/>
-  <import file="ant/findbugs.xml"/>
-  <import file="ant/test.xml"/>
+    <import file="ant/checkstyle.xml"/>
+    <import file="ant/dependencies.xml"/>
+    <import file="ant/deploy.xml"/>
+    <import file="ant/findbugs.xml"/>
+    <import file="ant/test.xml"/>
 
 </project>

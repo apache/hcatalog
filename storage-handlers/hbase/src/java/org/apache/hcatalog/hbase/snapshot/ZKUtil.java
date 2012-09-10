@@ -43,15 +43,17 @@ import org.slf4j.LoggerFactory;
 
 class ZKUtil {
 
-    private int              DEFAULT_SESSION_TIMEOUT = 1000000;
-    private ZooKeeper        zkSession;
-    private String           baseDir;
-    private String           connectString;
+    private int DEFAULT_SESSION_TIMEOUT = 1000000;
+    private ZooKeeper zkSession;
+    private String baseDir;
+    private String connectString;
     private static final Logger LOG = LoggerFactory.getLogger(ZKUtil.class);
 
     static enum UpdateMode {
         APPEND, REMOVE, KEEP_ALIVE
-    };
+    }
+
+    ;
 
     ZKUtil(String connection, String baseDir) {
         this.connectString = connection;
@@ -66,20 +68,20 @@ class ZKUtil {
      * @throws IOException
      */
     void setUpZnodesForTable(String table, List<String> families)
-            throws IOException {
+        throws IOException {
 
         String transactionDataTablePath = PathUtil.getTxnDataPath(baseDir, table);
         ensurePathExists(transactionDataTablePath, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         for (String cf : families) {
             String runningDataPath = PathUtil.getRunningTxnInfoPath(
-                    this.baseDir, table, cf);
+                this.baseDir, table, cf);
             ensurePathExists(runningDataPath, null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+                CreateMode.PERSISTENT);
             String abortDataPath = PathUtil.getAbortInformationPath(
-                    this.baseDir, table, cf);
+                this.baseDir, table, cf);
             ensurePathExists(abortDataPath, null, Ids.OPEN_ACL_UNSAFE,
-                    CreateMode.PERSISTENT);
+                CreateMode.PERSISTENT);
         }
 
     }
@@ -95,7 +97,7 @@ class ZKUtil {
      * @throws IOException
      */
     void ensurePathExists(String path, byte[] data, List<ACL> acl,
-            CreateMode flags) throws IOException {
+                          CreateMode flags) throws IOException {
         String[] dirs = path.split("/");
         String parentPath = "";
         for (String subDir : dirs) {
@@ -108,7 +110,7 @@ class ZKUtil {
                     }
                 } catch (Exception e) {
                     throw new IOException("Exception while creating path "
-                            + parentPath, e);
+                        + parentPath, e);
                 }
             }
         }
@@ -131,15 +133,15 @@ class ZKUtil {
             children = getSession().getChildren(path, false);
         } catch (KeeperException e) {
             LOG.warn("Caught: ", e);
-            throw new IOException("Exception while obtaining columns of table.",e);
+            throw new IOException("Exception while obtaining columns of table.", e);
         } catch (InterruptedException e) {
             LOG.warn("Caught: ", e);
-            throw new IOException("Exception while obtaining columns of table.",e);
+            throw new IOException("Exception while obtaining columns of table.", e);
         }
 
         for (String child : children) {
             if ((child.contains("idgen") == false)
-                    && (child.contains("_locknode_") == false)) {
+                && (child.contains("_locknode_") == false)) {
                 columnFamlies.add(child);
             }
         }
@@ -157,7 +159,7 @@ class ZKUtil {
         Stat stat;
         String clockPath = PathUtil.getClockPath(this.baseDir);
         ensurePathExists(clockPath, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         try {
             getSession().exists(clockPath, false);
             stat = getSession().setData(clockPath, null, -1);
@@ -184,10 +186,10 @@ class ZKUtil {
     long nextId(String tableName) throws IOException {
         String idNode = PathUtil.getRevisionIDNode(this.baseDir, tableName);
         ensurePathExists(idNode, Bytes.toBytes("0"), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         String lockNode = PathUtil.getLockManagementNode(idNode);
         ensurePathExists(lockNode, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         IDGenerator idf = new IDGenerator(getSession(), tableName, idNode);
         long id = idf.obtainID();
         return id;
@@ -200,13 +202,13 @@ class ZKUtil {
      * @return the long The revision number to use by any transaction.
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    long currentID(String tableName) throws IOException{
+    long currentID(String tableName) throws IOException {
         String idNode = PathUtil.getRevisionIDNode(this.baseDir, tableName);
         ensurePathExists(idNode, Bytes.toBytes("0"), Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         String lockNode = PathUtil.getLockManagementNode(idNode);
         ensurePathExists(lockNode, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         IDGenerator idf = new IDGenerator(getSession(), tableName, idNode);
         long id = idf.readID();
         return id;
@@ -221,7 +223,7 @@ class ZKUtil {
      * @throws IOException
      */
     List<FamilyRevision> getTransactionList(String path)
-            throws IOException {
+        throws IOException {
 
         byte[] data = getRawData(path, new Stat());
         ArrayList<FamilyRevision> wtxnList = new ArrayList<FamilyRevision>();
@@ -235,7 +237,7 @@ class ZKUtil {
         while (itr.hasNext()) {
             StoreFamilyRevision wtxn = itr.next();
             wtxnList.add(new FamilyRevision(wtxn.getRevision(), wtxn
-                    .getTimestamp()));
+                .getTimestamp()));
         }
 
         return wtxnList;
@@ -255,8 +257,8 @@ class ZKUtil {
             data = getSession().getData(path, false, stat);
         } catch (Exception e) {
             throw new IOException(
-                    "Exception while obtaining raw data from zookeeper path "
-                            + path, e);
+                "Exception while obtaining raw data from zookeeper path "
+                    + path, e);
         }
         return data;
     }
@@ -271,9 +273,9 @@ class ZKUtil {
         String txnBaseNode = PathUtil.getTransactionBasePath(this.baseDir);
         String clockNode = PathUtil.getClockPath(this.baseDir);
         ensurePathExists(txnBaseNode, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
         ensurePathExists(clockNode, null, Ids.OPEN_ACL_UNSAFE,
-                CreateMode.PERSISTENT);
+            CreateMode.PERSISTENT);
     }
 
     /**
@@ -298,12 +300,12 @@ class ZKUtil {
      * @return ZooKeeper An instance of zookeeper client.
      * @throws IOException
      */
-     ZooKeeper getSession() throws IOException {
+    ZooKeeper getSession() throws IOException {
         if (zkSession == null || zkSession.getState() == States.CLOSED) {
             synchronized (this) {
                 if (zkSession == null || zkSession.getState() == States.CLOSED) {
                     zkSession = new ZooKeeper(this.connectString,
-                            this.DEFAULT_SESSION_TIMEOUT, new ZKWatcher());
+                        this.DEFAULT_SESSION_TIMEOUT, new ZKWatcher());
                 }
             }
         }
@@ -319,11 +321,11 @@ class ZKUtil {
      * @throws IOException
      */
     void updateData(String path, FamilyRevision updateTx, UpdateMode mode)
-            throws IOException {
+        throws IOException {
 
         if (updateTx == null) {
             throw new IOException(
-                    "The transaction to be updated found to be null.");
+                "The transaction to be updated found to be null.");
         }
         List<FamilyRevision> currentData = getTransactionList(path);
         List<FamilyRevision> newData = new ArrayList<FamilyRevision>();
@@ -337,36 +339,36 @@ class ZKUtil {
             }
         }
         switch (mode) {
-            case REMOVE:
-                if (dataFound == false) {
-                    throw new IOException(
-                            "The transaction to be removed not found in the data.");
-                }
-                LOG.info("Removed trasaction : " + updateTx.toString());
-                break;
-            case KEEP_ALIVE:
-                if (dataFound == false) {
-                    throw new IOException(
-                            "The transaction to be kept alove not found in the data. It might have been expired.");
-                }
-                newData.add(updateTx);
-                LOG.info("keep alive of transaction : " + updateTx.toString());
-                break;
-            case APPEND:
-                if (dataFound == true) {
-                    throw new IOException(
-                            "The data to be appended already exists.");
-                }
-                newData.add(updateTx);
-                LOG.info("Added transaction : " + updateTx.toString());
-                break;
+        case REMOVE:
+            if (dataFound == false) {
+                throw new IOException(
+                    "The transaction to be removed not found in the data.");
+            }
+            LOG.info("Removed trasaction : " + updateTx.toString());
+            break;
+        case KEEP_ALIVE:
+            if (dataFound == false) {
+                throw new IOException(
+                    "The transaction to be kept alove not found in the data. It might have been expired.");
+            }
+            newData.add(updateTx);
+            LOG.info("keep alive of transaction : " + updateTx.toString());
+            break;
+        case APPEND:
+            if (dataFound == true) {
+                throw new IOException(
+                    "The data to be appended already exists.");
+            }
+            newData.add(updateTx);
+            LOG.info("Added transaction : " + updateTx.toString());
+            break;
         }
 
         // For serialization purposes.
         List<StoreFamilyRevision> newTxnList = new ArrayList<StoreFamilyRevision>();
         for (FamilyRevision wtxn : newData) {
             StoreFamilyRevision newTxn = new StoreFamilyRevision(wtxn.getRevision(),
-                    wtxn.getExpireTimestamp());
+                wtxn.getExpireTimestamp());
             newTxnList.add(newTxn);
         }
         StoreFamilyRevisionList wtxnList = new StoreFamilyRevisionList(newTxnList);
@@ -377,10 +379,10 @@ class ZKUtil {
             stat = zkSession.setData(path, newByteData, -1);
         } catch (KeeperException e) {
             throw new IOException(
-                    "Exception while updating trasactional data. ", e);
+                "Exception while updating trasactional data. ", e);
         } catch (InterruptedException e) {
             throw new IOException(
-                    "Exception while updating trasactional data. ", e);
+                "Exception while updating trasactional data. ", e);
         }
 
         if (stat != null) {
@@ -395,7 +397,7 @@ class ZKUtil {
      * @param path The path to the transaction data.
      * @throws IOException Signals that an I/O exception has occurred.
      */
-    void refreshTransactions(String path) throws IOException{
+    void refreshTransactions(String path) throws IOException {
         List<FamilyRevision> currentData = getTransactionList(path);
         List<FamilyRevision> newData = new ArrayList<FamilyRevision>();
 
@@ -405,11 +407,11 @@ class ZKUtil {
             }
         }
 
-        if(newData.equals(currentData) == false){
+        if (newData.equals(currentData) == false) {
             List<StoreFamilyRevision> newTxnList = new ArrayList<StoreFamilyRevision>();
             for (FamilyRevision wtxn : newData) {
                 StoreFamilyRevision newTxn = new StoreFamilyRevision(wtxn.getRevision(),
-                        wtxn.getExpireTimestamp());
+                    wtxn.getExpireTimestamp());
                 newTxnList.add(newTxn);
             }
             StoreFamilyRevisionList wtxnList = new StoreFamilyRevisionList(newTxnList);
@@ -419,10 +421,10 @@ class ZKUtil {
                 zkSession.setData(path, newByteData, -1);
             } catch (KeeperException e) {
                 throw new IOException(
-                        "Exception while updating trasactional data. ", e);
+                    "Exception while updating trasactional data. ", e);
             } catch (InterruptedException e) {
                 throw new IOException(
-                        "Exception while updating trasactional data. ", e);
+                    "Exception while updating trasactional data. ", e);
             }
 
         }
@@ -437,7 +439,7 @@ class ZKUtil {
      */
     void deleteZNodes(String tableName) throws IOException {
         String transactionDataTablePath = PathUtil.getTxnDataPath(baseDir,
-                tableName);
+            tableName);
         deleteRecursively(transactionDataTablePath);
     }
 
@@ -452,10 +454,10 @@ class ZKUtil {
             getSession().delete(path, -1);
         } catch (KeeperException e) {
             throw new IOException(
-                    "Exception while deleting path " + path + ".", e);
+                "Exception while deleting path " + path + ".", e);
         } catch (InterruptedException e) {
             throw new IOException(
-                    "Exception while deleting path " + path + ".", e);
+                "Exception while deleting path " + path + ".", e);
         }
     }
 
@@ -471,7 +473,7 @@ class ZKUtil {
             return new byte[0];
         try {
             TSerializer serializer = new TSerializer(
-                    new TBinaryProtocol.Factory());
+                new TBinaryProtocol.Factory());
             byte[] bytes = serializer.serialize(obj);
             return bytes;
         } catch (Exception e) {
@@ -492,7 +494,7 @@ class ZKUtil {
             return;
         try {
             TDeserializer deserializer = new TDeserializer(
-                    new TBinaryProtocol.Factory());
+                new TBinaryProtocol.Factory());
             deserializer.deserialize(obj, data);
         } catch (Exception e) {
             throw new IOException("Deserialization error: " + e.getMessage(), e);
@@ -502,12 +504,12 @@ class ZKUtil {
     private class ZKWatcher implements Watcher {
         public void process(WatchedEvent event) {
             switch (event.getState()) {
-                case Expired:
-                    LOG.info("The client session has expired. Try opening a new "
-                            + "session and connecting again.");
-                    zkSession = null;
-                    break;
-                default:
+            case Expired:
+                LOG.info("The client session has expired. Try opening a new "
+                    + "session and connecting again.");
+                zkSession = null;
+                break;
+            default:
 
             }
         }

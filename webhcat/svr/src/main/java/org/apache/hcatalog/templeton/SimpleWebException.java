@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**
@@ -50,9 +51,8 @@ public class SimpleWebException extends Throwable {
     }
 
     public static Response buildMessage(int httpCode, Map<String, Object> params,
-                                        String msg)
-    {
-        HashMap<String,Object> err = new HashMap<String,Object>();
+                                        String msg) {
+        HashMap<String, Object> err = new HashMap<String, Object>();
         err.put("error", msg);
         if (params != null)
             err.putAll(params);

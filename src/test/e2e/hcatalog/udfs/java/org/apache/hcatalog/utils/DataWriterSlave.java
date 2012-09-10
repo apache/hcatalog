@@ -36,51 +36,51 @@ import org.apache.hcatalog.data.transfer.WriterContext;
 
 public class DataWriterSlave {
 
-	public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
-		
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[0]));
-		WriterContext cntxt = (WriterContext) ois.readObject();
-		ois.close();
-		
-		HCatWriter writer = DataTransferFactory.getHCatWriter(cntxt);
-		writer.write(new HCatRecordItr(args[1]));
-		
-	}
-	
-	private static class HCatRecordItr implements Iterator<HCatRecord> {
+    public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
 
-		BufferedReader reader;
-		String curLine;
-		
-		public HCatRecordItr(String fileName) throws FileNotFoundException {
-			reader = new BufferedReader(new FileReader(new File(fileName)));
-		}
-		
-		@Override
-		public boolean hasNext() {
-			try {
-				curLine = reader.readLine();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return null == curLine ? false : true;
-		}
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[0]));
+        WriterContext cntxt = (WriterContext) ois.readObject();
+        ois.close();
 
-		@Override
-		public HCatRecord next() {
+        HCatWriter writer = DataTransferFactory.getHCatWriter(cntxt);
+        writer.write(new HCatRecordItr(args[1]));
 
-			String[] fields = curLine.split("\t");
-			List<Object> data = new ArrayList<Object>(3);
-			data.add(fields[0]);
-			data.add(Integer.parseInt(fields[1]));
-			data.add(Double.parseDouble(fields[2]));
-			return new DefaultHCatRecord(data);
-		}
+    }
 
-		@Override
-		public void remove() {
-			// TODO Auto-generated method stub
-			
-		}
-	}
+    private static class HCatRecordItr implements Iterator<HCatRecord> {
+
+        BufferedReader reader;
+        String curLine;
+
+        public HCatRecordItr(String fileName) throws FileNotFoundException {
+            reader = new BufferedReader(new FileReader(new File(fileName)));
+        }
+
+        @Override
+        public boolean hasNext() {
+            try {
+                curLine = reader.readLine();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null == curLine ? false : true;
+        }
+
+        @Override
+        public HCatRecord next() {
+
+            String[] fields = curLine.split("\t");
+            List<Object> data = new ArrayList<Object>(3);
+            data.add(fields[0]);
+            data.add(Integer.parseInt(fields[1]));
+            data.add(Double.parseDouble(fields[2]));
+            return new DefaultHCatRecord(data);
+        }
+
+        @Override
+        public void remove() {
+            // TODO Auto-generated method stub
+
+        }
+    }
 }

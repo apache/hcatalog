@@ -42,7 +42,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
  * table. It performs a group by on the first column and a SUM operation on the
  * other columns. This is to simulate a typical operation in a map reduce
  * program to test that hcat hands the right data to the map reduce program
- * 
+ *
  * Usage: hadoop jar sumnumbers <serveruri> <output dir> <-libjars hive-hcat
  * jar> The <tab|ctrla> argument controls the output delimiter The hcat jar
  * location should be specified as file://<full path to jar>
@@ -50,7 +50,7 @@ import org.apache.hcatalog.mapreduce.OutputJobInfo;
 public class WriteText extends Configured implements Tool {
 
     public static class Map extends
-            Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord> {
+        Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord> {
 
         byte t;
         short si;
@@ -62,18 +62,18 @@ public class WriteText extends Configured implements Tool {
 
         @Override
         protected void map(
-                WritableComparable key,
-                HCatRecord value,
-                org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord>.Context context)
-                throws IOException, InterruptedException {
-            t = (Byte)value.get(0);
-            si = (Short)value.get(1);
-            i = (Integer)value.get(2);
-            b = (Long)value.get(3);
-            f = (Float)value.get(4);
-            d = (Double)value.get(5);
-            s = (String)value.get(6);
-            
+            WritableComparable key,
+            HCatRecord value,
+            org.apache.hadoop.mapreduce.Mapper<WritableComparable, HCatRecord, WritableComparable, HCatRecord>.Context context)
+            throws IOException, InterruptedException {
+            t = (Byte) value.get(0);
+            si = (Short) value.get(1);
+            i = (Integer) value.get(2);
+            b = (Long) value.get(3);
+            f = (Float) value.get(4);
+            d = (Double) value.get(5);
+            s = (String) value.get(6);
+
             HCatRecord record = new DefaultHCatRecord(7);
             record.set(0, t);
             record.set(1, si);
@@ -82,7 +82,7 @@ public class WriteText extends Configured implements Tool {
             record.set(4, f);
             record.set(5, d);
             record.set(6, s);
-            
+
             context.write(null, record);
 
         }
@@ -98,12 +98,12 @@ public class WriteText extends Configured implements Tool {
         String dbName = null;
 
         String principalID = System
-                .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
+            .getProperty(HCatConstants.HCAT_METASTORE_PRINCIPAL);
         if (principalID != null)
             conf.set(HCatConstants.HCAT_METASTORE_PRINCIPAL, principalID);
         Job job = new Job(conf, "WriteText");
         HCatInputFormat.setInput(job, InputJobInfo.create(dbName,
-                inputTableName, null));
+            inputTableName, null));
         // initialize HCatOutputFormat
 
         job.setInputFormatClass(HCatInputFormat.class);
@@ -113,10 +113,10 @@ public class WriteText extends Configured implements Tool {
         job.setOutputValueClass(DefaultHCatRecord.class);
         job.setNumReduceTasks(0);
         HCatOutputFormat.setOutput(job, OutputJobInfo.create(dbName,
-                outputTableName, null));
+            outputTableName, null));
         HCatSchema s = HCatInputFormat.getTableSchema(job);
         System.err.println("INFO: output schema explicitly set for writing:"
-                + s);
+            + s);
         HCatOutputFormat.setSchema(job, s);
         job.setOutputFormatClass(HCatOutputFormat.class);
         return (job.waitForCompletion(true) ? 0 : 1);
