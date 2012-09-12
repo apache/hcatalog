@@ -107,6 +107,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-501 HBase storage handler tests failing in trunk (traviscrawford)
+
   HCAT-498 TestNotificationListener failing in trunk (traviscrawford)
 
   HCAT-397 Removal of unused parameter hadoop.clientside.fs.operations (khorgath via traviscrawford)
