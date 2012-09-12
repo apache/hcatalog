@@ -124,16 +124,19 @@ public class NotificationListener extends MetaStoreEventListener {
 
     }
 
+    /**
+     * Send dropped partition notifications. Subscribers can receive these notifications for a
+     * particular table by listening on a topic named "dbName.tableName" with message selector
+     * string {@value org.apache.hcatalog.common.HCatConstants#HCAT_EVENT} =
+     * {@value org.apache.hcatalog.common.HCatConstants#HCAT_DROP_PARTITION_EVENT}.
+     * </br>
+     * TODO: DataNucleus 2.0.3, currently used by the HiveMetaStore for persistence, has been
+     * found to throw NPE when serializing objects that contain null. For this reason we override
+     * some fields in the StorageDescriptor of this notification. This should be fixed after
+     * HIVE-2084 "Upgrade datanucleus from 2.0.3 to 3.0.1" is resolved.
+     */
     @Override
-    public void onDropPartition(DropPartitionEvent partitionEvent)
-        throws MetaException {
-        // Subscriber can get notification of dropped partition in a
-        // particular table by listening on a topic named "dbName.tableName"
-        // and message selector string as "HCAT_EVENT = HCAT_DROP_PARTITION"
-
-        // Datanucleus throws NPE when we try to serialize a partition object
-        // retrieved from metastore. To workaround that we reset following objects
-
+    public void onDropPartition(DropPartitionEvent partitionEvent) throws MetaException {
         if (partitionEvent.getStatus()) {
             Partition partition = partitionEvent.getPartition();
             StorageDescriptor sd = partition.getSd();
@@ -141,6 +144,7 @@ public class NotificationListener extends MetaStoreEventListener {
             sd.setSortCols(new ArrayList<Order>());
             sd.setParameters(new HashMap<String, String>());
             sd.getSerdeInfo().setParameters(new HashMap<String, String>());
+            sd.getSkewedInfo().setSkewedColNames(new ArrayList<String>());
             String topicName = getTopicName(partition, partitionEvent);
             if (topicName != null && !topicName.equals("")) {
                 send(partition, topicName, HCatConstants.HCAT_DROP_PARTITION_EVENT);
@@ -215,6 +219,17 @@ public class NotificationListener extends MetaStoreEventListener {
             HCatConstants.HCAT_DEFAULT_TOPIC_PREFIX);
     }
 
+    /**
+     * Send dropped table notifications. Subscribers can receive these notifications for
+     * dropped tables by listening on topic "HCAT" with message selector string
+     * {@value org.apache.hcatalog.common.HCatConstants#HCAT_EVENT} =
+     * {@value org.apache.hcatalog.common.HCatConstants#HCAT_DROP_TABLE_EVENT}
+     * </br>
+     * TODO: DataNucleus 2.0.3, currently used by the HiveMetaStore for persistence, has been
+     * found to throw NPE when serializing objects that contain null. For this reason we override
+     * some fields in the StorageDescriptor of this notification. This should be fixed after
+     * HIVE-2084 "Upgrade datanucleus from 2.0.3 to 3.0.1" is resolved.
+     */
     @Override
     public void onDropTable(DropTableEvent tableEvent) throws MetaException {
         // Subscriber can get notification about drop of a table in HCAT
@@ -231,6 +246,7 @@ public class NotificationListener extends MetaStoreEventListener {
             sd.setSortCols(new ArrayList<Order>());
             sd.setParameters(new HashMap<String, String>());
             sd.getSerdeInfo().setParameters(new HashMap<String, String>());
+            sd.getSkewedInfo().setSkewedColNames(new ArrayList<String>());
             send(table, getTopicPrefix(tableEvent.getHandler().getHiveConf()) + "."
                 + table.getDbName().toLowerCase(),
                 HCatConstants.HCAT_DROP_TABLE_EVENT);

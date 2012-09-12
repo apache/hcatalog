@@ -107,6 +107,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-498 TestNotificationListener failing in trunk (traviscrawford)
+
   HCAT-397 Removal of unused parameter hadoop.clientside.fs.operations (khorgath via traviscrawford)
 
   HCAT-483 HCatBaseStorer.getHCatFSFromPigFS fails when Table schema is not provided (pengfeng via traviscrawford)

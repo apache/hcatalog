@@ -60,15 +60,22 @@ public class HCatBaseTest {
     @Before
     public void setUp() throws Exception {
         if (driver == null) {
-            hiveConf = new HiveConf(this.getClass());
-            hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-            hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-            hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-            hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
+            setUpHiveConf();
             driver = new Driver(hiveConf);
             client = new HiveMetaStoreClient(hiveConf);
             SessionState.start(new CliSessionState(hiveConf));
         }
+    }
+
+    /**
+     * Create a new HiveConf and set properties necessary for unit tests.
+     */
+    protected void setUpHiveConf() {
+        hiveConf = new HiveConf(this.getClass());
+        hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
+        hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
+        hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+        hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
     }
 
     protected void logAndRegister(PigServer server, String query) throws IOException {
