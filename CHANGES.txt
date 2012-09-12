@@ -107,6 +107,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-499 Multiple store commands does not work with Hadoop23 (rohinip via avandana)
+
   HCAT-501 HBase storage handler tests failing in trunk (traviscrawford)
 
   HCAT-498 TestNotificationListener failing in trunk (traviscrawford)

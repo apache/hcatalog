@@ -106,6 +106,8 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     @Override
     public void commitTask(TaskAttemptContext context) throws IOException {
         if (!dynamicPartitioningUsed) {
+	     //See HCATALOG-499
+            FileOutputFormatContainer.setWorkOutputPath(context);
             getBaseOutputCommitter().commitTask(HCatMapRedUtil.createTaskAttemptContext(context));
         }
     }
