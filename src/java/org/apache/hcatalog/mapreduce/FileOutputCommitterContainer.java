@@ -288,7 +288,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
             if (!dynamicPartitioningUsed) {
                 partitionsToAdd.add(
                     constructPartition(
-                        context,
+                        context, jobInfo,
                         tblPath.toString(), jobInfo.getPartitionValues()
                         , jobInfo.getOutputSchema(), getStorerParameterMap(storer)
                         , table, fs
@@ -297,7 +297,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 for (Entry<String, Map<String, String>> entry : partitionsDiscoveredByPath.entrySet()) {
                     partitionsToAdd.add(
                         constructPartition(
-                            context,
+                            context, jobInfo,
                             getPartitionRootLocation(entry.getKey(), entry.getValue().size()), entry.getValue()
                             , jobInfo.getOutputSchema(), getStorerParameterMap(storer)
                             , table, fs
@@ -402,6 +402,8 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
     /**
      * Generate partition metadata object to be used to add to metadata.
+     * @param context The job context.
+     * @param jobInfo The OutputJobInfo.
      * @param partLocnRoot The table-equivalent location root of the partition
      *                       (temporary dir if dynamic partition, table dir if static)
      * @param partKVs The keyvalue pairs that form the partition
@@ -416,7 +418,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      */
 
     private Partition constructPartition(
-        JobContext context,
+        JobContext context, OutputJobInfo jobInfo,
         String partLocnRoot, Map<String, String> partKVs,
         HCatSchema outputSchema, Map<String, String> params,
         Table table, FileSystem fs,
@@ -440,16 +442,26 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
 
         // Sets permissions and group name on partition dirs and files.
 
-        Path partPath = new Path(partLocnRoot);
-        int i = 0;
-        for (FieldSchema partKey : table.getPartitionKeys()) {
-            if (i++ != 0) {
-                applyGroupAndPerms(fs, partPath, perms, grpName, false);
+        Path partPath;
+        if (Boolean.valueOf((String)table.getProperty("EXTERNAL"))
+               && jobInfo.getLocation() != null && jobInfo.getLocation().length() > 0) {
+            // honor external table that specifies the location
+            partPath = new Path(jobInfo.getLocation());
+        } else {
+            partPath = new Path(partLocnRoot);
+            int i = 0;
+            for (FieldSchema partKey : table.getPartitionKeys()) {
+                if (i++ != 0) {
+                    applyGroupAndPerms(fs, partPath, perms, grpName, false);
+                }
+                partPath = constructPartialPartPath(partPath, partKey.getName().toLowerCase(), partKVs);
             }
-            partPath = constructPartialPartPath(partPath, partKey.getName().toLowerCase(), partKVs);
         }
+
         // Apply the group and permissions to the leaf partition and files.
         applyGroupAndPerms(fs, partPath, perms, grpName, true);
+
+        // Set the location in the StorageDescriptor
         if (dynamicPartitioningUsed) {
             String dynamicPartitionDestination = getFinalDynamicPartitionDestination(table, partKVs);
             if (harProcessor.isEnabled()) {

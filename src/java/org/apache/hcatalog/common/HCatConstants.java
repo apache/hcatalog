@@ -43,6 +43,14 @@ public final class HCatConstants {
     public static final String HCAT_PIG_INNER_FIELD_NAME = "hcat.pig.inner.field.name";
     public static final String HCAT_PIG_INNER_FIELD_NAME_DEFAULT = "innerfield";
 
+    /**
+     * {@value} (default: null)
+     * When the property is set in the UDFContext of the {@link HCatStorer}, {@link HCatStorer} writes
+     * to the location it specifies instead of the default HCatalog location format. An example can be found
+     * in @{link HCatStorerWrapper}.
+     */
+    public static final String HCAT_PIG_STORER_EXTERNAL_LOCATION = HCAT_PIG_STORER + ".external.location";
+
     //The keys used to store info into the job Configuration
     public static final String HCAT_KEY_BASE = "mapreduce.lib.hcat";
 
