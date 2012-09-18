@@ -72,10 +72,10 @@ public class HCatBaseTest {
      */
     protected void setUpHiveConf() {
         hiveConf = new HiveConf(this.getClass());
-        hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-        hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-        hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-        hiveConf.set(HiveConf.ConfVars.METASTOREWAREHOUSE.varname, TEST_WAREHOUSE_DIR);
+        hiveConf.setVar(HiveConf.ConfVars.PREEXECHOOKS, "");
+        hiveConf.setVar(HiveConf.ConfVars.POSTEXECHOOKS, "");
+        hiveConf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, false);
+        hiveConf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE, TEST_WAREHOUSE_DIR);
     }
 
     protected void logAndRegister(PigServer server, String query) throws IOException {

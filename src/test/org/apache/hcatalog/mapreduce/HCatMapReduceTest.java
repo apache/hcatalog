@@ -25,25 +25,20 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import junit.framework.TestCase;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -55,22 +50,29 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hcatalog.HcatTestUtils;
+import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test for HCatOutputFormat. Writes a partition using HCatOutputFormat and reads
  * it back using HCatInputFormat, checks the column values and counts.
  */
-public abstract class HCatMapReduceTest extends TestCase {
+public abstract class HCatMapReduceTest extends HCatBaseTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(HCatMapReduceTest.class);
-    protected String dbName = "default";
-    protected String tableName = "testHCatMapReduceTable";
+    protected static String dbName = MetaStoreUtils.DEFAULT_DATABASE_NAME;
+    protected static String tableName = "testHCatMapReduceTable";
 
     protected String inputFormat = RCFileInputFormat.class.getName();
     protected String outputFormat = RCFileOutputFormat.class.getName();
@@ -79,52 +81,30 @@ public abstract class HCatMapReduceTest extends TestCase {
     private static List<HCatRecord> writeRecords = new ArrayList<HCatRecord>();
     private static List<HCatRecord> readRecords = new ArrayList<HCatRecord>();
 
-    protected abstract void initialize() throws Exception;
-
     protected abstract List<FieldSchema> getPartitionKeys();
 
     protected abstract List<FieldSchema> getTableColumns();
 
-    private HiveMetaStoreClient client;
-    protected HiveConf hiveConf;
+    private static FileSystem fs;
 
-    private FileSystem fs;
-    private String thriftUri = null;
-
-    protected Driver driver;
-
-    @Override
-    protected void setUp() throws Exception {
-        hiveConf = new HiveConf(this.getClass());
-
-        //The default org.apache.hadoop.hive.ql.hooks.PreExecutePrinter hook
-        //is present only in the ql/test directory
-        hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
-        hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
-        hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
-        driver = new Driver(hiveConf);
-        SessionState.start(new CliSessionState(hiveConf));
-
-        thriftUri = System.getenv("HCAT_METASTORE_URI");
-
-        if (thriftUri != null) {
-            LOG.info("Using URI {}", thriftUri);
-
-            hiveConf.set("hive.metastore.local", "false");
-            hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, thriftUri);
-        }
-
+    @BeforeClass
+    public static void setUpOneTime() throws Exception {
         fs = new LocalFileSystem();
         fs.initialize(fs.getWorkingDirectory().toUri(), new Configuration());
 
-        initialize();
+        HiveConf hiveConf = new HiveConf();
+        hiveConf.setInt(HCatConstants.HCAT_HIVE_CLIENT_EXPIRY_TIME, 0);
+        // Hack to initialize cache with 0 expiry time causing it to return a new hive client every time
+        // Otherwise the cache doesn't play well with the second test method with the client gets closed() in the
+        // tearDown() of the previous test
+        HCatUtil.getHiveClient(hiveConf);
 
-        client = new HiveMetaStoreClient(hiveConf, null);
-        initTable();
+        MapCreate.writeCount = 0;
+        MapRead.readCount = 0;
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void deleteTable() throws Exception {
         try {
             String databaseName = (dbName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : dbName;
 
@@ -133,13 +113,10 @@ public abstract class HCatMapReduceTest extends TestCase {
             e.printStackTrace();
             throw e;
         }
-
-        client.close();
     }
 
-
-    private void initTable() throws Exception {
-
+    @Before
+    public void createTable() throws Exception {
         String databaseName = (dbName == null) ? MetaStoreUtils.DEFAULT_DATABASE_NAME : dbName;
 
         try {
@@ -237,6 +214,23 @@ public abstract class HCatMapReduceTest extends TestCase {
     Job runMRCreate(Map<String, String> partitionValues,
                     List<HCatFieldSchema> partitionColumns, List<HCatRecord> records,
                     int writeCount, boolean assertWrite) throws Exception {
+        return runMRCreate(partitionValues, partitionColumns, records, writeCount, assertWrite, true);
+    }
+
+    /**
+     * Run a local map reduce job to load data from in memory records to an HCatalog Table
+     * @param partitionValues
+     * @param partitionColumns
+     * @param records data to be written to HCatalog table
+     * @param writeCount
+     * @param assertWrite
+     * @param asSingleMapTask
+     * @return
+     * @throws Exception
+     */
+    Job runMRCreate(Map<String, String> partitionValues,
+                    List<HCatFieldSchema> partitionColumns, List<HCatRecord> records,
+                    int writeCount, boolean assertWrite, boolean asSingleMapTask) throws Exception {
 
         writeRecords = records;
         MapCreate.writeCount = 0;
@@ -249,10 +243,22 @@ public abstract class HCatMapReduceTest extends TestCase {
         // input/output settings
         job.setInputFormatClass(TextInputFormat.class);
 
-        Path path = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceInput");
-        createInputFile(path, writeCount);
+        if (asSingleMapTask) {
+            // One input path would mean only one map task
+            Path path = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceInput");
+            createInputFile(path, writeCount);
+            TextInputFormat.setInputPaths(job, path);
+        } else {
+            // Create two input paths so that two map tasks get triggered. There could be other ways
+            // to trigger two map tasks.
+            Path path = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceInput");
+            createInputFile(path, writeCount / 2);
 
-        TextInputFormat.setInputPaths(job, path);
+            Path path2 = new Path(fs.getWorkingDirectory(), "mapred/testHCatMapReduceInput2");
+            createInputFile(path2, (writeCount - writeCount / 2));
+
+            TextInputFormat.setInputPaths(job, path, path2);
+        }
 
         job.setOutputFormatClass(HCatOutputFormat.class);
 
@@ -294,6 +300,13 @@ public abstract class HCatMapReduceTest extends TestCase {
         return runMRRead(readCount, null);
     }
 
+    /**
+     * Run a local map reduce job to read records from HCatalog table and verify if the count is as expected
+     * @param readCount
+     * @param filter
+     * @return
+     * @throws Exception
+     */
     List<HCatRecord> runMRRead(int readCount, String filter) throws Exception {
 
         MapRead.readCount = 0;

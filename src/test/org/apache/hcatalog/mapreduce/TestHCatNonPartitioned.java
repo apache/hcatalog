@@ -32,14 +32,19 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestHCatNonPartitioned extends HCatMapReduceTest {
 
-    private List<HCatRecord> writeRecords;
-    List<HCatFieldSchema> partitionColumns;
+    private static List<HCatRecord> writeRecords;
+    static List<HCatFieldSchema> partitionColumns;
 
-    @Override
-    protected void initialize() throws HCatException {
+    @BeforeClass
+    public static void oneTimeSetUp() throws Exception {
 
         dbName = null; //test if null dbName works ("default" is used)
         tableName = "testHCatNonPartitionedTable";
@@ -75,6 +80,7 @@ public class TestHCatNonPartitioned extends HCatMapReduceTest {
     }
 
 
+    @Test
     public void testHCatNonPartitionedTable() throws Exception {
 
         Map<String, String> partitionMap = new HashMap<String, String>();

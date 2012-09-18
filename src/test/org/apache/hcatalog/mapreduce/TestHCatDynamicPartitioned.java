@@ -34,31 +34,37 @@ import org.apache.hcatalog.data.DefaultHCatRecord;
 import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+
 public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
-    private List<HCatRecord> writeRecords;
-    private List<HCatFieldSchema> dataColumns;
+    private static List<HCatRecord> writeRecords;
+    private static List<HCatFieldSchema> dataColumns;
     private static final Logger LOG = LoggerFactory.getLogger(TestHCatDynamicPartitioned.class);
+    private static final int NUM_RECORDS = 20;
+    private static final int NUM_PARTITIONS = 5;
 
-    @Override
-    protected void initialize() throws Exception {
-
+    @BeforeClass
+    public static void generateInputData() throws Exception {
         tableName = "testHCatDynamicPartitionedTable";
-        generateWriteRecords(20, 5, 0);
+        generateWriteRecords(NUM_RECORDS, NUM_PARTITIONS, 0);
         generateDataColumns();
     }
 
-    private void generateDataColumns() throws HCatException {
+    private static void generateDataColumns() throws HCatException {
         dataColumns = new ArrayList<HCatFieldSchema>();
         dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
         dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
         dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("p1", Constants.STRING_TYPE_NAME, "")));
     }
 
-    private void generateWriteRecords(int max, int mod, int offset) {
+    private static void generateWriteRecords(int max, int mod, int offset) {
         writeRecords = new ArrayList<HCatRecord>();
 
         for (int i = 0; i < max; i++) {
@@ -86,13 +92,29 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
         return fields;
     }
 
-
+    /**
+     * Run the dynamic partitioning test but with single map task
+     * @throws Exception
+     */
+    @Test
     public void testHCatDynamicPartitionedTable() throws Exception {
+        runHCatDynamicPartitionedTable(true);
+    }
 
-        generateWriteRecords(20, 5, 0);
-        runMRCreate(null, dataColumns, writeRecords, 20, true);
+    /**
+     * Run the dynamic partitioning test but with multiple map task. See HCATALOG-490
+     * @throws Exception
+     */
+    @Test
+    public void testHCatDynamicPartitionedTableMultipleTask() throws Exception {
+        runHCatDynamicPartitionedTable(false);
+    }
 
-        runMRRead(20);
+    protected void runHCatDynamicPartitionedTable(boolean asSingleMapTask) throws Exception {
+        generateWriteRecords(NUM_RECORDS, NUM_PARTITIONS, 0);
+        runMRCreate(null, dataColumns, writeRecords, NUM_RECORDS, true, asSingleMapTask);
+
+        runMRRead(NUM_RECORDS);
 
         //Read with partition filter
         runMRRead(4, "p1 = \"0\"");
@@ -110,14 +132,14 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
         ArrayList<String> res = new ArrayList<String>();
         driver.getResults(res);
-        assertEquals(20, res.size());
+        assertEquals(NUM_RECORDS, res.size());
 
 
         //Test for duplicate publish
         IOException exc = null;
         try {
-            generateWriteRecords(20, 5, 0);
-            Job job = runMRCreate(null, dataColumns, writeRecords, 20, false);
+            generateWriteRecords(NUM_RECORDS, NUM_PARTITIONS, 0);
+            Job job = runMRCreate(null, dataColumns, writeRecords, NUM_RECORDS, false);
             if (HcatTestUtils.isHadoop23()) {
                 new FileOutputCommitterContainer(job, null).cleanupJob(job);
             }

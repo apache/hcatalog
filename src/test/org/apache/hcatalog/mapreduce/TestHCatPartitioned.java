@@ -33,14 +33,19 @@ import org.apache.hcatalog.data.HCatRecord;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.apache.hcatalog.data.schema.HCatSchemaUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestHCatPartitioned extends HCatMapReduceTest {
 
-    private List<HCatRecord> writeRecords;
-    private List<HCatFieldSchema> partitionColumns;
+    private static List<HCatRecord> writeRecords;
+    private static List<HCatFieldSchema> partitionColumns;
 
-    @Override
-    protected void initialize() throws Exception {
+    @BeforeClass
+    public static void oneTimeSetUp() throws Exception {
 
         tableName = "testHCatPartitionedTable";
         writeRecords = new ArrayList<HCatRecord>();
@@ -77,6 +82,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     }
 
 
+    @Test
     public void testHCatPartitionedTable() throws Exception {
 
         Map<String, String> partitionMap = new HashMap<String, String>();

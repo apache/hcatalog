@@ -195,8 +195,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 //create base OutputFormat
                 org.apache.hadoop.mapred.OutputFormat baseOF =
                     ReflectionUtils.newInstance(storageHandler.getOutputFormatClass(), currTaskContext.getJobConf());
-                //check outputSpecs
-                baseOF.checkOutputSpecs(null, currTaskContext.getJobConf());
                 //get Output Committer
                 org.apache.hadoop.mapred.OutputCommitter baseOutputCommitter = currTaskContext.getJobConf().getOutputCommitter();
                 //create currJobContext the latest so it gets all the config changes
