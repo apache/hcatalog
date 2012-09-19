@@ -109,6 +109,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-502 HCatalog dependency resolution fails due to missing repo (traviscrawford)
+
   HCAT-490 HCatStorer() throws error when the same partition key is present in records in more than one tasks running as part of the same job (amalakar via traviscrawford)
 
   HCAT-499 Multiple store commands does not work with Hadoop23 (rohinip via avandana)

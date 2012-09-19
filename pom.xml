@@ -51,6 +51,21 @@
         <checksumPolicy>warn</checksumPolicy>
       </releases>
     </repository>
+
+    <!-- A transitive dependency defines this repo in its pom, however, the repo
+       has moved and causes dependency resolutions for 'asm:asm:pom:3.1'. Here we
+       disable the repo as we prefer to use central anyway. -->
+    <repository>
+      <id>glassfish-repository</id>
+      <url>http://maven.glassfish.org/content/groups/glassfish</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
   </repositories>
 
 </project>
