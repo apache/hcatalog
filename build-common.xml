@@ -77,7 +77,7 @@
     <echo message="${ant.project.name}"/>
     <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}"/>
     <artifact:install file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
-      <artifact:pom file="${build.dir}/ivy/${ant.project.name}-${hcatalog.version}.pom"/>
+      <artifact:pom file="${pom.file}"/>
     </artifact:install>
   </target>
 

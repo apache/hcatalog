@@ -37,18 +37,7 @@
   <dependencies>
     <!-- hadoop20 dependencies -->
     <dependency org="org.apache.pig" name="pig" rev="${pig.version}" conf="default->*"/>
-    <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop20.version}" conf="default->*">
-      <exclude org="commons-daemon" module="commons-daemon"/>
-    </dependency>
-    <dependency org="org.apache.hadoop" name="hadoop-test" rev="${hadoop20.version}" conf="test->*">
-      <exclude org="commons-daemon" module="commons-daemon"/>
-    </dependency>
-
-    <dependency org="javax.jms" name="jms" rev="${jms.version}"/>
-    <dependency org="org.apache.activemq" name="activemq-core" rev="${activemq.version}">
-      <exclude org="org.springframework"/>
-    </dependency>
-    <dependency org="org.apache.activemq" name="kahadb" rev="${activemq.version}"/>
+    <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop20.version}" conf="default->*"/>
     <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="${jackson.version}"/>
     <dependency org="org.codehaus.jackson" name="jackson-core-asl" rev="${jackson.version}"/>

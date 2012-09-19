@@ -21,6 +21,8 @@
   <property name="path.to.basedir" value="${basedir}/.."/>
   <import file="../build-common.xml"/>
 
+  <property name="pom.file" location="${build.dir}/ivy/${ant.project.name}-${hcatalog.version}.pom"/>
+
   <path id="compile.class.path">
     <fileset dir="${build.dir}/ivy/lib/default" includes="*.jar"/>
   </path>

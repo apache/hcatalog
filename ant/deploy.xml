@@ -20,13 +20,50 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
-  <target name="mvn-init" unless="mvn-init.complete">
-    <get src="${mvnrepo}/org/apache/maven/maven-ant-tasks/${maven-ant-tasks.version}/maven-ant-tasks-${maven-ant-tasks.version}.jar"
-         dest="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar" usetimestamp="true" skipexisting="true"/>
-    <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
-             uri="artifact:org.apache.maven.artifact.ant"
-             classpath="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
-    <property name="mvn-init.complete" value="true"/>
-  </target>
+    <target name="mvn-init" unless="mvn-init.complete">
+        <echo message="${ant.project.name}"/>
+        <get src="${mvnrepo}/org/apache/maven/maven-ant-tasks/${maven-ant-tasks.version}/maven-ant-tasks-${maven-ant-tasks.version}.jar"
+             dest="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar"
+             usetimestamp="true"
+             skipexisting="true"/>
+        <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
+                 uri="artifact:org.apache.maven.artifact.ant"
+                 classpath="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+        <property name="mvn-init.complete" value="true"/>
+    </target>
+
+    <target name="_check-mvn-dependencies" unless="mvn-dependencies.complete">
+        <available property="mvn-dependencies.complete"
+                   file="${build.dir}/lib/.mvn-dependencies.complete"/>
+    </target>
+
+    <!-- Only resolve dependencies if not already copied to lib dir. We copy
+    dependencies into the build dir rather than directly using files from the
+    local maven repo to match how ivy dependencies work. This is necessary for
+    targets like javadoc that need a comprehensive set of all dependencies
+    that would otherwise be unavailable at the top-level build file. -->
+    <target name="mvn-dependencies"
+            depends="mvn-init,_check-mvn-dependencies"
+            unless="mvn-dependencies.complete">
+        <echo message="${ant.project.name}"/>
+
+        <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
+            <pom file="pom.xml"/>
+        </artifact:dependencies>
+        <mkdir dir="${build.dir}/lib/compile"/>
+        <copy todir="${build.dir}/lib/compile">
+            <path refid="mvn.compile.classpath"/>
+        </copy>
+
+        <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
+            <pom file="pom.xml"/>
+        </artifact:dependencies>
+        <mkdir dir="${build.dir}/lib/test"/>
+        <copy todir="${build.dir}/lib/test">
+            <path refid="mvn.test.classpath"/>
+        </copy>
+
+        <touch file="${build.dir}/lib/.mvn-dependencies.complete"/>
+    </target>
 
 </project>
