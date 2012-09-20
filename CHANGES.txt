@@ -63,6 +63,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-507 e2e harness failing on 0.23 (toffer)
+
   HCAT-499 Multiple store commands does not work with Hadoop23 (rohinip via avandana)
 
   HCAT-445 Clover builds broken on trunk (rohinip via avandana)

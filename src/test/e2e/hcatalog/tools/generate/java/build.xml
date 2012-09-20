@@ -23,7 +23,7 @@
     <path id="generator-classpath">
         <fileset file="${hive.serde.jarfile}" />
         <fileset file="${hive.ql.jarfile}" />
-        <fileset file="${hadoop.core.jarfile}" />
+        <pathelement path="${hadoop.core.jarfile}" />
     </path>
 
     <target name="init">

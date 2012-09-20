@@ -184,7 +184,11 @@ sub generateData
 #   }
 
     # Create the HDFS directories
-    Util::runHadoopCmd($cfg, $log, "fs -mkdir $cfg->{'hcat_data_dir'}");
+    my $mkdirCmd = "fs -mkdir";
+    if ($ENV{'HCAT_HADOOPVERSION'} eq "23") {
+        $mkdirCmd = "fs -mkdir -p"
+    }
+    Util::runHadoopCmd($cfg, $log, "$mkdirCmd $cfg->{'hcat_data_dir'}");
 
     foreach my $table (@tables) {
         print "Generating data for $table->{'name'}\n";
@@ -200,12 +204,12 @@ sub generateData
         $self->runCmd($log, \@cmd);
 
         # Copy the data to HDFS
-        my $hadoop = "fs -mkdir $cfg->{'hcat_data_dir'}/$table->{'hdfs'}";
+        my $hadoop = "$mkdirCmd $cfg->{'hcat_data_dir'}/$table->{'hdfs'}";
         Util::runHadoopCmd($cfg, $log, $hadoop);
 
         if (defined($table->{'partitions'})) {
             foreach my $part (@{$table->{'partitions'}}) {
-                my $hadoop = "fs -mkdir
+                my $hadoop = "$mkdirCmd
                     $cfg->{'hcat_data_dir'}/$table->{'hdfs'}/$table->{'name'}.$part";
                 Util::runHadoopCmd($cfg, $log, $hadoop);
                 my $hadoop = "fs -copyFromLocal $table->{'name'}.$part " .
