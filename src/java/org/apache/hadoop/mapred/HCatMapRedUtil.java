@@ -39,9 +39,9 @@ public class HCatMapRedUtil {
     }
 
     public static org.apache.hadoop.mapred.JobContext createJobContext(org.apache.hadoop.mapreduce.JobContext context) {
-        return createJobContext(new JobConf(context.getConfiguration()),
-                                            context.getJobID(),
-                                            Reporter.NULL);
+        return createJobContext((JobConf)context.getConfiguration(),
+                                context.getJobID(),
+                                Reporter.NULL);
     }
 
     public static JobContext createJobContext(JobConf conf, org.apache.hadoop.mapreduce.JobID id, Progressable progressable) {
