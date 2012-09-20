@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -50,7 +51,9 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
     @Override
     public org.apache.hadoop.mapreduce.TaskAttemptContext createTaskAttemptContext(Configuration conf,
                                                                                    org.apache.hadoop.mapreduce.TaskAttemptID taskId) {
-        return new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl(conf, taskId);
+        return new org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl(
+					conf instanceof JobConf? new JobConf(conf) : conf, 
+					taskId);
     }
 
     @Override
@@ -62,7 +65,8 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
                 org.apache.hadoop.mapred.JobConf.class, org.apache.hadoop.mapred.TaskAttemptID.class,
                 Reporter.class);
             construct.setAccessible(true);
-            newContext = (org.apache.hadoop.mapred.TaskAttemptContext) construct.newInstance(conf, taskId, (Reporter) progressable);
+            newContext = (org.apache.hadoop.mapred.TaskAttemptContext) construct.newInstance(
+                           new JobConf(conf), taskId, (Reporter) progressable);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -72,17 +76,15 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
     @Override
     public JobContext createJobContext(Configuration conf,
                                        JobID jobId) {
-        JobContext ctxt = new JobContextImpl(conf, jobId);
-
-        return ctxt;
+        return new JobContextImpl(conf instanceof JobConf? new JobConf(conf) : conf,
+                                  jobId);
     }
 
     @Override
     public org.apache.hadoop.mapred.JobContext createJobContext(org.apache.hadoop.mapred.JobConf conf,
                                                                 org.apache.hadoop.mapreduce.JobID jobId, Progressable progressable) {
-        org.apache.hadoop.mapred.JobContext newContext =
-            new org.apache.hadoop.mapred.JobContextImpl(conf, jobId, (org.apache.hadoop.mapred.Reporter) progressable);
-        return newContext;
+        return new org.apache.hadoop.mapred.JobContextImpl(
+					new JobConf(conf), jobId, (org.apache.hadoop.mapred.Reporter) progressable);
     }
 
     @Override

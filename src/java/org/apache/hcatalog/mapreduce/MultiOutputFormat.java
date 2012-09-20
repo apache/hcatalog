@@ -288,8 +288,10 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
                 }
             }
         }
-        builder.delete(builder.length() - CONF_VALUE_DELIM.length(), builder.length());
-        userConf.set(getAliasConfName(alias), builder.toString());
+        if (builder.length() > CONF_VALUE_DELIM.length()) {
+            builder.delete(builder.length() - CONF_VALUE_DELIM.length(), builder.length());
+            userConf.set(getAliasConfName(alias), builder.toString());
+        }
     }
 
     private static String getMergedConfValue(String originalValues, String newValues, String separator) {

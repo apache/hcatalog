@@ -111,6 +111,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-494 MultiOutputFormat in 0.23 fails to setAliasConf() correctly. (mithun via toffer)
+
   HCAT-507 e2e harness failing on 0.23 (toffer)
 
   HCAT-502 HCatalog dependency resolution fails due to missing repo (traviscrawford)
