@@ -195,6 +195,13 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 //create base OutputFormat
                 org.apache.hadoop.mapred.OutputFormat baseOF =
                     ReflectionUtils.newInstance(storageHandler.getOutputFormatClass(), currTaskContext.getJobConf());
+
+                //We are skipping calling checkOutputSpecs() for each partition
+                //As it can throw a FileAlreadyExistsException when more than one mapper is writing to a partition
+                //See HCATALOG-490, also to avoid contacting the namenode for each new FileOutputFormat instance
+                //In general this should be ok for most FileOutputFormat implementations
+                //but may become an issue for cases when the method is used to perform other setup tasks
+
                 //get Output Committer
                 org.apache.hadoop.mapred.OutputCommitter baseOutputCommitter = currTaskContext.getJobConf().getOutputCommitter();
                 //create currJobContext the latest so it gets all the config changes
