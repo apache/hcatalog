@@ -26,6 +26,7 @@
     <mkdir dir="${build.dir}/ivy/report"/>
 
     <ivy:configure file="${ivysettings.xml}"/>
+    <echo message="Generating ${pom.file}"/>
     <ivy:makepom ivyfile="${ivy.xml}" pomfile="${pom.file}">
       <mapping conf="default" scope="compile"/>
     </ivy:makepom>

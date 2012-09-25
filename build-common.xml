@@ -75,7 +75,9 @@
 
   <target name="jar" depends="compile,mvn-init">
     <echo message="${ant.project.name}"/>
-    <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}"/>
+    <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}">
+      <metainf dir="${path.to.basedir}" includes="**/LICENSE.txt,**/NOTICE.txt"/>
+    </jar>
     <artifact:install file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
       <artifact:pom file="${pom.file}"/>
     </artifact:install>

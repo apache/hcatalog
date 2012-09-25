@@ -20,6 +20,23 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
+    <macrodef name="_sign">
+        <attribute name="inputFile"/>
+        <sequential>
+            <echo>Signing @{inputFile}</echo>
+            <delete file="@{inputFile}.asc"/>
+            <exec executable="gpg">
+                <arg value="--armor"/>
+                <arg value="--output"/>
+                <arg value="@{inputFile}.asc"/>
+                <arg value="--passphrase"/>
+                <arg value="${gpg.passphrase}"/>
+                <arg value="--detach-sig"/>
+                <arg value="@{inputFile}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
     <target name="mvn-init" unless="mvn-init.complete">
         <echo message="${ant.project.name}"/>
         <get src="${mvnrepo}/org/apache/maven/maven-ant-tasks/${maven-ant-tasks.version}/maven-ant-tasks-${maven-ant-tasks.version}.jar"
@@ -64,6 +81,27 @@
         </copy>
 
         <touch file="${build.dir}/lib/.mvn-dependencies.complete"/>
+    </target>
+
+    <target name="mvn-deploy" depends="mvn-init" description="Deploy artifacts to a Maven repository.">
+        <echo message="${ant.project.name}"/>
+        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
+            <artifact:pom file="${pom.file}"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
+    </target>
+
+    <target name="mvn-deploy-signed" depends="mvn-init"
+            description="Sign and deploy artifacts to a Maven repository.">
+        <echo message="${ant.project.name}"/>
+        <_sign inputFile="${build.dir}/${ant.project.name}-${hcatalog.version}.jar"/>
+        <_sign inputFile="${pom.file}"/>
+        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
+            <artifact:pom file="${pom.file}"/>
+            <attach file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar.asc" type="jar.asc"/>
+            <attach file="${pom.file}.asc" type="pom.asc"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
     </target>
 
 </project>

@@ -340,6 +340,71 @@
 
     <!--
     ===============================================================================
+    Deploy Section
+    ===============================================================================
+    -->
+
+    <target name="mvn-deploy" depends="mvn-init"
+        description="Deploy artifacts to a Maven repository.">
+
+        <artifact:deploy file="${build.dir}/hcatalog/hcatalog-${hcatalog.version}.jar">
+            <artifact:pom file="${build.dir}/ivy/hcatalog-${hcatalog.version}.pom"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
+
+        <artifact:deploy file="${build.dir}/hcatalog/hcatalog-core-${hcatalog.version}.jar">
+            <artifact:pom file="${build.dir}/ivy/hcatalog-core-${hcatalog.version}.pom"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
+
+        <ant target="mvn-deploy" dir="hcatalog-pig-adapter" inheritAll="false" useNativeBasedir="true"/>
+        <ant target="mvn-deploy" dir="server-extensions" inheritAll="false" useNativeBasedir="true"/>
+        <ant target="mvn-deploy" dir="webhcat/java-client" inheritAll="false" useNativeBasedir="true"/>
+        <ant target="mvn-deploy" dir="webhcat/svr" inheritAll="false" useNativeBasedir="true"/>
+    </target>
+
+    <target name="mvn-deploy-signed" depends="mvn-init"
+            description="Sign and deploy artifacts to a Maven repository.">
+
+        <input message="Enter your gpg password (or just press return if using an agent): "
+               addproperty="gpg.passphrase">
+            <handler classname="org.apache.tools.ant.input.SecureInputHandler"/>
+        </input>
+
+        <_sign inputFile="${build.dir}/hcatalog/hcatalog-${hcatalog.version}.jar"/>
+        <_sign inputFile="${build.dir}/ivy/hcatalog-${hcatalog.version}.pom"/>
+        <artifact:deploy file="${build.dir}/hcatalog/hcatalog-${hcatalog.version}.jar">
+            <artifact:pom file="${build.dir}/ivy/hcatalog-${hcatalog.version}.pom"/>
+            <attach file="${build.dir}/hcatalog/hcatalog-${hcatalog.version}.jar.asc" type="jar.asc"/>
+            <attach file="${build.dir}/ivy/hcatalog-${hcatalog.version}.pom" type="pom.asc"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
+
+        <_sign inputFile="${build.dir}/hcatalog/hcatalog-core-${hcatalog.version}.jar"/>
+        <_sign inputFile="${build.dir}/ivy/hcatalog-core-${hcatalog.version}.pom"/>
+        <artifact:deploy file="${build.dir}/hcatalog/hcatalog-core-${hcatalog.version}.jar">
+            <artifact:pom file="${build.dir}/ivy/hcatalog-core-${hcatalog.version}.pom"/>
+            <attach file="${build.dir}/hcatalog/hcatalog-core-${hcatalog.version}.jar.asc" type="jar.asc"/>
+            <attach file="${build.dir}/ivy/hcatalog-core-${hcatalog.version}.pom.asc" type="pom.asc"/>
+            <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
+        </artifact:deploy>
+
+        <ant target="mvn-deploy-signed" dir="hcatalog-pig-adapter" inheritAll="false" useNativeBasedir="true">
+            <property name="gpg.passphrase" value="${gpg.passphrase}"/>
+        </ant>
+        <ant target="mvn-deploy-signed" dir="server-extensions" inheritAll="false" useNativeBasedir="true">
+            <property name="gpg.passphrase" value="${gpg.passphrase}"/>
+        </ant>
+        <ant target="mvn-deploy-signed" dir="webhcat/java-client" inheritAll="false" useNativeBasedir="true">
+            <property name="gpg.passphrase" value="${gpg.passphrase}"/>
+        </ant>
+        <ant target="mvn-deploy-signed" dir="webhcat/svr" inheritAll="false" useNativeBasedir="true">
+            <property name="gpg.passphrase" value="${gpg.passphrase}"/>
+        </ant>
+    </target>
+
+    <!--
+    ===============================================================================
     Distribution Section
     ===============================================================================
     -->
