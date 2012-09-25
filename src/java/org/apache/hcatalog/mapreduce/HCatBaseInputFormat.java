@@ -142,11 +142,17 @@ public abstract class HCatBaseInputFormat
             org.apache.hadoop.mapred.InputFormat inputFormat =
                 getMapRedInputFormat(jobConf, inputFormatClass);
 
-            //Call getSplit on the InputFormat, create an
-            //HCatSplit for each underlying split
-            //NumSplits is 0 for our purposes
+            //Call getSplit on the InputFormat, create an HCatSplit for each
+            //underlying split. When the desired number of input splits is missing,
+            //use a default number (denoted by zero).
+            //TODO(malewicz): Currently each partition is split independently into
+            //a desired number. However, we want the union of all partitions to be
+            //split into a desired number while maintaining balanced sizes of input
+            //splits.
+            int desiredNumSplits =
+                conf.getInt(HCatConstants.HCAT_DESIRED_PARTITION_NUM_SPLITS, 0);
             org.apache.hadoop.mapred.InputSplit[] baseSplits =
-                inputFormat.getSplits(jobConf, 0);
+                inputFormat.getSplits(jobConf, desiredNumSplits);
 
             for (org.apache.hadoop.mapred.InputSplit split : baseSplits) {
                 splits.add(new HCatSplit(

@@ -79,6 +79,16 @@ public final class HCatConstants {
     public static final String HCAT_METASTORE_PRINCIPAL
         = HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname;
 
+    /**
+     * The desired number of input splits produced for each partition. When the
+     * input files are large and few, we want to split them into many splits,
+     * so as to increase the parallelizm of loading the splits. Try also two
+     * other parameters, mapred.min.split.size and mapred.max.split.size, to
+     * control the number of input splits.
+     */
+    public static final String HCAT_DESIRED_PARTITION_NUM_SPLITS =
+        "hcat.desired.partition.num.splits";
+
     // IMPORTANT IMPORTANT IMPORTANT!!!!!
     //The keys used to store info into the job Configuration.
     //If any new keys are added, the HCatStorer needs to be updated. The HCatStorer
