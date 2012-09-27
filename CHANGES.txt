@@ -115,6 +115,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-497 HCatContext should use the jobconf instead of its own conf (traviscrawford)
+
   HCAT-494 MultiOutputFormat in 0.23 fails to setAliasConf() correctly. (mithun via toffer)
 
   HCAT-507 e2e harness failing on 0.23 (toffer)

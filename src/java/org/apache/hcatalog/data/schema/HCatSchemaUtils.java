@@ -139,14 +139,17 @@ public class HCatSchemaUtils {
     private static Type getPrimitiveHType(TypeInfo basePrimitiveTypeInfo) {
         switch (((PrimitiveTypeInfo) basePrimitiveTypeInfo).getPrimitiveCategory()) {
         case BOOLEAN:
-            return HCatContext.getInstance().getConf().getBoolean(
-                HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER,
-                HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT) ?
+            return (HCatContext.getInstance().getConf().isPresent() &&
+                HCatContext.getInstance().getConf().get().getBoolean(
+                    HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER,
+                    HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER_DEFAULT)) ?
                 Type.INT : Type.BOOLEAN;
         case BYTE:
-            return HCatContext.getInstance().getConf().getBoolean(
-                HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
-                HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT) ? Type.INT : Type.TINYINT;
+            return (HCatContext.getInstance().getConf().isPresent() &&
+                HCatContext.getInstance().getConf().get().getBoolean(
+                    HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
+                    HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT)) ?
+                Type.INT : Type.TINYINT;
         case DOUBLE:
             return Type.DOUBLE;
         case FLOAT:
@@ -156,9 +159,10 @@ public class HCatSchemaUtils {
         case LONG:
             return Type.BIGINT;
         case SHORT:
-            return HCatContext.getInstance().getConf().getBoolean(
-                HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
-                HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT) ?
+            return (HCatContext.getInstance().getConf().isPresent() &&
+                HCatContext.getInstance().getConf().get().getBoolean(
+                    HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION,
+                    HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION_DEFAULT)) ?
                 Type.INT : Type.SMALLINT;
         case STRING:
             return Type.STRING;

@@ -82,6 +82,8 @@ public class HCatLoader extends HCatBaseLoader {
 
     @Override
     public void setLocation(String location, Job job) throws IOException {
+        HCatContext.setupHCatContext(job.getConfiguration()).getConf().get()
+            .setBoolean(HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION, true);
 
         UDFContext udfContext = UDFContext.getUDFContext();
         Properties udfProps = udfContext.getUDFProperties(this.getClass(),
@@ -185,9 +187,8 @@ public class HCatLoader extends HCatBaseLoader {
 
     @Override
     public ResourceSchema getSchema(String location, Job job) throws IOException {
-        HCatContext.getInstance().mergeConf(job.getConfiguration());
-        HCatContext.getInstance().getConf().setBoolean(
-            HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION, true);
+        HCatContext.setupHCatContext(job.getConfiguration()).getConf().get()
+            .setBoolean(HCatConstants.HCAT_DATA_TINY_SMALL_INT_PROMOTION, true);
 
         Table table = phutil.getTable(location,
             hcatServerUri != null ? hcatServerUri : PigHCatUtil.getHCatServerUri(job),

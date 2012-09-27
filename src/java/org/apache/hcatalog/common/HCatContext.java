@@ -18,37 +18,54 @@
 
 package org.apache.hcatalog.common;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.Map;
 
 /**
- * HCatContext provides global access to configuration data.
+ * HCatContext provides global access to configuration data. It uses a reference to the
+ * job configuration so that settings are automatically passed to the backend by the
+ * MR framework.
  */
 public class HCatContext {
 
     private static final HCatContext hCatContext = new HCatContext();
 
-    private final Configuration conf;
+    private Configuration conf = null;
 
     private HCatContext() {
-        conf = new Configuration();
+    }
+
+    /**
+     * Setup the HCatContext as a reference to the given configuration. Keys
+     * exclusive to an existing config are set in the new conf.
+     */
+    public static synchronized HCatContext setupHCatContext(Configuration newConf) {
+        Preconditions.checkNotNull(newConf, "HCatContext must not have a null conf.");
+
+        if (hCatContext.conf == null) {
+            hCatContext.conf = newConf;
+            return hCatContext;
+        }
+
+        if (hCatContext.conf != newConf) {
+            for (Map.Entry<String, String> entry : hCatContext.conf) {
+                if (newConf.get(entry.getKey()) == null) {
+                    newConf.set(entry.getKey(), entry.getValue());
+                }
+            }
+            hCatContext.conf = newConf;
+        }
+        return hCatContext;
     }
 
     public static HCatContext getInstance() {
         return hCatContext;
     }
 
-    public Configuration getConf() {
-        return conf;
-    }
-
-    /**
-     * Merge the given configuration into the HCatContext conf, overwriting any existing keys.
-     */
-    public void mergeConf(Configuration conf) {
-        for (Map.Entry<String, String> entry : conf) {
-            this.conf.set(entry.getKey(), entry.getValue());
-        }
+    public Optional<Configuration> getConf() {
+        return Optional.fromNullable(conf);
     }
 }
