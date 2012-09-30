@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-515 Upgrade hadoop23 version to use 0.23.3 (cdrome via toffer)
+
   HCAT-132 Add HCatalog to Maven Repository (traviscrawford)
 
   HCAT-375 Make HCat work for Hadoop 0.23 (cdrome via toffer)
