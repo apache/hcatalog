@@ -21,7 +21,7 @@ imposed on others.
     <module name="FileLength"/>
 
     <module name="Header">
-        <property name="headerFile" value="apache_header_java.txt"/>
+        <property name="headerFile" value="build-support/checkstyle/apache_header_java.txt"/>
         <property name="fileExtensions" value="java"/>
     </module>
 

@@ -42,6 +42,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-517 Misc. build cleanup (traviscrawford)
+
   HCAT-506 desired number of input splits for large files (gmalewicz via traviscrawford)
 
   HCAT-461 Refactor server-extensions as a subproject (traviscrawford)

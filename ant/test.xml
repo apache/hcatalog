@@ -24,7 +24,8 @@
     <attribute name="srcDir"/>
     <sequential>
       <!-- If anyone knows how to set umask inside ant please do so -->
-      <exec executable="${path.to.basedir}/bin/umaskcheck.sh" failonerror="true"/>
+      <exec executable="${path.to.basedir}/build-support/scripts/umaskcheck.sh"
+            failonerror="true"/>
 
       <delete dir="${test.logs}"/>
       <delete dir="${test.warehouse.dir}"/>
