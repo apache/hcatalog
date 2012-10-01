@@ -65,6 +65,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-513  Data Store onto HCatalog table fails for dynamic partitioning as the temporary directory gets deleted by the completed map tasks (amalakar via toffer)
+
   HCAT-490 HCatStorer() throws error when the same partition key is present in records in more than one tasks running as part of the same job (amalakar via toffer)
 
   HCAT-494 MultiOutputFormat in 0.23 fails to setAliasConf() correctly. (mithun via toffer)

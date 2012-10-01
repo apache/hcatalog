@@ -35,9 +35,11 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.mapred.HCatMapRedUtil;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus.State;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
@@ -160,6 +162,10 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
         try {
             if (dynamicPartitioningUsed) {
                 discoverPartitions(jobContext);
+                // Commit each partition so it gets moved out of the job work dir
+                for (JobContext context : contextDiscoveredByPath.values()) {
+                    new JobConf(context.getConfiguration()).getOutputCommitter().commitJob(context);
+                }
             }
             if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
                 getBaseOutputCommitter().commitJob(
@@ -475,8 +481,13 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                     LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>();
                     Warehouse.makeSpecFromName(fullPartSpec, st.getPath());
                     partitionsDiscoveredByPath.put(st.getPath().toString(),fullPartSpec);
-                    JobContext currContext = HCatHadoopShims.Instance.get().createJobContext(context.getConfiguration(),context.getJobID());
-                    HCatOutputFormat.configureOutputStorageHandler(context, jobInfo, fullPartSpec);
+                    JobConf jobConf = (JobConf)context.getConfiguration();
+                    JobContext currContext = HCatMapRedUtil.createJobContext(
+                        jobConf,
+                        context.getJobID(),
+                        InternalUtil.createReporter(HCatMapRedUtil.createTaskAttemptContext(jobConf,
+                            HCatHadoopShims.Instance.get().createTaskAttemptID())));
+                    HCatOutputFormat.configureOutputStorageHandler(currContext, jobInfo, fullPartSpec);
                     contextDiscoveredByPath.put(st.getPath().toString(),currContext);
                 }
             }
@@ -616,7 +627,7 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
      * 0.9 versions. The cleanupJob method is deprecated but, Pig 0.8 and
      * 0.9 call cleanupJob method. Hence this method is used by both abortJob
      * and cleanupJob methods.
-     * @param JobContext The job context.
+     * @param context The job context.
      * @throws java.io.IOException
      */
     private void internalAbortJob(JobContext context, State state) throws IOException{
