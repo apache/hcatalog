@@ -207,6 +207,10 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
     public void commitJob(JobContext jobContext) throws IOException {
         if (dynamicPartitioningUsed) {
             discoverPartitions(jobContext);
+            // Commit each partition so it gets moved out of the job work dir
+            for (JobContext context : contextDiscoveredByPath.values()) {
+                new JobConf(context.getConfiguration()).getOutputCommitter().commitJob(context);
+            }
         }
         if (getBaseOutputCommitter() != null && !dynamicPartitioningUsed) {
             getBaseOutputCommitter().commitJob(HCatMapRedUtil.createJobContext(jobContext));
@@ -675,8 +679,13 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                     LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>();
                     Warehouse.makeSpecFromName(fullPartSpec, st.getPath());
                     partitionsDiscoveredByPath.put(st.getPath().toString(), fullPartSpec);
-                    JobContext currContext = HCatHadoopShims.Instance.get().createJobContext(context.getConfiguration(), context.getJobID());
-                    HCatOutputFormat.configureOutputStorageHandler(context, jobInfo, fullPartSpec);
+                    JobConf jobConf = (JobConf)context.getConfiguration();
+                    JobContext currContext = HCatMapRedUtil.createJobContext(
+                        jobConf,
+                        context.getJobID(),
+                        InternalUtil.createReporter(HCatMapRedUtil.createTaskAttemptContext(jobConf,
+                            HCatHadoopShims.Instance.get().createTaskAttemptID())));
+                    HCatOutputFormat.configureOutputStorageHandler(currContext, jobInfo, fullPartSpec);
                     contextDiscoveredByPath.put(st.getPath().toString(), currContext);
                 }
             }

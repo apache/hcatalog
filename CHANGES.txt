@@ -117,6 +117,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-513  Data Store onto HCatalog table fails for dynamic partitioning as the temporary directory gets deleted by the completed map tasks  (amalakar via toffer)
+
   HCAT-497 HCatContext should use the jobconf instead of its own conf (traviscrawford)
 
   HCAT-494 MultiOutputFormat in 0.23 fails to setAliasConf() correctly. (mithun via toffer)

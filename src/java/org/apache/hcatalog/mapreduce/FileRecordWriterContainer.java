@@ -144,8 +144,6 @@ class FileRecordWriterContainer extends RecordWriterContainer {
                 if (baseOutputCommitter.needsTaskCommit(currContext)) {
                     baseOutputCommitter.commitTask(currContext);
                 }
-                org.apache.hadoop.mapred.JobContext currJobContext = HCatMapRedUtil.createJobContext(currContext);
-                baseOutputCommitter.commitJob(currJobContext);
             }
         } else {
             getBaseRecordWriter().close(reporter);
