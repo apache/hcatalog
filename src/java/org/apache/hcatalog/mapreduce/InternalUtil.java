@@ -21,7 +21,9 @@ package org.apache.hcatalog.mapreduce;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -48,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -184,5 +187,31 @@ class InternalUtil {
             throw new IOException("Split must be " + HCatSplit.class.getName()
                 + " but found " + split.getClass().getName());
         }
+    }
+
+
+    static Map<String, String> createPtnKeyValueMap(Table table, Partition ptn)
+        throws IOException {
+        List<String> values = ptn.getValues();
+        if (values.size() != table.getPartitionKeys().size()) {
+            throw new IOException(
+                    "Partition values in partition inconsistent with table definition, table "
+                            + table.getTableName() + " has "
+                            + table.getPartitionKeys().size()
+                            + " partition keys, partition has " + values.size()
+                            + "partition values");
+        }
+
+        Map<String, String> ptnKeyValues = new HashMap<String, String>();
+
+        int i = 0;
+        for (FieldSchema schema : table.getPartitionKeys()) {
+            // CONCERN : the way this mapping goes, the order *needs* to be
+            // preserved for table.getPartitionKeys() and ptn.getValues()
+            ptnKeyValues.put(schema.getName().toLowerCase(), values.get(i));
+            i++;
+        }
+
+        return ptnKeyValues;
     }
 }
