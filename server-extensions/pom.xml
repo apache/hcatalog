@@ -79,5 +79,11 @@
             <version>${hadoop20.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.pig</groupId>
+            <artifactId>pig</artifactId>
+            <version>${pig.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

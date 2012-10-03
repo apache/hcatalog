@@ -156,7 +156,7 @@ public class HCatStorer extends HCatBaseStorer {
 
     @Override
     public void storeSchema(ResourceSchema schema, String arg1, Job job) throws IOException {
-        HCatHadoopShims.Instance.get().commitJob(getOutputFormat(), schema, arg1, job);
+        HCatHadoopShims.Instance.get().commitJob(getOutputFormat(), job);
     }
 
     @Override

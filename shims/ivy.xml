@@ -11,8 +11,6 @@
     <conf name="hadoop23" visibility="private"/>
   </configurations>
   <dependencies>
-    <dependency org="org.apache.pig" name="pig" rev="${pig.version}" conf="hadoop20->*;hadoop23->*"/>
-
     <!-- Hadoop 0.20 shim dependencies. Used for building 0.20 shims. -->
     <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop20.version}" conf="hadoop20->*">
       <exclude org="commons-daemon" module="commons-daemon"/>

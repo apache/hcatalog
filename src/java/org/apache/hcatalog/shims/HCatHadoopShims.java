@@ -30,7 +30,6 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.util.Progressable;
-import org.apache.pig.ResourceSchema;
 
 /**
  * Shim layer to abstract differences between Hadoop 0.20 and 0.23
@@ -81,8 +80,7 @@ public interface HCatHadoopShims {
 
     public org.apache.hadoop.mapred.JobContext createJobContext(JobConf conf, JobID jobId, Progressable progressable);
 
-    public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
-                          String arg1, Job job) throws IOException;
+    public void commitJob(OutputFormat outputFormat, Job job) throws IOException;
 
     public void abortJob(OutputFormat outputFormat, Job job) throws IOException;
 

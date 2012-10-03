@@ -36,7 +36,7 @@
 
   <dependencies>
     <!-- hadoop20 dependencies -->
-    <dependency org="org.apache.pig" name="pig" rev="${pig.version}" conf="default->*"/>
+    <dependency org="org.apache.pig" name="pig" rev="${pig.version}" conf="test->*"/>
     <dependency org="org.apache.hadoop" name="hadoop-tools" rev="${hadoop20.version}" conf="default->*"/>
     <dependency org="javax.management.j2ee" name="management-api" rev="${javax-mgmt.version}"/>
     <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="${jackson.version}"/>

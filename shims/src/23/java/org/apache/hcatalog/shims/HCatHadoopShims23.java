@@ -32,7 +32,6 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.util.Progressable;
-import org.apache.pig.ResourceSchema;
 
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.net.NetUtils;
@@ -88,8 +87,7 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
     }
 
     @Override
-    public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
-                          String arg1, Job job) throws IOException {
+    public void commitJob(OutputFormat outputFormat, Job job) throws IOException {
         // Do nothing as this was fixed by MAPREDUCE-1447.
     }
 

@@ -33,7 +33,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.util.Progressable;
-import org.apache.pig.ResourceSchema;
 
 public class HCatHadoopShims20S implements HCatHadoopShims {
     @Override
@@ -90,8 +89,7 @@ public class HCatHadoopShims20S implements HCatHadoopShims {
     }
 
     @Override
-    public void commitJob(OutputFormat outputFormat, ResourceSchema schema,
-            String arg1, Job job) throws IOException {
+    public void commitJob(OutputFormat outputFormat, Job job) throws IOException {
         if( job.getConfiguration().get("mapred.job.tracker", "").equalsIgnoreCase("local") ) {
             try {
                 //In local mode, mapreduce will not call OutputCommitter.cleanupJob.
