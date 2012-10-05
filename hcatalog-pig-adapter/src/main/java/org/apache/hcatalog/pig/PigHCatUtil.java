@@ -52,9 +52,15 @@ import org.apache.pig.data.DataType;
 import org.apache.pig.data.DefaultDataBag;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.data.TupleFactory;
+import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.UDFContext;
+import org.apache.pig.impl.util.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PigHCatUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PigHCatUtil.class);
 
     static final int PIG_EXCEPTION_CODE = 1115; // http://wiki.apache.org/pig/PigErrorHandlingFunctionalSpecification#Error_codes
     private static final String DEFAULT_DB = MetaStoreUtils.DEFAULT_DATABASE_NAME;
@@ -63,6 +69,39 @@ public class PigHCatUtil {
         new HashMap<Pair<String, String>, Table>();
 
     private static final TupleFactory tupFac = TupleFactory.getInstance();
+
+    private static boolean pigHasBooleanSupport = false;
+
+    /**
+     * Determine if the current Pig version supports boolean columns. This works around a
+     * dependency conflict preventing HCatalog from requiring a version of Pig with boolean
+     * field support and should be removed once HCATALOG-466 has been resolved.
+     */
+    static {
+        // DETAILS:
+        //
+        // PIG-1429 added support for boolean fields, which shipped in 0.10.0;
+        // this version of Pig depends on antlr 3.4.
+        //
+        // HCatalog depends heavily on Hive, which at this time uses antlr 3.0.1.
+        //
+        // antlr 3.0.1 and 3.4 are incompatible, so Pig 0.10.0 and Hive cannot be depended on in the
+        // same project. Pig 0.8.0 did not use antlr for its parser and can coexist with Hive,
+        // so that Pig version is depended on by HCatalog at this time.
+        try {
+            Schema schema = Utils.getSchemaFromString("myBooleanField: boolean");
+            pigHasBooleanSupport = (schema.getField("myBooleanField").type == DataType.BOOLEAN);
+        } catch (Throwable e) {
+            // pass
+        }
+
+        if (!pigHasBooleanSupport) {
+            LOG.info("This version of Pig does not support boolean fields. To enable "
+                    + "boolean-to-integer conversion, set the "
+                    + HCatConstants.HCAT_DATA_CONVERT_BOOLEAN_TO_INTEGER
+                    + "=true configuration parameter.");
+        }
+    }
 
     static public Pair<String, String> getDBTableNames(String location) throws IOException {
         // the location string will be of the form:
@@ -258,8 +297,6 @@ public class PigHCatUtil {
     }
 
     static public byte getPigType(Type type) throws IOException {
-        String errMsg;
-
         if (type == Type.STRING) {
             return DataType.CHARARRAY;
         }
@@ -296,14 +333,12 @@ public class PigHCatUtil {
             return DataType.BYTEARRAY;
         }
 
-        if (type == Type.BOOLEAN) {
-            errMsg = "HCatalog column type 'BOOLEAN' is not supported in " +
-                "Pig as a column type";
-            throw new PigException(errMsg, PIG_EXCEPTION_CODE);
+        if (type == Type.BOOLEAN && pigHasBooleanSupport) {
+            return DataType.BOOLEAN;
         }
 
-        errMsg = "HCatalog column type '" + type.toString() + "' is not supported in Pig as a column type";
-        throw new PigException(errMsg, PIG_EXCEPTION_CODE);
+        throw new PigException("HCatalog column type '" + type.toString()
+                + "' is not supported in Pig as a column type", PIG_EXCEPTION_CODE);
     }
 
     public static Tuple transformToTuple(HCatRecord hr, HCatSchema hs) throws Exception {
@@ -406,7 +441,11 @@ public class PigHCatUtil {
             Type hType = hcatField.getType();
             switch (hType) {
             case BOOLEAN:
-                throw new PigException("Incompatible type found in hcat table schema: " + hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                if (!pigHasBooleanSupport) {
+                    throw new PigException("Incompatible type found in HCat table schema: "
+                            + hcatField, PigHCatUtil.PIG_EXCEPTION_CODE);
+                }
+                break;
             case ARRAY:
                 validateHCatSchemaFollowsPigRules(hcatField.getArrayElementSchema());
                 break;

@@ -23,6 +23,8 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-364 HCatalog pig adapter should handle boolean fields (traviscrawford)
+
   HCAT-515 Upgrade hadoop23 version to use 0.23.3 (cdrome via toffer)
 
   HCAT-132 Add HCatalog to Maven Repository (traviscrawford)
