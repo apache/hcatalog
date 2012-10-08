@@ -363,7 +363,7 @@ public class PigHCatUtil {
             result = transformToBag((List<? extends Object>) o, hfs);
             break;
         case MAP:
-            result = transformToPigMap((Map<String, Object>) o, hfs);
+            result = transformToPigMap((Map<Object, Object>) o, hfs);
             break;
         default:
             result = o;
@@ -372,7 +372,7 @@ public class PigHCatUtil {
         return result;
     }
 
-    public static Tuple transformToTuple(List<? extends Object> objList, HCatFieldSchema hfs) throws Exception {
+    private static Tuple transformToTuple(List<? extends Object> objList, HCatFieldSchema hfs) throws Exception {
         try {
             return transformToTuple(objList, hfs.getStructSubSchema());
         } catch (Exception e) {
@@ -384,7 +384,7 @@ public class PigHCatUtil {
         }
     }
 
-    public static Tuple transformToTuple(List<? extends Object> objList, HCatSchema hs) throws Exception {
+    private static Tuple transformToTuple(List<? extends Object> objList, HCatSchema hs) throws Exception {
         if (objList == null) {
             return null;
         }
@@ -396,20 +396,21 @@ public class PigHCatUtil {
         return t;
     }
 
-    public static Map<String, Object> transformToPigMap(Map<String, Object> map, HCatFieldSchema hfs) throws Exception {
+    private static Map<String, Object> transformToPigMap(Map<Object, Object> map, HCatFieldSchema hfs) throws Exception {
         if (map == null) {
             return null;
         }
 
         Map<String, Object> result = new HashMap<String, Object>();
-        for (Entry<String, Object> entry : map.entrySet()) {
-            result.put(entry.getKey(), extractPigObject(entry.getValue(), hfs.getMapValueSchema().get(0)));
+        for (Entry<Object, Object> entry : map.entrySet()) {
+            // since map key for Pig has to be Strings
+            result.put(entry.getKey().toString(), extractPigObject(entry.getValue(), hfs.getMapValueSchema().get(0)));
         }
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    public static DataBag transformToBag(List<? extends Object> list, HCatFieldSchema hfs) throws Exception {
+    private static DataBag transformToBag(List<? extends Object> list, HCatFieldSchema hfs) throws Exception {
         if (list == null) {
             return null;
         }
@@ -454,6 +455,10 @@ public class PigHCatUtil {
                 break;
             case MAP:
                 // key is only string
+                if (hcatField.getMapKeyType() != Type.STRING) {
+                    LOG.info("Converting non-String key of map " + hcatField.getName() + " from "
+                        + hcatField.getMapKeyType() + " to String.");
+                }
                 validateHCatSchemaFollowsPigRules(hcatField.getMapValueSchema());
                 break;
             }

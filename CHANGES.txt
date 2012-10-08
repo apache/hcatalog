@@ -121,6 +121,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-523 PigHCatUtil should not assume map key type can be casted to String (pengfeng via traviscrawford)
+
   HCAT-522 Make HCatHadoopShims.commitJob() generic (traviscrawford)
 
   HCAT-451 Partitions are created even when Jobs are aborted (avandana)
