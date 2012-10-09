@@ -31,13 +31,11 @@
     </plugins>
   </build>
 
-  <project>
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>org.apache.hcatalog</groupId>
-    <artifactId>hcatalog</artifactId>
-    <version>${hcatalog.version}</version>
-    <packaging>pom</packaging>
-  </project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.apache.hcatalog</groupId>
+  <artifactId>hcatalog</artifactId>
+  <version>${hcatalog.version}</version>
+  <packaging>pom</packaging>
 
   <repositories>
     <!-- This is necessary for hive-metastore dependencies. -->

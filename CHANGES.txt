@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-519 Migrate pig-adapter/webhcat to maven dependencies and continue build cleanup (traviscrawford)
+
   HCAT-517 Misc. build cleanup (traviscrawford)
 
   HCAT-506 desired number of input splits for large files (gmalewicz via traviscrawford)

@@ -26,11 +26,6 @@
     <loadproperties srcfile="${basedir}/build.properties"/>
 
     <!--
-   ================================================================================
-   Imports
-   ================================================================================ -->
-
-    <!--
     ================================================================================
     Properties and Classpaths Section
     ================================================================================
@@ -44,19 +39,11 @@
     <property name="test.e2e.dir" value="${basedir}/src/test/e2e/hcatalog"/>
 
     <!-- ivy properties set here -->
-    <property name="ivy.repo.dir" value="${user.home}/ivyrepo"/>
     <property name="ivy.dir" location="ivy"/>
     <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
-    <property name="asfrepo" value="https://repository.apache.org"/>
-    <property name="asfsnapshotrepo" value="${asfrepo}/content/repositories/snapshots"/>
-    <property name="mvnrepo" value="http://repo2.maven.org/maven2"/>
-    <property name="asfstagingrepo" value="${asfrepo}/service/local/staging/deploy/maven2"/>
     <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
-    <property name="ant_task.jar" location="${ivy.dir}/maven-ant-tasks-${ant-task.version}.jar"/>
-    <property name="ant_task_repo_url"
-              value="${mvnrepo}/org/apache/maven/maven-ant-tasks/${ant-task.version}/maven-ant-tasks-${ant-task.version}.jar"/>
     <property name="ivy_repo_url" value="${mvnrepo}/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar"/>
-    <property name="ivy.xml" location="${basedir}/ivy.xml"/>
+
     <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml"/>
     <property name="build.ivy.dir" location="${build.dir}/ivy"/>
     <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
@@ -107,7 +94,7 @@
         <ant target="ivy-report" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
     </target>
 
-    <target name="ivy-download" description="To download ivy" unless="offline">
+    <target name="ivy-download" unless="offline">
         <echo message="${ant.project.name}"/>
         <get src="${ivy_repo_url}" dest="${ivy.jar}" usetimestamp="true" skipexisting="true"/>
         <typedef uri="antlib:org.apache.ivy.ant" onerror="fail" loaderRef="ivyLoader">
@@ -152,25 +139,30 @@
         </javac>
     </target>
 
-    <!-- Build the hcatalog client jar -->
-    <target name="clientjar" depends="compile-src">
-        <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
-             basedir="${build.classes}"/>
-        <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
-            <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
-        </artifact:install>
-    </target>
-
     <!--
     ================================================================================
     Build all jars
     ================================================================================
     -->
-    <target name="jar" depends="checkstyle,shims,clientjar,jar-storage-handlers">
+    <target name="jar" depends="checkstyle,compile-src" description="build all jars">
+
+        <!-- Shims are bundled inside the hcatalog-core jar and must be compiled first.
+        This is a candidate for cleanup using maven profiles in the future.
+        -->
+        <ant target="jar" dir="shims" inheritAll="false"/>
+
+        <!-- Build and install the hcatalog-core jar, as its not yet a subproject. -->
+        <jar jarfile="${build.dir}/${ant.project.name}/${hcatalog.core.jar}"
+             basedir="${build.classes}"/>
+        <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
+            <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
+        </artifact:install>
+
         <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
         <ant target="jar" dir="server-extensions" inheritAll="false"/>
         <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
         <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
+        <ant target="jar" dir="storage-handlers" inheritAll="false"/>
 
         <!-- Build hcatalog.jar, bundling the pig adapter. Our intention is to stop producing this
              fat jar after some migration period. -->
@@ -179,26 +171,6 @@
             <zipfileset src="hcatalog-pig-adapter/build/hcatalog-pig-adapter-${hcatalog.version}.jar"/>
             <zipfileset src="server-extensions/build/hcatalog-server-extensions-${hcatalog.version}.jar"/>
         </jar>
-    </target>
-
-    <!--
-    ================================================================================
-    Build shims
-    ================================================================================
-    -->
-
-    <target name="shims" depends="compile-src">
-        <ant antfile="shims/build.xml" target="jar" inheritAll="false" useNativeBasedir="true"/>
-    </target>
-
-    <!--
-    ================================================================================
-    Build storage handlers
-    ================================================================================
-    -->
-
-    <target name="jar-storage-handlers">
-        <ant target="jar" dir="storage-handlers" inheritAll="false" useNativeBasedir="true"/>
     </target>
 
     <!--
@@ -332,7 +304,9 @@
             <packageset dir="webhcat/java-client/src/main/java"/>
             <classpath>
                 <path refid="uber.classpath"/>
+                <fileset dir="hcatalog-pig-adapter/build/lib/compile"/>
                 <fileset dir="server-extensions/build/lib/compile"/>
+                <fileset dir="webhcat/svr/build/lib/compile"/>
             </classpath>
             <group title="hcatalog" packages="org.apache.hcatalog.*"/>
         </javadoc>
