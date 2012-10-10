@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-521 Ignore .reviewboardrc in git (nitay via traviscrawford)
+
   HCAT-519 Migrate pig-adapter/webhcat to maven dependencies and continue build cleanup (traviscrawford)
 
   HCAT-517 Misc. build cleanup (traviscrawford)
