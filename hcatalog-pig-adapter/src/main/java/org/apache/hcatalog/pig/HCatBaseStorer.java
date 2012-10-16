@@ -58,7 +58,7 @@ import org.apache.pig.impl.util.Utils;
  *
  */
 
-public abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata {
+abstract class HCatBaseStorer extends StoreFunc implements StoreMetadata {
 
     private static final List<Type> SUPPORTED_INTEGER_CONVERSIONS =
         Lists.newArrayList(Type.TINYINT, Type.SMALLINT, Type.INT);

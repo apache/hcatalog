@@ -46,7 +46,7 @@ import org.apache.pig.impl.util.UDFContext;
  * Base class for HCatLoader and HCatEximLoader
  */
 
-public abstract class HCatBaseLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
+abstract class HCatBaseLoader extends LoadFunc implements LoadMetadata, LoadPushDown {
 
     protected static final String PRUNE_PROJECTION_INFO = "prune.projection.info";
 

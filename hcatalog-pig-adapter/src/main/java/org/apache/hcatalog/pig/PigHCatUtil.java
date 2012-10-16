@@ -58,7 +58,7 @@ import org.apache.pig.impl.util.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PigHCatUtil {
+class PigHCatUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(PigHCatUtil.class);
 
