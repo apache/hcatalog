@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.thrift.DelegationTokenSelector;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.TokenIdentifier;
@@ -99,7 +100,7 @@ final class Security {
     }
 
     void handleSecurity(
-        Job job,
+        Credentials credentials,
         OutputJobInfo outputJobInfo,
         HiveMetaStoreClient client,
         Configuration conf,
@@ -144,18 +145,30 @@ final class Security {
                     if (jtToken == null) {
                         //we don't need to cancel this token as the TokenRenewer for JT tokens
                         //takes care of cancelling them
-                        job.getCredentials().addToken(new Text("hcat jt token"),
-                            HCatUtil.getJobTrackerDelegationToken(conf, ugi.getUserName()));
+                        credentials.addToken(
+                            new Text("hcat jt token"),
+                            HCatUtil.getJobTrackerDelegationToken(conf, ugi.getUserName())
+                        );
                     }
                 }
 
-                job.getCredentials().addToken(new Text(ugi.getUserName() + "_" + tokenSignature), hiveToken);
+                credentials.addToken(new Text(ugi.getUserName() + "_" + tokenSignature), hiveToken);
                 // this will be used by the outputcommitter to pass on to the metastore client
                 // which in turn will pass on to the TokenSelector so that it can select
                 // the right token.
-                job.getConfiguration().set(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE, tokenSignature);
+                conf.set(HCatConstants.HCAT_KEY_TOKEN_SIGNATURE, tokenSignature);
             }
         }
+    }
+
+    void handleSecurity(
+        Job job,
+        OutputJobInfo outputJobInfo,
+        HiveMetaStoreClient client,
+        Configuration conf,
+        boolean harRequested)
+        throws IOException, MetaException, TException, Exception {
+        handleSecurity(job.getCredentials(), outputJobInfo, client, conf, harRequested);
     }
 
     // we should cancel hcat token if it was acquired by hcat

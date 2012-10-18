@@ -58,12 +58,11 @@ public abstract class HCatBaseInputFormat
     private Class<? extends InputFormat> inputFileFormatClass;
 
     // TODO needs to go in InitializeInput? as part of InputJobInfo
-    public static HCatSchema getOutputSchema(JobContext context)
+    private static HCatSchema getOutputSchema(Configuration conf)
         throws IOException {
-        String os = context.getConfiguration().get(
-            HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
+        String os = conf.get(HCatConstants.HCAT_KEY_OUTPUT_SCHEMA);
         if (os == null) {
-            return getTableSchema(context);
+            return getTableSchema(conf);
         } else {
             return (HCatSchema) HCatUtil.deserialize(os);
         }
@@ -98,12 +97,13 @@ public abstract class HCatBaseInputFormat
     @Override
     public List<InputSplit> getSplits(JobContext jobContext)
         throws IOException, InterruptedException {
+        Configuration conf = jobContext.getConfiguration();
 
         //Get the job info from the configuration,
         //throws exception if not initialized
         InputJobInfo inputJobInfo;
         try {
-            inputJobInfo = getJobInfo(jobContext);
+            inputJobInfo = getJobInfo(conf);
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -117,7 +117,6 @@ public abstract class HCatBaseInputFormat
 
         HCatStorageHandler storageHandler;
         JobConf jobConf;
-        Configuration conf = jobContext.getConfiguration();
         //For each matching partition, call getSplits on the underlying InputFormat
         for (PartInfo partitionInfo : partitionInfoList) {
             jobConf = HCatUtil.getJobConfFromContext(jobContext);
@@ -183,16 +182,17 @@ public abstract class HCatBaseInputFormat
         HCatSplit hcatSplit = InternalUtil.castToHCatSplit(split);
         PartInfo partitionInfo = hcatSplit.getPartitionInfo();
         JobContext jobContext = taskContext;
+        Configuration conf = jobContext.getConfiguration();
 
         HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(
-            jobContext.getConfiguration(), partitionInfo);
+            conf, partitionInfo);
 
         JobConf jobConf = HCatUtil.getJobConfFromContext(jobContext);
         Map<String, String> jobProperties = partitionInfo.getJobProperties();
         HCatUtil.copyJobPropertiesToJobConf(jobProperties, jobConf);
 
         Map<String, String> valuesNotInDataCols = getColValsNotInDataColumns(
-            getOutputSchema(jobContext), partitionInfo
+            getOutputSchema(conf), partitionInfo
         );
 
         return new HCatRecordReader(storageHandler, valuesNotInDataCols);
@@ -222,17 +222,27 @@ public abstract class HCatBaseInputFormat
     }
 
     /**
+     * @see org.apache.hcatalog.mapreduce.HCatBaseInputFormat#getTableSchema(org.apache.hadoop.conf.Configuration)
+     * @deprecated Use {@link #getTableSchema(org.apache.hadoop.conf.Configuration)}
+     */
+    public static HCatSchema getTableSchema(JobContext context)
+        throws IOException {
+        return getTableSchema(context.getConfiguration());
+    }
+
+
+    /**
      * Gets the HCatTable schema for the table specified in the HCatInputFormat.setInput call
      * on the specified job context. This information is available only after HCatInputFormat.setInput
      * has been called for a JobContext.
-     * @param context the context
+     * @param conf the Configuration object
      * @return the table schema
      * @throws IOException if HCatInputFormat.setInput has not been called
      *                     for the current context
      */
-    public static HCatSchema getTableSchema(JobContext context)
+    public static HCatSchema getTableSchema(Configuration conf)
         throws IOException {
-        InputJobInfo inputJobInfo = getJobInfo(context);
+        InputJobInfo inputJobInfo = getJobInfo(conf);
         HCatSchema allCols = new HCatSchema(new LinkedList<HCatFieldSchema>());
         for (HCatFieldSchema field :
             inputJobInfo.getTableInfo().getDataColumns().getFields())
@@ -247,13 +257,13 @@ public abstract class HCatBaseInputFormat
      * Gets the InputJobInfo object by reading the Configuration and deserializing
      * the string. If InputJobInfo is not present in the configuration, throws an
      * exception since that means HCatInputFormat.setInput has not been called.
-     * @param jobContext the job context
+     * @param conf the Configuration object
      * @return the InputJobInfo object
      * @throws IOException the exception
      */
-    private static InputJobInfo getJobInfo(JobContext jobContext)
+    private static InputJobInfo getJobInfo(Configuration conf)
         throws IOException {
-        String jobString = jobContext.getConfiguration().get(
+        String jobString = conf.get(
             HCatConstants.HCAT_KEY_JOB_INFO);
         if (jobString == null) {
             throw new IOException("job information not found in JobContext."

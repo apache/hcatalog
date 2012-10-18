@@ -20,24 +20,33 @@ package org.apache.hcatalog.mapreduce;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
 /** The InputFormat to use to read data from HCatalog. */
 public class HCatInputFormat extends HCatBaseInputFormat {
 
     /**
+     * @see org.apache.hcatalog.mapreduce.HCatInputFormat#setInput(org.apache.hadoop.conf.Configuration, InputJobInfo)
+     */
+    public static void setInput(Job job,
+                                InputJobInfo inputJobInfo) throws IOException {
+        setInput(job.getConfiguration(), inputJobInfo);
+    }
+
+    /**
      * Set the input information to use for the job. This queries the metadata server
      * with the specified partition predicates, gets the matching partitions, and
      * puts the information in the conf object. The inputInfo object is updated
      * with information needed in the client context.
-     * @param job the job object
+     * @param conf the job Configuration object
      * @param inputJobInfo the input information about the table to read
      * @throws IOException the exception in communicating with the metadata server
      */
-    public static void setInput(Job job,
+    public static void setInput(Configuration conf,
                                 InputJobInfo inputJobInfo) throws IOException {
         try {
-            InitializeInput.setInput(job, inputJobInfo);
+            InitializeInput.setInput(conf, inputJobInfo);
         } catch (Exception e) {
             throw new IOException(e);
         }

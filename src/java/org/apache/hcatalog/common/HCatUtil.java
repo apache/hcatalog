@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.common.JavaUtils;
@@ -467,10 +469,11 @@ public class HCatUtil {
         return jobProperties;
     }
 
-
+    @InterfaceAudience.Private
+    @InterfaceStability.Evolving
     public static void
     configureOutputStorageHandler(HCatStorageHandler storageHandler,
-                                  JobContext context,
+                                  Configuration conf,
                                   OutputJobInfo outputJobInfo) {
         //TODO replace IgnoreKeyTextOutputFormat with a
         //HiveOutputFormatWrapper in StorageHandler
@@ -480,7 +483,7 @@ public class HCatUtil {
             outputJobInfo.getTableInfo().getStorerInfo().getProperties());
         if (tableDesc.getJobProperties() == null)
             tableDesc.setJobProperties(new HashMap<String, String>());
-        for (Map.Entry<String, String> el : context.getConfiguration()) {
+        for (Map.Entry<String, String> el : conf) {
             tableDesc.getJobProperties().put(el.getKey(), el.getValue());
         }
 
@@ -494,7 +497,7 @@ public class HCatUtil {
                 jobProperties);
 
             for (Map.Entry<String, String> el : jobProperties.entrySet()) {
-                context.getConfiguration().set(el.getKey(), el.getValue());
+                conf.set(el.getKey(), el.getValue());
             }
         } catch (IOException e) {
             throw new IllegalStateException(

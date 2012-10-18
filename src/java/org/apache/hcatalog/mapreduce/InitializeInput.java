@@ -50,6 +50,13 @@ public class InitializeInput {
     private static final Logger LOG = LoggerFactory.getLogger(InitializeInput.class);
 
     /**
+     * @see org.apache.hcatalog.mapreduce.InitializeInput#setInput(org.apache.hadoop.conf.Configuration, InputJobInfo)
+     */
+    public static void setInput(Job job, InputJobInfo theirInputJobInfo) throws Exception {
+        setInput(job.getConfiguration(), theirInputJobInfo);
+    }
+
+    /**
      * Set the input to use for the Job. This queries the metadata server with the specified
      * partition predicates, gets the matching partitions, and puts the information in the job
      * configuration object.
@@ -63,32 +70,32 @@ public class InitializeInput {
      *     job.getConfiguration().get(HCatConstants.HCAT_KEY_JOB_INFO));
      * {code}
      *
-     * @param job the job object
+     * @param conf the job Configuration object
      * @param theirInputJobInfo information on the Input to read
      * @throws Exception
      */
-    public static void setInput(Job job, InputJobInfo theirInputJobInfo) throws Exception {
+    public static void setInput(Configuration conf,
+                                InputJobInfo theirInputJobInfo) throws Exception {
         InputJobInfo inputJobInfo = InputJobInfo.create(
             theirInputJobInfo.getDatabaseName(),
             theirInputJobInfo.getTableName(),
             theirInputJobInfo.getFilter());
         inputJobInfo.getProperties().putAll(theirInputJobInfo.getProperties());
-        job.getConfiguration().set(
+        conf.set(
             HCatConstants.HCAT_KEY_JOB_INFO,
-            HCatUtil.serialize(getInputJobInfo(job, inputJobInfo, null)));
+            HCatUtil.serialize(getInputJobInfo(conf, inputJobInfo, null)));
     }
 
     /**
      * Returns the given InputJobInfo after populating with data queried from the metadata service.
      */
     private static InputJobInfo getInputJobInfo(
-        Job job, InputJobInfo inputJobInfo, String locationFilter) throws Exception {
-
+        Configuration conf, InputJobInfo inputJobInfo, String locationFilter) throws Exception {
         HiveMetaStoreClient client = null;
         HiveConf hiveConf = null;
         try {
-            if (job != null) {
-                hiveConf = HCatUtil.getHiveConf(job.getConfiguration());
+            if (conf != null) {
+                hiveConf = HCatUtil.getHiveConf(conf);
             } else {
                 hiveConf = new HiveConf(HCatInputFormat.class);
             }
@@ -117,7 +124,7 @@ public class InitializeInput {
                     HCatSchema schema = HCatUtil.extractSchema(
                         new org.apache.hadoop.hive.ql.metadata.Partition(table, ptn));
                     PartInfo partInfo = extractPartInfo(schema, ptn.getSd(),
-                        ptn.getParameters(), job.getConfiguration(), inputJobInfo);
+                        ptn.getParameters(), conf, inputJobInfo);
                     partInfo.setPartitionValues(InternalUtil.createPtnKeyValueMap(table, ptn));
                     partInfoList.add(partInfo);
                 }
@@ -126,7 +133,7 @@ public class InitializeInput {
                 //Non partitioned table
                 HCatSchema schema = HCatUtil.extractSchema(table);
                 PartInfo partInfo = extractPartInfo(schema, table.getTTable().getSd(),
-                    table.getParameters(), job.getConfiguration(), inputJobInfo);
+                    table.getParameters(), conf, inputJobInfo);
                 partInfo.setPartitionValues(new HashMap<String, String>());
                 partInfoList.add(partInfo);
             }

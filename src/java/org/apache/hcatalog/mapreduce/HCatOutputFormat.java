@@ -38,6 +38,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.security.Credentials;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -57,20 +58,27 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     private static boolean harRequested;
 
     /**
+     * @see org.apache.hcatalog.mapreduce.HCatOutputFormat#setOutput(org.apache.hadoop.conf.Configuration, OutputJobInfo)
+     */
+    public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
+        setOutput(job.getConfiguration(), job.getCredentials(), outputJobInfo);
+    }
+
+    /**
      * Set the information about the output to write for the job. This queries the metadata server
-     * to find the StorageHandler to use for the table.  It throws an error if the 
+     * to find the StorageHandler to use for the table.  It throws an error if the
      * partition is already published.
      * @param job the job object
      * @param outputJobInfo the table output information for the job
      * @throws IOException the exception in communicating with the metadata server
      */
     @SuppressWarnings("unchecked")
-    public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
+    public static void setOutput(Configuration conf, Credentials credentials,
+                                 OutputJobInfo outputJobInfo) throws IOException {
         HiveMetaStoreClient client = null;
 
         try {
 
-            Configuration conf = job.getConfiguration();
             HiveConf hiveConf = HCatUtil.getHiveConf(conf);
             client = HCatUtil.getHiveClient(hiveConf);
             Table table = HCatUtil.getTable(client, outputJobInfo.getDatabaseName(),
@@ -158,7 +166,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
                 partitionCols.add(schema.getName());
             }
 
-            HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(job.getConfiguration(), storerInfo);
+            HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf, storerInfo);
 
             //Serialize the output info into the configuration
             outputJobInfo.setTableInfo(HCatTableInfo.valueOf(table.getTTable()));
@@ -168,7 +176,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
             maxDynamicPartitions = getMaxDynamicPartitions(hiveConf);
             outputJobInfo.setMaximumDynamicPartitions(maxDynamicPartitions);
 
-            HCatUtil.configureOutputStorageHandler(storageHandler, job, outputJobInfo);
+            HCatUtil.configureOutputStorageHandler(storageHandler, conf, outputJobInfo);
 
             Path tblPath = new Path(table.getTTable().getSd().getLocation());
 
@@ -184,7 +192,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
                 tblPath.getFileSystem(conf).getFileStatus(tblPath).getPermission()));
 
             if (Security.getInstance().isSecurityEnabled()) {
-                Security.getInstance().handleSecurity(job, outputJobInfo, client, conf, harRequested);
+                Security.getInstance().handleSecurity(credentials, outputJobInfo, client, conf, harRequested);
             }
         } catch (Exception e) {
             if (e instanceof HCatException) {
@@ -198,18 +206,24 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     }
 
     /**
+     * @see org.apache.hcatalog.mapreduce.HCatOutputFormat#setSchema(org.apache.hadoop.conf.Configuration, org.apache.hcatalog.data.schema.HCatSchema)
+     */
+    public static void setSchema(final Job job, final HCatSchema schema) throws IOException {
+        setSchema(job.getConfiguration(), schema);
+    }
+
+    /**
      * Set the schema for the data being written out to the partition. The
      * table schema is used by default for the partition if this is not called.
-     * @param job the job object
+     * @param conf the job Configuration object
      * @param schema the schema for the data
      * @throws IOException
      */
-    public static void setSchema(final Job job, final HCatSchema schema) throws IOException {
-
-        OutputJobInfo jobInfo = getJobInfo(job);
+    public static void setSchema(final Configuration conf, final HCatSchema schema) throws IOException {
+        OutputJobInfo jobInfo = getJobInfo(conf);
         Map<String, String> partMap = jobInfo.getPartitionValues();
         setPartDetails(jobInfo, schema, partMap);
-        job.getConfiguration().set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
+        conf.set(HCatConstants.HCAT_KEY_OUTPUT_INFO, HCatUtil.serialize(jobInfo));
     }
 
     /**

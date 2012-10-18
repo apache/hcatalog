@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -40,14 +41,22 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
 //  static final private Log LOG = LogFactory.getLog(HCatBaseOutputFormat.class);
 
     /**
-     * Gets the table schema for the table specified in the HCatOutputFormat.setOutput call
-     * on the specified job context.
-     * @param context the context
-     * @return the table schema
-     * @throws IOException if HCatOutputFromat.setOutput has not been called for the passed context
+     * @see org.apache.hcatalog.mapreduce.HCatBaseOutputFormat#getTableSchema(org.apache.hadoop.conf.Configuration)
+     * @deprecated Use {@link #getTableSchema(org.apache.hadoop.conf.Configuration)}
      */
     public static HCatSchema getTableSchema(JobContext context) throws IOException {
-        OutputJobInfo jobInfo = getJobInfo(context);
+        return getTableSchema(context.getConfiguration());
+    }
+
+    /**
+     * Gets the table schema for the table specified in the HCatOutputFormat.setOutput call
+     * on the specified job context.
+     * @param conf the Configuration object
+     * @return the table schema
+     * @throws IOException if HCatOutputFormat.setOutput has not been called for the passed context
+     */
+    public static HCatSchema getTableSchema(Configuration conf) throws IOException {
+        OutputJobInfo jobInfo = getJobInfo(conf);
         return jobInfo.getTableInfo().getDataColumns();
     }
 
@@ -77,15 +86,23 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     }
 
     /**
+     * @see org.apache.hcatalog.mapreduce.HCatBaseOutputFormat#getJobInfo(org.apache.hadoop.conf.Configuration)
+     * @deprecated use {@link #getJobInfo(org.apache.hadoop.conf.Configuration)}
+     */
+    public static OutputJobInfo getJobInfo(JobContext jobContext) throws IOException {
+        return getJobInfo(jobContext.getConfiguration());
+    }
+
+    /**
      * Gets the HCatOuputJobInfo object by reading the Configuration and deserializing
      * the string. If InputJobInfo is not present in the configuration, throws an
      * exception since that means HCatOutputFormat.setOutput has not been called.
-     * @param jobContext the job context
+     * @param conf the job Configuration object
      * @return the OutputJobInfo object
      * @throws IOException the IO exception
      */
-    public static OutputJobInfo getJobInfo(JobContext jobContext) throws IOException {
-        String jobString = jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
+    public static OutputJobInfo getJobInfo(Configuration conf) throws IOException {
+        String jobString = conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO);
         if (jobString == null) {
             throw new HCatException(ErrorType.ERROR_NOT_INITIALIZED);
         }
@@ -113,9 +130,10 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
     @SuppressWarnings("unchecked")
     static void configureOutputStorageHandler(
         JobContext jobContext, List<String> dynamicPartVals) throws IOException {
+        Configuration conf = jobContext.getConfiguration();
         try {
-            OutputJobInfo jobInfo = (OutputJobInfo) HCatUtil.deserialize(jobContext.getConfiguration().get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
-            HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(jobContext.getConfiguration(), jobInfo.getTableInfo().getStorerInfo());
+            OutputJobInfo jobInfo = (OutputJobInfo) HCatUtil.deserialize(conf.get(HCatConstants.HCAT_KEY_OUTPUT_INFO));
+            HCatStorageHandler storageHandler = HCatUtil.getStorageHandler(conf, jobInfo.getTableInfo().getStorerInfo());
 
             Map<String, String> partitionValues = jobInfo.getPartitionValues();
             String location = jobInfo.getLocation();
@@ -143,7 +161,7 @@ public abstract class HCatBaseOutputFormat extends OutputFormat<WritableComparab
                 jobInfo.setPartitionValues(partitionValues);
             }
 
-            HCatUtil.configureOutputStorageHandler(storageHandler, jobContext, jobInfo);
+            HCatUtil.configureOutputStorageHandler(storageHandler, conf, jobInfo);
         } catch (Exception e) {
             if (e instanceof HCatException) {
                 throw (HCatException) e;
