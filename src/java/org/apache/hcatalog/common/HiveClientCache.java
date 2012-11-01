@@ -99,7 +99,7 @@ class HiveClientCache {
         Thread cleanupHiveClientShutdownThread = new Thread() {
             @Override
             public void run() {
-                LOG.info("Cleaning up hive client cache in ShutDown hook");
+                LOG.debug("Cleaning up hive client cache in ShutDown hook");
                 closeAllClientsQuietly();
             }
         };

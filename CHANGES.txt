@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-532 HiveClientCache shutdown hook should log at debug level (traviscrawford)
+
   HCAT-528 ivysettings.xml does not let you override .m2/repository or ivy.cache.dir setting (raja@cmbasics.com via traviscrawford)
 
   HCAT-516 HCOF should use less generic parameters (nitay via traviscrawford)
