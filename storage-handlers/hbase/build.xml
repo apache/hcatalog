@@ -102,8 +102,10 @@
     <target name="mvn-dependencies" depends="mvn-init">
       <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
         <pom file="pom.xml"/>
+        <localRepository path="${mvn.local.repo}" />
       </artifact:dependencies>
       <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
+        <localRepository path="${mvn.local.repo}" />
         <pom file="pom.xml"/>
       </artifact:dependencies>
     </target>

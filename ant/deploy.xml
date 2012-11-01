@@ -65,6 +65,7 @@
         <echo message="${ant.project.name}"/>
 
         <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
+            <localRepository path="${mvn.local.repo}"/>
             <pom file="pom.xml"/>
         </artifact:dependencies>
         <mkdir dir="${build.dir}/lib/compile"/>
@@ -73,6 +74,7 @@
         </copy>
 
         <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
+            <localRepository path="${mvn.local.repo}"/>
             <pom file="pom.xml"/>
         </artifact:dependencies>
         <mkdir dir="${build.dir}/lib/test"/>

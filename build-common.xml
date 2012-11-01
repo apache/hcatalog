@@ -80,6 +80,7 @@
     </jar>
     <artifact:install file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
       <artifact:pom file="${pom.file}"/>
+      <artifact:localRepository path="${mvn.local.repo}"/>
     </artifact:install>
   </target>
 

@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-528 ivysettings.xml does not let you override .m2/repository or ivy.cache.dir setting (raja@cmbasics.com via traviscrawford)
+
   HCAT-516 HCOF should use less generic parameters (nitay via traviscrawford)
 
   HCAT-525 Remove dead classes from HCatalog Source Tree (amalakar via traviscrawford)

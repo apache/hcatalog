@@ -156,6 +156,7 @@
              basedir="${build.classes}"/>
         <artifact:install file="${build.dir}/${ant.project.name}/${hcatalog.core.jar}">
             <artifact:pom file="${build.ivy.dir}/hcatalog-core-${hcatalog.version}.pom"/>
+            <artifact:localRepository path="${mvn.local.repo}}" />
         </artifact:install>
 
         <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
