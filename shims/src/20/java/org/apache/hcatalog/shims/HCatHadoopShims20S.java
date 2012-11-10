@@ -5,6 +5,8 @@ import java.net.InetSocketAddress;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -124,5 +126,11 @@ public class HCatHadoopShims20S implements HCatHadoopShims {
         }
 
         return "";
+    }
+
+    @Override
+    public boolean isFileInHDFS(FileSystem fs, Path path) throws IOException {
+        // In hadoop 1.x.x the file system URI is sufficient to determine the uri of the file
+        return "hdfs".equals(fs.getUri().getScheme());
     }
 }
