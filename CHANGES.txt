@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-538 HCatalogStorer fails for 100GB of data with dynamic partitioning, number of partition is 300 (amalakar via toffer)
+
   HCAT-532 HiveClientCache shutdown hook should log at debug level (traviscrawford)
 
   HCAT-528 ivysettings.xml does not let you override .m2/repository or ivy.cache.dir setting (raja@cmbasics.com via traviscrawford)

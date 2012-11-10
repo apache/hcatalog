@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
@@ -88,4 +90,14 @@ public interface HCatHadoopShims {
     public InetSocketAddress getResourceManagerAddress(Configuration conf);
 
     public String getPropertyName(PropertyName name);
+
+    /**
+     * Checks if file is in HDFS filesystem.
+     *
+     * @param fs
+     * @param path
+     * @return true if the file is in HDFS, false if the file is in other file systems.
+     */
+    public boolean isFileInHDFS(FileSystem fs, Path path) throws IOException;
+
 }

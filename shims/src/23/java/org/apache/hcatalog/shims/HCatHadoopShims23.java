@@ -32,6 +32,9 @@ import org.apache.hadoop.mapreduce.TaskID;
 import org.apache.hadoop.mapreduce.TaskType;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.util.Progressable;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.FileSystem;
+
 
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.net.NetUtils;
@@ -115,5 +118,12 @@ public class HCatHadoopShims23 implements HCatHadoopShims {
         }
 
         return "";
+    }
+
+    @Override
+    public boolean isFileInHDFS(FileSystem fs, Path path) throws IOException {
+        // In case of viewfs we need to lookup where the actual file is to know the filesystem in use.
+        // resolvePath is a sure shot way of knowing which file system the file is.
+        return "hdfs".equals(fs.resolvePath(path).toUri().getScheme());
     }
 }
