@@ -34,6 +34,7 @@ import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
+import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -195,7 +196,7 @@ public class NotificationListener extends MetaStoreEventListener{
 				 me.initCause(e);
 				throw me;
 			}
-			send(newTbl,getTopicPrefix(conf)+ "."+ newTbl.getDbName().toLowerCase(), HCatConstants.HCAT_ADD_TABLE_EVENT);
+			send(newTbl, getTopicPrefix(conf) + "." + newTbl.getDbName().toLowerCase(), HCatConstants.HCAT_ADD_TABLE_EVENT);
 		}
 	}
 	
@@ -236,7 +237,6 @@ public class NotificationListener extends MetaStoreEventListener{
 
 		try{
 
-			Destination topic = null;
 			if(null == session){
 				// this will happen, if we never able to establish a connection.
 				createConnection();
@@ -247,24 +247,16 @@ public class NotificationListener extends MetaStoreEventListener{
 					return;
 				}
 			}
-			try{
-				// Topics are created on demand. If it doesn't exist on broker it will
-				// be created when broker receives this message.
-				topic = session.createTopic(topicName);				
-			} catch (IllegalStateException ise){
-				// this will happen if we were able to establish connection once, but its no longer valid,
-				// ise is thrown, catch it and retry.
-				LOG.error("Seems like connection is lost. Retrying", ise);
-				createConnection();
-				topic = session.createTopic(topicName);				
-			}
-			if (null == topic){
-				// Still not successful, return from here.
-				LOG.error("Invalid session. Failed to send message on topic: "+
-						topicName + " event: "+event);				
-				return;
-			}
-			MessageProducer producer = session.createProducer(topic);
+            Destination topic = null;
+            topic = getTopic(topicName);
+            if (null == topic){
+                // Still not successful, return from here.
+                LOG.error("Invalid session. Failed to send message on topic: "+
+                        topicName + " event: "+ event);
+                return;
+            }
+
+            MessageProducer producer = session.createProducer(topic);
 			Message msg;
 			if (msgBody instanceof Map){
 				MapMessage mapMsg = session.createMapMessage();
@@ -288,6 +280,29 @@ public class NotificationListener extends MetaStoreEventListener{
 					" event: "+event , e);
 		}
 	}
+
+    /**
+     * Get the topic object for the topicName, it also tries to reconnect
+     * if the connection appears to be broken.
+     * @param topicName
+     * @return
+     * @throws JMSException
+     */
+    protected Topic getTopic(final String topicName) throws JMSException {
+        Topic topic;
+        try{
+            // Topics are created on demand. If it doesn't exist on broker it will
+            // be created when broker receives this message.
+            topic = session.createTopic(topicName);
+        } catch (IllegalStateException ise){
+            // this will happen if we were able to establish connection once, but its no longer valid,
+            // ise is thrown, catch it and retry.
+            LOG.error("Seems like connection is lost. Retrying", ise);
+            createConnection();
+            topic = session.createTopic(topicName);
+        }
+        return topic;
+    }
 
 	protected void createConnection(){
 

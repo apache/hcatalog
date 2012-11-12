@@ -38,6 +38,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-548 Move topic creation in NotificationListener to a separate method (amalakar via avandana)
+
   HCAT-538 HCatalogStorer fails for 100GB of data with dynamic partitioning, number of partition is 300 (amalakar via toffer)
 
   HCAT-492 Document CTAS workaround for Hive with JSON serde (lefty via khorgath)
