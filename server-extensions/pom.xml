@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
-        <version>${hcatalog.version}</version>
+        <version>0.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -30,7 +30,7 @@
     <groupId>org.apache.hcatalog</groupId>
     <artifactId>hcatalog-server-extensions</artifactId>
     <packaging>jar</packaging>
-    <version>${hcatalog.version}</version>
+    <version>0.5.0-SNAPSHOT</version>
     <name>server-extensions</name>
     <url>http://maven.apache.org</url>
 
@@ -67,18 +67,6 @@
         </dependency>
 
         <!-- test scope -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-test</artifactId>
-            <version>${hadoop20.version}</version>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>

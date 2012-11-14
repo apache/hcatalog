@@ -1,40 +1,34 @@
 <?xml version="1.0"?>
-<project xmlns:ivy="antlib:org.apache.ivy.ant" name="shims" default="jar">
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<project name="shims" default="jar">
   <property name="path.to.basedir" value="${basedir}/.."/>
   <import file="../build-common.xml"/>
 
-  <property name="ivy.dir" location="${path.to.basedir}/ivy" />
-  <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
-
-  <property name="parent.build.dir" location="${path.to.basedir}/build/classes"/>
-  <property name="build.ivy.dir" location="${build.dir}/ivy" />
-  <property name="build.ivy.lib.dir" location="${build.ivy.dir}/lib" />
-
-  <!-- sources and hadoop version for each shim -->
-  <property name="shims.include" value="20,23"/>
-  <property name="shims.0.20.sources" value="${basedir}/src/20/java" />
-  <property name="shims.0.23.sources" value="${basedir}/src/23/java" />
-  <path id="shims.0.20.hadoop.ivy.dir">
-    <fileset dir="${build.ivy.lib.dir}/hadoop20" includes="*.jar"/>
-    <fileset dir="${parent.build.dir}" includes="**/*"/>
-  </path>
-  <path id="shims.0.23.hadoop.ivy.dir">
-    <fileset dir="${build.ivy.lib.dir}/hadoop23" includes="*.jar"/>
-    <fileset dir="${parent.build.dir}" includes="**/*"/>
+  <path id="compile.class.path">
+    <fileset dir="${path.to.basedir}/core/build/lib/compile"/>
   </path>
 
-  <target name="jar" depends="compile">
-    <!-- Classes are added to hcatalog jar -->
-  </target>
-
-  <target name="compile" depends="ivy-retrieve">
+  <target name="jar">
     <echo message="Project: ${ant.project.name}"/>
-    <!-- TODO use for loop -->
-    <_javac srcDir="${shims.0.20.sources}"
-            destDir="${parent.build.dir}"
-            classPathRef="shims.0.20.hadoop.ivy.dir"/>
-    <_javac srcDir="${shims.0.23.sources}"
-            destDir="${parent.build.dir}"
-            classPathRef="shims.0.23.hadoop.ivy.dir"/>
+    <_javac srcDir="${basedir}/src/${hadoopversion}/java"
+            destDir="${path.to.basedir}/core/build/classes"
+            classPathRef="compile.class.path"/>
   </target>
 </project>

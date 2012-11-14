@@ -17,8 +17,7 @@
    limitations under the License.
 -->
 
-<project xmlns:ivy="antlib:org.apache.ivy.ant"
-         xmlns:artifact="artifact:org.apache.maven.artifact.ant">
+<project xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
     <macrodef name="_sign">
         <attribute name="inputFile"/>
@@ -54,11 +53,6 @@
                    file="${build.dir}/lib/.mvn-dependencies.complete"/>
     </target>
 
-    <!-- Only resolve dependencies if not already copied to lib dir. We copy
-    dependencies into the build dir rather than directly using files from the
-    local maven repo to match how ivy dependencies work. This is necessary for
-    targets like javadoc that need a comprehensive set of all dependencies
-    that would otherwise be unavailable at the top-level build file. -->
     <target name="mvn-dependencies"
             depends="mvn-init,_check-mvn-dependencies"
             unless="mvn-dependencies.complete">

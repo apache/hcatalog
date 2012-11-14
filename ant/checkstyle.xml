@@ -19,14 +19,15 @@
 
 <project xmlns:cs="antlib:com.puppycrawl.tools.checkstyle">
 
-  <target name="checkstyle-init" depends="ivy-retrieve">
+  <target name="checkstyle-init">
     <taskdef resource="checkstyletask.properties" classpathref="test.class.path"/>
     <mkdir dir="${build.dir}/checkstyle"/>
   </target>
 
   <target name="checkstyle" depends="checkstyle-init" description="run checkstyle">
+    <echo message="${ant.project.name}"/>
     <checkstyle classpathref="test.class.path"
-                config="${basedir}/build-support/checkstyle/coding_style.xml">
+                config="${path.to.basedir}/build-support/checkstyle/coding_style.xml">
       <fileset dir="${basedir}" includes="**/*.java"/>
       <formatter type="plain"/>
       <formatter type="xml" toFile="${build.dir}/checkstyle/checkstyle_result.xml"/>

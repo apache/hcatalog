@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+
 <!--
    Licensed to the Apache Software Foundation (ASF) under one or more
    contributor license agreements.  See the NOTICE file distributed with
@@ -16,11 +17,11 @@
    limitations under the License.
 -->
 
-<project name="webhcat">
-  <property name="path.to.basedir" location="${basedir}/../.."/>
+<project name="hcatalog-core">
+  <property name="path.to.basedir" value="${basedir}/.."/>
   <property name="pom.file" location="pom.xml"/>
 
-  <import file="../../build-common.xml"/>
+  <import file="../build-common.xml"/>
 
   <path id="compile.class.path">
     <fileset dir="${build.dir}/lib/compile"/>
@@ -28,13 +29,23 @@
 
   <path id="test.class.path">
     <fileset dir="${build.dir}/lib/test"/>
-    <dirset dir="${path.to.basedir}/core/build/test/classes"/>
     <dirset dir="${basedir}/build/classes"/>
     <dirset dir="${basedir}/build/test/classes"/>
+    <!-- TODO: break circular dependency -->
+    <fileset dir="${path.to.basedir}/hcatalog-pig-adapter/build/lib/test"/>
+    <dirset dir="${path.to.basedir}/hcatalog-pig-adapter/build/classes"/>
   </path>
 
   <path id="findbugs.class.path">
     <fileset dir="${build.dir}/lib/compile"/>
   </path>
+
+  <target name="compile">
+    <echo message="${ant.project.name}"/>
+    <_javac srcDir="${basedir}/src/main/java"
+            destDir="${build.classes}"
+            classPathRef="compile.class.path"/>
+    <ant target="jar" dir="${path.to.basedir}/shims" inheritAll="false"/>
+  </target>
 
 </project>

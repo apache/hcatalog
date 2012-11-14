@@ -19,7 +19,6 @@
 
 
 <project name="hbase-storage-handler" default="jar"
-         xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
     <property name="path.to.basedir" location="${basedir}/../.."/>
@@ -43,11 +42,8 @@
     <property name="lib.dir" value="${basedir}/lib/" />
     <property name="src.dir"  location="${basedir}/src/java"/>
     <property name="resources.dir"  location="${basedir}/src/resources"/>
-    <property name="docs.src" value="${basedir}/src/docs"/>
     <property name="build.dir" value="${basedir}/build"/>
     <property name="build.classes" value="${build.dir}/classes" />
-    <property name="build.docs" value="${build.dir}/docs" />
-    <property name="build.javadoc" value="${build.docs}/api" />
     <property name="dist.dir" value="${build.dir}/${final.name}" />
 
     <!-- javac properties -->
@@ -73,42 +69,19 @@
     <property name="test.output" value="no"/>
     <property name="hive.conf.dir" value="${hive.root}/conf"/>
 
-    <!-- ivy properteis set here -->
-    <property name="ivy.dir" location="../../ivy" />
-    <loadproperties srcfile="${ivy.dir}/libraries.properties"/>
-    <property name="ivy.jar" location="${ivy.dir}/ivy-${ivy.version}.jar"/>
-    <property name="ivysettings.xml" location="${ivy.dir}/ivysettings.xml" />
-    <property name="build.ivy.dir" location="${build.dir}/ivy" />
-    <property name="build.ivy.report.dir" location="${build.ivy.dir}/report" />
-    <property name="pom.file" location="${build.ivy.dir}/${ant.project.name}-${hcatalog.version}.pom"/>
-
     <!-- rats properties -->
     <property name="rat.reporting.classname" value="rat.Report"/>
 
-    <!--this is the naming policy for artifacts we want pulled down-->
-    <property name="ivy.artifact.retrieve.pattern" value="${ant.project.name}/[artifact]-[revision](-[classifier]).[ext]"/>
-
-    <path id="compile.classpath">
-      <path refid="mvn.compile.classpath"/>
+    <path id="compile.class.path">
+      <fileset dir="${build.dir}/lib/compile"/>
     </path>
 
-    <path id="test.classpath">
+    <path id="test.class.path">
+        <fileset dir="${build.dir}/lib/test"/>
         <pathelement location="${test.build.classes}" />
         <pathelement location="${build.classes}" />
         <pathelement location="conf"/>
-        <path refid="mvn.test.classpath"/>
     </path>
-
-    <target name="mvn-dependencies" depends="mvn-init">
-      <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
-        <pom file="pom.xml"/>
-        <localRepository path="${mvn.local.repo}" />
-      </artifact:dependencies>
-      <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
-        <localRepository path="${mvn.local.repo}" />
-        <pom file="pom.xml"/>
-      </artifact:dependencies>
-    </target>
 
     <target name="init" depends="mvn-dependencies">
         <mkdir dir="${dist.dir}" />
@@ -128,7 +101,7 @@
                source="${javac.version}" deprecation="${javac.deprecation}"
                includeantruntime="false">
             <compilerarg line="${javac.args}"/>
-            <classpath refid="compile.classpath"/>
+            <classpath refid="compile.class.path"/>
         </javac>
     </target>
 
@@ -139,7 +112,7 @@
                 <include name="*"/>
             </fileset>
         </copy>
-        <jar jarfile="${build.dir}/${ant.project.name}/${handler.jar}" basedir="${build.classes}"/>
+        <jar jarfile="${build.dir}/${handler.jar}" basedir="${build.classes}"/>
     </target>
 
     <!--
@@ -155,7 +128,7 @@
                source="${javac.version}" deprecation="${javac.deprecation}"
                includeantruntime="false">
             <compilerarg line="${javac.args}"/>
-            <classpath refid="test.classpath" />
+            <classpath refid="test.class.path" />
         </javac>
     </target>
 
@@ -174,7 +147,7 @@
                 <classpath>
                     <pathelement location="${test.build.classes}" />
                     <pathelement location="." />
-                    <path refid="test.classpath"/>
+                    <path refid="test.class.path"/>
                     <pathelement path="${clover.jar}"/>
                 </classpath>
                 <formatter type="${test.junit.output.format}" />
@@ -212,54 +185,21 @@
     </target>
 
     <!--
-    ================================================================================
-    Docs Section
-    ================================================================================
-    -->
-    <target name="docs" depends="javadoc">
-    </target>
-
-    <target name="javadoc" depends="jar" description="Create documentation">
-        <mkdir dir="${build.javadoc}"/>
-        <javadoc
-          packagenames="org.apache.hcatalog.*"
-          destdir="${build.javadoc}"
-          author="true"
-          version="true"
-          use="true"
-          windowtitle="HCatalog ${hcatalog.version} API"
-          doctitle="HCatalog ${hcatalog.version} API"
-          sourcepath="${src.dir}:${basedir}/src/gen-java">
-        <classpath>
-          <path refid="compile.classpath"/>
-        </classpath>
-        <group title="hcatalog" packages="org.apache.hcatalog.*"/>
-      </javadoc>
-    </target>
-
-
-    <!--
     ===============================================================================
     Distribution Section
     ===============================================================================
     -->
-    <target name="package" depends="jar, docs" description="Create an HCatalog release">
+    <target name="package" depends="jar" description="Create an HCatalog release">
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${dist.dir}/conf" />
         <mkdir dir="${dist.dir}/lib" />
-        <mkdir dir="${dist.dir}/docs" />
 
         <copy todir="${dist.dir}/lib" includeEmptyDirs="false">
-            <fileset dir="${lib.dir}" erroronmissingdir="false" />
-            <fileset dir="${build.dir}/${ant.project.name}">
-                <include name="*.jar"/>
+            <fileset dir="${build.dir}">
+                <include name="hbase-storage-handler-*.jar"/>
             </fileset>
         </copy>
 
-
-        <copy todir="${dist.dir}/docs">
-            <fileset dir="${build.docs}" />
-        </copy>
         <copy todir="${dist.dir}/conf">
             <fileset dir="${basedir}/conf" />
         </copy>
@@ -277,7 +217,6 @@
         </copy>
     </target>
 
-    <import file="../../ant/dependencies.xml"/>
     <import file="../../ant/deploy.xml"/>
 
 </project>

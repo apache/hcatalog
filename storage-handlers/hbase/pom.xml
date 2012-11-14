@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.apache.hcatalog</groupId>
     <artifactId>hcatalog</artifactId>
-    <version>${hcatalog.version}</version>
+    <version>0.5.0-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -13,15 +13,15 @@
   <groupId>org.apache.hcatalog</groupId>
   <artifactId>hbase-storage-handler</artifactId>
   <packaging>jar</packaging>
-  <version>${hcatalog.version}</version>
+  <version>0.5.0-SNAPSHOT</version>
   <name>hbase-storage-handler</name>
   <url>http://maven.apache.org</url>
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
-      <artifactId>hbase</artifactId>
-      <version>${hbase.version}</version>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-hbase-handler</artifactId>
+      <version>${hive.version}</version>
       <scope>compile</scope>
       <exclusions>
         <exclusion>
@@ -48,18 +48,6 @@
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
       <version>${commons-io.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-test</artifactId>
-      <version>${hadoop20.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

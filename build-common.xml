@@ -17,14 +17,12 @@
    limitations under the License.
 -->
 
-<project name="build-common-new" default="jar"
-         xmlns:ivy="antlib:org.apache.ivy.ant"
+<project name="build-common" default="jar"
          xmlns:artifact="artifact:org.apache.maven.artifact.ant">
 
   <loadproperties srcfile="${path.to.basedir}/build.properties"/>
-  <loadproperties srcfile="${path.to.basedir}/ivy/libraries.properties"/>
 
-  <import file="${path.to.basedir}/ant/dependencies.xml"/>
+  <import file="${path.to.basedir}/ant/checkstyle.xml"/>
   <import file="${path.to.basedir}/ant/deploy.xml"/>
   <import file="${path.to.basedir}/ant/findbugs.xml"/>
   <import file="${path.to.basedir}/ant/test.xml"/>
@@ -54,7 +52,7 @@
     <delete dir="${build.dir}"/>
   </target>
 
-  <target name="compile" depends="ivy-retrieve">
+  <target name="compile">
     <echo message="${ant.project.name}"/>
     <_javac srcDir="${basedir}/src/main/java"
             destDir="${build.classes}"
@@ -70,10 +68,11 @@
 
   <target name="test" depends="jar, compile-test">
     <echo message="${ant.project.name}"/>
+    <ant target="checkstyle"/>
     <_junit srcDir="${basedir}/src/test/java"/>
   </target>
 
-  <target name="jar" depends="compile,mvn-init">
+  <target name="jar" depends="mvn-dependencies,compile,mvn-init">
     <echo message="${ant.project.name}"/>
     <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}">
       <metainf dir="${path.to.basedir}" includes="**/LICENSE.txt,**/NOTICE.txt"/>

@@ -28,24 +28,56 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.hcatalog</groupId>
-    <artifactId>hcatalog-pig-adapter</artifactId>
+    <artifactId>hcatalog-core</artifactId>
     <packaging>jar</packaging>
     <version>0.5.0-SNAPSHOT</version>
-    <name>hcatalog-pig-adapter</name>
+    <name>hcatalog-core</name>
     <url>http://maven.apache.org</url>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.hcatalog</groupId>
-            <artifactId>hcatalog-core</artifactId>
-            <version>${hcatalog.version}</version>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-tools</artifactId>
+            <version>${hadoop20.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-builtins</artifactId>
+            <version>${hive.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-cli</artifactId>
+            <version>${hive.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-metastore</artifactId>
+            <version>${hive.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-common</artifactId>
+            <version>${hive.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+            <version>${hive.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- test scope -->
         <dependency>
             <groupId>org.apache.pig</groupId>
             <artifactId>pig</artifactId>
             <version>${pig.version}</version>
-            <scope>compile</scope>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

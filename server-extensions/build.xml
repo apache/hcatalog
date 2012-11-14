@@ -29,7 +29,7 @@
 
     <path id="test.class.path">
         <fileset dir="${build.dir}/lib/test"/>
-        <dirset dir="${basedir}/../build/test/classes"/>
+        <dirset dir="${path.to.basedir}/core/build/test/classes"/>
         <dirset dir="${build.dir}/classes"/>
         <dirset dir="${build.dir}/test/classes"/>
     </path>
@@ -37,8 +37,4 @@
     <path id="findbugs.class.path">
         <fileset dir="${build.dir}/lib/compile"/>
     </path>
-
-    <!-- Use Maven (instead of Ivy) for dependencies. -->
-    <target name="ivy-retrieve" depends="mvn-dependencies"/>
-
 </project>
