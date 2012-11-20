@@ -135,8 +135,11 @@ abstract class HCatBaseLoader extends LoadFunc implements LoadMetadata, LoadPush
                 if (p.getFileSystem(conf).isFile(p)) {
                     sizeInBytes += p.getFileSystem(conf).getFileStatus(p).getLen();
                 } else {
-                    for (FileStatus child : p.getFileSystem(conf).listStatus(p)) {
-                        sizeInBytes += child.getLen();
+                    FileStatus[] fileStatuses = p.getFileSystem(conf).listStatus(p);
+                    if (fileStatuses != null) {
+                        for (FileStatus child : fileStatuses) {
+                            sizeInBytes += child.getLen();
+                        }
                     }
                 }
             } catch (IOException e) {

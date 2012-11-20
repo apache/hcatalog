@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-530 HCatBaseLoader.getSizeInBytes NPE when partition path is missing (traviscrawford)
+
   HCAT-518 Refactor hcatalog-core as subproject (traviscrawford and toffer)
 
   HCAT-548 Move topic creation in NotificationListener to a separate method (amalakar via avandana)
