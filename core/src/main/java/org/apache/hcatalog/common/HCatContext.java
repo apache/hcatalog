@@ -21,50 +21,65 @@ package org.apache.hcatalog.common;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.classification.InterfaceAudience;
+import org.apache.hadoop.hive.common.classification.InterfaceStability;
 
 import java.util.Map;
 
 /**
- * HCatContext provides global access to configuration data. It uses a reference to the
- * job configuration so that settings are automatically passed to the backend by the
- * MR framework.
+ * HCatContext is a singleton that provides global access to configuration data.
+ *
+ * <p>HCatalog provides a variety of functionality that users can configure at runtime through
+ * configuration properties. Available configuration properties are defined in
+ * {@link HCatConstants}. HCatContext allows users to enable optional functionality by
+ * setting properties in a provided configuration.</p>
+ *
+ * <p>HCatalog <em>users</em> (MR apps, processing framework adapters) should set properties
+ * in a configuration that has been provided to
+ * {@link #setConf(org.apache.hadoop.conf.Configuration)} to enable optional functionality.
+ * The job configuration must be used to ensure properties are passed to the backend MR tasks.</p>
+ *
+ * <p>HCatalog <em>developers</em> should enable optional functionality by checking properties
+ * from {@link #getConf()}. Since users are not obligated to set a configuration, optional
+ * functionality must provide a sensible default.</p>
  */
-public class HCatContext {
-
-    private static final HCatContext hCatContext = new HCatContext();
+@InterfaceAudience.Public
+@InterfaceStability.Evolving
+public enum HCatContext {
+    INSTANCE;
 
     private Configuration conf = null;
 
-    private HCatContext() {
-    }
-
     /**
-     * Setup the HCatContext as a reference to the given configuration. Keys
-     * exclusive to an existing config are set in the new conf.
+     * Use the given configuration for optional behavior. Keys exclusive to an existing config
+     * are set in the new conf. The job conf must be used to ensure properties are passed to
+     * backend MR tasks.
      */
-    public static synchronized HCatContext setupHCatContext(Configuration newConf) {
-        Preconditions.checkNotNull(newConf, "HCatContext must not have a null conf.");
+    public synchronized HCatContext setConf(Configuration newConf) {
+        Preconditions.checkNotNull(newConf, "Required parameter 'newConf' must not be null.");
 
-        if (hCatContext.conf == null) {
-            hCatContext.conf = newConf;
-            return hCatContext;
+        if (conf == null) {
+            conf = newConf;
+            return this;
         }
 
-        if (hCatContext.conf != newConf) {
-            for (Map.Entry<String, String> entry : hCatContext.conf) {
+        if (conf != newConf) {
+            for (Map.Entry<String, String> entry : conf) {
                 if (newConf.get(entry.getKey()) == null) {
                     newConf.set(entry.getKey(), entry.getValue());
                 }
             }
-            hCatContext.conf = newConf;
+            conf = newConf;
         }
-        return hCatContext;
+        return this;
     }
 
-    public static HCatContext getInstance() {
-        return hCatContext;
-    }
-
+    /**
+     * Get the configuration, if there is one. Users are not required to setup HCatContext
+     * unless they wish to override default behavior, so the configuration may not be present.
+     *
+     * @return an Optional that might contain a Configuration
+     */
     public Optional<Configuration> getConf() {
         return Optional.fromNullable(conf);
     }

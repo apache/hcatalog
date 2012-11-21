@@ -265,8 +265,8 @@ public class HCatRecordSerDe implements SerDe {
     private static Object serializePrimitiveField(Object field,
             ObjectInspector fieldObjectInspector) {
 
-        if (field != null && HCatContext.getInstance().getConf().isPresent()) {
-            Configuration conf = HCatContext.getInstance().getConf().get();
+        if (field != null && HCatContext.INSTANCE.getConf().isPresent()) {
+            Configuration conf = HCatContext.INSTANCE.getConf().get();
 
             if (field instanceof Boolean &&
                 conf.getBoolean(
