@@ -133,6 +133,13 @@ sub runHCatCmdLine
     $outfiles[0] = $testCmd->{'thisResultsPath'} . "/" . $testCmd->{'group'} .
         "_" .  $testCmd->{'num'} . ".0.out";
 
+    # Append -p to dfs -mkdir to work with Hadoop23.
+    if ($ENV{'HCAT_HADOOPVERSION'} eq "23") {
+        if ($hcatCmd =~ /\bdfs -mkdir/) {
+            $hcatCmd=~s/\bdfs\s+-mkdir\s+(-p\s+)?/dfs -mkdir -p /g;
+        }   
+    }
+
     open(FH, "> $hcatfiles[0]") or
         die "Unable to open file $hcatfiles[0] to write SQL script, $ERRNO\n";
     print FH $hcatCmd . "\n";

@@ -145,6 +145,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-534 HCat_Drop_Table_3 dfs mkdir failing on hadoop23 (cdrome via toffer)
+
   HCAT-453 HCatalog queries fail due to exceeding max jobconf size (pengfeng via traviscrawford)
 
   HCAT-523 PigHCatUtil should not assume map key type can be casted to String (pengfeng via traviscrawford)
