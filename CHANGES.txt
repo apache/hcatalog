@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-542 Fix 0.23 build and dependencies (traviscrawford)
+
   HCAT-531 HCatContext should be an enum (traviscrawford)
 
   HCAT-530 HCatBaseLoader.getSizeInBytes NPE when partition path is missing (traviscrawford)

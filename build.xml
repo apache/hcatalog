@@ -60,12 +60,24 @@
     ================================================================================
     -->
     <target name="jar" depends="init" description="build all jars">
-        <ant target="jar" dir="core" inheritAll="false"/>
-        <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false"/>
-        <ant target="jar" dir="server-extensions" inheritAll="false"/>
-        <ant target="jar" dir="webhcat/svr" inheritAll="false"/>
-        <ant target="jar" dir="webhcat/java-client" inheritAll="false"/>
-        <ant target="jar" dir="storage-handlers/hbase" inheritAll="false"/>
+        <ant target="jar" dir="core" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
+        </ant>
+        <ant target="jar" dir="hcatalog-pig-adapter" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
+        </ant>
+        <ant target="jar" dir="server-extensions" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
+        </ant>
+        <ant target="jar" dir="webhcat/svr" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="hadoop20"/>
+        </ant>
+        <ant target="jar" dir="webhcat/java-client" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
+        </ant>
+        <ant target="jar" dir="storage-handlers/hbase" inheritAll="false">
+          <property name="_mvn.hadoop.profile" value="hadoop20"/>
+        </ant>
     </target>
 
     <!--

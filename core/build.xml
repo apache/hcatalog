@@ -45,7 +45,9 @@
     <_javac srcDir="${basedir}/src/main/java"
             destDir="${build.classes}"
             classPathRef="compile.class.path"/>
-    <ant target="jar" dir="${path.to.basedir}/shims" inheritAll="false"/>
+    <ant target="jar" dir="${path.to.basedir}/shims" inheritAll="false">
+        <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
+    </ant>
   </target>
 
 </project>

@@ -45,6 +45,9 @@
         <taskdef resource="org/apache/maven/artifact/ant/antlib.xml"
                  uri="artifact:org.apache.maven.artifact.ant"
                  classpath="${path.to.basedir}/build/maven-ant-tasks-${maven-ant-tasks.version}.jar"/>
+        <artifact:pom id="mvn.pom" file="pom.xml">
+            <profile id="${_mvn.hadoop.profile}"/>
+        </artifact:pom>
         <property name="mvn-init.complete" value="true"/>
     </target>
 
@@ -58,18 +61,18 @@
             unless="mvn-dependencies.complete">
         <echo message="${ant.project.name}"/>
 
-        <artifact:dependencies pathId="mvn.compile.classpath" scopes="compile">
+        <artifact:dependencies pathId="mvn.compile.classpath"
+          scopes="compile" pomRefId="mvn.pom">
             <localRepository path="${mvn.local.repo}"/>
-            <pom file="pom.xml"/>
         </artifact:dependencies>
         <mkdir dir="${build.dir}/lib/compile"/>
         <copy todir="${build.dir}/lib/compile">
             <path refid="mvn.compile.classpath"/>
         </copy>
 
-        <artifact:dependencies pathId="mvn.test.classpath" scopes="compile, test">
+        <artifact:dependencies pathId="mvn.test.classpath"
+          scopes="compile, test" pomRefId="mvn.pom">
             <localRepository path="${mvn.local.repo}"/>
-            <pom file="pom.xml"/>
         </artifact:dependencies>
         <mkdir dir="${build.dir}/lib/test"/>
         <copy todir="${build.dir}/lib/test">
@@ -81,8 +84,8 @@
 
     <target name="mvn-deploy" depends="mvn-init" description="Deploy artifacts to a Maven repository.">
         <echo message="${ant.project.name}"/>
-        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
-            <artifact:pom file="${pom.file}"/>
+        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar"
+          pomRefId="mvn.pom">
             <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>
         </artifact:deploy>
     </target>
@@ -92,8 +95,8 @@
         <echo message="${ant.project.name}"/>
         <_sign inputFile="${build.dir}/${ant.project.name}-${hcatalog.version}.jar"/>
         <_sign inputFile="${pom.file}"/>
-        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar">
-            <artifact:pom file="${pom.file}"/>
+        <artifact:deploy file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar"
+          pomRefId="mvn.pom">
             <attach file="${build.dir}/${ant.project.name}-${hcatalog.version}.jar.asc" type="jar.asc"/>
             <attach file="${pom.file}.asc" type="pom.asc"/>
             <remoteRepository id="${mvn.deploy.repo.id}" url="${mvn.deploy.repo.url}"/>

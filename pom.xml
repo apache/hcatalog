@@ -7,9 +7,11 @@
       <commons-exec.version>1.1</commons-exec.version>
       <commons-io.version>2.4</commons-io.version>
       <hadoop20.version>1.0.3</hadoop20.version>
+      <hadoop23.version>0.23.3</hadoop23.version>
       <hbase.version>0.92.0</hbase.version>
       <hcatalog.version>0.5.0-SNAPSHOT</hcatalog.version>
       <hive.version>0.10.0-SNAPSHOT</hive.version>
+      <jackson.version>1.8.8</jackson.version>
       <jersey.version>1.14</jersey.version>
       <jetty.webhcat.version>7.6.0.v20120127</jetty.webhcat.version>
       <jms.version>1.1</jms.version>
@@ -29,6 +31,69 @@
   <artifactId>hcatalog</artifactId>
   <version>0.5.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5.1</version>
+        <configuration>
+          <source>1.6</source>
+          <target>1.6</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>hadoop20</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-tools</artifactId>
+          <version>${hadoop20.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-test</artifactId>
+          <version>${hadoop20.version}</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>hadoop23</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-archives</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-mapreduce-client-core</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 
   <repositories>
     <!-- This is necessary for hive-metastore dependencies. -->
@@ -78,13 +143,6 @@
             </exclusion>
           </exclusions>
       </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-test</artifactId>
-            <version>${hadoop20.version}</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
 </project>
