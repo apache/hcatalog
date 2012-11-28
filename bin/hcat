@@ -99,11 +99,11 @@ fi
 
 # Find our hcatalog jar
 shopt -s extglob
-if (( `ls -1 $HCAT_PREFIX/share/hcatalog/hcatalog-[0-9]*.jar | wc -l` > 1 )) ; then
-    echo "Error:  found more than one hcatalog jar in $HCAT_PREFIX/share/hcatalog"
+if [ "$(ls -1 $HCAT_PREFIX/share/hcatalog/hcatalog-core-[0-9]*.jar | wc -l)" -ne 1 ]; then
+    echo "Error: did not find exactly one hcatalog-core jar in $HCAT_PREFIX/share/hcatalog"
     exit 1
 fi
-HCAT_JAR=`ls $HCAT_PREFIX/share/hcatalog/hcatalog-[0-9]*.jar`
+HCAT_JAR=`ls $HCAT_PREFIX/share/hcatalog/hcatalog-core-[0-9]*.jar`
 
 # Find the storage-handler jars.
 for jar in ${HCAT_PREFIX}/share/hcatalog/lib/*.jar ; do
