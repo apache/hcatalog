@@ -9,7 +9,7 @@
       <hadoop20.version>1.0.3</hadoop20.version>
       <hadoop23.version>0.23.3</hadoop23.version>
       <hbase.version>0.92.0</hbase.version>
-      <hcatalog.version>0.5.0-SNAPSHOT</hcatalog.version>
+      <hcatalog.version>${version}</hcatalog.version>
       <hive.version>0.10.0-SNAPSHOT</hive.version>
       <jackson.version>1.8.8</jackson.version>
       <jersey.version>1.14</jersey.version>
@@ -94,6 +94,15 @@
       </dependencies>
     </profile>
   </profiles>
+
+  <modules>
+    <module>core</module>
+    <module>hcatalog-pig-adapter</module>
+    <module>server-extensions</module>
+    <module>webhcat/java-client</module>
+    <module>webhcat/svr</module>
+    <module>storage-handlers/hbase</module>
+  </modules>
 
   <repositories>
     <!-- This is necessary for hive-metastore dependencies. -->
