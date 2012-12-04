@@ -123,9 +123,9 @@ class FileOutputFormatContainer extends OutputFormatContainer {
                 new Table(jobInfo.getTableInfo().getTable()));
         } catch (MetaException e) {
             throw new IOException(e);
-        } catch (TException e) {
-            throw new IOException(e);
         } catch (NoSuchObjectException e) {
+            throw new IOException(e);
+        } catch (TException e) {
             throw new IOException(e);
         } finally {
             HCatUtil.closeHiveClientQuietly(client);

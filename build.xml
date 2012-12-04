@@ -168,6 +168,7 @@
 
     <target name="javadoc" depends="jar" description="Generate Javadoc documentation">
         <mkdir dir="${build.javadoc}"/>
+        <record name="${build.dir}/javadoc.log" action="start"/>
         <javadoc overview="${src.dir}/../docs/overview.html"
                  packagenames="org.apache.hcatalog.*"
                  destdir="${build.javadoc}"
@@ -194,6 +195,13 @@
             </classpath>
             <group title="hcatalog" packages="org.apache.hcatalog.*"/>
         </javadoc>
+        <record name="${build.dir}/javadoc.log" action="stop"/>
+        <condition property="javadoc.warnings">
+            <isfileselected file="${build.dir}/javadoc.log">
+                <contains text="warnings"/>
+            </isfileselected>
+        </condition>
+        <fail if="javadoc.warnings">Javadoc comments contain warnings.</fail>
     </target>
 
     <!--

@@ -147,6 +147,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-559 Fix trivial build warnings in HCat trunk (mithunr via avandana)
+
   HCAT-555 hcat script should look for hcatalog-core jar and add HCAT_PREFIX/conf as a config location that is checked. (arpitgupta via traviscrawford)
 
   HCAT-534 HCat_Drop_Table_3 dfs mkdir failing on hadoop23 (cdrome via toffer)

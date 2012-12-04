@@ -218,7 +218,7 @@ public abstract class HCatClient {
      * Adds a list of partitions.
      *
      * @param partInfoList A list of HCatAddPartitionDesc.
-     * @return
+     * @return The number of partitions added.
      * @throws HCatException,ConnectionFailureException
      */
     public abstract int addPartitions(List<HCatAddPartitionDesc> partInfoList)

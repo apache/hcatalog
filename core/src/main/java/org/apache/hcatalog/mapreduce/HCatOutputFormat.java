@@ -58,7 +58,7 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
     private static boolean harRequested;
 
     /**
-     * @see org.apache.hcatalog.mapreduce.HCatOutputFormat#setOutput(org.apache.hadoop.conf.Configuration, OutputJobInfo)
+     * @see org.apache.hcatalog.mapreduce.HCatOutputFormat#setOutput(org.apache.hadoop.conf.Configuration, Credentials, OutputJobInfo)
      */
     public static void setOutput(Job job, OutputJobInfo outputJobInfo) throws IOException {
         setOutput(job.getConfiguration(), job.getCredentials(), outputJobInfo);
@@ -68,7 +68,8 @@ public class HCatOutputFormat extends HCatBaseOutputFormat {
      * Set the information about the output to write for the job. This queries the metadata server
      * to find the StorageHandler to use for the table.  It throws an error if the
      * partition is already published.
-     * @param job the job object
+     * @param conf the Configuration object
+     * @param credentials the Credentials object
      * @param outputJobInfo the table output information for the job
      * @throws IOException the exception in communicating with the metadata server
      */

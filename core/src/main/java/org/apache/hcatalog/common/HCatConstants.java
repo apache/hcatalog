@@ -45,9 +45,9 @@ public final class HCatConstants {
 
     /**
      * {@value} (default: null)
-     * When the property is set in the UDFContext of the {@link HCatStorer}, {@link HCatStorer} writes
+     * When the property is set in the UDFContext of the org.apache.hcatalog.pig.HCatStorer, HCatStorer writes
      * to the location it specifies instead of the default HCatalog location format. An example can be found
-     * in @{link HCatStorerWrapper}.
+     * in org.apache.hcatalog.pig.HCatStorerWrapper.
      */
     public static final String HCAT_PIG_STORER_EXTERNAL_LOCATION = HCAT_PIG_STORER + ".external.location";
 

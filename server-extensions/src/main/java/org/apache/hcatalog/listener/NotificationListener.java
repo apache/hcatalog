@@ -315,8 +315,8 @@ public class NotificationListener extends MetaStoreEventListener {
      * Get the topic object for the topicName, it also tries to reconnect
      * if the connection appears to be broken.
      *
-     * @param topicName
-     * @return
+     * @param topicName The String identifying the message-topic.
+     * @return A {@link Topic} object corresponding to the specified topicName.
      * @throws JMSException
      */
     protected Topic getTopic(final String topicName) throws JMSException {
