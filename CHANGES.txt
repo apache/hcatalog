@@ -147,6 +147,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-563 hcat script should look in the correct dir for the storage handler jars (arpitgupta via khorgath)
+
   HCAT-559 Fix trivial build warnings in HCat trunk (mithunr via avandana)
 
   HCAT-555 hcat script should look for hcatalog-core jar and add HCAT_PREFIX/conf as a config location that is checked. (arpitgupta via traviscrawford)
