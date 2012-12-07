@@ -20,7 +20,7 @@
   <property name="path.to.basedir" location="${basedir}/../.."/>
   <property name="pom.file" location="pom.xml"/>
 
-  <import file="../../build-common.xml"/>
+  <import file="${path.to.basedir}/build-support/ant/build-common.xml"/>
 
   <path id="compile.class.path">
     <fileset dir="${build.dir}/lib/compile"/>

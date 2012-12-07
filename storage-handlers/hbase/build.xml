@@ -217,6 +217,6 @@
         </copy>
     </target>
 
-    <import file="../../ant/deploy.xml"/>
+    <import file="${path.to.basedir}/build-support/ant/deploy.xml"/>
 
 </project>

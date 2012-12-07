@@ -19,7 +19,7 @@
 
 <project name="shims" default="jar">
   <property name="path.to.basedir" value="${basedir}/.."/>
-  <import file="${path.to.basedir}/build-common.xml"/>
+  <import file="${path.to.basedir}/build-support/ant/build-common.xml"/>
 
   <path id="compile.class.path">
     <fileset dir="${path.to.basedir}/core/build/lib/compile"/>

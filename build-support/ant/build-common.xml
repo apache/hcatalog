@@ -29,10 +29,10 @@
     <equals arg1="${_mvn.hadoop.profile}" arg2="hadoop23"/>
   </condition>
 
-  <import file="${path.to.basedir}/ant/checkstyle.xml"/>
-  <import file="${path.to.basedir}/ant/deploy.xml"/>
-  <import file="${path.to.basedir}/ant/findbugs.xml"/>
-  <import file="${path.to.basedir}/ant/test.xml"/>
+  <import file="checkstyle.xml"/>
+  <import file="deploy.xml"/>
+  <import file="findbugs.xml"/>
+  <import file="test.xml"/>
 
   <macrodef name="_javac">
     <attribute name="srcDir"/>
