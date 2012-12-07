@@ -19,6 +19,7 @@ package org.apache.hcatalog.api;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestHCatClient {
@@ -101,7 +103,7 @@ public class TestHCatClient {
         String tableOne = "testTable1";
         String tableTwo = "testTable2";
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
-        client.dropDatabase(db, true, HCatClient.DROP_DB_MODE.CASCADE);
+        client.dropDatabase(db, true, HCatClient.DropDBMode.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(db).ifNotExists(false)
             .build();
@@ -160,7 +162,7 @@ public class TestHCatClient {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String dbName = "ptnDB";
         String tableName = "pageView";
-        client.dropDatabase(dbName, true, HCatClient.DROP_DB_MODE.CASCADE);
+        client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(dbName)
             .ifNotExists(true).build();
@@ -231,7 +233,7 @@ public class TestHCatClient {
     public void testDatabaseLocation() throws Exception {
         HCatClient client = HCatClient.create(new Configuration(hcatConf));
         String dbName = "locationDB";
-        client.dropDatabase(dbName, true, HCatClient.DROP_DB_MODE.CASCADE);
+        client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
 
         HCatCreateDBDesc dbDesc = HCatCreateDBDesc.create(dbName)
             .ifNotExists(true).location("/tmp/" + dbName).build();
@@ -368,6 +370,36 @@ public class TestHCatClient {
         } finally {
             client.close();
             assertTrue("The expected exception was never thrown.", isExceptionCaught);
+        }
+    }
+
+    @Test
+    public void testUpdateTableSchema() throws Exception {
+        try {
+            HCatClient client = HCatClient.create(new Configuration(hcatConf));
+            final String dbName = "testUpdateTableSchema_DBName";
+            final String tableName = "testUpdateTableSchema_TableName";
+
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+
+            client.createDatabase(HCatCreateDBDesc.create(dbName).build());
+            List<HCatFieldSchema> oldSchema = Arrays.asList(new HCatFieldSchema("foo", Type.INT, ""),
+                    new HCatFieldSchema("bar", Type.STRING, ""));
+            client.createTable(HCatCreateTableDesc.create(dbName, tableName, oldSchema).build());
+
+            List<HCatFieldSchema> newSchema = Arrays.asList(new HCatFieldSchema("completely", Type.DOUBLE, ""),
+                    new HCatFieldSchema("new", Type.FLOAT, ""),
+                    new HCatFieldSchema("fields", Type.STRING, ""));
+
+            client.updateTableSchema(dbName, tableName, newSchema);
+
+            assertArrayEquals(newSchema.toArray(), client.getTable(dbName, tableName).getCols().toArray());
+
+            client.dropDatabase(dbName, false, HCatClient.DropDBMode.CASCADE);
+        }
+        catch (Exception exception) {
+            LOG.error("Unexpected exception.", exception);
+            assertTrue("Unexpected exception: " + exception.getMessage(), false);
         }
     }
 }

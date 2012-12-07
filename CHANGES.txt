@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-560 HCatClient should support addition of new columns to a Table.(mithunr via avandana)
+
   HCAT-558 Update test.sh to test from an extracted src-release (traviscrawford)
 
   HCAT-557 add modules to maven pom (toffer)
