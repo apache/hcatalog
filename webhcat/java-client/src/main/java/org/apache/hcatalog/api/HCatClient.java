@@ -17,7 +17,6 @@
  */
 package org.apache.hcatalog.api;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -25,23 +24,24 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.api.PartitionEventType;
 import org.apache.hcatalog.common.HCatException;
+import org.apache.hcatalog.data.schema.HCatFieldSchema;
 
 /**
  * The abstract class HCatClient containing APIs for HCatalog DDL commands.
  */
 public abstract class HCatClient {
 
-    public enum DROP_DB_MODE { RESTRICT, CASCADE };
+    public enum DropDBMode { RESTRICT, CASCADE }
+
     public static final String HCAT_CLIENT_IMPL_CLASS = "hcat.client.impl.class";
     /**
      * Creates an instance of HCatClient.
      *
      * @param conf An instance of configuration.
      * @return An instance of HCatClient.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
-    public static HCatClient create(Configuration conf) throws HCatException,
-            ConnectionFailureException {
+    public static HCatClient create(Configuration conf) throws HCatException {
         HCatClient client = null;
         String className = conf.get(HCAT_CLIENT_IMPL_CLASS,
                 HCatClientHMSImpl.class.getName());
@@ -49,7 +49,7 @@ public abstract class HCatClient {
             Class<? extends HCatClient> clientClass = Class.forName(className,
                     true, JavaUtils.getClassLoader()).asSubclass(
                     HCatClient.class);
-            client = (HCatClient) clientClass.newInstance();
+            client = clientClass.newInstance();
         } catch (ClassNotFoundException e) {
             throw new HCatException(
                     "ClassNotFoundException while creating client class.", e);
@@ -66,36 +66,36 @@ public abstract class HCatClient {
         return client;
     }
 
-    abstract void initialize(Configuration conf) throws HCatException,ConnectionFailureException;
+    abstract void initialize(Configuration conf) throws HCatException;
 
     /**
      * Get all existing databases that match the given
      * pattern. The matching occurs as per Java regular expressions
      *
-     * @param databasePattern  java re pattern
+     * @param pattern  java re pattern
      * @return list of database names
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract List<String> listDatabaseNamesByPattern(String pattern)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Gets the database.
      *
      * @param dbName The name of the database.
      * @return An instance of HCatDatabaseInfo.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
-    public abstract HCatDatabase getDatabase(String dbName) throws HCatException,ConnectionFailureException;
+    public abstract HCatDatabase getDatabase(String dbName) throws HCatException;
 
     /**
      * Creates the database.
      *
      * @param dbInfo An instance of HCatCreateDBDesc.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void createDatabase(HCatCreateDBDesc dbInfo)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Drops a database.
@@ -106,21 +106,21 @@ public abstract class HCatClient {
      * @param mode This is set to either "restrict" or "cascade". Restrict will
      *             remove the schema if all the tables are empty. Cascade removes
      *             everything including data and definitions.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void dropDatabase(String dbName, boolean ifExists,
-            DROP_DB_MODE mode) throws HCatException, ConnectionFailureException;
+            DropDBMode mode) throws HCatException;
 
     /**
      * Returns all existing tables from the specified database which match the given
      * pattern. The matching occurs as per Java regular expressions.
-     * @param dbName
-     * @param tablePattern
+     * @param dbName The name of the DB (to be searched)
+     * @param tablePattern The regex for the table-name
      * @return list of table names
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract List<String> listTableNamesByPattern(String dbName, String tablePattern)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Gets the table.
@@ -128,19 +128,30 @@ public abstract class HCatClient {
      * @param dbName The name of the database.
      * @param tableName The name of the table.
      * @return An instance of HCatTableInfo.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract HCatTable getTable(String dbName, String tableName)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Creates the table.
      *
      * @param createTableDesc An instance of HCatCreateTableDesc class.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void createTable(HCatCreateTableDesc createTableDesc)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
+
+    /**
+     * Updates the Table's column schema to the specified definition.
+     *
+     * @param dbName The name of the database.
+     * @param tableName The name of the table.
+     * @param columnSchema The (new) definition of the column schema (i.e. list of fields).
+     *
+     */
+    public abstract void updateTableSchema(String dbName, String tableName, List<HCatFieldSchema> columnSchema)
+            throws HCatException;
 
     /**
      * Creates the table like an existing table.
@@ -152,11 +163,11 @@ public abstract class HCatClient {
      * @param isExternal Set to "true", if table has be created at a different
      *                   location other than default.
      * @param location The location for the table.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void createTableLike(String dbName, String existingTblName,
             String newTableName, boolean ifNotExists, boolean isExternal,
-            String location) throws HCatException,ConnectionFailureException;
+            String location) throws HCatException;
 
     /**
      * Drop table.
@@ -165,10 +176,10 @@ public abstract class HCatClient {
      * @param tableName The name of the table.
      * @param ifExists Hive returns an error if the database specified does not exist,
      *                 unless ifExists is set to true.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void dropTable(String dbName, String tableName,
-            boolean ifExists) throws HCatException,ConnectionFailureException;
+            boolean ifExists) throws HCatException;
 
     /**
      * Renames a table.
@@ -176,10 +187,10 @@ public abstract class HCatClient {
      * @param dbName The name of the database.
      * @param oldName The name of the table to be renamed.
      * @param newName The new name of the table.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void renameTable(String dbName, String oldName,
-            String newName) throws HCatException, ConnectionFailureException;
+            String newName) throws HCatException;
 
     /**
      * Gets all the partitions.
@@ -187,10 +198,10 @@ public abstract class HCatClient {
      * @param dbName The name of the database.
      * @param tblName The name of the table.
      * @return A list of partitions.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract List<HCatPartition> getPartitions(String dbName, String tblName)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Gets the partition.
@@ -199,29 +210,29 @@ public abstract class HCatClient {
      * @param tableName The table name.
      * @param partitionSpec The partition specification, {[col_name,value],[col_name2,value2]}.
      * @return An instance of HCatPartitionInfo.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract HCatPartition getPartition(String dbName, String tableName,
-            Map<String,String> partitionSpec) throws HCatException,ConnectionFailureException;
+            Map<String,String> partitionSpec) throws HCatException;
 
     /**
      * Adds the partition.
      *
      * @param partInfo An instance of HCatAddPartitionDesc.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void addPartition(HCatAddPartitionDesc partInfo)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Adds a list of partitions.
      *
      * @param partInfoList A list of HCatAddPartitionDesc.
-     * @return
-     * @throws HCatException,ConnectionFailureException
+     * @return The number of partitions added.
+     * @throws HCatException
      */
     public abstract int addPartitions(List<HCatAddPartitionDesc> partInfoList)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Drops partition.
@@ -230,11 +241,11 @@ public abstract class HCatClient {
      * @param tableName The table name.
      * @param partitionSpec The partition specification, {[col_name,value],[col_name2,value2]}.
      * @param ifExists Hive returns an error if the partition specified does not exist, unless ifExists is set to true.
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void dropPartition(String dbName, String tableName,
             Map<String, String> partitionSpec, boolean ifExists)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * List partitions by filter.
@@ -245,10 +256,10 @@ public abstract class HCatClient {
      *    for example "part1 = \"p1_abc\" and part2 <= "\p2_test\"". Filtering can
      *    be done only on string partition keys.
      * @return list of partitions
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract List<HCatPartition> listPartitionsByFilter(String dbName, String tblName,
-            String filter) throws HCatException,ConnectionFailureException;
+            String filter) throws HCatException;
 
     /**
      * Mark partition for event.
@@ -257,11 +268,11 @@ public abstract class HCatClient {
      * @param tblName The table name.
      * @param partKVs the key-values associated with the partition.
      * @param eventType the event type
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void markPartitionForEvent(String dbName, String tblName,
             Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Checks if a partition is marked for event.
@@ -271,11 +282,11 @@ public abstract class HCatClient {
      * @param partKVs the key-values associated with the partition.
      * @param eventType the event type
      * @return true, if is partition marked for event
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract boolean isPartitionMarkedForEvent(String dbName, String tblName,
             Map<String, String> partKVs, PartitionEventType eventType)
-            throws HCatException,ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Gets the delegation token.
@@ -283,30 +294,29 @@ public abstract class HCatClient {
      * @param owner the owner
      * @param renewerKerberosPrincipalName the renewer kerberos principal name
      * @return the delegation token
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract String getDelegationToken(String owner,
-            String renewerKerberosPrincipalName) throws HCatException,
-            ConnectionFailureException;
+            String renewerKerberosPrincipalName) throws HCatException;
 
     /**
      * Renew delegation token.
      *
      * @param tokenStrForm the token string
      * @return the new expiration time
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract long renewDelegationToken(String tokenStrForm)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Cancel delegation token.
      *
      * @param tokenStrForm the token string
-     * @throws HCatException,ConnectionFailureException
+     * @throws HCatException
      */
     public abstract void cancelDelegationToken(String tokenStrForm)
-            throws HCatException, ConnectionFailureException;
+            throws HCatException;
 
     /**
      * Close the hcatalog client.
