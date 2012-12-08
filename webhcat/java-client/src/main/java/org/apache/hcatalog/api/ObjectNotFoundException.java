@@ -19,11 +19,12 @@
 package org.apache.hcatalog.api;
 
 import org.apache.hcatalog.common.HCatException;
+
 /**
- * Class representing exceptions resulting from connection problems
- * between HCat client and server.
+ * This exception is thrown when a Database, Table or Partition
+ * specified in an HCatalog query is not found.
  */
-public class ConnectionFailureException extends HCatException {
+public class ObjectNotFoundException extends HCatException {
 
     private static final long serialVersionUID = 1L;
 
@@ -31,8 +32,7 @@ public class ConnectionFailureException extends HCatException {
      * @param message Exception message.
      * @param cause The wrapped Throwable that caused this exception.
      */
-    public ConnectionFailureException(String message, Throwable cause) {
+    public ObjectNotFoundException(String message, Throwable cause) {
         super(message, cause);
     }
-
 }
