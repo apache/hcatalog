@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TestHCatClient {
@@ -401,6 +402,79 @@ public class TestHCatClient {
         catch (Exception exception) {
             LOG.error("Unexpected exception.", exception);
             assertTrue("Unexpected exception: " + exception.getMessage(), false);
+        }
+    }
+
+    @Test
+    public void testObjectNotFoundException() throws Exception {
+        try {
+
+            HCatClient client = HCatClient.create(new  Configuration(hcatConf));
+            String dbName = "testObjectNotFoundException_DBName";
+            String tableName = "testObjectNotFoundException_TableName";
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+
+            try {    // Test that fetching a non-existent db-name yields ObjectNotFound.
+                client.getDatabase(dbName);
+                assertTrue("Expected ObjectNotFoundException.", false);
+            } catch(Exception exception) {
+                LOG.info("Got exception: ", exception);
+                assertTrue("Expected ObjectNotFoundException. Got:" + exception.getClass(),
+                        exception instanceof ObjectNotFoundException);
+            }
+
+            client.createDatabase(HCatCreateDBDesc.create(dbName).build());
+
+            try {   // Test that fetching a non-existent table-name yields ObjectNotFound.
+                client.getTable(dbName, tableName);
+                assertTrue("Expected ObjectNotFoundException.", false);
+            } catch(Exception exception) {
+                LOG.info("Got exception: ", exception);
+                assertTrue("Expected ObjectNotFoundException. Got:" + exception.getClass(),
+                        exception instanceof ObjectNotFoundException);
+            }
+
+            String partitionColumn = "part";
+
+            List<HCatFieldSchema> columns = Arrays.asList(new HCatFieldSchema("col", Type.STRING, ""));
+            ArrayList<HCatFieldSchema> partitionColumns = new ArrayList<HCatFieldSchema>(
+                    Arrays.asList(new HCatFieldSchema(partitionColumn, Type.STRING, "")));
+            client.createTable(HCatCreateTableDesc.create(dbName, tableName, columns)
+                    .partCols(partitionColumns)
+                    .build());
+
+            Map<String, String> partitionSpec = new HashMap<String, String>();
+            partitionSpec.put(partitionColumn, "foobar");
+            try {  // Test that fetching a non-existent partition yields ObjectNotFound.
+                client.getPartition(dbName, tableName, partitionSpec);
+                assertTrue("Expected ObjectNotFoundException.", false);
+            } catch(Exception exception) {
+                LOG.info("Got exception: ", exception);
+                assertTrue("Expected ObjectNotFoundException. Got:" + exception.getClass(),
+                        exception instanceof ObjectNotFoundException);
+            }
+
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+
+            // Test that listPartitionsByFilter() returns an empty-set, if the filter selects no partitions.
+            assertEquals("Expected empty set of partitions.",
+                    0, client.listPartitionsByFilter(dbName, tableName, partitionColumn + " < 'foobar'").size());
+
+            try {  // Test that listPartitionsByFilter() throws HCatException if the partition-key is incorrect.
+                partitionSpec.put("NonExistentKey", "foobar");
+                client.getPartition(dbName, tableName, partitionSpec);
+                assertTrue("Expected HCatException.", false);
+            } catch(Exception exception) {
+                LOG.info("Got exception: ", exception);
+                assertTrue("Expected HCatException. Got:" + exception.getClass(),
+                        exception instanceof HCatException);
+                assertFalse("Did not expect ObjectNotFoundException.", exception instanceof ObjectNotFoundException);
+            }
+
+        }
+        catch (Throwable t) {
+            LOG.error("Unexpected exception!", t);
+            assertTrue("Unexpected exception! " + t.getMessage(), false);
         }
     }
 }
