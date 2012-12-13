@@ -48,7 +48,7 @@ import org.apache.hcatalog.data.schema.HCatSchema;
 
 public abstract class HCatBaseInputFormat 
   extends InputFormat<WritableComparable, HCatRecord> {
-  
+
   /**
    * get the schema for the HCatRecord data returned by HCatInputFormat.
    * 
@@ -300,15 +300,14 @@ public abstract class HCatBaseInputFormat
     pathStrings.add(location.substring(pathStart, length));
 
     Path[] paths = StringUtils.stringToPath(pathStrings.toArray(new String[0]));
-
-    FileSystem fs = FileSystem.get(jobConf);
-    Path path = paths[0].makeQualified(fs);
-    StringBuilder str = new StringBuilder(StringUtils.escapeString(
-                                                          path.toString()));
-    for(int i = 1; i < paths.length;i++) {
-      str.append(StringUtils.COMMA_STR);
-      path = paths[i].makeQualified(fs);
-      str.append(StringUtils.escapeString(path.toString()));
+    String separator = "";
+    StringBuilder str = new StringBuilder(); 
+    for (Path path : paths) {
+      FileSystem fs = path.getFileSystem(jobConf);
+      final String qualifiedPath = path.makeQualified(fs).toString();
+      str.append(separator)
+              .append(StringUtils.escapeString(qualifiedPath));
+      separator = StringUtils.COMMA_STR;
     }
 
     jobConf.set("mapred.input.dir", str.toString());
