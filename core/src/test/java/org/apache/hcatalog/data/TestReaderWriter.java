@@ -110,9 +110,7 @@ public class TestReaderWriter extends HCatBaseTest {
 
     private ReaderContext runsInMaster(Map<String, String> config, boolean bogus)
         throws HCatException {
-
-        ReadEntity.Builder builder = new ReadEntity.Builder();
-        ReadEntity entity = builder.withTable("mytbl").build();
+        ReadEntity entity = new ReadEntity.Builder().withTable("mytbl").build();
         HCatReader reader = DataTransferFactory.getHCatReader(entity, config);
         ReaderContext cntxt = reader.prepareRead();
         return cntxt;

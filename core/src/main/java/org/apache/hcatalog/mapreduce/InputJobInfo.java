@@ -17,6 +17,8 @@
  */
 package org.apache.hcatalog.mapreduce;
 
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 
 import java.io.IOException;
@@ -30,17 +32,16 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
- * Container for metadata read from the metadata server. Users should specify input to
- * their HCatalog MR jobs as follows:
- * <p><code>
- * HCatInputFormat.setInput(job, InputJobInfo.create(databaseName, tableName, filter));
- * </code></p>
- * Note: while InputJobInfo is public,
- * <a href="https://issues.apache.org/jira/browse/HCATALOG-527">HCATALOG-527</a> discusses
- * removing this class from the public API, by simplifying {@link HCatInputFormat#setInput}
- * to simply take the input specification arguments directly. Use InputJobInfo outside the
- * above context (including serialization) at your own peril!
+ * Container for metadata read from the metadata server.
+ * Prior to release 0.5, InputJobInfo was a key part of the public API, exposed directly
+ * to end-users as an argument to
+ * {@link HCatInputFormat#setInput(org.apache.hadoop.mapreduce.Job, InputJobInfo)}.
+ * Going forward, we plan on treating InputJobInfo as an implementation detail and no longer
+ * expose to end-users. Should you have a need to use InputJobInfo outside HCatalog itself,
+ * please contact the developer mailing list before depending on this class.
  */
+@InterfaceAudience.Private
+@InterfaceStability.Evolving
 public class InputJobInfo implements Serializable {
 
     /** The serialization version */
@@ -69,22 +70,22 @@ public class InputJobInfo implements Serializable {
      * @param tableName the table name
      * @param filter the partition filter
      */
-
     public static InputJobInfo create(String databaseName,
                                       String tableName,
-                                      String filter) {
-        return new InputJobInfo(databaseName, tableName, filter);
+                                      String filter,
+                                      Properties properties) {
+        return new InputJobInfo(databaseName, tableName, filter, properties);
     }
-
 
     private InputJobInfo(String databaseName,
                          String tableName,
-                         String filter) {
+                         String filter,
+                         Properties properties) {
         this.databaseName = (databaseName == null) ?
             MetaStoreUtils.DEFAULT_DATABASE_NAME : databaseName;
         this.tableName = tableName;
         this.filter = filter;
-        this.properties = new Properties();
+        this.properties = properties == null ? new Properties() : properties;
     }
 
     /**

@@ -61,7 +61,6 @@ import org.apache.hcatalog.hbase.snapshot.TableSnapshot;
 import org.apache.hcatalog.hbase.snapshot.Transaction;
 import org.apache.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.hcatalog.mapreduce.HCatOutputFormat;
-import org.apache.hcatalog.mapreduce.InputJobInfo;
 import org.apache.hcatalog.mapreduce.OutputJobInfo;
 import org.junit.Test;
 
@@ -363,9 +362,7 @@ public class TestHBaseDirectOutputFormat extends SkeletonHBaseTest {
         job.setJarByClass(this.getClass());
         job.setMapperClass(MapReadAbortedTransaction.class);
         job.setInputFormatClass(HCatInputFormat.class);
-        InputJobInfo inputJobInfo = InputJobInfo.create(databaseName,
-            tableName, null);
-        HCatInputFormat.setInput(job, inputJobInfo);
+        HCatInputFormat.setInput(job, databaseName, tableName);
         job.setOutputFormatClass(TextOutputFormat.class);
         TextOutputFormat.setOutputPath(job, outputDir);
         job.setMapOutputKeyClass(BytesWritable.class);
