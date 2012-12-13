@@ -36,6 +36,7 @@ import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatFieldSchema.Type;
@@ -477,4 +478,28 @@ public class TestHCatClient {
             assertTrue("Unexpected exception! " + t.getMessage(), false);
         }
     }
+
+    @Test
+    public void testGetMessageBusTopicName() throws Exception {
+        try {
+            HCatClient client = HCatClient.create(new Configuration(hcatConf));
+            String dbName = "testGetMessageBusTopicName_DBName";
+            String tableName = "testGetMessageBusTopicName_TableName";
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+            client.createDatabase(HCatCreateDBDesc.create(dbName).build());
+            String messageBusTopicName = "MY.topic.name";
+            Map<String, String> tableProperties = new HashMap<String, String>(1);
+            tableProperties.put(HCatConstants.HCAT_MSGBUS_TOPIC_NAME, messageBusTopicName);
+            client.createTable(HCatCreateTableDesc.create(dbName, tableName, Arrays.asList(new HCatFieldSchema("foo", Type.STRING, ""))).tblProps(tableProperties).build());
+
+            assertEquals("MessageBus topic-name doesn't match!", messageBusTopicName, client.getMessageBusTopicName(dbName, tableName));
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+            client.close();
+        }
+        catch (Exception exception) {
+            LOG.error("Unexpected exception.", exception);
+            assertTrue("Unexpected exception:" + exception.getMessage(), false);
+        }
+    }
+
 }

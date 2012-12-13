@@ -319,6 +319,16 @@ public abstract class HCatClient {
             throws HCatException;
 
     /**
+     * Retrieve Message-bus topic for a table.
+     *
+     * @param dbName The name of the DB.
+     * @param tableName The name of the table.
+     * @return Topic-name for the message-bus on which messages will be sent for the specified table.
+     */
+    public abstract String getMessageBusTopicName(String dbName, String tableName)
+            throws HCatException;
+
+    /**
      * Close the hcatalog client.
      *
      * @throws HCatException

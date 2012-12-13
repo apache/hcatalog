@@ -42,6 +42,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
+import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
@@ -671,6 +672,21 @@ public class HCatClientHMSImpl extends HCatClient {
                     + " is could not be found.", e);
         }
         return numPartitions;
+    }
+
+    @Override
+    public String getMessageBusTopicName(String dbName, String tableName) throws HCatException {
+        try {
+            return hmsClient.getTable(dbName, tableName).getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME);
+        }
+        catch (MetaException e) {
+            throw new HCatException("MetaException while retrieving JMS Topic name.", e);
+        } catch (TException e) {
+            throw new ConnectionFailureException(
+                    "TException while retrieving JMS Topic name.", e);
+        } catch (NoSuchObjectException e) {
+            throw new HCatException("Could not find DB:" + dbName + " or Table:" + tableName, e);
+        }
     }
 
 }
