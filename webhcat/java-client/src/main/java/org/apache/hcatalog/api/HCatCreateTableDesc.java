@@ -371,7 +371,7 @@ public class HCatCreateTableDesc {
          * @param partCols the partition cols
          * @return the builder
          */
-        public Builder partCols(ArrayList<HCatFieldSchema> partCols) {
+        public Builder partCols(List<HCatFieldSchema> partCols) {
             this.partCols = partCols;
             return this;
         }
@@ -383,7 +383,7 @@ public class HCatCreateTableDesc {
          * @param bucketCols the bucket cols
          * @return the builder
          */
-        public Builder bucketCols(ArrayList<String> bucketCols, int buckets) {
+        public Builder bucketCols(List<String> bucketCols, int buckets) {
             this.bucketCols = bucketCols;
             this.numBuckets = buckets;
             return this;
