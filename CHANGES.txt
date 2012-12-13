@@ -151,6 +151,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-562 HCatClient should allow for a table's message-topic-name to be queried for. (mithunr via avandana)
+
   HCAT-561 HCatClient should differentiate between "partition not available" and other generic errors.(mithunr via avandana)
 
   HCAT-563 hcat script should look in the correct dir for the storage handler jars (arpitgupta via khorgath)
