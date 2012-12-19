@@ -3,6 +3,9 @@
 # Run HCatalog tests. This script intends to centralize the different commands
 # and options necessary to build and test HCatalog. It should be run before
 # committing patches, and from CI.
+#
+# Set ANT_HOME to specify the version of ant to build with
+# (feature of "ant" shell script, not implemented here).
 
 function run_cmd() {
   echo "Running command: ${cmd}"
@@ -40,4 +43,3 @@ if [ "${HUDSON_URL}" == "https://builds.apache.org/" ]; then
   cmd="${cmd} mvn-deploy"
 fi
 run_cmd
-

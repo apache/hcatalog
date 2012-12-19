@@ -44,6 +44,8 @@ Trunk (unreleased changes)
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-564 test.sh should let users specify the ant version (traviscrawford)
+
   HCAT-527 InputJobInfo should not be public (traviscrawford)
 
   HCAT-560 HCatClient should support addition of new columns to a Table.(mithunr via avandana)
