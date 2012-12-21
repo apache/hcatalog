@@ -326,12 +326,45 @@ public class HCatClientHMSImpl extends HCatClient {
     }
 
     @Override
+    public List<HCatPartition> getPartitions(String dbName, String tblName, Map<String, String> partitionSpec) throws HCatException {
+        return listPartitionsByFilter(dbName, tblName, getFilterString(partitionSpec));
+    }
+
+    private static String getFilterString(Map<String, String> partitionSpec) {
+        final String AND = " AND ";
+
+        StringBuilder filter = new StringBuilder();
+        for (Map.Entry<String, String> entry : partitionSpec.entrySet()) {
+            filter.append(entry.getKey()).append("=").append("\"").append(entry.getValue()).append("\"").append(AND);
+        }
+
+        int length = filter.toString().length();
+        if (length > 0)
+            filter.delete(length - AND.length(), length);
+
+        return filter.toString();
+    }
+
+    @Override
     public HCatPartition getPartition(String dbName, String tableName,
                                       Map<String, String> partitionSpec) throws HCatException {
         HCatPartition partition = null;
         try {
+            List<HCatFieldSchema> partitionColumns = getTable(checkDB(dbName), tableName).getPartCols();
+            if (partitionColumns.size() != partitionSpec.size()) {
+                throw new HCatException("Partition-spec doesn't have the right number of partition keys.");
+            }
+
             ArrayList<String> ptnValues = new ArrayList<String>();
-            ptnValues.addAll(partitionSpec.values());
+            for (HCatFieldSchema partitionColumn : partitionColumns) {
+                String partKey = partitionColumn.getName();
+                if (partitionSpec.containsKey(partKey)) {
+                    ptnValues.add(partitionSpec.get(partKey)); // Partition-keys added in order.
+                }
+                else {
+                    throw new HCatException("Invalid partition-key specified: " + partKey);
+                }
+            }
             Partition hivePartition = hmsClient.getPartition(checkDB(dbName),
                 tableName, ptnValues);
             if (hivePartition != null) {
@@ -382,25 +415,40 @@ public class HCatClientHMSImpl extends HCatClient {
     }
 
     @Override
-    public void dropPartition(String dbName, String tableName,
-                              Map<String, String> partitionSpec, boolean ifExists)
+    public void dropPartitions(String dbName, String tableName,
+                               Map<String, String> partitionSpec, boolean ifExists)
         throws HCatException {
         try {
-            List<String> ptnValues = new ArrayList<String>();
-            ptnValues.addAll(partitionSpec.values());
-            hmsClient.dropPartition(checkDB(dbName), tableName, ptnValues,
-                ifExists);
-        } catch (NoSuchObjectException e) {
-            if (!ifExists) {
-                throw new ObjectNotFoundException(
-                    "NoSuchObjectException while dropping partition.", e);
+            dbName = checkDB(dbName);
+            List<Partition> partitions = hmsClient.listPartitionsByFilter(dbName, tableName,
+                    getFilterString(partitionSpec), (short)-1);
+
+            for (Partition partition : partitions) {
+                dropPartition(partition, ifExists);
             }
+
+        } catch (NoSuchObjectException e) {
+            throw new ObjectNotFoundException(
+                    "NoSuchObjectException while dropping partition. " +
+                            "Either db(" + dbName + ") or table(" + tableName + ") missing.", e);
         } catch (MetaException e) {
             throw new HCatException("MetaException while dropping partition.",
                 e);
         } catch (TException e) {
             throw new ConnectionFailureException(
                 "TException while dropping partition.", e);
+        }
+    }
+
+    private void dropPartition(Partition partition, boolean ifExists)
+        throws HCatException, MetaException, TException {
+        try {
+            hmsClient.dropPartition(partition.getDbName(), partition.getTableName(), partition.getValues());
+        } catch (NoSuchObjectException e) {
+            if (!ifExists) {
+                throw new ObjectNotFoundException(
+                        "NoSuchObjectException while dropping partition: " + partition.getValues(), e);
+            }
         }
     }
 

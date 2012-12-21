@@ -155,6 +155,8 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-567 HCatClient must allow retrieval of multiple partitions using a partial partition spec.(mithun via avandana)
+
   HCAT-556 HCatalog-trunk doesn't build against Hive-0.10.0 (mithun via avandana)
 
   HCAT-566 HCatTable doesn't report partition columns correctly. (mithun via traviscrawford)

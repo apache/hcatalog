@@ -215,7 +215,7 @@ public class TestHCatClient {
         HCatPartition ptn = client.getPartition(dbName, tableName, firstPtn);
         assertTrue(ptn != null);
 
-        client.dropPartition(dbName, tableName, firstPtn, true);
+        client.dropPartitions(dbName, tableName, firstPtn, true);
         ptnList = client.listPartitionsByFilter(dbName,
             tableName, null);
         assertTrue(ptnList.size() == 2);
@@ -533,4 +533,103 @@ public class TestHCatClient {
             assertTrue("Unexpected exception! " + unexpected.getMessage(), false);
         }
     }
+
+    @Test
+    public void testGetPartitionsWithPartialSpec() throws Exception {
+        try {
+            HCatClient client = HCatClient.create(new Configuration(hcatConf));
+            final String dbName = "myDb";
+            final String tableName = "myTable";
+
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+
+            client.createDatabase(HCatCreateDBDesc.create(dbName).build());
+            List<HCatFieldSchema> columnSchema = Arrays.asList(new HCatFieldSchema("foo", Type.INT, ""),
+                    new HCatFieldSchema("bar", Type.STRING, ""));
+
+            List<HCatFieldSchema> partitionSchema = Arrays.asList(new HCatFieldSchema("dt", Type.STRING, ""),
+                    new HCatFieldSchema("grid", Type.STRING, ""));
+
+            client.createTable(HCatCreateTableDesc.create(dbName, tableName, columnSchema).partCols(new ArrayList<HCatFieldSchema>(partitionSchema)).build());
+
+            Map<String, String> partitionSpec = new HashMap<String, String>();
+            partitionSpec.put("grid", "AB");
+            partitionSpec.put("dt", "2011_12_31");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("grid", "AB");
+            partitionSpec.put("dt", "2012_01_01");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("dt", "2012_01_01");
+            partitionSpec.put("grid", "OB");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("dt", "2012_01_01");
+            partitionSpec.put("grid", "XB");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+
+            Map<String, String> partialPartitionSpec = new HashMap<String, String>();
+            partialPartitionSpec.put("dt", "2012_01_01");
+
+            List<HCatPartition> partitions = client.getPartitions(dbName, tableName, partialPartitionSpec);
+            assertEquals("Unexpected number of partitions.", 3, partitions.size());
+            assertArrayEquals("Mismatched partition.", new String[]{"2012_01_01", "AB"}, partitions.get(0).getValues().toArray());
+            assertArrayEquals("Mismatched partition.", new String[]{"2012_01_01", "OB"}, partitions.get(1).getValues().toArray());
+            assertArrayEquals("Mismatched partition.", new String[]{"2012_01_01", "XB"}, partitions.get(2).getValues().toArray());
+
+            client.dropDatabase(dbName, false, HCatClient.DropDBMode.CASCADE);
+        }
+        catch (Exception unexpected) {
+            LOG.error("Unexpected exception!", unexpected);
+            assertTrue("Unexpected exception! " + unexpected.getMessage(), false);
+        }
+    }
+
+    @Test
+    public void testDropPartitionsWithPartialSpec() throws Exception {
+        try {
+            HCatClient client = HCatClient.create(new Configuration(hcatConf));
+            final String dbName = "myDb";
+            final String tableName = "myTable";
+
+            client.dropDatabase(dbName, true, HCatClient.DropDBMode.CASCADE);
+
+            client.createDatabase(HCatCreateDBDesc.create(dbName).build());
+            List<HCatFieldSchema> columnSchema = Arrays.asList(new HCatFieldSchema("foo", Type.INT, ""),
+                    new HCatFieldSchema("bar", Type.STRING, ""));
+
+            List<HCatFieldSchema> partitionSchema = Arrays.asList(new HCatFieldSchema("dt", Type.STRING, ""),
+                    new HCatFieldSchema("grid", Type.STRING, ""));
+
+            client.createTable(HCatCreateTableDesc.create(dbName, tableName, columnSchema).partCols(new ArrayList<HCatFieldSchema>(partitionSchema)).build());
+
+            Map<String, String> partitionSpec = new HashMap<String, String>();
+            partitionSpec.put("grid", "AB");
+            partitionSpec.put("dt", "2011_12_31");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("grid", "AB");
+            partitionSpec.put("dt", "2012_01_01");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("dt", "2012_01_01");
+            partitionSpec.put("grid", "OB");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+            partitionSpec.put("dt", "2012_01_01");
+            partitionSpec.put("grid", "XB");
+            client.addPartition(HCatAddPartitionDesc.create(dbName, tableName, "", partitionSpec).build());
+
+            Map<String, String> partialPartitionSpec = new HashMap<String, String>();
+            partialPartitionSpec.put("dt", "2012_01_01");
+
+            client.dropPartitions(dbName, tableName, partialPartitionSpec, true);
+
+            List<HCatPartition> partitions = client.getPartitions(dbName, tableName);
+            assertEquals("Unexpected number of partitions.", 1, partitions.size());
+            assertArrayEquals("Mismatched partition.", new String[]{"2011_12_31", "AB"}, partitions.get(0).getValues().toArray());
+
+            client.dropDatabase(dbName, false, HCatClient.DropDBMode.CASCADE);
+        }
+        catch (Exception unexpected) {
+            LOG.error("Unexpected exception!", unexpected);
+            assertTrue("Unexpected exception! " + unexpected.getMessage(), false);
+        }
+    }
+
 }
