@@ -45,7 +45,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.plan.FetchWork;
 import org.apache.hadoop.hive.ql.plan.PartitionDesc;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -127,19 +127,19 @@ public class TestHCatMultiOutputFormat {
 
         static {
             try {
-                FieldSchema keyCol = new FieldSchema("key", Constants.STRING_TYPE_NAME, "");
+                FieldSchema keyCol = new FieldSchema("key", serdeConstants.STRING_TYPE_NAME, "");
                 test1Cols.add(keyCol);
                 test2Cols.add(keyCol);
                 test3Cols.add(keyCol);
                 hCattest1Cols.add(HCatSchemaUtils.getHCatFieldSchema(keyCol));
                 hCattest2Cols.add(HCatSchemaUtils.getHCatFieldSchema(keyCol));
                 hCattest3Cols.add(HCatSchemaUtils.getHCatFieldSchema(keyCol));
-                FieldSchema valueCol = new FieldSchema("value", Constants.STRING_TYPE_NAME, "");
+                FieldSchema valueCol = new FieldSchema("value", serdeConstants.STRING_TYPE_NAME, "");
                 test1Cols.add(valueCol);
                 test3Cols.add(valueCol);
                 hCattest1Cols.add(HCatSchemaUtils.getHCatFieldSchema(valueCol));
                 hCattest3Cols.add(HCatSchemaUtils.getHCatFieldSchema(valueCol));
-                FieldSchema extraCol = new FieldSchema("extra", Constants.STRING_TYPE_NAME, "");
+                FieldSchema extraCol = new FieldSchema("extra", serdeConstants.STRING_TYPE_NAME, "");
                 test3Cols.add(extraCol);
                 hCattest3Cols.add(HCatSchemaUtils.getHCatFieldSchema(extraCol));
                 colMapping.put("test1", test1Cols);
@@ -152,8 +152,8 @@ public class TestHCatMultiOutputFormat {
         }
 
         static {
-            partitionCols.add(new FieldSchema("ds", Constants.STRING_TYPE_NAME, ""));
-            partitionCols.add(new FieldSchema("cluster", Constants.STRING_TYPE_NAME, ""));
+            partitionCols.add(new FieldSchema("ds", serdeConstants.STRING_TYPE_NAME, ""));
+            partitionCols.add(new FieldSchema("cluster", serdeConstants.STRING_TYPE_NAME, ""));
         }
     }
 
@@ -189,8 +189,8 @@ public class TestHCatMultiOutputFormat {
         hiveConf = new HiveConf(mrConf, TestHCatMultiOutputFormat.class);
         hiveConf.set("hive.metastore.local", "false");
         hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + msPort);
-        hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
-
+        hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
+        hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTFAILURERETRIES, 3);
         hiveConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
             HCatSemanticAnalyzer.class.getName());
         hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -238,8 +238,7 @@ public class TestHCatMultiOutputFormat {
         sd.getSerdeInfo().setParameters(new HashMap<String, String>());
         sd.setInputFormat(org.apache.hadoop.hive.ql.io.RCFileInputFormat.class.getName());
         sd.setOutputFormat(org.apache.hadoop.hive.ql.io.RCFileOutputFormat.class.getName());
-        sd.getSerdeInfo().getParameters().put(
-            org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
+        sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
         sd.getSerdeInfo().setSerializationLib(
             org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe.class.getName());
         tbl.setPartitionKeys(ColumnHolder.partitionCols);

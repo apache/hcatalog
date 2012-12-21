@@ -38,7 +38,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.slf4j.Logger;
@@ -96,7 +96,7 @@ public class TestHCatOutputFormat extends TestCase {
         assertNotNull((client.getDatabase(dbName).getLocationUri()));
 
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        fields.add(new FieldSchema("colname", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("colname", serdeConstants.STRING_TYPE_NAME, ""));
 
         Table tbl = new Table();
         tbl.setDbName(dbName);
@@ -115,8 +115,7 @@ public class TestHCatOutputFormat extends TestCase {
         sd.setSerdeInfo(new SerDeInfo());
         sd.getSerdeInfo().setName(tbl.getTableName());
         sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-        sd.getSerdeInfo().getParameters().put(
-                org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
+        sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
         sd.getSerdeInfo().setSerializationLib(
                 org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe.class.getName());
         tbl.setPartitionKeys(fields);

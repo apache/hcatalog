@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatException;
 import org.apache.hcatalog.data.DefaultHCatRecord;
@@ -59,8 +59,8 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
         }
 
         partitionColumns = new ArrayList<HCatFieldSchema>();
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, "")));
     }
 
 
@@ -68,16 +68,16 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
     protected List<FieldSchema> getPartitionKeys() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
         //Defining partition names in unsorted order
-        fields.add(new FieldSchema("PaRT1", Constants.STRING_TYPE_NAME, ""));
-        fields.add(new FieldSchema("part0", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("PaRT1", serdeConstants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("part0", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 
     @Override
     protected List<FieldSchema> getTableColumns() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        fields.add(new FieldSchema("c1", Constants.INT_TYPE_NAME, ""));
-        fields.add(new FieldSchema("c2", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 
@@ -179,7 +179,7 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
         assertEquals(4, tableSchema.getFields().size());
 
         //Update partition schema to have 3 fields
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", Constants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", serdeConstants.STRING_TYPE_NAME, "")));
 
         writeRecords = new ArrayList<HCatRecord>();
 
@@ -215,8 +215,8 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
         partitionMap.put("part0", "p0value6");
 
         partitionColumns = new ArrayList<HCatFieldSchema>();
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.INT_TYPE_NAME, "")));
 
         IOException exc = null;
         try {
@@ -231,10 +231,10 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
         //Test that partition key is not allowed in data
         partitionColumns = new ArrayList<HCatFieldSchema>();
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", Constants.STRING_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("part1", Constants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", serdeConstants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("part1", serdeConstants.STRING_TYPE_NAME, "")));
 
         List<HCatRecord> recordsContainingPartitionCols = new ArrayList<HCatRecord>(20);
         for (int i = 0; i < 20; i++) {
@@ -279,9 +279,9 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
         assertEquals(5, tableSchema.getFields().size());
 
         partitionColumns = new ArrayList<HCatFieldSchema>();
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", Constants.STRING_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c3", serdeConstants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, "")));
 
 
         writeRecords = new ArrayList<HCatRecord>();
@@ -313,8 +313,8 @@ public class TestHCatPartitioned extends HCatMapReduceTest {
 
 
         partitionColumns = new ArrayList<HCatFieldSchema>();
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        partitionColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, "")));
 
         writeRecords = new ArrayList<HCatRecord>();
 

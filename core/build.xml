@@ -28,7 +28,6 @@
   </path>
 
   <path id="test.class.path">
-    <fileset dir="${build.dir}/lib/test"/>
     <dirset dir="${basedir}/build/classes"/>
     <dirset dir="${basedir}/build/test/classes"/>
     <!-- TODO: break circular dependency -->

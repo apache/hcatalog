@@ -216,7 +216,7 @@ final class CreateTableHook extends HCatSemanticAnalyzerBase {
                 }
                 if (desc.getStorageHandler() != null) {
                     table.setProperty(
-                        org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE,
+                        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE,
                         desc.getStorageHandler());
                 }
                 for (Map.Entry<String, String> prop : tblProps.entrySet()) {

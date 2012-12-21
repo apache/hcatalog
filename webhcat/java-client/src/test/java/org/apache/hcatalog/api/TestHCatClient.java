@@ -89,7 +89,7 @@ public class TestHCatClient {
         hcatConf.set("hive.metastore.local", "false");
         hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:"
             + msPort);
-        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
+        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
         hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
             HCatSemanticAnalyzer.class.getName());
         hcatConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -284,7 +284,8 @@ public class TestHCatClient {
         try {
             client.getTable(null, tableName);
         } catch (HCatException exp) {
-            assertTrue(exp.getMessage().contains("NoSuchObjectException while fetching table"));
+            assertTrue("Unexpected exception message: " + exp.getMessage(),
+                    exp.getMessage().contains("NoSuchObjectException while fetching table"));
         }
         HCatTable newTable = client.getTable(null, newName);
         assertTrue(newTable != null);
@@ -308,7 +309,7 @@ public class TestHCatClient {
             client.createTable(tableDesc);
         } catch (Exception exp) {
             isExceptionCaught = true;
-            assertTrue(exp instanceof ConnectionFailureException);
+            assertEquals("Unexpected exception type.", HCatException.class, exp.getClass());
             // The connection was closed, so create a new one.
             client = HCatClient.create(new Configuration(hcatConf));
             String newName = "goodTable";

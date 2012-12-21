@@ -6,10 +6,11 @@
       <activemq.version>5.5.0</activemq.version>
       <commons-exec.version>1.1</commons-exec.version>
       <commons-io.version>2.4</commons-io.version>
+      <guava.version>11.0.2</guava.version>
       <hadoop20.version>1.0.3</hadoop20.version>
       <hadoop23.version>0.23.3</hadoop23.version>
       <hbase.version>0.92.0</hbase.version>
-      <hcatalog.version>${version}</hcatalog.version>
+      <hcatalog.version>${project.version}</hcatalog.version>
       <hive.version>0.10.0-SNAPSHOT</hive.version>
       <jackson.version>1.8.8</jackson.version>
       <jersey.version>1.14</jersey.version>

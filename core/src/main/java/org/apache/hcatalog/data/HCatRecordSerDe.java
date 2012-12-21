@@ -25,7 +25,7 @@ import java.util.Properties;
 import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -71,8 +71,8 @@ public class HCatRecordSerDe implements SerDe {
         LOG.debug("props to serde: {}", tbl.entrySet());
 
         // Get column names and types
-        String columnNameProperty = tbl.getProperty(Constants.LIST_COLUMNS);
-        String columnTypeProperty = tbl.getProperty(Constants.LIST_COLUMN_TYPES);
+        String columnNameProperty = tbl.getProperty(serdeConstants.LIST_COLUMNS);
+        String columnTypeProperty = tbl.getProperty(serdeConstants.LIST_COLUMN_TYPES);
 
         // all table column names
         if (columnNameProperty.length() == 0) {

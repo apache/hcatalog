@@ -39,7 +39,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.BytesWritable;
@@ -97,8 +97,8 @@ public class TestHCatPartitionPublish {
         hcatConf.set("hive.metastore.local", "false");
         hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:"
                 + msPort);
-        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
-
+        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
+        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTFAILURERETRIES, 3);
         hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname,
                 HCatSemanticAnalyzer.class.getName());
         hcatConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -223,9 +223,7 @@ public class TestHCatPartitionPublish {
         sd.setSerdeInfo(new SerDeInfo());
         sd.getSerdeInfo().setName(tbl.getTableName());
         sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-        sd.getSerdeInfo().getParameters().put(
-                org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT,
-                "1");
+        sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
         sd.getSerdeInfo().setSerializationLib(ColumnarSerDe.class.getName());
         sd.setInputFormat(RCFileInputFormat.class.getName());
         sd.setOutputFormat(RCFileOutputFormat.class.getName());
@@ -239,15 +237,15 @@ public class TestHCatPartitionPublish {
     protected List<FieldSchema> getPartitionKeys() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
         // Defining partition names in unsorted order
-        fields.add(new FieldSchema("PaRT1", Constants.STRING_TYPE_NAME, ""));
-        fields.add(new FieldSchema("part0", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("PaRT1", serdeConstants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("part0", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 
     protected List<FieldSchema> getTableColumns() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        fields.add(new FieldSchema("c1", Constants.INT_TYPE_NAME, ""));
-        fields.add(new FieldSchema("c2", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 

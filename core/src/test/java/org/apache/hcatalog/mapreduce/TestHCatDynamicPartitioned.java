@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.common.ErrorType;
@@ -59,9 +59,9 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
 
     private static void generateDataColumns() throws HCatException {
         dataColumns = new ArrayList<HCatFieldSchema>();
-        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", Constants.INT_TYPE_NAME, "")));
-        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", Constants.STRING_TYPE_NAME, "")));
-        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("p1", Constants.STRING_TYPE_NAME, "")));
+        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, "")));
+        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, "")));
+        dataColumns.add(HCatSchemaUtils.getHCatFieldSchema(new FieldSchema("p1", serdeConstants.STRING_TYPE_NAME, "")));
     }
 
     private static void generateWriteRecords(int max, int mod, int offset) {
@@ -80,15 +80,15 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
     @Override
     protected List<FieldSchema> getPartitionKeys() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        fields.add(new FieldSchema("p1", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("p1", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 
     @Override
     protected List<FieldSchema> getTableColumns() {
         List<FieldSchema> fields = new ArrayList<FieldSchema>();
-        fields.add(new FieldSchema("c1", Constants.INT_TYPE_NAME, ""));
-        fields.add(new FieldSchema("c2", Constants.STRING_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c1", serdeConstants.INT_TYPE_NAME, ""));
+        fields.add(new FieldSchema("c2", serdeConstants.STRING_TYPE_NAME, ""));
         return fields;
     }
 

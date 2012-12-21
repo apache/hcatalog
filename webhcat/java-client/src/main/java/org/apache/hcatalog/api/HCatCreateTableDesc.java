@@ -136,7 +136,7 @@ public class HCatCreateTableDesc {
                 sd.getSerdeInfo().setSerializationLib(
                     sh.getSerDeClass().getName());
                 newTable.putToParameters(
-                    org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE,
+                    org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE,
                     storageHandler);
             } catch (HiveException e) {
                 throw new HCatException(

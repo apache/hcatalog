@@ -34,13 +34,16 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.metadata.AuthorizationException;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProviderBase;
 import org.apache.hadoop.hive.ql.security.authorization.Privilege;
 import org.apache.hadoop.hive.shims.HadoopShims;
@@ -67,6 +70,11 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
     public HdfsAuthorizationProvider(Configuration conf) {
         super();
         setConf(conf);
+    }
+
+    @Override
+    public void init(Configuration conf) throws HiveException {
+        hive_db = new HiveProxy(Hive.get(new HiveConf(conf, HiveAuthorizationProvider.class)));
     }
 
     @Override

@@ -73,7 +73,7 @@ class InternalUtil {
 
         return new StorerInfo(
             sd.getInputFormat(), sd.getOutputFormat(), sd.getSerdeInfo().getSerializationLib(),
-            properties.get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE),
+            properties.get(org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE),
             hcatProperties);
     }
 
@@ -155,14 +155,14 @@ class InternalUtil {
         throws SerDeException {
         Properties props = new Properties();
         List<FieldSchema> fields = HCatUtil.getFieldSchemaList(s.getFields());
-        props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMNS,
+        props.setProperty(org.apache.hadoop.hive.serde.serdeConstants.LIST_COLUMNS,
             MetaStoreUtils.getColumnNamesFromFieldSchema(fields));
-        props.setProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMN_TYPES,
+        props.setProperty(org.apache.hadoop.hive.serde.serdeConstants.LIST_COLUMN_TYPES,
             MetaStoreUtils.getColumnTypesFromFieldSchema(fields));
 
         // setting these props to match LazySimpleSerde
-        props.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_NULL_FORMAT, "\\N");
-        props.setProperty(org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
+        props.setProperty(org.apache.hadoop.hive.serde.serdeConstants.SERIALIZATION_NULL_FORMAT, "\\N");
+        props.setProperty(org.apache.hadoop.hive.serde.serdeConstants.SERIALIZATION_FORMAT, "1");
 
         //add props from params set in table schema
         props.putAll(info.getStorerInfo().getProperties());

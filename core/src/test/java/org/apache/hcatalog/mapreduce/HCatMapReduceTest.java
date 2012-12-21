@@ -39,6 +39,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -140,8 +141,7 @@ public abstract class HCatMapReduceTest extends HCatBaseTest {
         sd.setSerdeInfo(new SerDeInfo());
         sd.getSerdeInfo().setName(tbl.getTableName());
         sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-        sd.getSerdeInfo().getParameters().put(
-                org.apache.hadoop.hive.serde.Constants.SERIALIZATION_FORMAT, "1");
+        sd.getSerdeInfo().getParameters().put(serdeConstants.SERIALIZATION_FORMAT, "1");
         sd.getSerdeInfo().setSerializationLib(serdeClass);
         sd.setInputFormat(inputFormat);
         sd.setOutputFormat(outputFormat);

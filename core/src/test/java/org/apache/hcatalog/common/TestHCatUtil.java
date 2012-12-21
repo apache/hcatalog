@@ -33,7 +33,7 @@ import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.ql.metadata.Table;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hcatalog.data.schema.HCatSchema;
 import org.junit.Assert;
@@ -116,7 +116,7 @@ public class TestHCatUtil {
     public void testGetTableSchemaWithPtnColsApi() throws IOException {
         // Check the schema of a table with one field & no partition keys.
         StorageDescriptor sd = new StorageDescriptor(
-                Lists.newArrayList(new FieldSchema("username", Constants.STRING_TYPE_NAME, null)),
+                Lists.newArrayList(new FieldSchema("username", serdeConstants.STRING_TYPE_NAME, null)),
                 "location", "org.apache.hadoop.mapred.TextInputFormat",
                 "org.apache.hadoop.mapred.TextOutputFormat", false, -1, new SerDeInfo(),
                 new ArrayList<String>(), new ArrayList<Order>(), new HashMap<String, String>());
@@ -134,7 +134,7 @@ public class TestHCatUtil {
 
         // Add a partition key & ensure its reflected in the schema.
         List<FieldSchema> partitionKeys =
-                Lists.newArrayList(new FieldSchema("dt", Constants.STRING_TYPE_NAME, null));
+                Lists.newArrayList(new FieldSchema("dt", serdeConstants.STRING_TYPE_NAME, null));
         table.getTTable().setPartitionKeys(partitionKeys);
         expectedHCatSchema.add(new HCatFieldSchema("dt", HCatFieldSchema.Type.STRING, null));
         Assert.assertEquals(new HCatSchema(expectedHCatSchema),
@@ -152,9 +152,9 @@ public class TestHCatUtil {
     @Test
     public void testGetTableSchemaWithPtnColsSerDeReportedFields() throws IOException {
         Map<String, String> parameters = Maps.newHashMap();
-        parameters.put(Constants.SERIALIZATION_CLASS,
+        parameters.put(serdeConstants.SERIALIZATION_CLASS,
                 "org.apache.hadoop.hive.serde2.thrift.test.IntString");
-        parameters.put(Constants.SERIALIZATION_FORMAT, "org.apache.thrift.protocol.TBinaryProtocol");
+        parameters.put(serdeConstants.SERIALIZATION_FORMAT, "org.apache.thrift.protocol.TBinaryProtocol");
 
         SerDeInfo serDeInfo = new SerDeInfo(null,
                 "org.apache.hadoop.hive.serde2.thrift.ThriftDeserializer", parameters);

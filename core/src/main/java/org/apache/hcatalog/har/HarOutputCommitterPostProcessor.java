@@ -23,7 +23,7 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.metastore.api.Constants;
+import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.tools.HadoopArchives;
@@ -47,7 +47,7 @@ public class HarOutputCommitterPostProcessor {
     public void exec(JobContext context, Partition partition, Path partPath) throws IOException {
 //    LOG.info("Archiving partition ["+partPath.toString()+"]");
         makeHar(context, partPath.toUri().toString(), harFile(partPath));
-        partition.getParameters().put(Constants.IS_ARCHIVED, "true");
+        partition.getParameters().put(hive_metastoreConstants.IS_ARCHIVED, "true");
     }
 
     public String harFile(Path ptnPath) throws IOException {

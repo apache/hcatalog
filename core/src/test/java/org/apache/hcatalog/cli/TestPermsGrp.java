@@ -40,7 +40,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.ql.metadata.Hive;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hcatalog.ExitException;
 import org.apache.hcatalog.NoExitSecurityManager;
@@ -82,7 +82,8 @@ public class TestPermsGrp extends TestCase {
         hcatConf = new HiveConf(this.getClass());
         hcatConf.set("hive.metastore.local", "false");
         hcatConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://127.0.0.1:" + msPort);
-        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTRETRIES, 3);
+        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
+        hcatConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTFAILURERETRIES, 3);
 
         hcatConf.set(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname, HCatSemanticAnalyzer.class.getName());
         hcatConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -209,7 +210,7 @@ public class TestPermsGrp extends TestCase {
         Type typ1 = new Type();
         typ1.setName(typeName);
         typ1.setFields(new ArrayList<FieldSchema>(1));
-        typ1.getFields().add(new FieldSchema("name", Constants.STRING_TYPE_NAME, ""));
+        typ1.getFields().add(new FieldSchema("name", serdeConstants.STRING_TYPE_NAME, ""));
         msc.createType(typ1);
 
         Table tbl = new Table();

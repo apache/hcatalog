@@ -28,7 +28,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
@@ -104,8 +104,8 @@ public class TestHCatRecordSerDe extends TestCase {
                         + "array<map<string,string>>,array<array<string>>";
         Properties props = new Properties();
 
-        props.put(Constants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1,am,aa");
-        props.put(Constants.LIST_COLUMN_TYPES, typeString);
+        props.put(serdeConstants.LIST_COLUMNS, "ti,si,i,bi,d,f,s,n,r,l,m,b,c1,am,aa");
+        props.put(serdeConstants.LIST_COLUMN_TYPES, typeString);
 //    props.put(Constants.SERIALIZATION_NULL_FORMAT, "\\N");
 //    props.put(Constants.SERIALIZATION_FORMAT, "1");
 

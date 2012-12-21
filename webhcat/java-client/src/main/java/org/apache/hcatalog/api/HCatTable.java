@@ -68,7 +68,7 @@ public class HCatTable {
         storageHandler = hiveTable
             .getSd()
             .getParameters()
-            .get(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_STORAGE);
+            .get(org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE);
         tblProps = hiveTable.getParameters();
         serde = hiveTable.getSd().getSerdeInfo().getSerializationLib();
         location = hiveTable.getSd().getLocation();
