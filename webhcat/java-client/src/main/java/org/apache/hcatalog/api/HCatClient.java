@@ -204,11 +204,30 @@ public abstract class HCatClient {
             throws HCatException;
 
     /**
+     * Gets all the partitions that match the specified (and possibly partial) partition specification.
+     * A partial partition-specification is one where not all partition-keys have associated values. For example,
+     * for a table ('myDb.myTable') with 2 partition keys (dt string, region string),
+     * if for each dt ('20120101', '20120102', etc.) there can exist 3 regions ('us', 'uk', 'in'), then,
+     *  1. Complete partition spec: getPartitions('myDb', 'myTable', {dt='20120101', region='us'}) would return 1 partition.
+     *  2. Partial  partition spec: getPartitions('myDb', 'myTable', {dt='20120101'}) would return all 3 partitions,
+     *                              with dt='20120101' (i.e. region = 'us', 'uk' and 'in').
+     * @param dbName The name of the database.
+     * @param tableName The name of the table.
+     * @param partitionSpec The partition specification. (Need not include all partition keys.)
+     * @return A list of partitions.
+     * @throws HCatException
+     */
+    public abstract List<HCatPartition> getPartitions(String dbName, String tableName,
+                                               Map<String,String> partitionSpec) throws HCatException;
+
+
+    /**
      * Gets the partition.
      *
      * @param dbName The database name.
      * @param tableName The table name.
-     * @param partitionSpec The partition specification, {[col_name,value],[col_name2,value2]}.
+     * @param partitionSpec The partition specification, {[col_name,value],[col_name2,value2]}. All partition-key-values
+     *                      must be specified.
      * @return An instance of HCatPartitionInfo.
      * @throws HCatException
      */
@@ -235,15 +254,20 @@ public abstract class HCatClient {
             throws HCatException;
 
     /**
-     * Drops partition.
-     *
+     * Drops partition(s) that match the specified (and possibly partial) partition specification.
+     * A partial partition-specification is one where not all partition-keys have associated values. For example,
+     * for a table ('myDb.myTable') with 2 partition keys (dt string, region string),
+     * if for each dt ('20120101', '20120102', etc.) there can exist 3 regions ('us', 'uk', 'in'), then,
+     *  1. Complete partition spec: dropPartitions('myDb', 'myTable', {dt='20120101', region='us'}) would drop 1 partition.
+     *  2. Partial  partition spec: dropPartitions('myDb', 'myTable', {dt='20120101'}) would drop all 3 partitions,
+     *                              with dt='20120101' (i.e. region = 'us', 'uk' and 'in').
      * @param dbName The database name.
      * @param tableName The table name.
      * @param partitionSpec The partition specification, {[col_name,value],[col_name2,value2]}.
      * @param ifExists Hive returns an error if the partition specified does not exist, unless ifExists is set to true.
      * @throws HCatException
      */
-    public abstract void dropPartition(String dbName, String tableName,
+    public abstract void dropPartitions(String dbName, String tableName,
             Map<String, String> partitionSpec, boolean ifExists)
             throws HCatException;
 
