@@ -17,6 +17,18 @@
 
 Apache HCatalog Change Log
 
+Trunk (unreleased changes)
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
 Release 0.5.0 - Unreleased
 
   INCOMPATIBLE CHANGES
