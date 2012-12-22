@@ -18,6 +18,7 @@ build-eclipse
 .arc_jira_lib
 .classpath*
 .externalToolBuilders
+.idea
 .project
 .settings
 *.launch
@@ -25,3 +26,4 @@ build-eclipse
 .git
 .svn
 .reviewboardrc
+
