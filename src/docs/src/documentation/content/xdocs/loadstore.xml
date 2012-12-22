@@ -189,9 +189,6 @@ The table shows how Pig will interpret the HCatalog data type.</p>
  </table>
 
 <p><br/></p>
-<p>Currently HCatLoader cannot map the smallint and tinyint datatypes to Pig data types.
-This issue exists in HCatalog version 0.4.0;
-the fix for Jira issue <a href="https://issues.apache.org/jira/browse/HCATALOG-425">HCATALOG-425</a> should be available in HCatalog version 0.5.0.</p>
 
 </section> 
 
@@ -252,13 +249,14 @@ $HIVE_HOME/lib/hive-exec-*.jar:$HIVE_HOME/lib/libfb303-*.jar:\
 $HIVE_HOME/lib/jdo2-api-*-ec.jar:$HIVE_HOME/lib/slf4j-api-*.jar  &lt;script.pig&gt;
 </source>
 
-<p>The version number found in each filepath will be substituted for <code>*</code>. For example, HCatalog release 0.4.0 uses these jars and conf files:</p>
+<p>The version number found in each filepath will be substituted for <code>*</code>. For example, HCatalog release 0.5.0 uses these jars and conf files:</p>
 
 <ul>
-    <li><code>$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar</code></li>
-    <li><code>$HIVE_HOME/lib/hive-metastore-0.9.0.jar</code></li>
+    <li><code>$HCAT_HOME/share/hcatalog/hcatalog-core-0.5.0.jar</code></li>
+    <li><code>$HCAT_HOME/share/hcatalog/hcatalog-pig-adapter-0.5.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/hive-metastore-0.10.0.jar</code></li>
     <li><code>$HIVE_HOME/lib/libthrift-0.7.0.jar</code></li>
-    <li><code>$HIVE_HOME/lib/hive-exec-0.9.0.jar</code></li>
+    <li><code>$HIVE_HOME/lib/hive-exec-0.10.0.jar</code></li>
     <li><code>$HIVE_HOME/lib/libfb303-0.7.0.jar</code></li>
     <li><code>$HIVE_HOME/lib/jdo2-api-2.3-ec.jar</code></li>
     <li><code>$HIVE_HOME/conf</code></li>
@@ -557,9 +555,6 @@ The table shows how Pig will interpret the HCatalog data type.</p>
  </table>
 
 <p><br/></p>
-<p>Currently HCatLoader cannot map the smallint and tinyint datatypes to Pig data types.
-This issue exists in HCatalog version 0.4.0;
-the fix for Jira issue <a href="https://issues.apache.org/jira/browse/HCATALOG-425">HCATALOG-425</a> should be available in HCatalog version 0.5.0.</p>
 
 </section>
 

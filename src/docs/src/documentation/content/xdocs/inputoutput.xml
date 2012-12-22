@@ -240,18 +240,18 @@ pass the Hive and HCatalog jars to MapReduce as well, via the -libjars argument.
 export HADOOP_HOME=&lt;path_to_hadoop_install&gt;
 export HCAT_HOME=&lt;path_to_hcat_install&gt;
 export HIVE_HOME=&lt;path_to_hive_install&gt;
-export LIB_JARS=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar,
-$HIVE_HOME/lib/hive-metastore-0.9.0.jar,
+export LIB_JARS=$HCAT_HOME/share/hcatalog/hcatalog-core-0.5.0.jar,
+$HIVE_HOME/lib/hive-metastore-0.10.0.jar,
 $HIVE_HOME/lib/libthrift-0.7.0.jar,
-$HIVE_HOME/lib/hive-exec-0.9.0.jar,
+$HIVE_HOME/lib/hive-exec-0.10.0.jar,
 $HIVE_HOME/lib/libfb303-0.7.0.jar,
 $HIVE_HOME/lib/jdo2-api-2.3-ec.jar,
 $HIVE_HOME/lib/slf4j-api-1.6.1.jar
 
-export HADOOP_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar:
-$HIVE_HOME/lib/hive-metastore-0.9.0.jar:
+export HADOOP_CLASSPATH=$HCAT_HOME/share/hcatalog/hcatalog-core-0.5.0.jar:
+$HIVE_HOME/lib/hive-metastore-0.10.0.jar:
 $HIVE_HOME/lib/libthrift-0.7.0.jar:
-$HIVE_HOME/lib/hive-exec-0.9.0.jar:
+$HIVE_HOME/lib/hive-exec-0.10.0.jar:
 $HIVE_HOME/lib/libfb303-0.7.0.jar:
 $HIVE_HOME/lib/jdo2-api-2.3-ec.jar:
 $HIVE_HOME/conf:$HADOOP_HOME/conf:
@@ -265,18 +265,18 @@ $HADOOP_HOME/bin/hadoop --config $HADOOP_HOME/conf jar &lt;path_to_jar&gt;
 <p>Instead, you can optimize to ship libjars using HDFS locations. By doing this, Hadoop will reuse the entries in the distributed cache.</p>
 
 <source>
-bin/hadoop fs -copyFromLocal $HCAT_HOME/share/hcatalog/hcatalog-0.4.0.jar /tmp
-bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-metastore-0.9.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HCAT_HOME/share/hcatalog/hcatalog-core-0.5.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-metastore-0.10.0.jar /tmp
 bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/libthrift-0.7.0.jar /tmp
-bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-exec-0.9.0.jar /tmp
+bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/hive-exec-0.10.0.jar /tmp
 bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/libfb303-0.7.0.jar /tmp
 bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/jdo2-api-2.3-ec.jar /tmp
 bin/hadoop fs -copyFromLocal $HIVE_HOME/lib/slf4j-api-1.6.1.jar /tmp
 
-export LIB_JARS=hdfs:///tmp/hcatalog-0.4.0.jar,
-hdfs:///tmp/hive-metastore-0.9.0.jar,
+export LIB_JARS=hdfs:///tmp/hcatalog-core-0.5.0.jar,
+hdfs:///tmp/hive-metastore-0.10.0.jar,
 hdfs:///tmp/libthrift-0.7.0.jar,
-hdfs:///tmp/hive-exec-0.9.0.jar,
+hdfs:///tmp/hive-exec-0.10.0.jar,
 hdfs:///tmp/libfb303-0.7.0.jar,
 hdfs:///tmp/jdo2-api-2.3-ec.jar,
 hdfs:///tmp/slf4j-api-1.6.1.jar

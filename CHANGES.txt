@@ -17,7 +17,7 @@
 
 Apache HCatalog Change Log
 
-Trunk (unreleased changes)
+Release 0.5.0 - Unreleased
 
   INCOMPATIBLE CHANGES
 

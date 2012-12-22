@@ -48,7 +48,7 @@
     <p>If you downloaded HCatalog from Apache or another site as a source release,
     you will need to first build a tarball to install.  You can tell if you have
     a source release by looking at the name of the object you downloaded.  If
-    it is named hcatalog-src-0.4.0-incubating.tar.gz (notice the
+    it is named hcatalog-src-0.5.0-incubating.tar.gz (notice the
     <strong>src</strong> in the name) then you have a source release.</p>
     
     <p>If you do not already have Apache Ant installed on your machine, you 
@@ -68,18 +68,18 @@
     <p>Create a directory to expand the source release in.  Copy the source
     release to that directory and unpack it.</p>
     <p><code>mkdir /tmp/hcat_source_release</code></p>
-    <p><code>cp hcatalog-src-0.4.0-incubating.tar.gz /tmp/hcat_source_release</code></p>
+    <p><code>cp hcatalog-src-0.5.0-incubating.tar.gz /tmp/hcat_source_release</code></p>
     <p><code>cd /tmp/hcat_source_release</code></p>
-    <p><code>tar xzf hcatalog-src-0.4.0-incubating.tar.gz</code></p>
+    <p><code>tar xzf hcatalog-src-0.5.0-incubating.tar.gz</code></p>
 
     <p>Change directories into the unpacked source release and build the
     installation tarball.</p>
-    <p><code>cd hcatalog-src-0.4.0-incubating</code></p>
-    <p><em>ant_home</em><code>/bin/ant -Dhcatalog.version=0.4.0
+    <p><code>cd hcatalog-src-0.5.0-incubating</code></p>
+    <p><em>ant_home</em><code>/bin/ant -Dhcatalog.version=0.5.0
     -Dforrest.home=</code><em>forrest_home</em><code> tar </code></p>
 
     <p>The tarball for installation should now be at
-    <code>build/hcatalog-0.4.0.tar.gz</code></p>
+    <code>build/hcatalog-0.5.0.tar.gz</code></p>
 
     <p><strong>Database Setup</strong></p>
 
@@ -114,7 +114,7 @@
     where you have installed Hive.  If you are using Hive rpms, then this will
     be <code>/usr/lib/hive</code>.</p>
 
-    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hivedb.acme.com</em><code> -p &lt; </code><em>hive_home</em><code>/scripts/metastore/upgrade/mysql/hive-schema-0.9.0.mysql.sql</code></p>
+    <p><code>mysql -u hive -D hivemetastoredb -h</code><em>hivedb.acme.com</em><code> -p &lt; </code><em>hive_home</em><code>/scripts/metastore/upgrade/mysql/hive-schema-0.10.0.mysql.sql</code></p>
 
     <p><strong>Thrift Server Setup</strong></p>
 
@@ -164,8 +164,8 @@
     the port number you wish HCatalog to operate on which you will use to set
     <em>portnum</em>.</p>
 
-    <p><code>tar zxf hcatalog-0.4.0.tar.gz</code></p>
-    <p><code>cd hcatalog-0.4.0</code></p>
+    <p><code>tar zxf hcatalog-0.5.0.tar.gz</code></p>
+    <p><code>cd hcatalog-0.5.0</code></p>
     <p><code>share/hcatalog/scripts/hcat_server_install.sh -r </code><em>root</em><code> -d </code><em>dbroot</em><code> -h </code><em>hadoop_home</em><code> -p </code><em>portnum</em></p>
 
     <p>Now you need to edit your <em>hive_home</em><code>/conf/hive-site.xml</code> file.
@@ -284,7 +284,7 @@
     <p>Copy the HCatalog installation tarball into a temporary directory, and untar
     it.</p>
 
-    <p><code>tar zxf hcatalog-0.4.0.tar.gz</code></p>
+    <p><code>tar zxf hcatalog-0.5.0.tar.gz</code></p>
 
     <p>Now you need to edit your <em>hive_home</em><code>/conf/hive-site.xml</code> file.
     You can use the same file as on the server <strong>except the value of 
