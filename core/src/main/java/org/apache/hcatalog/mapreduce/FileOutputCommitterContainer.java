@@ -420,6 +420,9 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 if(LOG.isDebugEnabled()) {
                     LOG.debug("Moving file: [ " + file + "] to [" + finalOutputPath + "]");
                 }
+                // Make sure the parent directory exists.  It is not an error
+                // to recreate an existing directory
+                fs.mkdirs(finalOutputPath.getParent());
                 if (!fs.rename(file, finalOutputPath)) {
                     if (!fs.delete(finalOutputPath, true)) {
                         throw new HCatException(ErrorType.ERROR_MOVE_FAILED, "Failed to delete existing path " + finalOutputPath);

@@ -168,6 +168,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-584 Changes in HCAT-538 break Pig stores into non-partitioned tables (gates)
+
   HCAT-576 HCATALOG-527 Broke backward compatibility (gates)
 
   HCAT-567 HCatClient must allow retrieval of multiple partitions using a partial partition spec.(mithun via avandana)
