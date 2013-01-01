@@ -22,10 +22,15 @@
     <property name="udf.jarfile" value="testudf.jar"/>
     <property name="udfs.build.dir" value="${basedir}/build"/>
     <property name="udfs.src.dir" value="${basedir}/org/"/>
+    <property name="hcatalog.base" value="../../../../../.."/>
+    <property name="hcatalog.core.build" value="${hcatalog.base}/core/build"/>
+    <property name="hcatalog.pig.build" value="${hcatalog.base}/hcatalog-pig-adapter/build"/>
 
     <path id="udf-classpath">
-        <fileset file="../../../../../../build/hcatalog/*.jar"/>
-        <fileset file="../../../../../../build/ivy/lib/default/*.jar"/>
+        <fileset file="${hcatalog.core.build}/hcatalog-core-*.jar"/>
+        <fileset file="${hcatalog.core.build}/lib/compile/*.jar"/>
+        <fileset file="${hcatalog.pig.build}/hcatalog-pig-adapter-*.jar"/>
+        <fileset file="${hcatalog.pig.build}/lib/compile/*.jar"/>
     </path>
 
     <target name="init">

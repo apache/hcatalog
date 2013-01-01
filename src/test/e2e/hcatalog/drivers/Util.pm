@@ -412,10 +412,10 @@ sub getHiveLibsForPig($$)
         /hive-.*\.jar$/ && do {
             $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
         };
-        /libfb303.jar/ && do {
+        /libfb303-.*\.jar/ && do {
             $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
         };
-        /libthrift.jar/ && do {
+        /libthrift-.*\.jar/ && do {
             $cp .= $cfg->{'hivelib'} . '/' . $_ . ':';
         };
         /datanucleus-.*\.jar$/ && do {
@@ -474,7 +474,7 @@ sub getHCatLibs($$)
     opendir(LIB, $cfg->{'hcatshare'}) or die "Cannot open $cfg->{'hcatshare'}, $!\n";
     my @jars = readdir(LIB);
     foreach (@jars) {
-        /hcatalog-[0-9].*\.jar$/ && do {
+        (/hcatalog-core-[0-9].*\.jar$/ || /hcatalog-pig-adapter-[0-9].*\.jar$/) && do {
             $cp .= $cfg->{'hcatshare'} . '/' . $_ . ':';
         };
     }
@@ -487,6 +487,18 @@ sub getHCatLibs($$)
         };
     }
     closedir(LIB);
+
+    # Get jars required non-hcat jars that are not distributed with Hadoop or Hive
+    opendir(LIB, $cfg->{'hcatcoredevlib'}) or die "Cannot open $cfg->{'hcatcoredevlib'}, $!\n";
+    my @jars = readdir(LIB);
+    foreach (@jars) {
+        /guava.*\.jar$/ && do {
+            $cp .= $cfg->{'hcatcoredevlib'} . '/' . $_ . ':';
+        };
+    }
+    closedir(LIB);
+
+
     return $cp;
 }
         
