@@ -156,6 +156,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-580 Optimizations in HCAT-538 break e2e tests (daijy via gates)
+
   HCAT-583 e2e tests do not build (gates)
 
   HCAT-577 HCatContext causes persistance of undesired jobConf parameters (khorgath via gates)
