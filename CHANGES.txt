@@ -156,6 +156,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-577 HCatContext causes persistance of undesired jobConf parameters (khorgath via gates)
+
   HCAT-584 Changes in HCAT-538 break Pig stores into non-partitioned tables (gates)
 
   HCAT-576 HCATALOG-527 Broke backward compatibility (gates)
