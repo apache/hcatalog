@@ -254,8 +254,8 @@ sub runHadoop
 
     # Get all of the additional jars we'll need.
     my $additionalJars = Util::getHBaseLibs($testCmd, $log); #hbase before hive for precedence over bundled hbase
-    $additionalJars .= Util::getHiveLibs($testCmd, $log);
     $additionalJars .= Util::getHCatLibs($testCmd, $log);
+    $additionalJars .= Util::getHiveLibs($testCmd, $log);
     $testCmd->{'libjars'} = $additionalJars;
     $testCmd->{'libjars'} =~ s/:/,/g;
     my $hadoopcmd = Util::replaceParameters( $testCmd->{'hadoop'}, $outfile, $testCmd, $log );

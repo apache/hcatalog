@@ -168,6 +168,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-583 e2e tests do not build (gates)
+
   HCAT-577 HCatContext causes persistance of undesired jobConf parameters (khorgath via gates)
 
   HCAT-584 Changes in HCAT-538 break Pig stores into non-partitioned tables (gates)

@@ -330,7 +330,7 @@ location '$location'
 
 sub findAllJars()
 {
-    my @files = <../../../../../build/ivy/lib/default/*.jar>;
+    my @files = <../../../../../core/build/lib/test/*.jar>;
     my $classpath = "";
     my $file = undef;
     foreach $file (@files) {
