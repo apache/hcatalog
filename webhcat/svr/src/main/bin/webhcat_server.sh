@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -7,14 +8,13 @@
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the License is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-# KIND, either express or implied.  See the License for the
-# specific language governing permissions and limitations
-# under the License.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 #
 # Support functions
@@ -39,27 +39,27 @@ function real_script_name() {
 
 function usage() {
         echo "usage: $0 [start|stop|foreground]"
-        echo "  start           Start the Templeton Server"
-        echo "  stop            Stop the Templeton Server"
-        echo "  foreground      Run the Templeton Server in the foreground"
+        echo "  start           Start the Webhcat Server"
+        echo "  stop            Stop the Webhcat Server"
+        echo "  foreground      Run the Webhcat Server in the foreground"
         exit 1
 }
 
 # Print an error message and exit
 function die() {
-        echo "templeton: $@" 1>&2
+        echo "webhcat: $@" 1>&2
         exit 1
 }
 
 # Print an message
 function log() {
-        echo "templeton: $@"
+        echo "webhcat: $@"
 }
 
-# Find the templeton jar
+# Find the webhcat jar
 function find_jar_path() {
-        for dir in "." "build" "share/hcatalog/"; do
-                local jar="$base_dir/$dir/$TEMPLETON_JAR"
+        for dir in "." "build" "share/webhcat/svr/"; do
+                local jar="$base_dir/$dir/$WEBHCAT_JAR"
                 if [[ -f $jar ]]; then
                         echo $jar
                         break
@@ -67,10 +67,10 @@ function find_jar_path() {
         done
 }
 
-# Find the templeton classpath
+# Find the webhcat classpath
 function find_classpath() {
         local classpath=""
-        for dir in  "share/hcatalog" "build/ivy/lib/templeton" "conf" ; do
+        for dir in  "share/webhcat/svr/" "share/webhcat/svr/lib/"  "conf" ; do
                 local path="$base_dir/$dir"
 
                 if [[ -d $path ]]; then
@@ -84,11 +84,11 @@ function find_classpath() {
                 fi
         done
 
-        if [[ -n "$TEMPLETON_CONF_DIR" ]]; then
+        if [[ -n "$WEBHCAT_CONF_DIR" ]]; then
                 if [[ -z "$classpath" ]]; then
-                        classpath="$TEMPLETON_CONF_DIR"
+                        classpath="$WEBHCAT_CONF_DIR"
                 else
-                        classpath="$classpath:$TEMPLETON_CONF_DIR"
+                        classpath="$classpath:$WEBHCAT_CONF_DIR"
                 fi
         fi
 
@@ -111,14 +111,14 @@ function check_pid() {
         fi
 }
 
-# Start the templeton server in the foreground
-function foreground_templeton() {
+# Start the webhcat server in the foreground
+function foreground_webhcat() {
         $start_cmd
 }
 
-# Start the templeton server in the background.  Record the PID for
+# Start the webhcat server in the background.  Record the PID for
 # later use.
-function start_templeton() {
+function start_webhcat() {
         if [[ -f $PID_FILE ]]; then
                 # Check if there is a server running
                 local pid=`cat $PID_FILE`
@@ -147,7 +147,7 @@ function start_templeton() {
 }
 
 # Stop a running server
-function stop_templeton() {
+function stop_webhcat() {
         local pid
         if [[ -f $PID_FILE ]]; then
                 # Check if there is a server running
@@ -179,15 +179,15 @@ this=`real_script_name "${BASH_SOURCE-$0}"`
 this_bin=`dirname $this`
 base_dir="$this_bin/.."
 
-if [[ -f "$base_dir/libexec/templeton_config.sh" ]]; then
-        . "$base_dir/libexec/templeton_config.sh"
+if [[ -f "$base_dir/libexec/webhcat_config.sh" ]]; then
+        . "$base_dir/libexec/webhcat_config.sh"
 else
-        . "$this_bin/templeton_config.sh"
+        . "$this_bin/webhcat_config.sh"
 fi
 
 JAR=`find_jar_path`
 if [[ -z "$JAR" ]]; then
-        die "No templeton jar found"
+        die "No webhcat jar found"
 fi
 
 CLASSPATH=`find_classpath`
@@ -202,18 +202,18 @@ else
         export HADOOP_CLASSPATH="$CLASSPATH:$HADOOP_CLASSPATH"
 fi
 
-if [[ -z "$TEMPLETON_LOG4J" ]]; then
-        if [[ -f "$base_dir/conf/templeton-log4j.properties" ]]; then
-                TEMPLETON_LOG4J="$base_dir/conf/templeton-log4j.properties";
-        elif [[ -f "$base_dir/conf/templeton-log4j.properties" ]]; then
-                TEMPLETON_LOG4J="$base_dir/conf/templeton-log4j.properties";
+if [[ -z "$WEBHCAT_LOG4J" ]]; then
+        if [[ -f "$base_dir/conf/webhcat-log4j.properties" ]]; then
+                WEBHCAT_LOG4J="$base_dir/conf/webhcat-log4j.properties";
+        elif [[ -f "$base_dir/conf/webhcat-log4j.properties" ]]; then
+                WEBHCAT_LOG4J="$base_dir/conf/webhcat-log4j.properties";
         else
-                TEMPLETON_LOG4J="templeton-log4j.properties";
+                WEBHCAT_LOG4J="webhcat-log4j.properties";
         fi
 fi
 
 export HADOOP_USER_CLASSPATH_FIRST=true
-export HADOOP_OPTS="-Dtempleton.log.dir=$TEMPLETON_LOG_DIR -Dlog4j.configuration=$TEMPLETON_LOG4J"
+export HADOOP_OPTS="-Dwebhcat.log.dir=$WEBHCAT_LOG_DIR -Dlog4j.configuration=$WEBHCAT_LOG4J"
 
 start_cmd="$HADOOP_PREFIX/bin/hadoop jar $JAR org.apache.hcatalog.templeton.Main  "
 
@@ -221,13 +221,13 @@ start_cmd="$HADOOP_PREFIX/bin/hadoop jar $JAR org.apache.hcatalog.templeton.Main
 cmd=$1
 case $cmd in
         start)
-                start_templeton
+                start_webhcat
                 ;;
         stop)
-                stop_templeton
+                stop_webhcat
                 ;;
         foreground)
-                foreground_templeton
+                foreground_webhcat
                 ;;
         *)
                 usage

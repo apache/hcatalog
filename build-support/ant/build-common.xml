@@ -61,6 +61,17 @@
     <delete dir="${build.dir}"/>
   </target>
 
+  <!--
+       Empty target, override in subproject to do any additional
+       specific resource compilation in subprojects.
+       Webhcat server overrides it.
+  -->
+  <target name="compile-resource">
+    <echo message="${ant.project.name}"/>
+    <echo message="Empty default compile-resource target"/>
+  </target>
+
+
   <target name="compile">
     <echo message="${ant.project.name}"/>
     <_javac srcDir="${basedir}/src/main/java"
@@ -80,7 +91,7 @@
     <_junit srcDir="${basedir}/src/test/java"/>
   </target>
 
-  <target name="jar" depends="mvn-dependencies,compile,mvn-init">
+  <target name="jar" depends="mvn-dependencies,compile,compile-resource">
     <echo message="${ant.project.name}"/>
     <jar jarfile="${build.dir}/${jar.name}" basedir="${build.classes}">
       <metainf dir="${path.to.basedir}" includes="**/LICENSE.txt,**/NOTICE.txt"/>

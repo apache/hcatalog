@@ -95,7 +95,6 @@
         <ant target="test" dir="webhcat/svr" inheritAll="false"/>
         <ant target="test" dir="webhcat/java-client" inheritAll="false"/>
         <ant target="test" dir="storage-handlers/hbase" inheritAll="false"/>
-
         <!-- One checkstyle run for the whole repo. Runs after junit tests
         to piggyback on resolved jars. -->
         <path id="checkstyle.class.path">
@@ -198,9 +197,13 @@
             <classpath>
                 <fileset dir="core/build/lib/compile"/>
                 <fileset dir="hcatalog-pig-adapter/build/lib/compile"/>
+                <fileset dir="hcatalog-pig-adapter/build/lib/provided"/>
                 <fileset dir="server-extensions/build/lib/compile"/>
+                <fileset dir="server-extensions/build/lib/provided"/>
                 <fileset dir="storage-handlers/hbase/build/lib/compile"/>
+                <fileset dir="storage-handlers/hbase/build/lib/provided"/>
                 <fileset dir="webhcat/svr/build/lib/compile"/>
+                <fileset dir="webhcat/svr/build/lib/provided"/>
             </classpath>
             <group title="hcatalog" packages="org.apache.hcatalog.*"/>
         </javadoc>
@@ -292,9 +295,18 @@
             <fileset dir="server-extensions/build">
                 <include name="hcatalog-*.jar"/>
             </fileset>
+        </copy>
+        <copy todir="${dist.dir}/share/webhcat/svr/" includeEmptyDirs="false">
             <fileset dir="webhcat/svr/build">
                 <include name="webhcat-*.jar"/>
             </fileset>
+        </copy>
+        <copy todir="${dist.dir}/share/webhcat/svr/lib/" includeEmptyDirs="false">
+            <fileset dir="webhcat/svr/build/lib/compile/">
+                <include name="*.jar"/>
+            </fileset>
+        </copy>
+        <copy todir="${dist.dir}/share/webhcat/java-client/" includeEmptyDirs="false">
             <fileset dir="webhcat/java-client/build">
                 <include name="webhcat-java-client*.jar"/>
             </fileset>
@@ -320,6 +332,10 @@
 
         <copy todir="${dist.dir}/etc/${ant.project.name}">
             <fileset dir="conf"/>
+        </copy>
+
+        <copy todir="${dist.dir}/etc/webhcat">
+            <fileset dir="webhcat/svr/src/main/config/" />
         </copy>
 
         <copy todir="${dist.dir}/share/${ant.project.name}/scripts">

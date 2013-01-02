@@ -72,6 +72,15 @@
             <path refid="mvn.compile.classpath"/>
         </copy>
 
+        <artifact:dependencies pathId="mvn.provided.classpath"
+          scopes="provided" pomRefId="mvn.pom">
+            <localRepository path="${mvn.local.repo}"/>
+        </artifact:dependencies>
+        <mkdir dir="${build.dir}/lib/provided"/>
+        <copy todir="${build.dir}/lib/provided">
+            <path refid="mvn.provided.classpath"/>
+        </copy>
+
         <artifact:dependencies pathId="mvn.test.classpath"
           scopes="compile, test" pomRefId="mvn.pom">
             <localRepository path="${mvn.local.repo}"/>

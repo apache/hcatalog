@@ -55,6 +55,8 @@ Release 0.5.0 - Unreleased
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-549 rename webhcat config and shell scripts to use webhcat in the names (thejas via gates)
+
   HCAT-446 Enforce apache headers for all HCatalog code (traviscrawford via gates)
 
   HCAT-564 test.sh should let users specify the ant version (traviscrawford)
