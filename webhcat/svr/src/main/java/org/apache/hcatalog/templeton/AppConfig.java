@@ -39,11 +39,11 @@ import org.apache.hcatalog.templeton.tool.ZooKeeperStorage;
  *
  * The Templeton specific configuration is split into two layers
  *
- * 1. templeton-default.xml - All the configuration variables that
+ * 1. webhcat-default.xml - All the configuration variables that
  *    Templeton needs.  These are the defaults that ship with the app
  *    and should only be changed be the app developers.
  *
- * 2. templeton-site.xml - The (possibly empty) configuration that the
+ * 2. webhcat-site.xml - The (possibly empty) configuration that the
  *    system administrator can set variables for their Hadoop cluster.
  *
  * The configuration files are loaded in this order with later files
@@ -72,8 +72,8 @@ public class AppConfig extends Configuration {
     public static final String TEMPLETON_HOME_VAR = "TEMPLETON_HOME";
 
     public static final String[] TEMPLETON_CONF_FILENAMES = {
-        "templeton-default.xml",
-        "templeton-site.xml"
+        "webhcat-default.xml",
+        "webhcat-site.xml"
     };
 
     public static final String PORT                = "templeton.port";

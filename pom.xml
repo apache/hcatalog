@@ -31,12 +31,13 @@
       <hbase.version>0.92.0</hbase.version>
       <hcatalog.version>${project.version}</hcatalog.version>
       <hive.version>0.10.0-SNAPSHOT</hive.version>
-      <jackson.version>1.8.8</jackson.version>
-      <jersey.version>1.14</jersey.version>
+      <jackson.version>1.8.3</jackson.version>
+      <jersey.version>1.9.1</jersey.version>
       <jetty.webhcat.version>7.6.0.v20120127</jetty.webhcat.version>
       <jms.version>1.1</jms.version>
       <pig.version>0.8.0</pig.version>
       <slf4j.version>1.6.1</slf4j.version>
+      <wadl-resourcedoc-doclet.version>1.4</wadl-resourcedoc-doclet.version>
       <zookeeper.version>3.4.3</zookeeper.version>
   </properties>
 

@@ -37,9 +37,40 @@
     <url>http://maven.apache.org</url>
 
     <dependencies>
+
+        <!-- provided scope - made available as separate package
+          not packaged or added as dependency
+        -->
+
+        <dependency>
+            <groupId>org.apache.hcatalog</groupId>
+            <artifactId>hcatalog-core</artifactId>
+            <version>${hcatalog.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>${hadoop20.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- compile scope - this is packaged -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-servlet</artifactId>
+            <artifactId>jersey-core</artifactId>
+            <version>${jersey.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>${jersey.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
             <version>${jersey.version}</version>
             <scope>compile</scope>
         </dependency>
@@ -50,9 +81,15 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.hcatalog</groupId>
-            <artifactId>hcatalog-core</artifactId>
-            <version>${hcatalog.version}</version>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>${zookeeper.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+            <version>${jersey.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -65,6 +102,12 @@
             <groupId>org.eclipse.jetty.aggregate</groupId>
             <artifactId>jetty-all-server</artifactId>
             <version>${jetty.webhcat.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey.contribs</groupId>
+            <artifactId>wadl-resourcedoc-doclet</artifactId>
+            <version>${wadl-resourcedoc-doclet.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -16,24 +17,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
+
 #====================================
 #Default config param values
 #====================================
 
-# The file containing the running pid
-PID_FILE=./templeton.pid
+# The directory,file containing the running pid
+PID_DIR=${WEBHCAT_PID_DIR:-.}
+PID_FILE=${PID_DIR}/webhcat.pid
+
+PID_FILE=./webhcat.pid
 
 #default log directory
-TEMPLETON_LOG_DIR=${TEMPLETON_LOG_DIR:-.}
+WEBHCAT_LOG_DIR=${WEBHCAT_LOG_DIR:-.}
 
 # The console error log
-ERROR_LOG=${TEMPLETON_LOG_DIR}/templeton-console-error.log
+ERROR_LOG=${WEBHCAT_LOG_DIR}/webhcat-console-error.log
 
 # The console log
-CONSOLE_LOG=${TEMPLETON_LOG_DIR}/templeton-console.log
+CONSOLE_LOG=${WEBHCAT_LOG_DIR}/webhcat-console.log
 
-# The name of the templeton jar file
-TEMPLETON_JAR=webhcat-0.5.0-SNAPSHOT.jar
+# The name of the webhcat jar file
+WEBHCAT_JAR=webhcat-0.5.0-SNAPSHOT.jar
 
 # How long to wait before testing that the process started correctly
 SLEEP_TIME_AFTER_START=10
@@ -42,9 +47,9 @@ SLEEP_TIME_AFTER_START=10
 #See if the default configs have been overwritten
 #================================================
 
-#These parameters can be overriden by templeton-env.sh
-# the root of the TEMPLETON installation
-export TEMPLETON_PREFIX=`dirname "$this"`/..
+#These parameters can be overriden by webhcat-env.sh
+# the root of the WEBHCAT installation
+export WEBHCAT_PREFIX=`dirname "$this"`/..
 
 #check to see if the conf dir is given as an optional argument
 if [ $# -gt 1 ]
@@ -54,22 +59,22 @@ then
               shift
               confdir=$1
               shift
-              TEMPLETON_CONF_DIR=$confdir
+              WEBHCAT_CONF_DIR=$confdir
     fi
 fi
 
 # Allow alternate conf dir location.
-if [ -e "${TEMPLETON_PREFIX}/conf/templeton-env.sh" ]; then
-  DEFAULT_CONF_DIR=${TEMPLETON_PREFIX}/"conf"
+if [ -e "${WEBHCAT_PREFIX}/etc/webhcat/webhcat-env.sh" ]; then
+  DEFAULT_CONF_DIR=${WEBHCAT_PREFIX}/"etc/webhcat"
 else
-  DEFAULT_CONF_DIR="/etc/hcatalog"
+  DEFAULT_CONF_DIR="/etc/webhcat"
 fi
-TEMPLETON_CONF_DIR="${TEMPLETON_CONF_DIR:-$DEFAULT_CONF_DIR}"
+WEBHCAT_CONF_DIR="${WEBHCAT_CONF_DIR:-$DEFAULT_CONF_DIR}"
 
-#users can add various env vars to templeton-env.sh in the conf
+#users can add various env vars to webhcat-env.sh in the conf
 #rather than having to export them before running the command
-if [ -f "${TEMPLETON_CONF_DIR}/templeton-env.sh" ]; then
-  . "${TEMPLETON_CONF_DIR}/templeton-env.sh"
+if [ -f "${WEBHCAT_CONF_DIR}/webhcat-env.sh" ]; then
+  source "${WEBHCAT_CONF_DIR}/webhcat-env.sh"
 fi
 
 #====================================
@@ -80,15 +85,10 @@ fi
 if [ -f ${HADOOP_HOME}/bin/hadoop ]; then
   HADOOP_PREFIX=$HADOOP_HOME
 #if this is an rpm install check for /usr/bin/hadoop
-elif [ -f ${TEMPLETON_PREFIX}/bin/hadoop ]; then
-  HADOOP_PREFIX=$TEMPLETON_PREFIX
+elif [ -f ${WEBHCAT_PREFIX}/bin/hadoop ]; then
+  HADOOP_PREFIX=$WEBHCAT_PREFIX
 #otherwise see if HADOOP_PREFIX is defined
 elif [ ! -f ${HADOOP_PREFIX}/bin/hadoop ]; then
   echo "Hadoop not found."
   exit 1
 fi
-
-
-
-
-
