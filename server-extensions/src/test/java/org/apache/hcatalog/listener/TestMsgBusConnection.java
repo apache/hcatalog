@@ -25,7 +25,7 @@ import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.ObjectMessage;
+import javax.jms.TextMessage;
 import javax.jms.Session;
 
 import junit.framework.TestCase;
@@ -36,11 +36,12 @@ import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
-import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.messaging.HCatEventMessage;
+import org.apache.hcatalog.messaging.jms.MessagingUtils;
 
 public class TestMsgBusConnection extends TestCase {
 
@@ -89,29 +90,28 @@ public class TestMsgBusConnection extends TestCase {
         try {
             driver.run("create database testconndb");
             Message msg = consumer.receive();
-            assertEquals(HCatConstants.HCAT_ADD_DATABASE_EVENT,
+            assertTrue("Expected TextMessage", msg instanceof TextMessage);
+            assertEquals(HCatConstants.HCAT_CREATE_DATABASE_EVENT,
                     msg.getStringProperty(HCatConstants.HCAT_EVENT));
             assertEquals("topic://planetlab.hcat", msg.getJMSDestination().toString());
-            assertEquals("testconndb",
-                    ((Database) ((ObjectMessage) msg).getObject()).getName());
+            HCatEventMessage messageObject = MessagingUtils.getMessage(msg);
+            assertEquals("testconndb", messageObject.getDB());
             broker.stop();
             driver.run("drop database testconndb cascade");
             broker.start(true);
             connectClient();
             driver.run("create database testconndb");
             msg = consumer.receive();
-            assertEquals(HCatConstants.HCAT_ADD_DATABASE_EVENT,
+            assertEquals(HCatConstants.HCAT_CREATE_DATABASE_EVENT,
                     msg.getStringProperty(HCatConstants.HCAT_EVENT));
             assertEquals("topic://planetlab.hcat", msg.getJMSDestination().toString());
-            assertEquals("testconndb",
-                    ((Database) ((ObjectMessage) msg).getObject()).getName());
+            assertEquals("testconndb", messageObject.getDB());
             driver.run("drop database testconndb cascade");
             msg = consumer.receive();
             assertEquals(HCatConstants.HCAT_DROP_DATABASE_EVENT,
                     msg.getStringProperty(HCatConstants.HCAT_EVENT));
             assertEquals("topic://planetlab.hcat", msg.getJMSDestination().toString());
-            assertEquals("testconndb",
-                    ((Database) ((ObjectMessage) msg).getObject()).getName());
+            assertEquals("testconndb", messageObject.getDB());
         } catch (NoSuchObjectException nsoe) {
             nsoe.printStackTrace(System.err);
             assert false;

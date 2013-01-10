@@ -19,11 +19,8 @@
 
 package org.apache.hcatalog.listener;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -31,7 +28,6 @@ import javax.jms.Destination;
 import javax.jms.ExceptionListener;
 import javax.jms.IllegalStateException;
 import javax.jms.JMSException;
-import javax.jms.MapMessage;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
@@ -62,6 +58,8 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hcatalog.common.HCatConstants;
+import org.apache.hcatalog.messaging.HCatEventMessage;
+import org.apache.hcatalog.messaging.MessageFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +78,7 @@ public class NotificationListener extends MetaStoreEventListener {
     private static final Logger LOG = LoggerFactory.getLogger(NotificationListener.class);
     protected Session session;
     protected Connection conn;
+    private static MessageFactory messageFactory = MessageFactory.getInstance();
 
     /**
      * Create message bus connection and session in constructor.
@@ -112,7 +111,7 @@ public class NotificationListener extends MetaStoreEventListener {
             Partition partition = partitionEvent.getPartition();
             String topicName = getTopicName(partition, partitionEvent);
             if (topicName != null && !topicName.equals("")) {
-                send(partition, topicName, HCatConstants.HCAT_ADD_PARTITION_EVENT);
+                send(messageFactory.buildAddPartitionMessage(partitionEvent.getTable(), partition), topicName);
             } else {
                 LOG.info("Topic name not found in metastore. Suppressing HCatalog notification for "
                     + partition.getDbName()
@@ -149,7 +148,7 @@ public class NotificationListener extends MetaStoreEventListener {
             sd.getSkewedInfo().setSkewedColNames(new ArrayList<String>());
             String topicName = getTopicName(partition, partitionEvent);
             if (topicName != null && !topicName.equals("")) {
-                send(partition, topicName, HCatConstants.HCAT_DROP_PARTITION_EVENT);
+                send(messageFactory.buildDropPartitionMessage(partitionEvent.getTable(), partition), topicName);
             } else {
                 LOG.info("Topic name not found in metastore. Suppressing HCatalog notification for "
                     + partition.getDbName()
@@ -168,9 +167,10 @@ public class NotificationListener extends MetaStoreEventListener {
         // Subscriber can get notification about addition of a database in HCAT
         // by listening on a topic named "HCAT" and message selector string
         // as "HCAT_EVENT = HCAT_ADD_DATABASE"
-        if (dbEvent.getStatus())
-            send(dbEvent.getDatabase(), getTopicPrefix(dbEvent.getHandler()
-                .getHiveConf()), HCatConstants.HCAT_ADD_DATABASE_EVENT);
+        if (dbEvent.getStatus()) {
+            String topicName = getTopicPrefix(dbEvent.getHandler().getHiveConf());
+            send(messageFactory.buildCreateDatabaseMessage(dbEvent.getDatabase()), topicName);
+        }
     }
 
     @Override
@@ -178,9 +178,10 @@ public class NotificationListener extends MetaStoreEventListener {
         // Subscriber can get notification about drop of a database in HCAT
         // by listening on a topic named "HCAT" and message selector string
         // as "HCAT_EVENT = HCAT_DROP_DATABASE"
-        if (dbEvent.getStatus())
-            send(dbEvent.getDatabase(), getTopicPrefix(dbEvent.getHandler()
-                .getHiveConf()), HCatConstants.HCAT_DROP_DATABASE_EVENT);
+        if (dbEvent.getStatus())  {
+            String topicName = getTopicPrefix(dbEvent.getHandler().getHiveConf());
+            send(messageFactory.buildDropDatabaseMessage(dbEvent.getDatabase()), topicName);
+        }
     }
 
     @Override
@@ -210,9 +211,8 @@ public class NotificationListener extends MetaStoreEventListener {
                 me.initCause(e);
                 throw me;
             }
-            send(newTbl, getTopicPrefix(conf) + "."
-                + newTbl.getDbName().toLowerCase(),
-                HCatConstants.HCAT_ADD_TABLE_EVENT);
+            String topicName = getTopicPrefix(conf) + "." + newTbl.getDbName().toLowerCase();
+            send(messageFactory.buildCreateTableMessage(newTbl), topicName);
         }
     }
 
@@ -243,72 +243,60 @@ public class NotificationListener extends MetaStoreEventListener {
 
         if (tableEvent.getStatus()) {
             Table table = tableEvent.getTable();
-            StorageDescriptor sd = table.getSd();
-            sd.setBucketCols(new ArrayList<String>());
-            sd.setSortCols(new ArrayList<Order>());
-            sd.setParameters(new HashMap<String, String>());
-            sd.getSerdeInfo().setParameters(new HashMap<String, String>());
-            sd.getSkewedInfo().setSkewedColNames(new ArrayList<String>());
-            send(table, getTopicPrefix(tableEvent.getHandler().getHiveConf()) + "."
-                + table.getDbName().toLowerCase(),
-                HCatConstants.HCAT_DROP_TABLE_EVENT);
+            String topicName = getTopicPrefix(tableEvent.getHandler().getHiveConf()) + "." + table.getDbName().toLowerCase();
+            send(messageFactory.buildDropTableMessage(table), topicName);
         }
     }
 
     /**
-     * @param msgBody
-     *          is the metastore object. It is sent in full such that if
-     *          subscriber is really interested in details, it can reconstruct it
-     *          fully. In case of finalize_partition message this will be string
-     *          specification of the partition.
-     * @param topicName
-     *          is the name on message broker on which message is sent.
-     * @param event
-     *          is the value of HCAT_EVENT property in message. It can be used to
-     *          select messages in client side.
+     * @param hCatEventMessage The HCatEventMessage being sent over JMS.
+     * @param topicName is the name on message broker on which message is sent.
      */
-    protected void send(Object msgBody, String topicName, String event) {
+    protected void send(HCatEventMessage hCatEventMessage, String topicName) {
         try {
-
             Destination topic = null;
-            if (null == session) {
+            if(null == session){
                 // this will happen, if we never able to establish a connection.
                 createConnection();
-                if (null == session) {
+                if (null == session){
                     // Still not successful, return from here.
-                    LOG.error("Invalid session. Failed to send message on topic: "
-                        + topicName + " event: " + event);
+                    LOG.error("Invalid session. Failed to send message on topic: " +
+                            topicName + " event: " + hCatEventMessage.getEventType());
                     return;
                 }
             }
-            topic = getTopic(topicName);
-            if (null == topic) {
+            try{
+                // Topics are created on demand. If it doesn't exist on broker it will
+                // be created when broker receives this message.
+                topic = session.createTopic(topicName);
+            } catch (IllegalStateException ise){
+                // this will happen if we were able to establish connection once, but its no longer valid,
+                // ise is thrown, catch it and retry.
+                LOG.error("Seems like connection is lost. Retrying", ise);
+                createConnection();
+                topic = session.createTopic(topicName);
+            }
+            if (null == topic){
                 // Still not successful, return from here.
-                LOG.error("Invalid session. Failed to send message on topic: "
-                    + topicName + " event: " + event);
+                LOG.error("Invalid session. Failed to send message on topic: " +
+                        topicName + " event: " + hCatEventMessage.getEventType());
                 return;
             }
-            MessageProducer producer = session.createProducer(topic);
-            Message msg;
-            if (msgBody instanceof Map) {
-                MapMessage mapMsg = session.createMapMessage();
-                Map<String, String> incomingMap = (Map<String, String>) msgBody;
-                for (Entry<String, String> partCol : incomingMap.entrySet()) {
-                    mapMsg.setString(partCol.getKey(), partCol.getValue());
-                }
-                msg = mapMsg;
-            } else {
-                msg = session.createObjectMessage((Serializable) msgBody);
-            }
 
-            msg.setStringProperty(HCatConstants.HCAT_EVENT, event);
+            MessageProducer producer = session.createProducer(topic);
+            Message msg = session.createTextMessage(hCatEventMessage.toString());
+
+            msg.setStringProperty(HCatConstants.HCAT_EVENT, hCatEventMessage.getEventType().toString());
+            msg.setStringProperty(HCatConstants.HCAT_MESSAGE_VERSION, messageFactory.getVersion());
+            msg.setStringProperty(HCatConstants.HCAT_MESSAGE_FORMAT, messageFactory.getMessageFormat());
             producer.send(msg);
             // Message must be transacted before we return.
             session.commit();
-        } catch (Exception e) {
+        }
+        catch(Exception e){
             // Gobble up the exception. Message delivery is best effort.
-            LOG.error("Failed to send message on topic: " + topicName + " event: "
-                    + event, e);
+            LOG.error("Failed to send message on topic: " + topicName +
+                    " event: " + hCatEventMessage.getEventType(), e);
         }
     }
 
@@ -383,12 +371,9 @@ public class NotificationListener extends MetaStoreEventListener {
     @Override
     public void onLoadPartitionDone(LoadPartitionDoneEvent lpde)
         throws MetaException {
-        if (lpde.getStatus())
-            send(
-                lpde.getPartitionName(),
-                lpde.getTable().getParameters()
-                    .get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME),
-                HCatConstants.HCAT_PARTITION_DONE_EVENT);
+//  TODO: Fix LoadPartitionDoneEvent. Currently, LPDE can only carry a single partition-spec. And that defeats the purpose.
+//		if(lpde.getStatus())
+//			send(lpde.getPartitionName(),lpde.getTable().getParameters().get(HCatConstants.HCAT_MSGBUS_TOPIC_NAME),HCatConstants.HCAT_PARTITION_DONE_EVENT);
     }
 
     @Override
