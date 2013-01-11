@@ -304,7 +304,7 @@ public abstract class HCatBaseInputFormat
     StringBuilder str = new StringBuilder(); 
     for (Path path : paths) {
       FileSystem fs = path.getFileSystem(jobConf);
-      final String qualifiedPath = path.makeQualified(fs).toString();
+      final String qualifiedPath = fs.makeQualified(path).toString();
       str.append(separator)
               .append(StringUtils.escapeString(qualifiedPath));
       separator = StringUtils.COMMA_STR;
