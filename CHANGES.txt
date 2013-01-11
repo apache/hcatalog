@@ -158,6 +158,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-554 Loading data using HCatLoader() from a table on non default namenode fails. (amalakar via avandana)
+
   HCAT-586 checkstyle fails every time complaining that it's own header file does not have the proper header (gates)
 
   HCAT-580 Optimizations in HCAT-538 break e2e tests (daijy via gates)
