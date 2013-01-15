@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.exec.ExecuteException;
+import org.apache.hcatalog.templeton.tool.TempletonControllerJob;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 
 /**
@@ -73,6 +74,9 @@ public class PigDelegator extends LauncherDelegator {
 
             args.add("--");
             args.add(appConf.pigPath());
+            //the token file location should be first argument of pig
+            args.add("-D" + TempletonControllerJob.TOKEN_FILE_ARG_PLACEHOLDER);
+            
             args.addAll(pigArgs);
             if (TempletonUtils.isset(execute)) {
                 args.add("-execute");

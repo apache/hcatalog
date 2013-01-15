@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +49,11 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 
 /**
  * A Map Reduce job that will start another job.
@@ -70,7 +71,6 @@ public class TempletonControllerJob extends Configured implements Tool {
     static enum ControllerCounters {SIMPLE_COUNTER}
 
     ;
-
     public static final String COPY_NAME = "templeton.copy";
     public static final String STATUSDIR_NAME = "templeton.statusdir";
     public static final String JAR_ARGS_NAME = "templeton.args";
@@ -82,7 +82,11 @@ public class TempletonControllerJob extends Configured implements Tool {
 
     public static final int WATCHER_TIMEOUT_SECS = 10;
     public static final int KEEP_ALIVE_MSEC = 60 * 1000;
-
+    
+    public static final String TOKEN_FILE_ARG_PLACEHOLDER 
+        = "__WEBHCAT_TOKEN_FILE_LOCATION__";
+    
+    
     private static TrivialExecService execService = TrivialExecService.getInstance();
 
     private static final Log LOG = LogFactory.getLog(TempletonControllerJob.class);
@@ -104,8 +108,26 @@ public class TempletonControllerJob extends Configured implements Tool {
                 overrideClasspath);
             List<String> jarArgsList = new LinkedList<String>(Arrays.asList(jarArgs));
             String tokenFile = System.getenv("HADOOP_TOKEN_FILE_LOCATION");
+
+
             if (tokenFile != null) {
-                jarArgsList.add(1, "-Dmapreduce.job.credentials.binary=" + tokenFile);
+                //Token is available, so replace the placeholder
+                String tokenArg = "mapreduce.job.credentials.binary=" + tokenFile;
+                for(int i=0; i<jarArgsList.size(); i++){
+                    String newArg = 
+                        jarArgsList.get(i).replace(TOKEN_FILE_ARG_PLACEHOLDER, tokenArg);
+                    jarArgsList.set(i, newArg);
+                }
+                
+            }else{
+                //No token, so remove the placeholder arg
+                Iterator<String> it = jarArgsList.iterator();
+                while(it.hasNext()){
+                    String arg = it.next();
+                    if(arg.contains(TOKEN_FILE_ARG_PLACEHOLDER)){
+                        it.remove();
+                    }
+                }
             }
             return execService.run(jarArgsList, removeEnv, env);
         }

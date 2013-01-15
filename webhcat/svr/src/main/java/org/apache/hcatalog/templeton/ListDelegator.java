@@ -37,13 +37,13 @@ public class ListDelegator extends TempletonDelegator {
     }
 
     public List<String> run(String user)
-        throws NotAuthorizedException, BadParam, IOException {
+        throws NotAuthorizedException, BadParam, IOException, InterruptedException {
+        
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         TempletonJobTracker tracker = null;
         try {
-            tracker = new TempletonJobTracker(ugi,
-                JobTracker.getAddress(appConf),
-                appConf);
+            tracker = new TempletonJobTracker(JobTracker.getAddress(appConf),
+                    appConf);
 
             ArrayList<String> ids = new ArrayList<String>();
 

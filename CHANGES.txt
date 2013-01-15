@@ -24,6 +24,8 @@ Trunk (unreleased changes)
   NEW FEATURES
   HCAT-546 Rework HCatalog's JMS Notifications (mithunr via gates) 
 
+  HCAT-509 Webhcat security work (thejas via gates)
+
   IMPROVEMENTS
 
   OPTIMIZATIONS

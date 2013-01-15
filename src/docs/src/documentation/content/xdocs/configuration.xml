@@ -158,7 +158,10 @@ ${env.PIG_HOME}/bin/pig
 <code>hive.metastore.local=false,
 hive.metastore.uris=thrift://localhost:9933,
 hive.metastore.sasl.enabled=false</code></td>
-    <td>Properties to set when running hive.</td>
+    <td>Properties to set when running hive. To use it in a cluster with 
+kerberos security enabled set hive.metastore.sasl.enabled=false and add hive.metastore.execute.setugi=true
+Using localhost in metastore uri does not work with kerberos security.
+</td>
   </tr>
 
   <tr>

@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.exec.ExecuteException;
+import org.apache.hcatalog.templeton.tool.TempletonControllerJob;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 
 /**
@@ -59,8 +61,14 @@ public class HiveDelegator extends LauncherDelegator {
             args.addAll(makeBasicArgs(execute, srcFile, statusdir, completedUrl));
             args.add("--");
             args.add(appConf.hivePath());
+            
             args.add("--service");
             args.add("cli");
+
+            //the token file location as initial hiveconf arg
+            args.add("--hiveconf");
+            args.add(TempletonControllerJob.TOKEN_FILE_ARG_PLACEHOLDER);
+
             for (String prop : appConf.getStrings(AppConfig.HIVE_PROPS_NAME)) {
                 args.add("--hiveconf");
                 args.add(prop);

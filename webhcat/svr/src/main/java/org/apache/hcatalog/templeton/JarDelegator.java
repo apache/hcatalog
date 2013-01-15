@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.exec.ExecuteException;
+import org.apache.hcatalog.templeton.tool.TempletonControllerJob;
 import org.apache.hcatalog.templeton.tool.TempletonUtils;
 
 /**
@@ -79,7 +80,9 @@ public class JarDelegator extends LauncherDelegator {
                 args.add(TempletonUtils.hadoopFsListAsString(files, appConf,
                     runAs));
             }
-
+            //the token file location comes after mainClass, as a -Dprop=val
+            args.add("-D" + TempletonControllerJob.TOKEN_FILE_ARG_PLACEHOLDER);
+            
             for (String d : defines)
                 args.add("-D" + d);
 

@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -214,12 +216,24 @@ public class TempletonUtils {
         if (fname == null || conf == null) {
             return null;
         }
-        FileSystem defaultFs = FileSystem.get(new URI(fname), conf, user);
+
+        final Configuration fConf = new Configuration(conf);
+        final String finalFName = new String(fname);
+
+        UserGroupInformation ugi = UserGroupInformation.getLoginUser();
+        final FileSystem defaultFs = 
+                ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+                    public FileSystem run() 
+                        throws URISyntaxException, FileNotFoundException, IOException,
+                            InterruptedException {
+                        return FileSystem.get(new URI(finalFName), fConf);
+                    }
+                });
+
         URI u = new URI(fname);
         Path p = new Path(u).makeQualified(defaultFs);
 
-        FileSystem fs = p.getFileSystem(conf);
-        if (hadoopFsIsMissing(fs, p))
+        if (hadoopFsIsMissing(defaultFs, p))
             throw new FileNotFoundException("File " + fname + " does not exist.");
 
         return p;
