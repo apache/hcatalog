@@ -22,8 +22,6 @@ Trunk (unreleased changes)
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
-  HCAT-546 Rework HCatalog's JMS Notifications (mithunr via gates) 
-
   HCAT-509 Webhcat security work (thejas via gates)
 
   IMPROVEMENTS
@@ -38,6 +36,8 @@ Release 0.5.0 - Unreleased
   INCOMPATIBLE CHANGES
 
   NEW FEATURES
+  HCAT-546 Rework HCatalog's JMS Notifications (mithunr via gates) 
+
   HCAT-364 HCatalog pig adapter should handle boolean fields (traviscrawford)
 
   HCAT-515 Upgrade hadoop23 version to use 0.23.3 (cdrome via toffer)
