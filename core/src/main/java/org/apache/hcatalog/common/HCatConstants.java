@@ -121,13 +121,18 @@ public final class HCatConstants {
     // Message Bus related properties.
     public static final String HCAT_DEFAULT_TOPIC_PREFIX = "hcat";
     public static final String HCAT_EVENT = "HCAT_EVENT";
-    public static final String HCAT_ADD_PARTITION_EVENT = "HCAT_ADD_PARTITION";
-    public static final String HCAT_DROP_PARTITION_EVENT = "HCAT_DROP_PARTITION";
-    public static final String HCAT_PARTITION_DONE_EVENT = "HCAT_PARTITION_DONE";
-    public static final String HCAT_ADD_TABLE_EVENT = "HCAT_ADD_TABLE";
-    public static final String HCAT_DROP_TABLE_EVENT = "HCAT_DROP_TABLE";
-    public static final String HCAT_ADD_DATABASE_EVENT = "HCAT_ADD_DATABASE";
-    public static final String HCAT_DROP_DATABASE_EVENT = "HCAT_DROP_DATABASE";
+    public static final String HCAT_ADD_PARTITION_EVENT = "ADD_PARTITION";
+    public static final String HCAT_DROP_PARTITION_EVENT = "DROP_PARTITION";
+    public static final String HCAT_PARTITION_DONE_EVENT = "PARTITION_DONE";
+    public static final String HCAT_CREATE_TABLE_EVENT = "CREATE_TABLE";
+    public static final String HCAT_DROP_TABLE_EVENT = "DROP_TABLE";
+    public static final String HCAT_CREATE_DATABASE_EVENT = "CREATE_DATABASE";
+    public static final String HCAT_DROP_DATABASE_EVENT = "DROP_DATABASE";
+    public static final String HCAT_MESSAGE_VERSION = "HCAT_MESSAGE_VERSION";
+    public static final String HCAT_MESSAGE_FORMAT = "HCAT_MESSAGE_FORMAT";
+    public static final String CONF_LABEL_HCAT_MESSAGE_FACTORY_IMPL_PREFIX = "hcatalog.message.factory.impl.";
+    public static final String CONF_LABEL_HCAT_MESSAGE_FORMAT = "hcatalog.message.format";
+    public static final String DEFAULT_MESSAGE_FACTORY_IMPL = "org.apache.hcatalog.messaging.json.JSONMessageFactory";
 
     // System environment variables
     public static final String SYSENV_HADOOP_TOKEN_FILE_LOCATION = "HADOOP_TOKEN_FILE_LOCATION";
