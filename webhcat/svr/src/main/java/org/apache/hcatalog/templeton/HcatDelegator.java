@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.Response;
-
+ 
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -113,7 +113,7 @@ public class HcatDelegator extends LauncherDelegator {
             String res = jsonRun(user, exec);
             return JsonBuilder.create(res).build();
         } catch (HcatException e) {
-            if (e.execBean.stderr.indexOf("Error in semantic analysis") > -1) {
+            if (e.execBean.stderr.contains("SemanticException")) {
                 return JsonBuilder.create().
                     put("error", "Database " + db + " does not exist")
                     .put("errorCode", "404")
@@ -256,7 +256,15 @@ public class HcatDelegator extends LauncherDelegator {
                 .put("table", table)
                 .build();
         } catch (HcatException e) {
-            throw new HcatException("unable to describe table: " + table,
+            if (e.execBean.stderr.contains("SemanticException") &&
+                e.execBean.stderr.contains("Table not found")) {
+                return JsonBuilder.create().
+                    put("error", "Table" + db + "." + table + " does not exist" )
+                    .put("errorCode", "404")
+                    .put("table", table)
+                    .put("database", db).build();
+            }
+            throw new HcatException("unable to describe database: " + db,
                 e.execBean, exec);
         }
     }
@@ -631,6 +639,19 @@ public class HcatDelegator extends LauncherDelegator {
                 .put("partition", partition)
                 .build();
         } catch (HcatException e) {
+            if (e.execBean.stderr.contains("SemanticException") &&
+                e.execBean.stderr.contains("Partition not found")) {
+                String emsg = "Partition " + partition + " for table " 
+                    + table + " does not exist" + db + "." + table + " does not exist";
+                return JsonBuilder.create()
+                    .put("error", emsg)
+                    .put("errorCode", "404")
+                    .put("database", db)
+                    .put("table", table)
+                    .put("partition", partition)
+                    .build();
+            }
+
             throw new HcatException("unable to show partition: "
                 + table + " " + partition,
                 e.execBean,
