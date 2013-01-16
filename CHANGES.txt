@@ -160,6 +160,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-588 Webhcat server wouldn't start as it is unable to write templeton.log (thejas via traviscrawford)
+
   HCAT-573 Remove version number from WEBHCAT_JAR in webhcat_config.sh (thejas via traviscrawford)
 
   HCAT-592 webhcat - handle change in hive table/partition not found error (thejas via gates)
