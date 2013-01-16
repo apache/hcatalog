@@ -38,7 +38,7 @@ ERROR_LOG=${WEBHCAT_LOG_DIR}/webhcat-console-error.log
 CONSOLE_LOG=${WEBHCAT_LOG_DIR}/webhcat-console.log
 
 # The name of the webhcat jar file
-WEBHCAT_JAR=webhcat-0.5.0-SNAPSHOT.jar
+WEBHCAT_JAR='webhcat-*.jar'
 
 # How long to wait before testing that the process started correctly
 SLEEP_TIME_AFTER_START=10
