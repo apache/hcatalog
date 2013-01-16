@@ -56,13 +56,21 @@ function log() {
         echo "webhcat: $@"
 }
 
-# Find the webhcat jar
+# return(print) the webhcat jar
 function find_jar_path() {
-        for dir in "." "build" "share/webhcat/svr/"; do
-                local jar="$base_dir/$dir/$WEBHCAT_JAR"
+         for dir in "." "build" "share/webhcat/svr/"; do
+                if (( `ls -1 $base_dir/$dir/$WEBHCAT_JAR 2>/dev/null| wc -l ` > 1 )) ; then
+                       echo "Error:  found more than one hcatalog jar in $base_dir/$dir/$WEBHCAT_JAR"
+                       exit 1
+                fi
+                if (( `ls -1 $base_dir/$dir/$WEBHCAT_JAR 2>/dev/null | wc -l` == 0 )) ; then
+                       continue
+                fi
+ 
+                local jar=`ls $base_dir/$dir/$WEBHCAT_JAR`
                 if [[ -f $jar ]]; then
-                        echo $jar
-                        break
+                       echo $jar
+                       break
                 fi
         done
 }
@@ -94,7 +102,7 @@ function find_classpath() {
 
         # Append hcat classpath
         local hcat_classpath
-        hcat_classpath=`hcat -classpath`
+        hcat_classpath=`$base_dir/bin/hcat -classpath`
         if [[ "$?" != "0" ]]; then
                 die "Unable to get the hcatalog classpath"
         fi
@@ -213,7 +221,7 @@ if [[ -z "$WEBHCAT_LOG4J" ]]; then
 fi
 
 export HADOOP_USER_CLASSPATH_FIRST=true
-export HADOOP_OPTS="-Dwebhcat.log.dir=$WEBHCAT_LOG_DIR -Dlog4j.configuration=$WEBHCAT_LOG4J"
+export HADOOP_OPTS="${HADOOP_OPTS} -Dwebhcat.log.dir=$WEBHCAT_LOG_DIR -Dlog4j.configuration=$WEBHCAT_LOG4J"
 
 start_cmd="$HADOOP_PREFIX/bin/hadoop jar $JAR org.apache.hcatalog.templeton.Main  "
 
