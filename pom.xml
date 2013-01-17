@@ -30,7 +30,7 @@
       <hadoop23.version>0.23.3</hadoop23.version>
       <hbase.version>0.92.0</hbase.version>
       <hcatalog.version>${project.version}</hcatalog.version>
-      <hive.version>0.10.0-SNAPSHOT</hive.version>
+      <hive.version>0.10.0</hive.version>
       <jackson.version>1.8.3</jackson.version>
       <jersey.version>1.9.1</jersey.version>
       <jetty.webhcat.version>7.6.0.v20120127</jetty.webhcat.version>

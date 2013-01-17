@@ -59,6 +59,8 @@ Release 0.5.0 - Unreleased
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-595 Update hcatalog hive dependency to 0.10.0 (traviscrawford)
+
   HCAT-549 rename webhcat config and shell scripts to use webhcat in the names (thejas via gates)
 
   HCAT-446 Enforce apache headers for all HCatalog code (traviscrawford via gates)
