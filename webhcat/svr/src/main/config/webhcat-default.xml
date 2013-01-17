@@ -39,13 +39,13 @@
 
   <property>
     <name>templeton.jar</name>
-    <value>${env.TEMPLETON_HOME}/templeton-0.1.0-dev.jar</value>
+    <value>${env.TEMPLETON_HOME}/share/webhcat/svr/webhcat-0.5.0-SNAPSHOT.jar</value>
     <description>The path to the Templeton jar file.</description>
   </property>
 
   <property>
     <name>templeton.libjars</name>
-    <value>${env.TEMPLETON_HOME}/lib/zookeeper-3.3.4.jar</value>
+    <value>${env.TEMPLETON_HOME}/share/webhcat/svr/lib/zookeeper-3.4.3.jar</value>
     <description>Jars to add to the classpath.</description>
   </property>
 
@@ -61,7 +61,7 @@
 
   <property>
     <name>templeton.override.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Enable the override path in templeton.override.jars
     </description>
@@ -81,13 +81,13 @@
 
   <property>
     <name>templeton.pig.archive</name>
-    <value>hdfs:///user/templeton/pig-0.10.0.tar.gz</value>
+    <value>hdfs:///apps/templeton/pig-0.10.1.tar.gz</value>
     <description>The path to the Pig archive.</description>
   </property>
 
   <property>
     <name>templeton.pig.path</name>
-    <value>pig-0.10.0.tar.gz/pig-0.10.0/bin/pig</value>
+    <value>pig-0.10.1.tar.gz/pig-0.10.1/bin/pig</value>
     <description>The path to the Pig executable.</description>
   </property>
 
@@ -99,7 +99,7 @@
 
   <property>
     <name>templeton.hive.archive</name>
-    <value>hdfs:///user/templeton/hive-0.10.0.tar.gz</value>
+    <value>hdfs:///apps/templeton/hive-0.10.0.tar.gz</value>
     <description>The path to the Hive archive.</description>
   </property>
 
@@ -146,7 +146,7 @@
 
   <property>
     <name>templeton.exec.envs</name>
-    <value>HADOOP_PREFIX,HADOOP_HOME,JAVA_HOME</value>
+    <value>HADOOP_PREFIX,HADOOP_HOME,JAVA_HOME,HIVE_HOME</value>
     <description>The environment variables passed through to exec.</description>
   </property>
 
