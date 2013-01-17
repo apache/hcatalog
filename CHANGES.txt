@@ -162,6 +162,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-587 webhcat controller map task takes too much memory (thejas via traviscrawford)
+
   HCAT-594 updated documentation, default.xml, job submission fix (thejas via gates)
 
   HCAT-588 Webhcat server wouldn't start as it is unable to write templeton.log (thejas via traviscrawford)

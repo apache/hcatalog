@@ -145,6 +145,21 @@
   </property>
 
   <property>
+    <name>templeton.controller.mr.child.opts</name>
+    <value>-server -Xmx256m -Djava.net.preferIPv4Stack=true</value>
+    <description>Java options to be passed to templeton controller map task.
+        The default value of mapreduce child "-Xmx" (heap memory limit)
+        might be close to what is allowed for a map task.
+        Even if templeton  controller map task does not need much 
+        memory, the jvm (with -server option?)
+        allocates the max memory when it starts. This along with the 
+        memory used by pig/hive client it starts can end up exceeding
+        the max memory configured to be allowed for a map task
+        Use this option to set -Xmx to lower value
+    </description>
+  </property>
+
+  <property>
     <name>templeton.exec.envs</name>
     <value>HADOOP_PREFIX,HADOOP_HOME,JAVA_HOME,HIVE_HOME</value>
     <description>The environment variables passed through to exec.</description>
