@@ -49,9 +49,6 @@
     <property name="package.buildroot" value="${build.dir}/rpm/hcatalog_package_build_${user.name}"/>
     <property name="package.build.dir" value="${build.dir}/rpm/hcatalog_package_build_${user.name}/BUILD"/>
 
-    <!-- rats properties -->
-    <property name="rat.reporting.classname" value="rat.Report"/>
-
     <target name="init">
         <mkdir dir="${dist.dir}"/>
     </target>
@@ -400,11 +397,20 @@
         <checksum file="${build.dir}/${final.name}.tar.gz" forceOverwrite="yes"/>
     </target>
 
-    <target name="releaseaudit" description="Release Audit activities">
-        <java classname="${rat.reporting.classname}" fork="true">
-            <classpath refid="releaseaudit.classpath"/>
-            <arg value="${basedir}/src"/>
+    <target name="releaseaudit" description="generate a release audit report">
+        <get src="${mvnrepo}/org/apache/rat/apache-rat/${apache-rat.version}/apache-rat-${apache-rat.version}.jar"
+             dest="${basedir}/build/apache-rat-${apache-rat.version}.jar"
+             usetimestamp="true"
+             skipexisting="true"/>
+        <java jar="${basedir}/build/apache-rat-${apache-rat.version}.jar"
+              fork="true"
+              output="${basedir}/build/releaseaudit_report.txt">
+            <arg value="--dir"/>
+            <arg value="${basedir}"/>
+            <arg value="-e"/>
+            <arg value=".*/build/.*"/>
         </java>
+        <echo message="releaseaudit report generated at ${basedir}/build/releaseaudit_report.txt"/>
     </target>
 
     <!-- ================================================================== -->

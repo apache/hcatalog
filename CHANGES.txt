@@ -176,6 +176,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-596 fix releaseaudit and automate running (traviscrawford)
+
   HCAT-587 webhcat controller map task takes too much memory (thejas via traviscrawford)
 
   HCAT-594 updated documentation, default.xml, job submission fix (thejas via gates)
