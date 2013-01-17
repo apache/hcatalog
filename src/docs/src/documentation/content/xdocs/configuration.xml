@@ -191,6 +191,12 @@ Using localhost in metastore uri does not work with kerberos security.
   </tr>
 
   <tr>
+    <td><strong>templeton.controller.mr.child.opts</strong></td>
+    <td><code>-server -Xmx256m -Djava.net.preferIPv4Stack=true</code></td>
+    <td>Java options to be passed to templeton controller map task.</td>
+  </tr>
+
+  <tr>
     <td><strong>templeton.exec.envs</strong></td>
     <td><code>HADOOP_PREFIX,HADOOP_HOME,JAVA_HOME,HIVE_HOME</code></td>
     <td>The environment variables passed through to exec.</td>

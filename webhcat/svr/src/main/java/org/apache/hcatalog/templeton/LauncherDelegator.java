@@ -116,6 +116,7 @@ public class LauncherDelegator extends TempletonDelegator {
         // Hadoop vars
         addDef(args, "user.name", runAs);
         addDef(args, AppConfig.HADOOP_SPECULATIVE_NAME, "false");
+        addDef(args, AppConfig.HADOOP_CHILD_JAVA_OPTS, appConf.controllerMRChildOpts());
 
         // Internal vars
         addDef(args, TempletonControllerJob.STATUSDIR_NAME, statusdir);
