@@ -39,7 +39,7 @@
 
   <property>
     <name>templeton.jar</name>
-    <value>${env.TEMPLETON_HOME}/share/webhcat/svr/webhcat-0.5.0-SNAPSHOT.jar</value>
+    <value>${env.TEMPLETON_HOME}/share/webhcat/svr/webhcat-0.6.0-SNAPSHOT.jar</value>
     <description>The path to the Templeton jar file.</description>
   </property>
 

@@ -20,6 +20,11 @@ End to end tests
 End to end tests in templeton runs tests against an existing templeton server.
 It runs hcat, mapreduce, streaming, hive and pig tests.
 
+!!!! NOTE !!!!
+--------------
+USE SVN TO CHECKOUT CODE FOR RUNNING TESTS AS THE TEST
+  HARNESS IS EXTERNED FROM PIG. GIT WILL NOT IMPORT IT
+
 Test cases
 ----------
 The tests are defined in src/test/e2e/templeton/tests/*.conf
@@ -43,6 +48,7 @@ Setup
 * Data::Compare
 * File::Find::Rule
 * HTTP::Daemon
+* Parallel::ForkManager
 
 Tips:
 * Using perlbrew (http://perlbrew.pl) should make installing perl modules easier. 
@@ -51,6 +57,10 @@ Tips:
 
 
 3. Copy contents of src/test/e2e/templeton/inpdir to hdfs
+
+4. You will need to two jars in the same HDFS directory as the contents of inpdir.  piggybank.jar, which can
+be obtained from Pig.  The second is the hadoop-examples.jar, which can be obtained from your Hadoop distribution.
+This should be called hexamples.jar when it is uploaded to HDFS.
 
 
 Running the tests

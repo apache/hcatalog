@@ -20,14 +20,16 @@
 <project name="TestHarnessTempletonTests" default="test">
 
     <!-- Separate property name for udfs' build.xml -->
-    <property name="e2e.lib.dir" value="${basedir}/lib"/>
 
     <property name="test.src" value="${basedir}/tests"/>
     <property name="driver.src" value="${basedir}/drivers"/>
+    <property name="conf.src" value="${basedir}/conf"/>
     <property name="harness.dir" value="${basedir}/../harness"/>
+    <property name="harness.tar" value="${harness.dir}/harness.tar"/>
     <property name="inpdir.local" value="${basedir}/inpdir/"/>
-    <property name="test.location" value="${basedir}/testWorkDir"/>
-    <property name="driver.src" value="${basedir}/drivers"/>
+    <property name="tar.name" value="${basedir}/hcattests.tar"/>
+    <property name="tar.dir" value="${basedir}/tar"/>
+    <property name="test.location" value="${basedir}/testdist"/>
 
     <!-- Check that the necessary properties are setup -->
     <target name="property-check">
@@ -39,16 +41,45 @@
               unless="inpdir.hdfs"/>
     </target>
 
+    <!-- Get the tarball for the harness -->
+    <target name="build-harness">
+        <ant dir="${harness.dir}" inheritAll="false"/>
+    </target>
+
+    <!-- Build an archive to use in the tests -->
+    <target name="tar" description="Create tar file with hcat modules">
+        <mkdir dir="${tar.dir}"/>
+        <mkdir dir="${tar.dir}/tests"/>
+        <mkdir dir="${tar.dir}/conf"/>
+        <copy todir="${tar.dir}/tests">
+            <fileset dir="${test.src}">
+            </fileset>
+        </copy>
+        <copy todir="${tar.dir}">
+            <fileset dir="${driver.src}"/>
+        </copy>
+        <copy todir="${tar.dir}/conf">
+            <fileset dir="${conf.src}"/>
+        </copy>
+        <tar destfile="${tar.name}" basedir="${tar.dir}"/>
+    </target>
+
     <!-- Prep the test area -->
-    <target name="init-test">
+    <target name="init-test" depends="build-harness, tar">
         <mkdir dir="${test.location}"/>
+
+        <untar src="${tar.name}" dest="${test.location}"/>
+        <untar src="${harness.tar}" dest="${test.location}"/>
+
+        <chmod perm="ugo+x" type="file">
+            <fileset file="${test.location}/test_harness.pl"/>
+        </chmod>
     </target>
 
     <target name="test" depends="property-check, init-test">
         <property name="tests.to.run" value=""/>
-        <exec executable="${harness.dir}/test_harness.pl" dir="${test.location}" failonerror="true">
-            <env key="HARNESS_ROOT" value="${harness.dir}"/>
-            <env key="DRIVER_ROOT" value="${basedir}/drivers"/>
+        <exec executable="./test_harness.pl" dir="${test.location}" failonerror="true">
+            <env key="HARNESS_ROOT" value="."/>
             <env key="TH_WORKING_DIR" value="${test.location}"/>
             <env key="TH_INPDIR_LOCAL" value="${inpdir.local}"/>
             <env key="TH_INPDIR_HDFS" value="${inpdir.hdfs}"/>
@@ -70,7 +101,6 @@
         <property name="tests.to.run" value=""/>
         <exec executable="${harness.dir}/test_harness.pl" dir="${test.location}" failonerror="true">
             <env key="HARNESS_ROOT" value="${harness.dir}"/>
-            <env key="DRIVER_ROOT" value="${basedir}/drivers"/>
             <env key="TH_WORKING_DIR" value="${test.location}"/>
             <env key="TH_INPDIR_LOCAL" value="${inpdir.local}"/>
             <env key="TH_INPDIR_HDFS" value="${inpdir.hdfs}"/>
@@ -90,7 +120,10 @@
         </exec>
     </target>
 
+    <target name="clean">
+        <delete dir="${test.location}"/>
+        <delete file="${tar.name}"/>
+        <delete dir="${tar.dir}"/>
+    </target>
 
 </project>
-
-
