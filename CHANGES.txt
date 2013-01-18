@@ -162,6 +162,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-600 webhcat installation doc incorrectly gives location of start/stop script
+
   HCAT-593 webhcat system tests don't work as per the instructions (thejas via gates)
 
   HCAT-596 fix releaseaudit and automate running (traviscrawford)

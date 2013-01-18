@@ -48,7 +48,7 @@
   <li>Build HCatalog using the command <code>ant jar</code> from the
       top level HCatalog directory.</li>
   <li>Start the REST server with the command
-      <code>bin/webhcat_server.sh start</code>.</li>
+      <code>sbin/webhcat_server.sh start</code>.</li>
   <li>Check that your local install works.  Assuming that the server is running
       on port 50111, the following command would give output similar to that shown.
 <source>
