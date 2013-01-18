@@ -397,7 +397,7 @@
         <checksum file="${build.dir}/${final.name}.tar.gz" forceOverwrite="yes"/>
     </target>
 
-    <target name="releaseaudit" description="generate a release audit report">
+    <target name="releaseaudit" depends="init" description="generate a release audit report">
         <get src="${mvnrepo}/org/apache/rat/apache-rat/${apache-rat.version}/apache-rat-${apache-rat.version}.jar"
              dest="${basedir}/build/apache-rat-${apache-rat.version}.jar"
              usetimestamp="true"
