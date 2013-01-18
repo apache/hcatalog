@@ -55,7 +55,7 @@ run_cmd
 
 # Build and run tests with hadoop20. This must happen afterwards so test results
 # are available for CI to publish.
-cmd='ant -Dtest.junit.output.format=xml clean package releaseaudit test'
+cmd='ant -Dtest.junit.output.format=xml clean releaseaudit package test'
 if [ "${HUDSON_URL}" == "https://builds.apache.org/" ]; then
   cmd="${cmd} mvn-deploy"
 fi
