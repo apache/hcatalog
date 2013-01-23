@@ -29,9 +29,13 @@ if [ "${HCAT_RELEASE_VERSION}" == "" ]; then
   exit -1
 fi
 
-find . -name pom.xml -exec sed -i '' "s/0.5.0-SNAPSHOT/${HCAT_RELEASE_VERSION}/" {} \;
+snapshot_version=$(awk -F= '/hcatalog.version=/ { print $2 }' build.properties)
 
-export ANT_ARGS="${ANT_ARGS} -Dhcatalog.version=${HCAT_RELEASE_VERSION}"
+find . -name pom.xml -exec sed -i '' "s/${snapshot_version}/${HCAT_RELEASE_VERSION}/" {} \;
+sed -i '' "s/${snapshot_version}/${HCAT_RELEASE_VERSION}/" build.properties
+
+# useful to pass in "-Dtestcase=Foo" to bypass tests when troubleshooting builds
+export ANT_ARGS="${ANT_ARGS}"
 
 ./build-support/scripts/test.sh
 
