@@ -59,6 +59,8 @@ Release 0.5.0 - Unreleased
   HCAT-427 Document storage-based authorization (lefty via gates)
 
   IMPROVEMENTS
+  HCAT-604 add flexibility wrt. location of PID/LOG files (rvs via traviscrawford)
+
   HCAT-602 release notes for hcatalog 0.0.5 (traviscrawford)
 
   HCAT-595 Update hcatalog hive dependency to 0.10.0 (traviscrawford)
