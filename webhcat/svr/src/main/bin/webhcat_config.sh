@@ -26,8 +26,6 @@
 PID_DIR=${WEBHCAT_PID_DIR:-.}
 PID_FILE=${PID_DIR}/webhcat.pid
 
-PID_FILE=./webhcat.pid
-
 #default log directory
 WEBHCAT_LOG_DIR=${WEBHCAT_LOG_DIR:-.}
 

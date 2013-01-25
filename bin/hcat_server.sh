@@ -21,7 +21,8 @@ bin=`which $0`
 bin=`dirname ${bin}`
 bin=`cd "$bin"; pwd`
 
-HCAT_LOG_DIR="$bin"/../var/log
+HCAT_LOG_DIR=${HCAT_LOG_DIR:-"$bin"/../var/log}
+HCAT_PID_DIR=${HCAT_PID_DIR:-$HCAT_LOG_DIR}
 
 if [ -e "$bin/../libexec/hcat-config.sh" ]; then
   . "$bin"/../libexec/hcat-config.sh
@@ -37,7 +38,7 @@ function print_usage() {
 
 function start_hcat() {
   # back ground the metastore service and record the pid
-  PID_FILE=${HCAT_LOG_DIR}/hcat.pid
+  PID_FILE=${HCAT_PID_DIR}/hcat.pid
   SLEEP_TIME_AFTER_START=15
 
   # check if service is already running, if so exit
@@ -112,7 +113,7 @@ function start_hcat() {
 function stop_hcat() {
   SLEEP_TIME_AFTER_KILL=30
 
-  PID_FILE=${HCAT_LOG_DIR}/hcat.pid
+  PID_FILE=${HCAT_PID_DIR}/hcat.pid
   echo looking for $PID_FILE
 
   # check if service is already running, if so exit
