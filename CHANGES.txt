@@ -164,6 +164,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-599 NotificationListener doesn't use getTopic() for sending messages. (mithun via traviscrawford)
+
   HCAT-605 HCatalog release script does not update version in build.properties (traviscrawford)
 
   HCAT-603 releaseaudit should run before generating artifacts (traviscrawford)

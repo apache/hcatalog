@@ -254,7 +254,6 @@ public class NotificationListener extends MetaStoreEventListener {
      */
     protected void send(HCatEventMessage hCatEventMessage, String topicName) {
         try {
-            Destination topic = null;
             if(null == session){
                 // this will happen, if we never able to establish a connection.
                 createConnection();
@@ -265,17 +264,9 @@ public class NotificationListener extends MetaStoreEventListener {
                     return;
                 }
             }
-            try{
-                // Topics are created on demand. If it doesn't exist on broker it will
-                // be created when broker receives this message.
-                topic = session.createTopic(topicName);
-            } catch (IllegalStateException ise){
-                // this will happen if we were able to establish connection once, but its no longer valid,
-                // ise is thrown, catch it and retry.
-                LOG.error("Seems like connection is lost. Retrying", ise);
-                createConnection();
-                topic = session.createTopic(topicName);
-            }
+
+            Destination topic = getTopic(topicName);
+
             if (null == topic){
                 // Still not successful, return from here.
                 LOG.error("Invalid session. Failed to send message on topic: " +
