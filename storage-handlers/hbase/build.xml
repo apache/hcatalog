@@ -64,8 +64,6 @@
     <property name="test.data.dir" value="${test.build.dir}/data" />
     <property name="test.timeout" value="2700000" />
     <property name="test.junit.output.format" value="plain" />
-    <property name="test.all.file" value="${test.src.dir}/all-tests"/>
-    <property name="test.exclude.file" value="${test.src.dir}/excluded-tests"/>
     <property name="test.output" value="no"/>
     <property name="hive.conf.dir" value="${hive.root}/conf"/>
 
@@ -150,12 +148,7 @@
                 <formatter type="${test.junit.output.format}" />
                 <!-- If the user has not defined a particular test to run, run them all -->
                 <batchtest fork="yes" todir="${test.log.dir}" unless="testcase">
-                    <fileset dir="src/test">
-                        <patternset>
-                            <includesfile name="${test.all.file}"/>
-                            <excludesfile name="${test.exclude.file}"/>
-                        </patternset>
-                    </fileset>
+                    <fileset dir="src/test" includes="**/Test*.java"/>
                     <fileset dir="src/test" includes="**/lock/*Test.java"/>
                 </batchtest>
                 <!-- Run one test case.  To use this define -Dtestcase=X on the command line -->
