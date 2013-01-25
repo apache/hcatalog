@@ -34,6 +34,7 @@
           <exclude name="**/build/**"/>
           <exclude name=".idea/**"/>
           <exclude name="build-support/checkstyle/apache_header.txt"/>
+          <exclude name="build-support/conf/rat-excludes.txt"/>
           <exclude name="license/*-LICENSE.txt"/>
           <exclude name="src/docs/src/documentation/**"/>
           <exclude name="src/packages/**"/> <!-- TODO: delete packages configs -->

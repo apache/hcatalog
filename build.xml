@@ -407,8 +407,8 @@
               output="${basedir}/build/releaseaudit_report.txt">
             <arg value="--dir"/>
             <arg value="${basedir}"/>
-            <arg value="-e"/>
-            <arg value=".*/build/.*"/>
+            <arg value="--exclude-file"/>
+            <arg value="build-support/conf/rat-excludes.txt"/>
         </java>
         <echo message="releaseaudit report generated at ${basedir}/build/releaseaudit_report.txt"/>
     </target>
