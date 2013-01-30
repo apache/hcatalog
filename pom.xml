@@ -32,7 +32,7 @@
       <hcatalog.version>${project.version}</hcatalog.version>
       <hive.version>0.10.0</hive.version>
       <jackson.version>1.8.3</jackson.version>
-      <jersey.version>1.9.1</jersey.version>
+      <jersey.version>1.14</jersey.version>
       <jetty.webhcat.version>7.6.0.v20120127</jetty.webhcat.version>
       <jms.version>1.1</jms.version>
       <pig.version>0.8.0</pig.version>
@@ -143,6 +143,16 @@
        disable the repo as we prefer to use central anyway. -->
     <repository>
       <id>glassfish-repository</id>
+      <url>http://maven.glassfish.org/content/groups/glassfish</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>glassfish-repo-archive</id>
       <url>http://maven.glassfish.org/content/groups/glassfish</url>
       <releases>
         <enabled>false</enabled>
