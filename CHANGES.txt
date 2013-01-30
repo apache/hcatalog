@@ -180,6 +180,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-601 fix hcatalog dependency resolution issues (sushanth via traviscrawford)
+
   HCAT-608 exclude data files from hcatalog release audit report (traviscrawford)
 
   HCAT-606 remove hcatalog test includes/excludes files (traviscrawford)
