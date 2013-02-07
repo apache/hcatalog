@@ -166,6 +166,8 @@ Release 0.5.0 - Unreleased
   OPTIMIZATIONS
 
   BUG FIXES
+  HCAT-614 Environment/rpm based configuration for e2e test do not have hcatcoredevlib defined in it (amalakar via toffer) 
+
   HCAT-601 fix hcatalog dependency resolution issues (sushanth via traviscrawford)
 
   HCAT-608 exclude data files from hcatalog release audit report (traviscrawford)
