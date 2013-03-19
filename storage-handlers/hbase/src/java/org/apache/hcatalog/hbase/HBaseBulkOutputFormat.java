@@ -144,7 +144,7 @@ class HBaseBulkOutputFormat extends HBaseBaseOutputFormat {
         @Override
         public void commitTask(TaskAttemptContext taskContext)
             throws IOException {
-            baseOutputCommitter.commitTask(taskContext);
+            // baseOutputCommitter.commitTask(taskContext);
         }
 
         @Override

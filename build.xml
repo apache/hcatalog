@@ -69,13 +69,13 @@
           <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
         </ant>
         <ant target="jar" dir="webhcat/svr" inheritAll="false">
-          <property name="_mvn.hadoop.profile" value="hadoop20"/>
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
         </ant>
         <ant target="jar" dir="webhcat/java-client" inheritAll="false">
           <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
         </ant>
         <ant target="jar" dir="storage-handlers/hbase" inheritAll="false">
-          <property name="_mvn.hadoop.profile" value="hadoop20"/>
+          <property name="_mvn.hadoop.profile" value="${mvn.hadoop.profile}"/>
         </ant>
     </target>
 
@@ -192,7 +192,7 @@
             <packageset dir="webhcat/svr/src/main/java"/>
             <packageset dir="webhcat/java-client/src/main/java"/>
             <classpath>
-                <fileset dir="core/build/lib/compile"/>
+                <fileset dir="core/build/lib/test"/>
                 <fileset dir="hcatalog-pig-adapter/build/lib/compile"/>
                 <fileset dir="hcatalog-pig-adapter/build/lib/provided"/>
                 <fileset dir="server-extensions/build/lib/compile"/>

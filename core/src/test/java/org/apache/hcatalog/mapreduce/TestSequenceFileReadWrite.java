@@ -170,7 +170,7 @@ public class TestSequenceFileReadWrite extends TestCase {
         HCatOutputFormat.setSchema(job, getSchema());
         job.setNumReduceTasks(0);
         assertTrue(job.waitForCompletion(true));
-        if (!HcatTestUtils.isHadoop23()) {
+        if (!HCatUtil.isHadoop23()) {
             new FileOutputCommitterContainer(job, null).commitJob(job);
         }
         assertTrue(job.isSuccessful());
@@ -217,7 +217,7 @@ public class TestSequenceFileReadWrite extends TestCase {
         job.setOutputFormatClass(HCatOutputFormat.class);
         HCatOutputFormat.setSchema(job, getSchema());
         assertTrue(job.waitForCompletion(true));
-        if (!HcatTestUtils.isHadoop23()) {
+        if (!HCatUtil.isHadoop23()) {
             new FileOutputCommitterContainer(job, null).commitJob(job);
         }
         assertTrue(job.isSuccessful());

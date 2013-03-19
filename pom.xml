@@ -27,18 +27,19 @@
       <commons-io.version>2.4</commons-io.version>
       <guava.version>11.0.2</guava.version>
       <hadoop20.version>1.0.3</hadoop20.version>
-      <hadoop23.version>0.23.3</hadoop23.version>
-      <hbase.version>0.92.0</hbase.version>
+      <hadoop23.version>2.0.3-alpha</hadoop23.version>
+      <hbase.version>0.94.5</hbase.version>
       <hcatalog.version>${project.version}</hcatalog.version>
-      <hive.version>0.10.0</hive.version>
+      <hive.version>0.11.0-SNAPSHOT</hive.version>
       <jackson.version>1.8.3</jackson.version>
       <jersey.version>1.14</jersey.version>
       <jetty.webhcat.version>7.6.0.v20120127</jetty.webhcat.version>
       <jms.version>1.1</jms.version>
-      <pig.version>0.8.0</pig.version>
+      <pig.version>0.10.1</pig.version>
       <slf4j.version>1.6.1</slf4j.version>
       <wadl-resourcedoc-doclet.version>1.4</wadl-resourcedoc-doclet.version>
       <zookeeper.version>3.4.3</zookeeper.version>
+      <metrics-core.version>2.1.2</metrics-core.version>
   </properties>
 
   <parent>
@@ -83,6 +84,12 @@
           <version>${hadoop20.version}</version>
           <scope>test</scope>
         </dependency>
+        <dependency>
+          <groupId>org.apache.pig</groupId>
+          <artifactId>pig</artifactId>
+          <version>${pig.version}</version>
+          <scope>compile</scope>
+        </dependency>
       </dependencies>
     </profile>
     <profile>
@@ -108,8 +115,61 @@
         </dependency>
         <dependency>
           <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+          <version>${hadoop23.version}</version>
+          <classifier>tests</classifier>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
           <artifactId>hadoop-mapreduce-client-core</artifactId>
           <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+          <version>${hadoop23.version}</version>
+          <classifier>tests</classifier>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-yarn-server-tests</artifactId>
+          <version>${hadoop23.version}</version>
+          <classifier>tests</classifier>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-mapreduce-client-app</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <version>${hadoop23.version}</version>
+          <classifier>tests</classifier>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-mapreduce-client-hs</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-minicluster</artifactId>
+          <version>${hadoop23.version}</version>
+          <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.pig</groupId>
+          <artifactId>pig</artifactId>
+          <version>${pig.version}</version>
+          <classifier>h2</classifier>
           <scope>compile</scope>
         </dependency>
       </dependencies>

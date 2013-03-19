@@ -51,7 +51,6 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.data.DefaultHCatRecord;
@@ -281,7 +280,7 @@ public abstract class HCatMapReduceTest extends HCatBaseTest {
                     .findCounter("FILE_BYTES_READ").getValue() > 0);
         }
 
-        if (!HcatTestUtils.isHadoop23()) {
+        if (!HCatUtil.isHadoop23()) {
             // Local mode outputcommitter hook is not invoked in Hadoop 1.x
             if (success) {
                 new FileOutputCommitterContainer(job, null).commitJob(job);

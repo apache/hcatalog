@@ -183,6 +183,8 @@ public class TestHBaseBulkOutputFormat extends SkeletonHBaseTest {
 
         //create table
         conf.set(HBaseConstants.PROPERTY_OUTPUT_TABLE_NAME_KEY, tableName);
+        conf.set("yarn.scheduler.capacity.root.queues", "default");
+        conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
         createTable(tableName, new String[]{familyName});
 
         String data[] = {"1,english:one,spanish:uno",

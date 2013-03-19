@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.apache.hadoop.mapred.JobStatus;
-import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TempletonJobTracker;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hcatalog.templeton.tool.JobState;
@@ -42,7 +41,7 @@ public class ListDelegator extends TempletonDelegator {
         UserGroupInformation ugi = UserGroupInformation.createRemoteUser(user);
         TempletonJobTracker tracker = null;
         try {
-            tracker = new TempletonJobTracker(JobTracker.getAddress(appConf),
+            tracker = new TempletonJobTracker(getAddress(appConf),
                     appConf);
 
             ArrayList<String> ids = new ArrayList<String>();

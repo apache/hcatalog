@@ -75,6 +75,9 @@ public class TestHCatPartitionPublish {
     @BeforeClass
     public static void setup() throws Exception {
         Configuration conf = new Configuration(true);
+        conf.set("yarn.scheduler.capacity.root.queues", "default");
+        conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
+        
         fs = FileSystem.get(conf);
         System.setProperty("hadoop.log.dir", new File(fs.getWorkingDirectory()
                 .toString(), "/logs").getAbsolutePath());

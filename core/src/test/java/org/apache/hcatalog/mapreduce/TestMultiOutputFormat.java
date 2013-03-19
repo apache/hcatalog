@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
@@ -70,6 +72,9 @@ public class TestMultiOutputFormat {
     public static void setup() throws IOException {
         createWorkDir();
         Configuration conf = new Configuration(true);
+        conf.set("yarn.scheduler.capacity.root.queues", "default");
+        conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
+        
         fs = FileSystem.get(conf);
         System.setProperty("hadoop.log.dir", new File(workDir, "/logs").getAbsolutePath());
         // LocalJobRunner does not work with mapreduce OutputCommitter. So need
@@ -134,12 +139,14 @@ public class TestMultiOutputFormat {
 
         // Verify if the configs are merged
         Path[] fileClassPaths = DistributedCache.getFileClassPaths(job.getConfiguration());
-        Assert.assertArrayEquals(new Path[]{new Path(inputFile), new Path(dummyFile)},
-            fileClassPaths);
-        URI[] expectedCacheFiles = new URI[]{new Path(inputFile).makeQualified(fs).toUri(),
-            new Path(dummyFile).makeQualified(fs).toUri()};
+        List<Path> fileClassPathsList = Arrays.asList(fileClassPaths);
+        Assert.assertTrue(fileClassPathsList.contains(new Path(inputFile)));
+        Assert.assertTrue(fileClassPathsList.contains(new Path(dummyFile)));
+
         URI[] cacheFiles = DistributedCache.getCacheFiles(job.getConfiguration());
-        Assert.assertArrayEquals(expectedCacheFiles, cacheFiles);
+        List<URI> cacheFilesList = Arrays.asList(cacheFiles);
+        Assert.assertTrue(cacheFilesList.contains(new Path(inputFile).makeQualified(fs).toUri()));
+        Assert.assertTrue(cacheFilesList.contains(new Path(dummyFile).makeQualified(fs).toUri()));
 
         Assert.assertTrue(job.waitForCompletion(true));
 

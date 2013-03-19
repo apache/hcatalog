@@ -20,7 +20,6 @@ package org.apache.hcatalog.templeton;
 
 import java.io.IOException;
 import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.JobTracker;
 import org.apache.hadoop.mapred.TempletonJobTracker;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hcatalog.templeton.tool.JobState;
@@ -40,7 +39,7 @@ public class DeleteDelegator extends TempletonDelegator {
         TempletonJobTracker tracker = null;
         JobState state = null;
         try {
-            tracker = new TempletonJobTracker(JobTracker.getAddress(appConf),
+            tracker = new TempletonJobTracker(getAddress(appConf),
                                               appConf);
             JobID jobid = StatusDelegator.StringToJobID(id);
             if (jobid == null)

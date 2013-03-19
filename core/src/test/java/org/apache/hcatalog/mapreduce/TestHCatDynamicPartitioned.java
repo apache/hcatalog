@@ -23,11 +23,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import junit.framework.Assert;
+
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hcatalog.HcatTestUtils;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.common.ErrorType;
 import org.apache.hcatalog.common.HCatConstants;
 import org.apache.hcatalog.common.HCatException;
@@ -141,20 +143,23 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
         try {
             generateWriteRecords(NUM_RECORDS, NUM_PARTITIONS, 0);
             Job job = runMRCreate(null, dataColumns, writeRecords, NUM_RECORDS, false);
-            if (HcatTestUtils.isHadoop23()) {
-                new FileOutputCommitterContainer(job, null).cleanupJob(job);
+            
+            if (HCatUtil.isHadoop23()) {
+                Assert.assertTrue(job.isSuccessful()==false);
             }
         } catch (IOException e) {
             exc = e;
         }
 
-        assertTrue(exc != null);
-        assertTrue(exc instanceof HCatException);
-        assertTrue("Got exception of type [" + ((HCatException) exc).getErrorType().toString()
-                + "] Expected ERROR_PUBLISHING_PARTITION or ERROR_MOVE_FAILED",
-                (ErrorType.ERROR_PUBLISHING_PARTITION == ((HCatException) exc).getErrorType())
-                        || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType())
-        );
+        if (!HCatUtil.isHadoop23()) {
+            assertTrue(exc != null);
+            assertTrue(exc instanceof HCatException);
+            assertTrue("Got exception of type [" + ((HCatException) exc).getErrorType().toString()
+                    + "] Expected ERROR_PUBLISHING_PARTITION or ERROR_MOVE_FAILED",
+                    (ErrorType.ERROR_PUBLISHING_PARTITION == ((HCatException) exc).getErrorType())
+                            || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType())
+            );
+        }
     }
 
     //TODO 1.0 miniCluster is slow this test times out, make it work

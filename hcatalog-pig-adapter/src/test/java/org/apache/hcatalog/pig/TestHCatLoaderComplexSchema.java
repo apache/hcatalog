@@ -112,7 +112,6 @@ public class TestHCatLoaderComplexSchema {
     @Test
     public void testSyntheticComplexSchema() throws Exception {
         String pigSchema =
-            "(" +
                 "a: " +
                 "(" +
                 "aa: chararray, " +
@@ -124,8 +123,7 @@ public class TestHCatLoaderComplexSchema {
                 ")," +
                 "b: chararray, " +
                 "c: long, " +
-                "d:  { t: (da:long, db: ( dba: chararray, dbb: long), dc: { t: (dca: long) } ) } " +
-                ")";
+                "d:  { t: (da:long, db: ( dba: chararray, dbb: long), dc: { t: (dca: long) } ) } ";
 
         // with extra structs
         String tableSchema =
@@ -191,7 +189,7 @@ public class TestHCatLoaderComplexSchema {
             createTable(tablename, tableSchema);
             PigServer server = new PigServer(ExecType.LOCAL);
             server.setBatchOn();
-            server.registerQuery("A = load '" + tablename + "Input' using org.apache.hcatalog.pig.MockLoader() AS " + pigSchema + ";");
+            server.registerQuery("A = load '" + tablename + "Input' using org.apache.hcatalog.pig.MockLoader() AS (" + pigSchema + ");");
             Schema dumpedASchema = server.dumpSchema("A");
             server.registerQuery("STORE A into '" + tablename + "' using org.apache.hcatalog.pig.HCatStorer("
                 + (provideSchemaToStorer ? "'', '" + pigSchema + "'" : "")
@@ -255,7 +253,7 @@ public class TestHCatLoaderComplexSchema {
      */
     @Test
     public void testTupleInBagInTupleInBag() throws Exception {
-        String pigSchema = "(a: { b : ( c: { d: (i : long) } ) })";
+        String pigSchema = "a: { b : ( c: { d: (i : long) } ) }";
 
         String tableSchema = "a array< array< bigint > >";
 
@@ -279,7 +277,7 @@ public class TestHCatLoaderComplexSchema {
 
     @Test
     public void testMapWithComplexData() throws Exception {
-        String pigSchema = "(a: long, b: map[])";
+        String pigSchema = "a: long, b: map[]";
         String tableSchema = "a bigint, b map<string, struct<aa:bigint, ab:string>>";
 
         List<Tuple> data = new ArrayList<Tuple>();

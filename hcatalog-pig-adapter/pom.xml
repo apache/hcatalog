@@ -43,11 +43,5 @@
             <version>${hcatalog.version}</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.pig</groupId>
-            <artifactId>pig</artifactId>
-            <version>${pig.version}</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 </project>

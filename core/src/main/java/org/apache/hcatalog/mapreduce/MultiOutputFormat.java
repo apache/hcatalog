@@ -47,6 +47,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.util.ReflectionUtils;
+import org.apache.hcatalog.common.HCatUtil;
 import org.apache.hcatalog.shims.HCatHadoopShims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,8 +153,14 @@ public class MultiOutputFormat extends OutputFormat<Writable, Writable> {
         configsToMerge.put("tmparchives", COMMA_DELIM);
         configsToMerge.put(HCatHadoopShims.Instance.get().getPropertyName(HCatHadoopShims.PropertyName.CACHE_ARCHIVES), COMMA_DELIM);
         configsToMerge.put(HCatHadoopShims.Instance.get().getPropertyName(HCatHadoopShims.PropertyName.CACHE_FILES), COMMA_DELIM);
-        configsToMerge.put("mapred.job.classpath.archives", System.getProperty("path.separator"));
-        configsToMerge.put("mapred.job.classpath.files", System.getProperty("path.separator"));
+        String fileSep;
+        if (HCatUtil.isHadoop23()) {
+            fileSep = ",";
+        } else {
+            fileSep = System.getProperty("path.separator");
+        }
+        configsToMerge.put("mapred.job.classpath.archives", fileSep);
+        configsToMerge.put("mapred.job.classpath.files", fileSep);
     }
 
     /**

@@ -175,6 +175,9 @@ public class TestHCatMultiOutputFormat {
         // LocalJobRunner does not work with mapreduce OutputCommitter. So need
         // to use MiniMRCluster. MAPREDUCE-2350
         Configuration conf = new Configuration(true);
+        conf.set("yarn.scheduler.capacity.root.queues", "default");
+        conf.set("yarn.scheduler.capacity.root.default.capacity", "100");
+
         FileSystem fs = FileSystem.get(conf);
         System.setProperty("hadoop.log.dir", new File(workDir, "/logs").getAbsolutePath());
         mrCluster = new MiniMRCluster(1, fs.getUri().toString(), 1, null, null,

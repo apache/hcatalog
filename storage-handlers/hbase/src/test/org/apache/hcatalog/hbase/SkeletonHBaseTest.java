@@ -30,6 +30,7 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -203,10 +204,12 @@ public abstract class SkeletonHBaseTest {
                 } finally {
                     System.out.println("Trying to cleanup: " + testDir);
                     try {
-                        FileUtil.fullyDelete(new File(testDir));
+                        FileSystem fs = FileSystem.get(jobConf);
+                        fs.delete(new Path(testDir), true);
                     } catch (IOException e) {
                         throw new IllegalStateException("Failed to cleanup test dir", e);
                     }
+                    
                 }
             }
         }

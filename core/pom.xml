@@ -89,13 +89,5 @@
             <version>${hive.version}</version>
             <scope>compile</scope>
         </dependency>
-
-        <!-- test scope -->
-        <dependency>
-            <groupId>org.apache.pig</groupId>
-            <artifactId>pig</artifactId>
-            <version>${pig.version}</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

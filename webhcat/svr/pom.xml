@@ -48,12 +48,6 @@
             <version>${hcatalog.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-core</artifactId>
-            <version>${hadoop20.version}</version>
-            <scope>provided</scope>
-        </dependency>
 
         <!-- compile scope - this is packaged -->
         <dependency>

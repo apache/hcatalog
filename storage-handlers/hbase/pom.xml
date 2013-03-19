@@ -61,6 +61,12 @@
       <version>${zookeeper.version}</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hbase</groupId>
+      <artifactId>hbase</artifactId>
+      <version>${hbase.version}</version>
+      <scope>compile</scope>
+    </dependency>
 
     <!-- test scope -->
     <dependency>
@@ -87,6 +93,12 @@
       <artifactId>zookeeper</artifactId>
       <version>${zookeeper.version}</version>
       <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.yammer.metrics</groupId>
+      <artifactId>metrics-core</artifactId>
+      <version>${metrics-core.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -210,6 +210,8 @@ public class ManyMiniCluster {
                 jobConf = new JobConf();
 
             jobConf.setInt("mapred.submit.replication", 1);
+            jobConf.set("yarn.scheduler.capacity.root.queues", "default");
+            jobConf.set("yarn.scheduler.capacity.root.default.capacity", "100");
             //conf.set("hadoop.job.history.location",new File(workDir).getAbsolutePath()+"/history");
             System.setProperty("hadoop.log.dir", new File(workDir, "/logs").getAbsolutePath());
 
