@@ -35,7 +35,9 @@ Trunk (unreleased changes)
 
   HCAT-639 ant test fails on trunk due to checkstyle issues (gates)
 
-Release 0.5.0 - Unreleased
+  HCAT-640 CHANGES.txt still lists 0.5 as unreleased (gates)
+
+Release 0.5.0 - Released 14 February 2013
 
   INCOMPATIBLE CHANGES
 
