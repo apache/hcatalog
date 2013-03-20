@@ -17,7 +17,20 @@
 
 Apache HCatalog Change Log
 
-Release 0.5.0 - Unreleased
+Branch 0.5 (unreleased changes)
+
+INCOMPATIBLE CHANGES
+
+NEW FEATURES
+
+IMPROVEMENTS
+
+OPTIMIZATIONS
+
+BUG FIXES
+  HCAT-640 CHANGES.txt still lists 0.5 as unreleased (gates)
+
+Release 0.5.0 - Released 14 February 2013
 
   INCOMPATIBLE CHANGES
 
