@@ -38,6 +38,6 @@ public class TempletonDelegator {
     public static InetSocketAddress getAddress(Configuration conf) {
         String jobTrackerStr =
                 conf.get("mapred.job.tracker", "localhost:8012");
-              return NetUtils.createSocketAddr(jobTrackerStr);
-            }
+        return NetUtils.createSocketAddr(jobTrackerStr);
+    }
 }
