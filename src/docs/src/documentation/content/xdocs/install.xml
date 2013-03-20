@@ -57,29 +57,12 @@
     somewhere on your machine.  The directory where you unpack it will be referred
     to as <em>ant_home</em> in this document.</p>
 
-    <p>If you do not already have Apache Forrest installed on your machine, you 
-    will need to obtain it.  You can get it from the <a href="http://forrest.apache.org/">
-    Apache Forrest website</a>.  Once you download it, you will need to unpack 
-    it somewhere on your machine.  The directory where you unpack it will be referred
-    to as <em>forrest_home</em> in this document.</p>
-    
-    <p>To produce a tarball from this do the following:</p>
-
-    <p>Create a directory to expand the source release in.  Copy the source
-    release to that directory and unpack it.</p>
-    <p><code>mkdir /tmp/hcat_source_release</code></p>
-    <p><code>cp hcatalog-src-0.5.0-incubating.tar.gz /tmp/hcat_source_release</code></p>
-    <p><code>cd /tmp/hcat_source_release</code></p>
+    <p>To produce a binary tarball from downloaded src tarball, execute the following steps:</p>
     <p><code>tar xzf hcatalog-src-0.5.0-incubating.tar.gz</code></p>
-
-    <p>Change directories into the unpacked source release and build the
-    installation tarball.</p>
     <p><code>cd hcatalog-src-0.5.0-incubating</code></p>
-    <p><em>ant_home</em><code>/bin/ant -Dhcatalog.version=0.5.0
-    -Dforrest.home=</code><em>forrest_home</em><code> tar </code></p>
-
+    <p><em>ant_home</em><code>/bin/ant package </code></p>
     <p>The tarball for installation should now be at
-    <code>build/hcatalog-0.5.0.tar.gz</code></p>
+    <code>build/hcatalog-0.5.0-incubating.tar.gz</code></p>
 
     <p><strong>Database Setup</strong></p>
 
@@ -127,7 +110,7 @@
     purposes of these instructions we will refer to this machine as
     <em>hcatsvr.acme.com</em>.</p>
 
-    <p>If you have not already done so, install Hive 0.9 on this machine.  You
+    <p>If you have not already done so, install Hive 0.10.0 (say) on this machine.  You
     can use the
     <a href="http://hive.apache.org/releases.html">binary distributions</a> 
     provided by Hive or rpms available from
@@ -164,11 +147,13 @@
     the port number you wish HCatalog to operate on which you will use to set
     <em>portnum</em>.</p>
 
-    <p><code>tar zxf hcatalog-0.5.0.tar.gz</code></p>
-    <p><code>cd hcatalog-0.5.0</code></p>
+    <p><code>tar zxf hcatalog-0.5.0-incubating.tar.gz</code></p>
+    <p><code>cd hcatalog-0.5.0-incubating</code></p>
     <p><code>share/hcatalog/scripts/hcat_server_install.sh -r </code><em>root</em><code> -d </code><em>dbroot</em><code> -h </code><em>hadoop_home</em><code> -p </code><em>portnum</em></p>
 
     <p>Now you need to edit your <em>hive_home</em><code>/conf/hive-site.xml</code> file.
+    If there is no such file in hive conf directory, copy <em>hcat_home</em><code>/etc/hcatalog/proto-hive-site.xml</code>
+    and rename it hive-site.xml in <em>hive_home</em><code>/conf/</code>.
     Open this file in your favorite text editor.  The following table shows the
     values you need to configure.</p>
 
@@ -284,7 +269,7 @@
     <p>Copy the HCatalog installation tarball into a temporary directory, and untar
     it.</p>
 
-    <p><code>tar zxf hcatalog-0.5.0.tar.gz</code></p>
+    <p><code>tar zxf hcatalog-0.5.0-incubating.tar.gz</code></p>
 
     <p>Now you need to edit your <em>hive_home</em><code>/conf/hive-site.xml</code> file.
     You can use the same file as on the server <strong>except the value of 
