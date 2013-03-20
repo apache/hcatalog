@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.apache.hcatalog</groupId>
         <artifactId>hcatalog</artifactId>
-        <version>0.6.0-SNAPSHOT</version>
+        <version>1.0-gates</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
@@ -32,7 +32,7 @@
     <groupId>org.apache.hcatalog</groupId>
     <artifactId>webhcat-java-client</artifactId>
     <packaging>jar</packaging>
-    <version>0.6.0-SNAPSHOT</version>
+    <version>1.0-gates</version>
     <name>webhcat-java-client</name>
     <url>http://maven.apache.org</url>
 

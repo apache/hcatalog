@@ -26,6 +26,8 @@ Trunk (unreleased changes)
 
   IMPROVEMENTS
 
+  HCAT-619 Update HCatalog test/release script with post-release improvements (traviscrawford via gates)
+
   OPTIMIZATIONS
 
   BUG FIXES
