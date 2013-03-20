@@ -31,6 +31,8 @@ Trunk (unreleased changes)
   BUG FIXES
   HCAT-554 Loading data using HCatLoader() from a table on non default namenode fails. (amalakar via avandana)
 
+  HCAT-629 First request always fails for webhcat (kamrul via gates)
+
 Release 0.5.0 - Unreleased
 
   INCOMPATIBLE CHANGES
