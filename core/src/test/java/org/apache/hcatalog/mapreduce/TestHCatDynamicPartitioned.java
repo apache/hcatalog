@@ -160,6 +160,24 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
                             || (ErrorType.ERROR_MOVE_FAILED == ((HCatException) exc).getErrorType())
             );
         }
+
+        query = "show partitions " + tableName;
+        retCode = driver.run(query).getResponseCode();
+        if (retCode != 0) {
+            throw new Exception("Error " + retCode + " running query " + query);
+        }
+        res = new ArrayList<String>();
+        driver.getResults(res);
+        assertEquals(NUM_PARTITIONS, res.size());
+
+        query = "select * from " + tableName;
+        retCode = driver.run(query).getResponseCode();
+        if (retCode != 0) {
+            throw new Exception("Error " + retCode + " running query " + query);
+        }
+        res = new ArrayList<String>();
+        driver.getResults(res);
+        assertEquals(NUM_RECORDS, res.size());
     }
 
     //TODO 1.0 miniCluster is slow this test times out, make it work

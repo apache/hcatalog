@@ -31,6 +31,9 @@ Trunk (unreleased changes)
   OPTIMIZATIONS
 
   BUG FIXES
+
+  HCAT-628 Committer deletes the original partition when a duplicate partition fails registration (thiruvel via daijy)
+
   HCAT-554 Loading data using HCatLoader() from a table on non default namenode fails. (amalakar via avandana)
 
   HCAT-629 First request always fails for webhcat (kamrul via gates)
