@@ -28,6 +28,8 @@ IMPROVEMENTS
 OPTIMIZATIONS
 
 BUG FIXES
+  HCAT-628 Committer deletes the original partition when a duplicate partition fails registration (thiruvel via daijy)
+
   HCAT-640 CHANGES.txt still lists 0.5 as unreleased (gates)
 
   HCAT-625 HCatalog 0.5.0 installation document is outdated

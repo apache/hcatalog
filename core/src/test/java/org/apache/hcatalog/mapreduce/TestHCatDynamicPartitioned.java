@@ -181,5 +181,23 @@ public class TestHCatDynamicPartitioned extends HCatMapReduceTest {
             assertTrue(exc == null);
             runMRRead(maxParts + 5);
         }
+
+        query = "show partitions " + tableName;
+        retCode = driver.run(query).getResponseCode();
+        if (retCode != 0) {
+            throw new Exception("Error " + retCode + " running query " + query);
+        }
+        res = new ArrayList<String>();
+        driver.getResults(res);
+        assertEquals(NUM_PARTITIONS, res.size());
+
+        query = "select * from " + tableName;
+        retCode = driver.run(query).getResponseCode();
+        if (retCode != 0) {
+            throw new Exception("Error " + retCode + " running query " + query);
+        }
+        res = new ArrayList<String>();
+        driver.getResults(res);
+        assertEquals(NUM_RECORDS, res.size());
     }
 }

@@ -681,14 +681,14 @@ class FileOutputCommitterContainer extends OutputCommitterContainer {
                 // no harProcessor, regular operation
                 updateTableSchema(client, table, jobInfo.getOutputSchema());
                 LOG.info("HAR not is not being used. The table {} has new partitions {}.", table.getTableName(), ptnInfos);
-                partitionsAdded = partitionsToAdd;
-                if (dynamicPartitioningUsed && (partitionsAdded.size()>0)){
+                if (dynamicPartitioningUsed && (partitionsToAdd.size()>0)){
                     Path src = new Path(ptnRootLocation);
                     moveTaskOutputs(fs, src, src, tblPath, true);
                     moveTaskOutputs(fs, src, src, tblPath, false);
                     fs.delete(src, true);
                 }
                 client.add_partitions(partitionsToAdd);
+                partitionsAdded = partitionsToAdd;
             }
         } catch (Exception e) {
             if (partitionsAdded.size() > 0) {
