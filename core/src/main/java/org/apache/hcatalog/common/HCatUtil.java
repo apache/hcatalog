@@ -81,7 +81,8 @@ public class HCatUtil {
     private final static int DEFAULT_HIVE_CACHE_EXPIRY_TIME_SECONDS = 2 * 60;
 
     public static boolean checkJobContextIfRunningFromBackend(JobContext j) {
-        if (j.getConfiguration().get("mapred.task.id", "").equals("")) {
+        if (j.getConfiguration().get("mapred.task.id", "").equals("") &&
+                !("true".equals(j.getConfiguration().get("pig.illustrating")))) {
             return false;
         }
         return true;
